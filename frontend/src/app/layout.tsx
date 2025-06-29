@@ -17,6 +17,14 @@ export const metadata: Metadata = {
 	title: "Saifuu - 家計管理アプリ",
 	description:
 		"個人用家計管理アプリケーション - 支出・収入の記録と分析、サブスクリプション管理",
+	robots: {
+		index: false,
+		follow: false,
+		noarchive: true,
+		nosnippet: true,
+		noimageindex: true,
+		nocache: true,
+	},
 };
 
 export default function RootLayout({
