@@ -1,6 +1,5 @@
 // Storybookストーリーファイル
-// 注意: Storybookがインストールされていない場合は、以下のimportを有効にする必要があります
-// import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { Header } from "./Header";
 
 /**
@@ -20,7 +19,7 @@ import { Header } from "./Header";
  * 2. 上記のimportを有効化
  * 3. 型定義を以下に変更: const meta: Meta<typeof Header> = {
  */
-const meta = {
+const meta: Meta<typeof Header> = {
 	title: "Components/Layout/Header",
 	component: Header,
 	parameters: {
@@ -102,8 +101,7 @@ const meta = {
 };
 
 export default meta;
-// Storybookインストール後に有効化: type Story = StoryObj<typeof meta>;
-type Story = any;
+type Story = StoryObj<typeof meta>;
 
 /**
  * デフォルト状態

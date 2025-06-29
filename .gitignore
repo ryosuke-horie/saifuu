@@ -50,3 +50,9 @@ next-env.d.ts
 
 # Playwright
 **/playwright-report
+
+# storybook
+*storybook.log
+storybook-static
+chromatic-*
+.storybook/cache
