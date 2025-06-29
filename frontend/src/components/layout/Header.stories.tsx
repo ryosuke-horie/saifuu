@@ -10,7 +10,6 @@ import { Header } from "./Header";
  *
  * 特徴:
  * - レスポンシブデザイン対応
- * - ダークモード対応
  * - アクセシビリティ対応
  * - カスタムタイトル設定可能
  *
@@ -39,7 +38,6 @@ const meta: Meta<typeof Header> = {
 #### 特徴
 - **レスポンシブ**: モバイルファーストなデザイン
 - **アクセシブル**: セマンティックHTML、適切なARIA属性
-- **テーマ対応**: ライト・ダークモード対応
 - **カスタマイズ可能**: タイトルとクラス名をカスタマイズ可能
 
 #### 技術仕様
@@ -180,7 +178,7 @@ export const EmptyTitle: Story = {
 export const WithCustomClass: Story = {
 	args: {
 		title: "Saifuu",
-		className: "bg-blue-100 dark:bg-blue-900",
+		className: "bg-blue-100",
 	},
 	parameters: {
 		docs: {
@@ -248,39 +246,6 @@ export const Desktop: Story = {
 			},
 		},
 	},
-};
-
-/**
- * ダークモード
- *
- * ダークモードでの表示確認用ストーリーです。
- * カラーテーマの切り替えに対応していることを確認できます。
- */
-export const DarkMode: Story = {
-	parameters: {
-		backgrounds: {
-			default: "dark",
-			values: [
-				{
-					name: "dark",
-					value: "#1f2937",
-				},
-			],
-		},
-		docs: {
-			description: {
-				story:
-					"ダークモードでの表示例。Tailwind CSSのダークモードクラスが適切に動作することを確認します。",
-			},
-		},
-	},
-	decorators: [
-		(Story: any) => (
-			<div className="dark">
-				<Story />
-			</div>
-		),
-	],
 };
 
 /**

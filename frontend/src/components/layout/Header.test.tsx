@@ -124,15 +124,11 @@ describe("Header", () => {
 			// 基本レイアウトクラスの確認
 			expect(header).toHaveClass("sticky", "top-0", "z-50", "w-full");
 
-			// テーマ対応クラスの確認
-			expect(header).toHaveClass("bg-white/80", "dark:bg-gray-900/80");
+			// 背景クラスの確認
+			expect(header).toHaveClass("bg-white/80");
 
 			// ボーダー・影効果の確認
-			expect(header).toHaveClass(
-				"border-b",
-				"border-gray-200",
-				"dark:border-gray-800",
-			);
+			expect(header).toHaveClass("border-b", "border-gray-200");
 			expect(header).toHaveClass("backdrop-blur-md", "shadow-sm");
 		});
 
