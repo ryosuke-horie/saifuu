@@ -1,0 +1,29 @@
+.DS_Store
+/node_modules/
+*.tsbuildinfo
+
+# React Router
+/.react-router/
+/build/
+/dist/
+
+# Cloudflare
+.mf
+.wrangler
+.dev.vars*
+worker-configuration.d.ts
+
+# Playwright
+/playwright-report/
+/test-results/
+/tests/e2e/screenshots/
+
+# Database
+/data/dev.db
+/data/dev.db-*
+local-dev.db
+local-dev.db-*
+test-e2e.db
+test-e2e.db-*
+
+coverage/
