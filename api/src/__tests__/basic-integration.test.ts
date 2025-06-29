@@ -4,8 +4,8 @@
  */
 /// <reference path="./types.d.ts" />
 
-import { describe, it, expect } from 'vitest'
-import { SELF } from 'cloudflare:test'
+import { env, SELF } from 'cloudflare:test'
+import { describe, expect, it } from 'vitest'
 
 describe('Basic Integration Tests', () => {
 	describe('Application Startup', () => {
@@ -15,40 +15,40 @@ describe('Basic Integration Tests', () => {
 		})
 
 		it('環境変数が利用可能', () => {
-			expect(SELF.env).toBeDefined()
-			expect(SELF.env.DB).toBeDefined()
+			expect(env).toBeDefined()
+			expect(env.DB).toBeDefined()
 		})
 	})
 
 	describe('Basic HTTP Routes', () => {
 		it('ルートパスが応答する', async () => {
 			const response = await SELF.fetch('http://localhost/')
-			
+
 			expect(response.status).toBe(200)
-			
+
 			const html = await response.text()
 			expect(html).toContain('Saifuu API')
 		})
 
 		it('ヘルスチェックエンドポイントが応答する', async () => {
 			const response = await SELF.fetch('http://localhost/api/health')
-			
+
 			// レスポンスが返されることを確認（データベース接続エラーでも200または500のいずれかが返される）
 			expect([200, 500].includes(response.status)).toBe(true)
-			
-			const data = await response.json()
+
+			const data = (await response.json()) as { status: string; timestamp: string }
 			expect(data).toHaveProperty('status')
 			expect(data).toHaveProperty('timestamp')
 		})
 
 		it('カテゴリエンドポイントが応答する', async () => {
 			const response = await SELF.fetch('http://localhost/api/categories')
-			
+
 			// データベース接続の問題があっても、エンドポイント自体は存在する
 			expect([200, 500].includes(response.status)).toBe(true)
-			
+
 			if (response.status === 200) {
-				const data = await response.json()
+				const data = (await response.json()) as unknown[]
 				expect(Array.isArray(data)).toBe(true)
 			}
 		})
@@ -76,7 +76,7 @@ describe('Basic Integration Tests', () => {
 
 		it('存在しないルートで404が返される', async () => {
 			const response = await SELF.fetch('http://localhost/nonexistent')
-			
+
 			expect(response.status).toBe(404)
 		})
 	})
@@ -84,7 +84,7 @@ describe('Basic Integration Tests', () => {
 	describe('Response Headers', () => {
 		it('JSONエンドポイントで適切なContent-Typeが設定される', async () => {
 			const response = await SELF.fetch('http://localhost/api/health')
-			
+
 			if (response.status === 200) {
 				expect(response.headers.get('content-type')).toContain('application/json')
 			}
@@ -108,13 +108,13 @@ describe('Basic Integration Tests', () => {
 
 	describe('Database Connection', () => {
 		it('D1データベースバインディングが存在する', () => {
-			expect(SELF.env.DB).toBeDefined()
-			expect(typeof SELF.env.DB.prepare).toBe('function')
+			expect(env.DB).toBeDefined()
+			expect(typeof env.DB.prepare).toBe('function')
 		})
 
 		it('基本的なSQLクエリが実行可能', async () => {
 			try {
-				const result = await SELF.env.DB.prepare("SELECT 1 as test").first()
+				const result = await env.DB.prepare('SELECT 1 as test').first()
 				expect(result).toEqual({ test: 1 })
 			} catch (error) {
 				// テスト環境でのDB接続問題は警告として記録
@@ -128,7 +128,7 @@ describe('Basic Integration Tests', () => {
 		it('TypeScriptコンパイルが成功している', async () => {
 			// TypeScriptが正常にコンパイルされていることを間接的に確認
 			const response = await SELF.fetch('http://localhost/api/health')
-			
+
 			// TypeScriptエラーがあればアプリケーション自体が動作しない
 			expect(response).toBeDefined()
 			expect(typeof response.status).toBe('number')
@@ -149,7 +149,7 @@ describe('Basic Integration Tests', () => {
 		it('V8エンジンのJavaScript機能が利用可能', () => {
 			expect(typeof Promise).toBe('function')
 			expect(Array.isArray).toBeDefined()
-			expect(typeof async function() {}).toBe('function')
+			expect(typeof (async () => {})).toBe('function')
 		})
 	})
 
@@ -171,7 +171,7 @@ describe('Basic Integration Tests', () => {
 
 		it('Honoミドルウェアが機能する', async () => {
 			const response = await SELF.fetch('http://localhost/')
-			
+
 			// HTMLレンダリングミドルウェアが機能していることを確認
 			expect(response.status).toBe(200)
 			const content = await response.text()

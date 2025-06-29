@@ -3,53 +3,65 @@
  */
 
 declare module 'cloudflare:test' {
-  import type { Env } from '../db'
-  
-  interface TestSELF {
-    fetch(input: RequestInfo | URL | string, init?: RequestInit): Promise<Response>
-    env: Env
-  }
-  
-  export const SELF: TestSELF
+	interface TestSELF {
+		fetch(input: RequestInfo | URL | string, init?: RequestInit): Promise<Response>
+		connect(address: string | SocketAddress, options?: SocketOptions): Socket
+	}
+
+	// ProvidedEnv is the actual type provided by the test environment
+	// It contains the D1Database binding that we need
+	interface ProvidedEnv {
+		DB: D1Database
+	}
+
+	export const SELF: TestSELF
+	export const env: ProvidedEnv
+}
+
+// Extend Response interface to include typed json() method
+declare global {
+	interface Response {
+		json(): Promise<unknown>
+	}
 }
 
 // Vitest global functions
 declare global {
-  function describe(name: string, fn: () => void): void
-  function it(name: string, fn: () => void | Promise<void>): void
-  function expect<T>(actual: T): {
-    toBe(expected: T): void
-    toEqual(expected: T): void
-    toBeDefined(): void
-    toBeUndefined(): void
-    toBeNull(): void
-    toBeTruthy(): void
-    toBeFalsy(): void
-    toBeGreaterThan(expected: number): void
-    toBeGreaterThanOrEqual(expected: number): void
-    toBeLessThan(expected: number): void
-    toBeLessThanOrEqual(expected: number): void
-    toContain(expected: string | any): void
-    toHaveProperty(property: string): void
-    toBeInstanceOf(expected: any): void
-    toMatchObject(expected: object): void
-    not: {
-      toBe(expected: T): void
-      toEqual(expected: T): void
-      toBeDefined(): void
-      toThrow(): void
-    }
-  }
-  function beforeEach(fn: () => void | Promise<void>): void
-  function afterEach(fn: () => void | Promise<void>): void
-  function beforeAll(fn: () => void | Promise<void>): void
-  function afterAll(fn: () => void | Promise<void>): void
-  
-  interface Performance {
-    now(): number
-  }
-  
-  const performance: Performance
+	function describe(name: string, fn: () => void): void
+	function it(name: string, fn: () => void | Promise<void>): void
+	function expect<T>(actual: T): {
+		toBe(expected: T): void
+		toEqual(expected: T): void
+		toBeDefined(): void
+		toBeUndefined(): void
+		toBeNull(): void
+		toBeTruthy(): void
+		toBeFalsy(): void
+		toBeGreaterThan(expected: number): void
+		toBeGreaterThanOrEqual(expected: number): void
+		toBeLessThan(expected: number): void
+		toBeLessThanOrEqual(expected: number): void
+		toContain(expected: string | unknown): void
+		toHaveProperty(property: string): void
+		toBeInstanceOf(expected: unknown): void
+		toMatchObject(expected: object): void
+		not: {
+			toBe(expected: T): void
+			toEqual(expected: T): void
+			toBeDefined(): void
+			toThrow(): void
+		}
+	}
+	function beforeEach(fn: () => void | Promise<void>): void
+	function afterEach(fn: () => void | Promise<void>): void
+	function beforeAll(fn: () => void | Promise<void>): void
+	function afterAll(fn: () => void | Promise<void>): void
+
+	interface Performance {
+		now(): number
+	}
+
+	const performance: Performance
 }
 
 export {}

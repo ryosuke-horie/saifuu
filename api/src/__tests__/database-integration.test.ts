@@ -4,38 +4,38 @@
  */
 /// <reference path="./types.d.ts" />
 
-import { describe, it, expect, beforeEach } from 'vitest'
-import { SELF } from 'cloudflare:test'
+import { env, SELF } from 'cloudflare:test'
+import { and, eq, gte, lte } from 'drizzle-orm'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { categories, subscriptions, transactions } from '../db/schema'
 import { createTestDatabase, seedTestData } from './setup'
-import { categories, transactions, subscriptions } from '../db/schema'
-import { eq, and, gte, lte } from 'drizzle-orm'
 
 describe('D1 Database Integration', () => {
 	describe('データベース接続', () => {
 		it('D1データベースに正常に接続できる', async () => {
-			const db = createTestDatabase(SELF.env)
-			
+			const db = createTestDatabase(env)
+
 			expect(db).toBeDefined()
 			expect(await db).toBeDefined()
 		})
 
 		it('Drizzle ORMでのクエリ実行が可能', async () => {
-			const db = await createTestDatabase(SELF.env)
-			
+			const db = await createTestDatabase(env)
+
 			// 基本的なSELECTクエリ
 			const result = await db.select().from(categories)
-			
+
 			expect(Array.isArray(result)).toBe(true)
 		})
 
 		it('データベーステーブルが存在する', async () => {
-			const db = SELF.env.DB
-			const result = await db.prepare(
-				"SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
-			).all()
+			const db = env.DB
+			const result = await db
+				.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+				.all()
 
 			expect(result.success).toBe(true)
-			
+
 			const tableNames = result.results?.map((row: any) => row.name)
 			expect(tableNames).toContain('categories')
 			expect(tableNames).toContain('transactions')
@@ -45,11 +45,11 @@ describe('D1 Database Integration', () => {
 
 	describe('CRUD Operations - Categories', () => {
 		beforeEach(async () => {
-			await createTestDatabase(SELF.env)
+			await createTestDatabase(env)
 		})
 
 		it('カテゴリの作成・読み取り・更新・削除が正常に動作', async () => {
-			const db = await createTestDatabase(SELF.env)
+			const db = await createTestDatabase(env)
 
 			// Create
 			const newCategory = {
@@ -90,7 +90,7 @@ describe('D1 Database Integration', () => {
 		})
 
 		it('複数カテゴリの一括操作', async () => {
-			const db = await createTestDatabase(SELF.env)
+			const db = await createTestDatabase(env)
 
 			const newCategories = [
 				{ name: 'カテゴリ1', type: 'income' as const, color: '#4CAF50' },
@@ -119,17 +119,20 @@ describe('D1 Database Integration', () => {
 
 	describe('CRUD Operations - Transactions', () => {
 		beforeEach(async () => {
-			await seedTestData(SELF.env)
+			await seedTestData(env)
 		})
 
 		it('取引データの基本操作', async () => {
-			const db = await createTestDatabase(SELF.env)
+			const db = await createTestDatabase(env)
 
 			// カテゴリを作成
-			const category = await db.insert(categories).values({
-				name: '取引テスト用',
-				type: 'expense',
-			}).returning()
+			const category = await db
+				.insert(categories)
+				.values({
+					name: '取引テスト用',
+					type: 'expense',
+				})
+				.returning()
 
 			const categoryId = category[0].id
 
@@ -160,13 +163,16 @@ describe('D1 Database Integration', () => {
 		})
 
 		it('カテゴリとのリレーション', async () => {
-			const db = await createTestDatabase(SELF.env)
+			const db = await createTestDatabase(env)
 
 			// カテゴリを作成
-			const category = await db.insert(categories).values({
-				name: 'リレーション確認',
-				type: 'income',
-			}).returning()
+			const category = await db
+				.insert(categories)
+				.values({
+					name: 'リレーション確認',
+					type: 'income',
+				})
+				.returning()
 
 			// 関連する取引を作成
 			await db.insert(transactions).values({
@@ -194,13 +200,16 @@ describe('D1 Database Integration', () => {
 		})
 
 		it('日付範囲での取引検索', async () => {
-			const db = await createTestDatabase(SELF.env)
+			const db = await createTestDatabase(env)
 
 			// カテゴリ作成
-			const category = await db.insert(categories).values({
-				name: '日付テスト',
-				type: 'expense',
-			}).returning()
+			const category = await db
+				.insert(categories)
+				.values({
+					name: '日付テスト',
+					type: 'expense',
+				})
+				.returning()
 
 			const categoryId = category[0].id
 
@@ -229,12 +238,7 @@ describe('D1 Database Integration', () => {
 			const rangeResults = await db
 				.select()
 				.from(transactions)
-				.where(
-					and(
-						gte(transactions.date, startDate),
-						lte(transactions.date, endDate)
-					)
-				)
+				.where(and(gte(transactions.date, startDate), lte(transactions.date, endDate)))
 
 			expect(rangeResults.length).toBe(2) // 1/15と1/20の取引
 		})
@@ -242,17 +246,20 @@ describe('D1 Database Integration', () => {
 
 	describe('CRUD Operations - Subscriptions', () => {
 		beforeEach(async () => {
-			await createTestDatabase(SELF.env)
+			await createTestDatabase(env)
 		})
 
 		it('サブスクリプション管理', async () => {
-			const db = await createTestDatabase(SELF.env)
+			const db = await createTestDatabase(env)
 
 			// カテゴリ作成
-			const category = await db.insert(categories).values({
-				name: 'サブスク',
-				type: 'expense',
-			}).returning()
+			const category = await db
+				.insert(categories)
+				.values({
+					name: 'サブスク',
+					type: 'expense',
+				})
+				.returning()
 
 			// サブスクリプション作成
 			const newSubscription = {
@@ -294,11 +301,11 @@ describe('D1 Database Integration', () => {
 
 	describe('データ整合性とバリデーション', () => {
 		beforeEach(async () => {
-			await createTestDatabase(SELF.env)
+			await createTestDatabase(env)
 		})
 
 		it('外部キー制約の動作確認', async () => {
-			const db = await createTestDatabase(SELF.env)
+			const db = await createTestDatabase(env)
 
 			// 存在しないカテゴリIDでの取引作成
 			// D1では外部キー制約が厳密でない場合があるため、アプリケーションレベルでの検証が重要
@@ -322,33 +329,42 @@ describe('D1 Database Integration', () => {
 		})
 
 		it('データ型の検証', async () => {
-			const db = await createTestDatabase(SELF.env)
+			const db = await createTestDatabase(env)
 
 			// 数値型のテスト
-			const category = await db.insert(categories).values({
-				name: '数値テスト',
-				type: 'expense',
-			}).returning()
+			const category = await db
+				.insert(categories)
+				.values({
+					name: '数値テスト',
+					type: 'expense',
+				})
+				.returning()
 
-			const transaction = await db.insert(transactions).values({
-				amount: 123.45, // real型
-				type: 'expense',
-				categoryId: category[0].id,
-				description: '小数点テスト',
-				date: new Date(),
-			}).returning()
+			const transaction = await db
+				.insert(transactions)
+				.values({
+					amount: 123.45, // real型
+					type: 'expense',
+					categoryId: category[0].id,
+					description: '小数点テスト',
+					date: new Date(),
+				})
+				.returning()
 
 			expect(transaction[0].amount).toBe(123.45)
 
 			// 日付型のテスト
 			const testDate = new Date('2024-01-15T10:30:00Z')
-			const subscription = await db.insert(subscriptions).values({
-				name: '日付テスト',
-				amount: 1000,
-				billingCycle: 'monthly',
-				nextBillingDate: testDate,
-				categoryId: category[0].id,
-			}).returning()
+			const subscription = await db
+				.insert(subscriptions)
+				.values({
+					name: '日付テスト',
+					amount: 1000,
+					billingCycle: 'monthly',
+					nextBillingDate: testDate,
+					categoryId: category[0].id,
+				})
+				.returning()
 
 			// 日付がtimestamp形式で保存されていることを確認
 			expect(subscription[0].nextBillingDate).toBeInstanceOf(Date)
@@ -357,17 +373,20 @@ describe('D1 Database Integration', () => {
 
 	describe('パフォーマンステスト', () => {
 		beforeEach(async () => {
-			await createTestDatabase(SELF.env)
+			await createTestDatabase(env)
 		})
 
 		it('大量データでの操作性能', async () => {
-			const db = await createTestDatabase(SELF.env)
+			const db = await createTestDatabase(env)
 
 			// カテゴリを作成
-			const category = await db.insert(categories).values({
-				name: 'パフォーマンステスト',
-				type: 'expense',
-			}).returning()
+			const category = await db
+				.insert(categories)
+				.values({
+					name: 'パフォーマンステスト',
+					type: 'expense',
+				})
+				.returning()
 
 			const categoryId = category[0].id
 
@@ -380,7 +399,7 @@ describe('D1 Database Integration', () => {
 					type: 'expense',
 					categoryId,
 					description: `パフォーマンステスト ${i}`,
-					date: new Date(2024, 0, i % 30 + 1),
+					date: new Date(2024, 0, (i % 30) + 1),
 				})
 			}
 
@@ -388,11 +407,14 @@ describe('D1 Database Integration', () => {
 
 			// 全件取得のパフォーマンス
 			const selectStartTime = performance.now()
-			const results = await db.select().from(transactions).where(eq(transactions.categoryId, categoryId))
+			const results = await db
+				.select()
+				.from(transactions)
+				.where(eq(transactions.categoryId, categoryId))
 			const selectTime = performance.now() - selectStartTime
 
 			expect(results.length).toBe(100)
-			
+
 			// パフォーマンスの目安（D1環境で適切な範囲）
 			expect(insertTime).toBeLessThan(10000) // 10秒以内
 			expect(selectTime).toBeLessThan(1000) // 1秒以内
@@ -401,17 +423,20 @@ describe('D1 Database Integration', () => {
 
 	describe('トランザクション処理', () => {
 		beforeEach(async () => {
-			await createTestDatabase(SELF.env)
+			await createTestDatabase(env)
 		})
 
 		it('複数操作の一貫性', async () => {
-			const db = await createTestDatabase(SELF.env)
+			const db = await createTestDatabase(env)
 
 			// カテゴリ作成
-			const category = await db.insert(categories).values({
-				name: 'トランザクションテスト',
-				type: 'expense',
-			}).returning()
+			const category = await db
+				.insert(categories)
+				.values({
+					name: 'トランザクションテスト',
+					type: 'expense',
+				})
+				.returning()
 
 			const categoryId = category[0].id
 
@@ -419,21 +444,27 @@ describe('D1 Database Integration', () => {
 			// D1ではトランザクションサポートが限定的なため、
 			// アプリケーションレベルでの整合性管理が重要
 
-			const transaction1 = await db.insert(transactions).values({
-				amount: 1000,
-				type: 'expense',
-				categoryId,
-				description: '取引1',
-				date: new Date(),
-			}).returning()
+			const transaction1 = await db
+				.insert(transactions)
+				.values({
+					amount: 1000,
+					type: 'expense',
+					categoryId,
+					description: '取引1',
+					date: new Date(),
+				})
+				.returning()
 
-			const subscription1 = await db.insert(subscriptions).values({
-				name: '関連サブスク',
-				amount: 500,
-				billingCycle: 'monthly',
-				nextBillingDate: new Date(),
-				categoryId,
-			}).returning()
+			const subscription1 = await db
+				.insert(subscriptions)
+				.values({
+					name: '関連サブスク',
+					amount: 500,
+					billingCycle: 'monthly',
+					nextBillingDate: new Date(),
+					categoryId,
+				})
+				.returning()
 
 			// 関連データの整合性確認
 			expect(transaction1[0].categoryId).toBe(categoryId)

@@ -4,8 +4,8 @@
  */
 /// <reference path="./types.d.ts" />
 
-import { describe, it, expect } from 'vitest'
-import { SELF } from 'cloudflare:test'
+import { env, SELF } from 'cloudflare:test'
+import { describe, expect, it } from 'vitest'
 
 describe('Cloudflare Workers Runtime', () => {
 	describe('基本的なランタイム機能', () => {
@@ -15,21 +15,21 @@ describe('Cloudflare Workers Runtime', () => {
 		})
 
 		it('環境変数にアクセスできる', () => {
-			expect(SELF.env).toBeDefined()
-			expect(SELF.env.DB).toBeDefined()
+			expect(env).toBeDefined()
+			expect(env.DB).toBeDefined()
 		})
 
 		it('D1データベースバインディングが利用可能', () => {
-			expect(SELF.env.DB).toBeDefined()
-			expect(typeof SELF.env.DB.prepare).toBe('function')
-			expect(typeof SELF.env.DB.exec).toBe('function')
+			expect(env.DB).toBeDefined()
+			expect(typeof env.DB.prepare).toBe('function')
+			expect(typeof env.DB.exec).toBe('function')
 		})
 	})
 
 	describe('HTTPレスポンス処理', () => {
 		it('基本的なHTTPリクエストが処理される', async () => {
 			const response = await SELF.fetch('/')
-			
+
 			expect(response).toBeDefined()
 			expect(response.status).toBeDefined()
 			expect(typeof response.status).toBe('number')
@@ -37,10 +37,10 @@ describe('Cloudflare Workers Runtime', () => {
 
 		it('JSONレスポンスが正しく処理される', async () => {
 			const response = await SELF.fetch('/api/health')
-			
+
 			expect(response.headers.get('content-type')).toContain('application/json')
-			
-			const data = await response.json()
+
+			const data = (await response.json()) as any
 			expect(data).toBeDefined()
 			expect(typeof data).toBe('object')
 		})
@@ -57,7 +57,7 @@ describe('Cloudflare Workers Runtime', () => {
 	describe('Hono フレームワーク統合', () => {
 		it('Honoアプリケーションが正常に動作する', async () => {
 			const response = await SELF.fetch('/')
-			
+
 			expect(response.status).toBe(200)
 			const html = await response.text()
 			expect(html).toContain('Saifuu API')
@@ -74,7 +74,7 @@ describe('Cloudflare Workers Runtime', () => {
 		it('Honoのコンテキストオブジェクトが利用可能', async () => {
 			// コンテキストオブジェクトの機能確認（間接的）
 			const response = await SELF.fetch('/api/health')
-			const data = await response.json()
+			const data = (await response.json()) as any
 
 			// c.json() メソッドが正常に動作していることを確認
 			expect(data).toBeDefined()
@@ -85,7 +85,7 @@ describe('Cloudflare Workers Runtime', () => {
 	describe('データベース統合', () => {
 		it('D1データベースへの接続が可能', async () => {
 			const response = await SELF.fetch('/api/health')
-			const data = await response.json()
+			const data = (await response.json()) as any
 
 			expect(response.status).toBe(200)
 			expect(data.database).toBe('connected')
@@ -94,17 +94,17 @@ describe('Cloudflare Workers Runtime', () => {
 		it('Drizzle ORMが正常に動作する', async () => {
 			// カテゴリエンドポイントでDrizzle ORMの動作を確認
 			const response = await SELF.fetch('/api/categories')
-			
+
 			expect(response.status).toBe(200)
-			const data = await response.json()
+			const data = (await response.json()) as any
 			expect(Array.isArray(data)).toBe(true)
 		})
 
 		it('データベーステーブルにアクセスできる', async () => {
 			// 実際にDBクエリが実行されることを確認
-			const db = SELF.env.DB
+			const db = env.DB
 			const result = await db.prepare('SELECT name FROM sqlite_master WHERE type="table"').all()
-			
+
 			expect(result.success).toBe(true)
 			expect(result.results).toBeDefined()
 		})
@@ -115,21 +115,19 @@ describe('Cloudflare Workers Runtime', () => {
 			const startTime = performance.now()
 			const response = await SELF.fetch('/api/health')
 			const endTime = performance.now()
-			
+
 			expect(response.status).toBe(200)
-			
+
 			// Workers環境でのコールドスタート時間の想定値（2秒以内）
 			const responseTime = endTime - startTime
 			expect(responseTime).toBeLessThan(2000)
 		})
 
 		it('連続リクエストでのレスポンス安定性', async () => {
-			const requests = Array.from({ length: 5 }, () => 
-				SELF.fetch('/api/health')
-			)
-			
+			const requests = Array.from({ length: 5 }, () => SELF.fetch('/api/health'))
+
 			const responses = await Promise.all(requests)
-			
+
 			for (const response of responses) {
 				expect(response.status).toBe(200)
 			}
@@ -139,15 +137,15 @@ describe('Cloudflare Workers Runtime', () => {
 	describe('エラーハンドリング', () => {
 		it('存在しないルートで適切な404レスポンス', async () => {
 			const response = await SELF.fetch('/nonexistent/route')
-			
+
 			expect(response.status).toBe(404)
 		})
 
 		it('不正なHTTPメソッドでの適切なエラーレスポンス', async () => {
 			const response = await SELF.fetch('/api/categories', {
-				method: 'INVALID_METHOD'
+				method: 'INVALID_METHOD',
 			})
-			
+
 			// 405 Method Not Allowed または 404 Not Found が返されることを確認
 			expect([404, 405].includes(response.status)).toBe(true)
 		})
@@ -157,7 +155,7 @@ describe('Cloudflare Workers Runtime', () => {
 		it('V8エンジンのJavaScript実行環境', () => {
 			// V8エンジンでサポートされているJavaScript機能の確認
 			expect(typeof Promise).toBe('function')
-			expect(typeof async function() {}).toBe('function')
+			expect(typeof (async () => {})).toBe('function')
 			expect(Array.isArray).toBeDefined()
 		})
 
@@ -170,22 +168,22 @@ describe('Cloudflare Workers Runtime', () => {
 
 		it('Cloudflare Workers固有のAPIが利用可能', () => {
 			// テスト環境で利用可能なWorkersのAPIを確認
-			expect(SELF.env).toBeDefined()
+			expect(env).toBeDefined()
 		})
 	})
 
 	describe('セキュリティ機能', () => {
 		it('環境変数が適切に分離されている', () => {
 			// 環境変数へのアクセスが制限されていることを確認
-			expect(SELF.env.DB).toBeDefined()
-			
+			expect(env.DB).toBeDefined()
+
 			// processオブジェクトが存在しないことを確認（Node.js環境との分離）
 			expect(typeof process === 'undefined' || !process.env).toBe(true)
 		})
 
 		it('適切なContent-Typeヘッダーが設定される', async () => {
 			const response = await SELF.fetch('/api/health')
-			
+
 			expect(response.headers.get('content-type')).toContain('application/json')
 		})
 	})
@@ -194,11 +192,11 @@ describe('Cloudflare Workers Runtime', () => {
 		it('型定義が正しく適用されている', async () => {
 			// TypeScriptコンパイルが成功していることを間接的に確認
 			const response = await SELF.fetch('/api/health')
-			
+
 			expect(response.status).toBe(200)
-			
+
 			// 型安全性の恩恵を受けているコードが正常に動作することを確認
-			const data = await response.json()
+			const data = (await response.json()) as any
 			expect(data.status).toBeDefined()
 		})
 	})

@@ -3,27 +3,33 @@
  * Cloudflare Workers環境でのテスト実行に必要な共通設定を提供
  */
 
-import { createDatabase, type Env } from '../db'
-import { categories, transactions, subscriptions } from '../db/schema'
+import { createDatabase } from '../db'
+
+// Test environment type (compatible with ProvidedEnv from 'cloudflare:test')
+type TestEnv = {
+	DB: D1Database
+}
+
+import { categories, subscriptions, transactions } from '../db/schema'
 
 /**
  * テスト用のモックD1データベースを作成
  * Cloudflare Workers のvitest環境では実際のD1インスタンスが提供される
  */
-export async function createTestDatabase(env: Env) {
+export async function createTestDatabase(env: TestEnv) {
 	const db = createDatabase(env.DB)
-	
+
 	// テーブルの初期化（テスト実行前にクリーンな状態にする）
 	// D1では外部キー制約を考慮した順序で削除
 	try {
 		await db.delete(subscriptions)
-		await db.delete(transactions) 
+		await db.delete(transactions)
 		await db.delete(categories)
 	} catch (error) {
 		// テーブルが存在しない場合やその他のエラーは無視
 		console.warn('Database cleanup warning:', error)
 	}
-	
+
 	return db
 }
 
@@ -96,9 +102,9 @@ export const mockSubscriptions = [
 /**
  * テストデータをデータベースに挿入するヘルパー関数
  */
-export async function seedTestData(env: Env) {
+export async function seedTestData(env: TestEnv) {
 	const db = await createTestDatabase(env)
-	
+
 	// カテゴリデータの挿入
 	for (const category of mockCategories) {
 		await db.insert(categories).values({
@@ -109,7 +115,7 @@ export async function seedTestData(env: Env) {
 			updatedAt: category.updatedAt,
 		})
 	}
-	
+
 	// 取引データの挿入
 	for (const transaction of mockTransactions) {
 		await db.insert(transactions).values({
@@ -122,7 +128,7 @@ export async function seedTestData(env: Env) {
 			updatedAt: transaction.updatedAt,
 		})
 	}
-	
+
 	// サブスクリプションデータの挿入
 	for (const subscription of mockSubscriptions) {
 		await db.insert(subscriptions).values({
@@ -137,7 +143,7 @@ export async function seedTestData(env: Env) {
 			updatedAt: subscription.updatedAt,
 		})
 	}
-	
+
 	return db
 }
 
@@ -146,7 +152,7 @@ export async function seedTestData(env: Env) {
  */
 export interface TestResponse {
 	status: number
-	json: () => Promise<any>
+	json: () => Promise<unknown>
 	text: () => Promise<string>
 }
 
