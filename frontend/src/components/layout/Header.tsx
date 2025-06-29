@@ -6,7 +6,6 @@ import type { FC } from "react";
  * アプリケーション全体のヘッダーコンポーネント
  * - アプリケーションタイトル表示
  * - レスポンシブデザイン対応
- * - ダークモード対応
  * - セマンティックHTMLの使用によるアクセシビリティ確保
  *
  * 設計方針:
@@ -38,10 +37,10 @@ export const Header: FC<HeaderProps> = ({
 				// 基本レイアウト
 				"sticky top-0 z-50",
 				"w-full",
-				"border-b border-gray-200 dark:border-gray-800",
+				"border-b border-gray-200",
 
-				// 背景とテーマ対応
-				"bg-white/80 dark:bg-gray-900/80",
+				// 背景
+				"bg-white/80",
 				"backdrop-blur-md",
 
 				// 影効果
@@ -66,7 +65,7 @@ export const Header: FC<HeaderProps> = ({
 						</div>
 
 						{/* アプリケーションタイトル */}
-						<h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white font-sans">
+						<h1 className="text-xl sm:text-2xl font-bold text-gray-900 font-sans">
 							{title}
 						</h1>
 					</div>
