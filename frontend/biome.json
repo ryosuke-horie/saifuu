@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
 	"vcs": {
 		"enabled": false,
 		"clientKind": "git",
@@ -7,35 +7,34 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"ignore": [
-			"**/node_modules/**",
-			"**/dist/**",
-			"**/build/**",
-			"**/coverage/**",
-			"**/.wrangler/**",
-			"**/public/**",
-			"**/.react-router/**",
-			"**/.vscode/**",
-			"**/worker-configuration.d.ts",
-			"**/db/migrations/**/*.sql",
-			"**/db/migrations/meta/**/*.json",
-			"**/*.css",
-			"**/storybook-static/**",
-			"**/stories/**",
-			"**/.next/**",
-			"**/test-results/**",
-			"**/playwright-report/**",
-			"**/cloudflare-env.d.ts",
-			"**/next-env.d.ts"
+		"includes": [
+			"**",
+			"!**/node_modules/**",
+			"!**/dist/**",
+			"!**/build/**",
+			"!**/coverage/**",
+			"!**/.wrangler/**",
+			"!**/public/**",
+			"!**/.react-router/**",
+			"!**/.vscode/**",
+			"!**/worker-configuration.d.ts",
+			"!**/db/migrations/**/*.sql",
+			"!**/db/migrations/meta/**/*.json",
+			"!**/*.css",
+			"!**/storybook-static/**",
+			"!**/stories/**",
+			"!**/.next/**",
+			"!**/test-results/**",
+			"!**/playwright-report/**",
+			"!**/cloudflare-env.d.ts",
+			"!**/next-env.d.ts"
 		]
 	},
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab"
 	},
-	"organizeImports": {
-		"enabled": true
-	},
+	"assist": { "actions": { "source": { "organizeImports": "on" } } },
 	"linter": {
 		"enabled": true,
 		"rules": {
@@ -46,7 +45,16 @@
 			},
 			"style": {
 				"noParameterAssign": "off",
-				"noNonNullAssertion": "off"
+				"noNonNullAssertion": "off",
+				"useAsConstAssertion": "error",
+				"useDefaultParameterLast": "error",
+				"useEnumInitializers": "error",
+				"useSelfClosingElements": "error",
+				"useSingleVarDeclarator": "error",
+				"noUnusedTemplateLiteral": "error",
+				"useNumberNamespace": "error",
+				"noInferrableTypes": "error",
+				"noUselessElse": "error"
 			},
 			"correctness": {
 				"noEmptyPattern": "off"
