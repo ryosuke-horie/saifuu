@@ -6,6 +6,12 @@
 
 import { env, SELF } from 'cloudflare:test'
 import { describe, expect, it } from 'vitest'
+import type {
+	CategoriesListResponse,
+	D1QueryResult,
+	HealthCheckResponse,
+	SqliteMaster,
+} from './api-types'
 
 describe('Cloudflare Workers Runtime', () => {
 	describe('基本的なランタイム機能', () => {
@@ -40,7 +46,7 @@ describe('Cloudflare Workers Runtime', () => {
 
 			expect(response.headers.get('content-type')).toContain('application/json')
 
-			const data = (await response.json()) as any
+			const data = (await response.json()) as HealthCheckResponse
 			expect(data).toBeDefined()
 			expect(typeof data).toBe('object')
 		})
@@ -74,7 +80,7 @@ describe('Cloudflare Workers Runtime', () => {
 		it('Honoのコンテキストオブジェクトが利用可能', async () => {
 			// コンテキストオブジェクトの機能確認（間接的）
 			const response = await SELF.fetch('/api/health')
-			const data = (await response.json()) as any
+			const data = (await response.json()) as HealthCheckResponse
 
 			// c.json() メソッドが正常に動作していることを確認
 			expect(data).toBeDefined()
@@ -85,7 +91,7 @@ describe('Cloudflare Workers Runtime', () => {
 	describe('データベース統合', () => {
 		it('D1データベースへの接続が可能', async () => {
 			const response = await SELF.fetch('/api/health')
-			const data = (await response.json()) as any
+			const data = (await response.json()) as HealthCheckResponse
 
 			expect(response.status).toBe(200)
 			expect(data.database).toBe('connected')
@@ -96,14 +102,16 @@ describe('Cloudflare Workers Runtime', () => {
 			const response = await SELF.fetch('/api/categories')
 
 			expect(response.status).toBe(200)
-			const data = (await response.json()) as any
+			const data = (await response.json()) as CategoriesListResponse
 			expect(Array.isArray(data)).toBe(true)
 		})
 
 		it('データベーステーブルにアクセスできる', async () => {
 			// 実際にDBクエリが実行されることを確認
 			const db = env.DB
-			const result = await db.prepare('SELECT name FROM sqlite_master WHERE type="table"').all()
+			const result = (await db
+				.prepare('SELECT name FROM sqlite_master WHERE type="table"')
+				.all()) as D1QueryResult<SqliteMaster>
 
 			expect(result.success).toBe(true)
 			expect(result.results).toBeDefined()
@@ -196,7 +204,7 @@ describe('Cloudflare Workers Runtime', () => {
 			expect(response.status).toBe(200)
 
 			// 型安全性の恩恵を受けているコードが正常に動作することを確認
-			const data = (await response.json()) as any
+			const data = (await response.json()) as HealthCheckResponse
 			expect(data.status).toBeDefined()
 		})
 	})

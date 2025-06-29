@@ -3,10 +3,12 @@
  * Cloudflare Workers環境でのテスト実行に必要な共通設定を提供
  */
 
+import { applyD1Migrations } from 'cloudflare:test'
+import { readD1Migrations } from '@cloudflare/vitest-pool-workers/config'
 import { createDatabase } from '../db'
 
 // Test environment type (compatible with ProvidedEnv from 'cloudflare:test')
-type TestEnv = {
+interface TestEnv {
 	DB: D1Database
 }
 
@@ -17,14 +19,22 @@ import { categories, subscriptions, transactions } from '../db/schema'
  * Cloudflare Workers のvitest環境では実際のD1インスタンスが提供される
  */
 export async function createTestDatabase(env: TestEnv) {
+	// まずマイグレーションを適用してテーブルを作成
+	try {
+		const migrations = await readD1Migrations('./drizzle/migrations')
+		await applyD1Migrations(env.DB, migrations)
+	} catch (error) {
+		console.warn('Migration application warning:', error)
+	}
+
 	const db = createDatabase(env.DB)
 
 	// テーブルの初期化（テスト実行前にクリーンな状態にする）
 	// D1では外部キー制約を考慮した順序で削除
 	try {
-		await db.delete(subscriptions)
-		await db.delete(transactions)
-		await db.delete(categories)
+		await db.delete(subscriptions).execute()
+		await db.delete(transactions).execute()
+		await db.delete(categories).execute()
 	} catch (error) {
 		// テーブルが存在しない場合やその他のエラーは無視
 		console.warn('Database cleanup warning:', error)

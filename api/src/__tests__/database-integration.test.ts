@@ -4,7 +4,7 @@
  */
 /// <reference path="./types.d.ts" />
 
-import { env, SELF } from 'cloudflare:test'
+import { env } from 'cloudflare:test'
 import { and, eq, gte, lte } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { categories, subscriptions, transactions } from '../db/schema'
@@ -36,7 +36,7 @@ describe('D1 Database Integration', () => {
 
 			expect(result.success).toBe(true)
 
-			const tableNames = result.results?.map((row: any) => row.name)
+			const tableNames = result.results?.map((row) => (row as { name: string }).name)
 			expect(tableNames).toContain('categories')
 			expect(tableNames).toContain('transactions')
 			expect(tableNames).toContain('subscriptions')

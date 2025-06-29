@@ -7,17 +7,23 @@
 import { env, SELF } from 'cloudflare:test'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { NewCategory } from '../db/schema'
-import { createTestDatabase, mockCategories, seedTestData } from './setup'
+import type {
+	CategoriesListResponse,
+	CategoryResponse,
+	ErrorResponse,
+	SuccessMessageResponse,
+} from './api-types'
+import { createTestDatabase, seedTestData } from './setup'
 
 describe('/api/categories', () => {
 	describe('GET /api/categories - カテゴリ一覧取得', () => {
 		beforeEach(async () => {
-			await seedTestData(env as any)
+			await seedTestData(env)
 		})
 
 		it('全カテゴリを正常に取得できる', async () => {
 			const response = await SELF.fetch('/api/categories')
-			const data = (await response.json()) as any
+			const data = (await response.json()) as CategoriesListResponse
 
 			expect(response.status).toBe(200)
 			expect(Array.isArray(data)).toBe(true)
@@ -36,10 +42,10 @@ describe('/api/categories', () => {
 
 		it('空のデータベースでは空配列を返す', async () => {
 			// データベースをクリーンアップ
-			await createTestDatabase(env as any)
+			await createTestDatabase(env)
 
 			const response = await SELF.fetch('/api/categories')
-			const data = (await response.json()) as any
+			const data = (await response.json()) as CategoriesListResponse
 
 			expect(response.status).toBe(200)
 			expect(Array.isArray(data)).toBe(true)
@@ -48,24 +54,24 @@ describe('/api/categories', () => {
 
 		it('カテゴリデータの内容が正しい', async () => {
 			const response = await SELF.fetch('/api/categories')
-			const data = (await response.json()) as any
+			const data = (await response.json()) as CategoriesListResponse
 
-			const incomeCategory = data.find((cat: any) => cat.type === 'income')
-			const expenseCategory = data.find((cat: any) => cat.type === 'expense')
+			const incomeCategory = data.find((cat) => cat.type === 'income')
+			const expenseCategory = data.find((cat) => cat.type === 'expense')
 
 			expect(incomeCategory).toBeDefined()
-			expect(incomeCategory.name).toBe('テスト収入カテゴリ')
-			expect(incomeCategory.color).toBe('#4CAF50')
+			expect(incomeCategory?.name).toBe('テスト収入カテゴリ')
+			expect(incomeCategory?.color).toBe('#4CAF50')
 
 			expect(expenseCategory).toBeDefined()
-			expect(expenseCategory.name).toBe('テスト支出カテゴリ')
-			expect(expenseCategory.color).toBe('#F44336')
+			expect(expenseCategory?.name).toBe('テスト支出カテゴリ')
+			expect(expenseCategory?.color).toBe('#F44336')
 		})
 	})
 
 	describe('POST /api/categories - カテゴリ作成', () => {
 		beforeEach(async () => {
-			await createTestDatabase(env as any)
+			await createTestDatabase(env)
 		})
 
 		it('有効なデータでカテゴリを作成できる', async () => {
@@ -83,7 +89,7 @@ describe('/api/categories', () => {
 				body: JSON.stringify(newCategory),
 			})
 
-			const data = (await response.json()) as any
+			const data = (await response.json()) as CategoryResponse
 
 			expect(response.status).toBe(201)
 			expect(data.id).toBeDefined()
@@ -109,7 +115,7 @@ describe('/api/categories', () => {
 				body: JSON.stringify(newCategory),
 			})
 
-			const data = (await response.json()) as any
+			const data = (await response.json()) as CategoryResponse
 
 			expect(response.status).toBe(201)
 			expect(data.type).toBe('income')
@@ -129,7 +135,7 @@ describe('/api/categories', () => {
 				body: JSON.stringify(newCategory),
 			})
 
-			const data = (await response.json()) as any
+			const data = (await response.json()) as CategoryResponse
 
 			expect(response.status).toBe(201)
 			expect(data.color).toBeNull()
@@ -151,7 +157,7 @@ describe('/api/categories', () => {
 			})
 
 			// データベースから直接確認
-			const db = createTestDatabase(env as any)
+			const db = createTestDatabase(env)
 			const categories = await (await db).query.categories.findMany()
 			const createdCategory = categories.find((cat) => cat.name === newCategory.name)
 
@@ -162,7 +168,7 @@ describe('/api/categories', () => {
 
 	describe('PUT /api/categories/:id - カテゴリ更新', () => {
 		beforeEach(async () => {
-			await seedTestData(env as any)
+			await seedTestData(env)
 		})
 
 		it('既存カテゴリを正常に更新できる', async () => {
@@ -179,7 +185,7 @@ describe('/api/categories', () => {
 				body: JSON.stringify(updateData),
 			})
 
-			const data = (await response.json()) as any
+			const data = (await response.json()) as CategoryResponse
 
 			expect(response.status).toBe(200)
 			expect(data.id).toBe(1)
@@ -201,7 +207,7 @@ describe('/api/categories', () => {
 				body: JSON.stringify(updateData),
 			})
 
-			const data = (await response.json()) as any
+			const data = (await response.json()) as CategoryResponse
 
 			expect(response.status).toBe(200)
 			expect(data.name).toBe(updateData.name)
@@ -222,7 +228,7 @@ describe('/api/categories', () => {
 				body: JSON.stringify(updateData),
 			})
 
-			const data = (await response.json()) as any
+			const data = (await response.json()) as ErrorResponse
 
 			expect(response.status).toBe(404)
 			expect(data.error).toBe('Category not found')
@@ -231,7 +237,7 @@ describe('/api/categories', () => {
 		it('updatedAtが更新される', async () => {
 			// 元のデータ取得
 			const originalResponse = await SELF.fetch('/api/categories/1')
-			const originalData = (await originalResponse.json()) as any
+			const originalData = (await originalResponse.json()) as CategoryResponse
 
 			// 少し待機してから更新
 			await new Promise((resolve) => setTimeout(resolve, 10))
@@ -248,7 +254,7 @@ describe('/api/categories', () => {
 				body: JSON.stringify(updateData),
 			})
 
-			const data = (await response.json()) as any
+			const data = (await response.json()) as CategoryResponse
 
 			expect(response.status).toBe(200)
 			expect(new Date(data.updatedAt).getTime()).toBeGreaterThan(
@@ -259,7 +265,7 @@ describe('/api/categories', () => {
 
 	describe('DELETE /api/categories/:id - カテゴリ削除', () => {
 		beforeEach(async () => {
-			await seedTestData(env as any)
+			await seedTestData(env)
 		})
 
 		it('既存カテゴリを正常に削除できる', async () => {
@@ -267,7 +273,7 @@ describe('/api/categories', () => {
 				method: 'DELETE',
 			})
 
-			const data = (await response.json()) as any
+			const data = (await response.json()) as SuccessMessageResponse
 
 			expect(response.status).toBe(200)
 			expect(data.message).toBe('Category deleted successfully')
@@ -281,9 +287,9 @@ describe('/api/categories', () => {
 
 			// 一覧取得で確認
 			const listResponse = await SELF.fetch('/api/categories')
-			const categories = (await listResponse.json()) as any
+			const categories = (await listResponse.json()) as CategoriesListResponse
 
-			expect(categories.find((cat: any) => cat.id === 1)).toBeUndefined()
+			expect(categories.find((cat) => cat.id === 1)).toBeUndefined()
 			expect(categories.length).toBe(1) // 元々2個あったので1個残る
 		})
 
@@ -292,7 +298,7 @@ describe('/api/categories', () => {
 				method: 'DELETE',
 			})
 
-			const data = (await response.json()) as any
+			const data = (await response.json()) as ErrorResponse
 
 			expect(response.status).toBe(404)
 			expect(data.error).toBe('Category not found')
@@ -303,7 +309,7 @@ describe('/api/categories', () => {
 				method: 'DELETE',
 			})
 
-			const data = (await response.json()) as any
+			const data = (await response.json()) as ErrorResponse
 
 			expect(response.status).toBe(404)
 			expect(data.error).toBe('Category not found')
@@ -312,7 +318,7 @@ describe('/api/categories', () => {
 
 	describe('エラーハンドリング', () => {
 		beforeEach(async () => {
-			await createTestDatabase(env as any)
+			await createTestDatabase(env)
 		})
 
 		it('不正なJSONではエラーを返す', async () => {
@@ -343,12 +349,12 @@ describe('/api/categories', () => {
 
 	describe('データ型検証', () => {
 		beforeEach(async () => {
-			await seedTestData(env as any)
+			await seedTestData(env)
 		})
 
 		it('取得したカテゴリデータの型が正しい', async () => {
 			const response = await SELF.fetch('/api/categories')
-			const data = (await response.json()) as any
+			const data = (await response.json()) as CategoriesListResponse
 
 			for (const category of data) {
 				expect(typeof category.id).toBe('number')

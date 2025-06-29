@@ -6,6 +6,7 @@
 
 import { env, SELF } from 'cloudflare:test'
 import { beforeEach, describe, expect, it } from 'vitest'
+import type { HealthCheckResponse } from './api-types'
 import { createTestDatabase, seedTestData } from './setup'
 
 describe('/api/health', () => {
@@ -17,7 +18,7 @@ describe('/api/health', () => {
 
 		it('データベース接続が正常な場合、正常なレスポンスを返す', async () => {
 			const response = await SELF.fetch('/api/health')
-			const data = (await response.json()) as any
+			const data = (await response.json()) as HealthCheckResponse
 
 			expect(response.status).toBe(200)
 			expect(data).toMatchObject({
@@ -46,7 +47,7 @@ describe('/api/health', () => {
 
 			for (const response of responses) {
 				expect(response.status).toBe(200)
-				const data = (await response.json()) as any
+				const data = (await response.json()) as HealthCheckResponse
 				expect(data.status).toBe('ok')
 				expect(data.database).toBe('connected')
 			}
@@ -60,7 +61,7 @@ describe('/api/health', () => {
 
 		it('正常時のレスポンス形式が正しい', async () => {
 			const response = await SELF.fetch('/api/health')
-			const data = (await response.json()) as any
+			const data = (await response.json()) as HealthCheckResponse
 
 			// 必須フィールドの存在確認
 			expect(data).toHaveProperty('status')
@@ -81,7 +82,7 @@ describe('/api/health', () => {
 			const beforeRequest = new Date()
 			const response = await SELF.fetch('/api/health')
 			const afterRequest = new Date()
-			const data = (await response.json()) as any
+			const data = (await response.json()) as HealthCheckResponse
 
 			const responseTime = new Date(data.timestamp)
 
@@ -103,7 +104,7 @@ describe('/api/health', () => {
 
 			// ヘルスチェックエンドポイントがデータベースにアクセスできることを確認
 			const response = await SELF.fetch('/api/health')
-			const data = (await response.json()) as any
+			const data = (await response.json()) as HealthCheckResponse
 
 			expect(response.status).toBe(200)
 			expect(data.database).toBe('connected')
