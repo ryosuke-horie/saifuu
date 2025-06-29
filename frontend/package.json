@@ -7,6 +7,16 @@
 		"build": "next build",
 		"start": "next start",
 		"lint": "next lint",
+		"lint:biome": "biome check .",
+		"lint:biome:fix": "biome check --fix .",
+		"format": "biome format --write .",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest",
+		"test:unit": "vitest run",
+		"test:watch": "vitest watch",
+		"check": "npm run typecheck && npm run lint:biome && npm run test:unit",
+		"check:fix": "npm run typecheck && npm run lint:biome:fix && npm run test:unit",
+		"ci:check": "npm run typecheck && npm run lint:biome && npm run test:unit",
 		"deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
 		"preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
 		"cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts",
@@ -17,17 +27,23 @@
 	"dependencies": {
 		"@opennextjs/cloudflare": "^1.3.1",
 		"next": "15.3.4",
-		"react": "^19.0.0",
-		"react-dom": "^19.0.0"
+		"react": "^19.1.0",
+		"react-dom": "^19.1.0"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "^2.0.6",
 		"@playwright/test": "^1.53.1",
 		"@tailwindcss/postcss": "^4",
-		"@types/node": "^20.19.2",
+		"@testing-library/jest-dom": "^6.6.3",
+		"@testing-library/react": "^16.3.0",
+		"@types/node": "^24.0.7",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
+		"@vitejs/plugin-react": "^4.6.0",
+		"jsdom": "^26.1.0",
 		"tailwindcss": "^4",
 		"typescript": "^5",
+		"vitest": "^3.2.4",
 		"wrangler": "^4.22.0"
 	}
 }
