@@ -1,0 +1,59 @@
+name: API CI (Self-hosted)
+
+on:
+  pull_request:
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-ci.yml'
+
+# GitHub Actions無料枠節約のため、同一PRで複数実行時は前の実行をキャンセル
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api-checks:
+    name: API Quality Checks
+    runs-on: self-hosted
+    timeout-minutes: 10
+    
+    defaults:
+      run:
+        working-directory: api
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          # セルフホストランナーの制約によりキャッシュは無効
+          # cache: 'npm'
+          # cache-dependency-path: api/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Type check
+        run: npm run typecheck
+      
+      - name: Biome check
+        run: npm run check
+      
+      - name: Build check
+        run: npm run build
+      
+      # Cloudflare Workers向けの追加チェック
+      - name: Wrangler validation
+        run: npx wrangler deploy --dry-run --compatibility-date=2024-09-23
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
