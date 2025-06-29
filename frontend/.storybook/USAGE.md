@@ -1,0 +1,155 @@
+# Storybook使用方法ガイド
+
+## 基本的な使い方
+
+### 開発サーバーの起動
+```bash
+pnpm storybook
+```
+ブラウザで http://localhost:6006 が自動で開きます。
+
+### ストーリーファイルの作成
+
+#### 1. 基本的なストーリー構造
+```typescript
+// src/components/Button/Button.stories.tsx
+import type { Meta, StoryObj } from "@storybook/react";
+import { Button } from "./Button";
+
+const meta: Meta<typeof Button> = {
+  title: "Components/Button",
+  component: Button,
+  parameters: {
+    layout: "centered",
+  },
+  argTypes: {
+    variant: {
+      control: { type: "select" },
+      options: ["primary", "secondary", "danger"],
+    },
+  },
+  args: {
+    children: "Button",
+  },
+  tags: ["autodocs"],
+};
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Primary: Story = {
+  args: {
+    variant: "primary",
+  },
+};
+
+export const Loading: Story = {
+  args: {
+    variant: "primary",
+    loading: true,
+  },
+};
+```
+
+#### 2. MSWを使ったAPIモック
+```typescript
+export const WithApiData: Story = {
+  parameters: {
+    msw: {
+      handlers: [
+        http.get("/api/transactions", () => {
+          return HttpResponse.json([
+            { id: "1", amount: 1000, description: "テストデータ" }
+          ]);
+        }),
+      ],
+    },
+  },
+};
+```
+
+#### 3. インタラクションテスト
+```typescript
+import { expect, userEvent, within } from "@storybook/test";
+
+export const InteractionTest: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    
+    await userEvent.click(canvas.getByRole("button"));
+    await expect(canvas.getByText("クリック済み")).toBeInTheDocument();
+  },
+};
+```
+
+## アドオンの活用
+
+### A11yアドオン
+- ストーリー表示時に自動でアクセシビリティチェック
+- 「Accessibility」タブで結果確認
+- コントラスト比、フォーカス可能性等をチェック
+
+### Viewportアドオン
+- ツールバーからビューポート切り替え
+- Mobile（375px）、Tablet（768px）、Desktop（1024px）
+- レスポンシブデザインの確認
+
+### Controlsアドオン
+- 「Controls」タブでプロパティを動的に変更
+- リアルタイムでコンポーネントの動作確認
+
+## ベストプラクティス
+
+### ストーリー命名規則
+- Default: 基本状態
+- Loading: ローディング状態
+- Error: エラー状態  
+- Empty: 空データ状態
+- [Variant]State: バリエーション別状態
+
+### ディレクトリ構成
+```
+src/components/
+├── Button/
+│   ├── Button.tsx
+│   ├── Button.stories.tsx
+│   └── Button.test.tsx
+└── Header/
+    ├── Header.tsx
+    ├── Header.stories.tsx
+    └── Header.test.tsx
+```
+
+### 推奨設定
+```typescript
+const meta: Meta<typeof Component> = {
+  title: "Components/ComponentName", // カテゴリ/コンポーネント名
+  component: Component,
+  parameters: {
+    layout: "centered", // または "padded", "fullscreen"
+    docs: {
+      description: {
+        component: "コンポーネントの説明"
+      }
+    }
+  },
+  tags: ["autodocs"], // 自動ドキュメント生成
+};
+```
+
+## トラブルシューティング
+
+### よくある問題
+1. **Tailwindスタイルが適用されない**
+   → `.storybook/preview.ts`でglobals.cssが読み込まれているか確認
+
+2. **MSWモックが動作しない**
+   → `parameters.msw.handlers`でハンドラーが正しく定義されているか確認
+
+3. **型エラーが発生する**
+   → `@storybook/test`からテストユーティリティをインポートしているか確認
+
+### デバッグ方法
+- ブラウザの開発者ツールでネットワークタブを確認
+- Storybookのアクションタブでイベント発火を確認
+- コンソールでエラーメッセージを確認
