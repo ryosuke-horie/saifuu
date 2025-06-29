@@ -1,4 +1,4 @@
-name: Frontend CI
+name: Frontend CI (Self-hosted)
 
 on:
   pull_request:
