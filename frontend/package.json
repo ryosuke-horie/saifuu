@@ -14,6 +14,8 @@
 		"test": "vitest",
 		"test:unit": "vitest run",
 		"test:watch": "vitest watch",
+		"check": "npm run typecheck && npm run lint:biome && npm run test:unit",
+		"check:fix": "npm run typecheck && npm run lint:biome:fix && npm run test:unit",
 		"ci:check": "npm run typecheck && npm run lint:biome && npm run test:unit",
 		"deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
 		"preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
