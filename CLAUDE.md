@@ -13,10 +13,16 @@
 ## 技術スタック
 
 ### フレームワーク・ランタイム
-- **React Router v7** - フルスタックWebフレームワーク
+
+#### フロントエンド
+- **Next.js v15** - フルスタックWebフレームワーク
 - **React 19** - UIライブラリ
 - **Cloudflare Workers** - エッジランタイム環境
 - **TypeScript** - 型安全な開発
+
+#### バックエンド
+- **hono** - API用フレームワーク
+- **drizzle** - D1へアクセスするORM
 
 ### スタイリング・UI
 - **Tailwind CSS v4** - ユーティリティファーストCSSフレームワーク
@@ -77,12 +83,6 @@ git commit -m "chore: ESLintからBiomeに移行"
 ### 4. 署名設定
 - コミット時の署名は必ず `ryosuke-horie` のみとする
 - Co-Authoredは設定しない
-- 以下のGit設定を使用する：
-
-```bash
-git config user.name "ryosuke-horie"
-git config user.email "あなたのメールアドレス"
-```
 
 ### 5. テスト
 
@@ -95,6 +95,11 @@ git config user.email "あなたのメールアドレス"
 - Playwright, MSWやVitest, Storybook, Chronium(これはまだ入れられていない)を利用します。
 - タスクが進むごとに細かくテストを実施し検証します。特にPRを更新する前に確認します。
 - PRはテストが失敗する限りマージされることはありません。
+
+### 6. 技術スタックに関連した最新情報の取得
+
+- Context7 MCPを利用して最新情報を取得する
+- 特にNextjs, React, Drizzle, Cloudflare, honoは更新が早いため最新情報からデータを取得する必要がある。
 
 ## 開発環境セットアップ
 
