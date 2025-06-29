@@ -11,7 +11,7 @@ test.describe('トップページ', () => {
     await page.goto('/');
     
     // ページタイトルが正しく設定されているか確認
-    await expect(page).toHaveTitle(/Next\.js/);
+    await expect(page).toHaveTitle(/Create Next App/);
     
     // Next.jsロゴが表示されているか確認
     const nextLogo = page.locator('img[alt="Next.js logo"]');
