@@ -1,29 +1,43 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
 .DS_Store
-/node_modules/
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
 *.tsbuildinfo
+next-env.d.ts
 
-# React Router
-/.react-router/
-/build/
-/dist/
+# OpenNext
+/.open-next
 
-# Cloudflare
-.mf
+# wrangler files
 .wrangler
 .dev.vars*
-worker-configuration.d.ts
-
-# Playwright
-/playwright-report/
-/test-results/
-/tests/e2e/screenshots/
-
-# Database
-/data/dev.db
-/data/dev.db-*
-local-dev.db
-local-dev.db-*
-test-e2e.db
-test-e2e.db-*
-
-coverage/
