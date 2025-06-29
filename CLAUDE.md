@@ -24,7 +24,7 @@
 ### 開発ツール
 - **Vite** - 高速なビルドツール
 - **Biome** - コードフォーマッター・リンター
-- **pnpm** - パッケージマネージャー
+- **npm** - パッケージマネージャー
 
 ### テスト・開発ツール
 - **Playwright** - E2Eテストフレームワーク（現在無効化中 - 後述の制約事項参照）
@@ -52,7 +52,7 @@
 ```
 
 ### 2. 型チェック・リント
-- 必ず `pnpm check:fix` を実行してから作業を終える
+- 必ず `npm run check:fix` を実行してから作業を終える
 - 型エラーとリントエラーを放置しない
 - Biomeの設定に従う
 
@@ -104,48 +104,45 @@ git config user.email "あなたのメールアドレス"
 
 ### 2. 初回セットアップ
 ```bash
-# mise経由でNode.js 22とpnpm 10をインストール
+# mise経由でNode.js 22をインストール
 mise install
 
 # 依存関係のインストール
-pnpm install
+npm ci
 ```
 
 ### 3. 開発環境の確認
 ```bash
 # Node.jsバージョンの確認（22系であることを確認）
 node --version
-
-# pnpmバージョンの確認
-pnpm --version
 ```
 
 ## スクリプト
 
 ```bash
 # 開発サーバー起動(あなた(=Claude)は開発サーバーの起動を行うと他の作業ができなくなるため、ユーザー(=開発者)に別セッションでの起動を依頼すること。)
-pnpm dev
+npm run  dev
 
 # 型チェックとリント修正
-pnpm check:fix
+npm run check:fix
 
 # ビルド
-pnpm build
+npm run build
 
 # Storybook起動
-pnpm storybook
+npm run storybook
 
 # Storybookビルド
-pnpm build-storybook
+npm run build-storybook
 
 # E2Eテスト
-pnpm test:e2e
+npm run test:e2e
 
 # ユニットテスト
-pnpm test:unit
+npm run test:unit
 
 # デプロイ（Cloudflare Workers）
-pnpm deploy
+npm run deploy
 ```
 
 ## プロジェクト構造
@@ -365,36 +362,9 @@ GitHub Actions無料枠を効率的に使用するため、E2Eテストは最小
 ## セルフホストランナー運用ルール
 
 ### 重要な制約
-- **キャッシュ無効**: セルフホストランナーのマシン性能の都合により、`cache: 'pnpm'` や Node.js キャッシュは使用しない
+- **キャッシュ無効**: セルフホストランナーのマシン性能の都合によりNode.js キャッシュは使用しない
 - **パフォーマンス優先**: キャッシュによる遅延を避けるため、毎回クリーンインストールを実行
-- **pnpmディレクトリクリーンアップ**: `/home/runner-user/setup-pnpm` に残留するnode_modulesがエラー原因となるため、毎回削除
 - **複数ランナー対応**: 同一マシンで複数ランナーが同時実行される場合があるため、安全なクリーンアップを実行
-
-### 設定例
-```yaml
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
-  
-  # ✅ 必須: pnpm setup ディレクトリクリーンアップ
-  - name: Clean up pnpm setup directory
-    run: rm -rf /home/runner-user/setup-pnpm || true
-  
-  - name: Setup pnpm
-    uses: pnpm/action-setup@v4
-    with:
-      version: '10'
-      standalone: true
-  
-  # ✅ 正しい設定: キャッシュなし
-  - name: Setup Node.js
-    uses: actions/setup-node@v4
-    with:
-      node-version: '22'  # cache設定なし
-  
-  - name: Install dependencies
-    run: pnpm install --frozen-lockfile
-```
 
 ### 注意事項
 - **複数ランナー同時実行**: 同一マシンで複数ジョブが並行実行される場合、ディレクトリ競合に注意
@@ -428,7 +398,7 @@ steps:
 
 1. 新機能開発時は、まず設計意図をコメントで記載
 2. **Storybookでコンポーネント分離開発**
-3. 小さな単位で実装し、都度 `pnpm check:fix` を実行
+3. 小さな単位で実装し、都度 `npm run check:fix` を実行
 4. テストを書く（Storybook・ユニット・E2E）
 5. 機能の完成度に応じて頻繁にコミット
 6. プルリクエストを作成してレビュー

@@ -6,9 +6,6 @@
 # This ensures all developers use the same Node.js version
 node = "22"
 
-# pnpm package manager
-pnpm = "10"
-
 [env]
 # Development environment variables
 NODE_ENV = "development"
