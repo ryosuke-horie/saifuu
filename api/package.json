@@ -10,9 +10,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome lint src/",
     "format": "biome format --write src/",
-    "check": "biome check src/",
-    "check:fix": "biome check --write src/",
-    "check:all": "npm run typecheck && npm run check"
+    "check": "npm run typecheck && biome check src/",
+    "check:fix": "npm run typecheck && biome check --write src/"
   },
   "dependencies": {
     "hono": "^4.8.3"
