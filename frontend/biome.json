@@ -21,7 +21,12 @@
 			"**/db/migrations/meta/**/*.json",
 			"**/*.css",
 			"**/storybook-static/**",
-			"**/stories/**"
+			"**/stories/**",
+			"**/.next/**",
+			"**/test-results/**",
+			"**/playwright-report/**",
+			"**/cloudflare-env.d.ts",
+			"**/next-env.d.ts"
 		]
 	},
 	"formatter": {
