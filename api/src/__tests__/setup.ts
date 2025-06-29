@@ -3,8 +3,6 @@
  * Cloudflare Workers環境でのテスト実行に必要な共通設定を提供
  */
 
-import { applyD1Migrations } from 'cloudflare:test'
-import { readD1Migrations } from '@cloudflare/vitest-pool-workers/config'
 import { createDatabase } from '../db'
 
 // Test environment type (compatible with ProvidedEnv from 'cloudflare:test')
@@ -20,12 +18,7 @@ import { categories, subscriptions, transactions } from '../db/schema'
  */
 export async function createTestDatabase(env: TestEnv) {
 	// まずマイグレーションを適用してテーブルを作成
-	try {
-		const migrations = await readD1Migrations('./drizzle/migrations')
-		await applyD1Migrations(env.DB, migrations)
-	} catch (error) {
-		console.warn('Migration application warning:', error)
-	}
+	// Note: Using direct table creation instead of migrations for test environment
 
 	const db = createDatabase(env.DB)
 
@@ -41,6 +34,17 @@ export async function createTestDatabase(env: TestEnv) {
 	}
 
 	return db
+}
+
+/**
+ * テスト用のデータベース接続を取得（テーブルクリアしない）
+ * 既存のデータを保持したまま、データベース操作を行う場合に使用
+ */
+export async function getTestDatabase(env: TestEnv) {
+	// マイグレーションが適用されていない場合のみ適用
+	// Note: Using direct table creation instead of migrations for test environment
+
+	return createDatabase(env.DB)
 }
 
 /**

@@ -7,7 +7,7 @@
 import { env, SELF } from 'cloudflare:test'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { HealthCheckResponse } from './api-types'
-import { createTestDatabase, seedTestData } from './setup'
+import { getTestDatabase, seedTestData } from './setup'
 
 describe('/api/health', () => {
 	describe('正常系テスト', () => {
@@ -17,7 +17,7 @@ describe('/api/health', () => {
 		})
 
 		it('データベース接続が正常な場合、正常なレスポンスを返す', async () => {
-			const response = await SELF.fetch('/api/health')
+			const response = await SELF.fetch('https://example.com/api/health')
 			const data = (await response.json()) as HealthCheckResponse
 
 			expect(response.status).toBe(200)
@@ -33,16 +33,16 @@ describe('/api/health', () => {
 		})
 
 		it('レスポンスヘッダーが正しく設定されている', async () => {
-			const response = await SELF.fetch('/api/health')
+			const response = await SELF.fetch('https://example.com/api/health')
 
 			expect(response.headers.get('content-type')).toContain('application/json')
 		})
 
 		it('複数回の呼び出しでも安定したレスポンスを返す', async () => {
 			const responses = await Promise.all([
-				SELF.fetch('/api/health'),
-				SELF.fetch('/api/health'),
-				SELF.fetch('/api/health'),
+				SELF.fetch('https://example.com/api/health'),
+				SELF.fetch('https://example.com/api/health'),
+				SELF.fetch('https://example.com/api/health'),
 			])
 
 			for (const response of responses) {
@@ -60,7 +60,7 @@ describe('/api/health', () => {
 		})
 
 		it('正常時のレスポンス形式が正しい', async () => {
-			const response = await SELF.fetch('/api/health')
+			const response = await SELF.fetch('https://example.com/api/health')
 			const data = (await response.json()) as HealthCheckResponse
 
 			// 必須フィールドの存在確認
@@ -80,7 +80,7 @@ describe('/api/health', () => {
 
 		it('タイムスタンプが現在時刻に近い値である', async () => {
 			const beforeRequest = new Date()
-			const response = await SELF.fetch('/api/health')
+			const response = await SELF.fetch('https://example.com/api/health')
 			const afterRequest = new Date()
 			const data = (await response.json()) as HealthCheckResponse
 
@@ -98,12 +98,12 @@ describe('/api/health', () => {
 
 		it('データベースクエリが実際に実行される', async () => {
 			// まずテストデータが存在することを確認
-			const db = await createTestDatabase(env)
+			const db = await getTestDatabase(env)
 			const categories = await db.query.categories.findMany()
 			expect(categories.length).toBeGreaterThan(0)
 
 			// ヘルスチェックエンドポイントがデータベースにアクセスできることを確認
-			const response = await SELF.fetch('/api/health')
+			const response = await SELF.fetch('https://example.com/api/health')
 			const data = (await response.json()) as HealthCheckResponse
 
 			expect(response.status).toBe(200)
@@ -118,7 +118,7 @@ describe('/api/health', () => {
 
 		it('レスポンス時間が許容範囲内である', async () => {
 			const startTime = performance.now()
-			const response = await SELF.fetch('/api/health')
+			const response = await SELF.fetch('https://example.com/api/health')
 			const endTime = performance.now()
 
 			expect(response.status).toBe(200)

@@ -22,7 +22,7 @@ describe('/api/categories', () => {
 		})
 
 		it('全カテゴリを正常に取得できる', async () => {
-			const response = await SELF.fetch('/api/categories')
+			const response = await SELF.fetch('https://example.com/api/categories')
 			const data = (await response.json()) as CategoriesListResponse
 
 			expect(response.status).toBe(200)
@@ -44,7 +44,7 @@ describe('/api/categories', () => {
 			// データベースをクリーンアップ
 			await createTestDatabase(env)
 
-			const response = await SELF.fetch('/api/categories')
+			const response = await SELF.fetch('https://example.com/api/categories')
 			const data = (await response.json()) as CategoriesListResponse
 
 			expect(response.status).toBe(200)
@@ -53,7 +53,7 @@ describe('/api/categories', () => {
 		})
 
 		it('カテゴリデータの内容が正しい', async () => {
-			const response = await SELF.fetch('/api/categories')
+			const response = await SELF.fetch('https://example.com/api/categories')
 			const data = (await response.json()) as CategoriesListResponse
 
 			const incomeCategory = data.find((cat) => cat.type === 'income')
@@ -81,7 +81,7 @@ describe('/api/categories', () => {
 				color: '#FF9800',
 			}
 
-			const response = await SELF.fetch('/api/categories', {
+			const response = await SELF.fetch('https://example.com/api/categories', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ describe('/api/categories', () => {
 				color: '#4CAF50',
 			}
 
-			const response = await SELF.fetch('/api/categories', {
+			const response = await SELF.fetch('https://example.com/api/categories', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ describe('/api/categories', () => {
 				type: 'expense',
 			}
 
-			const response = await SELF.fetch('/api/categories', {
+			const response = await SELF.fetch('https://example.com/api/categories', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -148,7 +148,7 @@ describe('/api/categories', () => {
 				color: '#E91E63',
 			}
 
-			await SELF.fetch('/api/categories', {
+			await SELF.fetch('https://example.com/api/categories', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -177,7 +177,7 @@ describe('/api/categories', () => {
 				color: '#9C27B0',
 			}
 
-			const response = await SELF.fetch('/api/categories/1', {
+			const response = await SELF.fetch('https://example.com/api/categories/1', {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
@@ -199,7 +199,7 @@ describe('/api/categories', () => {
 				name: '名前のみ更新',
 			}
 
-			const response = await SELF.fetch('/api/categories/2', {
+			const response = await SELF.fetch('https://example.com/api/categories/2', {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
@@ -220,7 +220,7 @@ describe('/api/categories', () => {
 				name: '存在しないID',
 			}
 
-			const response = await SELF.fetch('/api/categories/999', {
+			const response = await SELF.fetch('https://example.com/api/categories/999', {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
@@ -236,7 +236,7 @@ describe('/api/categories', () => {
 
 		it('updatedAtが更新される', async () => {
 			// 元のデータ取得
-			const originalResponse = await SELF.fetch('/api/categories/1')
+			const originalResponse = await SELF.fetch('https://example.com/api/categories/1')
 			const originalData = (await originalResponse.json()) as CategoryResponse
 
 			// 少し待機してから更新
@@ -246,7 +246,7 @@ describe('/api/categories', () => {
 				name: 'タイムスタンプ確認',
 			}
 
-			const response = await SELF.fetch('/api/categories/1', {
+			const response = await SELF.fetch('https://example.com/api/categories/1', {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
@@ -269,7 +269,7 @@ describe('/api/categories', () => {
 		})
 
 		it('既存カテゴリを正常に削除できる', async () => {
-			const response = await SELF.fetch('/api/categories/1', {
+			const response = await SELF.fetch('https://example.com/api/categories/1', {
 				method: 'DELETE',
 			})
 
@@ -281,12 +281,12 @@ describe('/api/categories', () => {
 
 		it('削除後にカテゴリが存在しなくなる', async () => {
 			// 削除実行
-			await SELF.fetch('/api/categories/1', {
+			await SELF.fetch('https://example.com/api/categories/1', {
 				method: 'DELETE',
 			})
 
 			// 一覧取得で確認
-			const listResponse = await SELF.fetch('/api/categories')
+			const listResponse = await SELF.fetch('https://example.com/api/categories')
 			const categories = (await listResponse.json()) as CategoriesListResponse
 
 			expect(categories.find((cat) => cat.id === 1)).toBeUndefined()
@@ -294,7 +294,7 @@ describe('/api/categories', () => {
 		})
 
 		it('存在しないIDでは404を返す', async () => {
-			const response = await SELF.fetch('/api/categories/999', {
+			const response = await SELF.fetch('https://example.com/api/categories/999', {
 				method: 'DELETE',
 			})
 
@@ -305,7 +305,7 @@ describe('/api/categories', () => {
 		})
 
 		it('無効なIDでは404を返す', async () => {
-			const response = await SELF.fetch('/api/categories/invalid', {
+			const response = await SELF.fetch('https://example.com/api/categories/invalid', {
 				method: 'DELETE',
 			})
 
@@ -322,7 +322,7 @@ describe('/api/categories', () => {
 		})
 
 		it('不正なJSONではエラーを返す', async () => {
-			const response = await SELF.fetch('/api/categories', {
+			const response = await SELF.fetch('https://example.com/api/categories', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -334,7 +334,7 @@ describe('/api/categories', () => {
 		})
 
 		it('Content-Typeが不正でもエラーハンドリングされる', async () => {
-			const response = await SELF.fetch('/api/categories', {
+			const response = await SELF.fetch('https://example.com/api/categories', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'text/plain',
@@ -353,7 +353,7 @@ describe('/api/categories', () => {
 		})
 
 		it('取得したカテゴリデータの型が正しい', async () => {
-			const response = await SELF.fetch('/api/categories')
+			const response = await SELF.fetch('https://example.com/api/categories')
 			const data = (await response.json()) as CategoriesListResponse
 
 			for (const category of data) {

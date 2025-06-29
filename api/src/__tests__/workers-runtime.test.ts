@@ -34,7 +34,7 @@ describe('Cloudflare Workers Runtime', () => {
 
 	describe('HTTPレスポンス処理', () => {
 		it('基本的なHTTPリクエストが処理される', async () => {
-			const response = await SELF.fetch('/')
+			const response = await SELF.fetch('https://example.com/')
 
 			expect(response).toBeDefined()
 			expect(response.status).toBeDefined()
@@ -42,7 +42,7 @@ describe('Cloudflare Workers Runtime', () => {
 		})
 
 		it('JSONレスポンスが正しく処理される', async () => {
-			const response = await SELF.fetch('/api/health')
+			const response = await SELF.fetch('https://example.com/api/health')
 
 			expect(response.headers.get('content-type')).toContain('application/json')
 
@@ -52,17 +52,17 @@ describe('Cloudflare Workers Runtime', () => {
 		})
 
 		it('適切なHTTPステータスコードが返される', async () => {
-			const healthResponse = await SELF.fetch('/api/health')
+			const healthResponse = await SELF.fetch('https://example.com/api/health')
 			expect(healthResponse.status).toBe(200)
 
-			const notFoundResponse = await SELF.fetch('/nonexistent')
+			const notFoundResponse = await SELF.fetch('https://example.com/nonexistent')
 			expect(notFoundResponse.status).toBe(404)
 		})
 	})
 
 	describe('Hono フレームワーク統合', () => {
 		it('Honoアプリケーションが正常に動作する', async () => {
-			const response = await SELF.fetch('/')
+			const response = await SELF.fetch('https://example.com/')
 
 			expect(response.status).toBe(200)
 			const html = await response.text()
@@ -70,16 +70,16 @@ describe('Cloudflare Workers Runtime', () => {
 		})
 
 		it('ルーティングが正常に機能する', async () => {
-			const healthResponse = await SELF.fetch('/api/health')
+			const healthResponse = await SELF.fetch('https://example.com/api/health')
 			expect(healthResponse.status).toBe(200)
 
-			const categoriesResponse = await SELF.fetch('/api/categories')
+			const categoriesResponse = await SELF.fetch('https://example.com/api/categories')
 			expect(categoriesResponse.status).toBe(200)
 		})
 
 		it('Honoのコンテキストオブジェクトが利用可能', async () => {
 			// コンテキストオブジェクトの機能確認（間接的）
-			const response = await SELF.fetch('/api/health')
+			const response = await SELF.fetch('https://example.com/api/health')
 			const data = (await response.json()) as HealthCheckResponse
 
 			// c.json() メソッドが正常に動作していることを確認
@@ -90,7 +90,7 @@ describe('Cloudflare Workers Runtime', () => {
 
 	describe('データベース統合', () => {
 		it('D1データベースへの接続が可能', async () => {
-			const response = await SELF.fetch('/api/health')
+			const response = await SELF.fetch('https://example.com/api/health')
 			const data = (await response.json()) as HealthCheckResponse
 
 			expect(response.status).toBe(200)
@@ -99,7 +99,7 @@ describe('Cloudflare Workers Runtime', () => {
 
 		it('Drizzle ORMが正常に動作する', async () => {
 			// カテゴリエンドポイントでDrizzle ORMの動作を確認
-			const response = await SELF.fetch('/api/categories')
+			const response = await SELF.fetch('https://example.com/api/categories')
 
 			expect(response.status).toBe(200)
 			const data = (await response.json()) as CategoriesListResponse
@@ -121,7 +121,7 @@ describe('Cloudflare Workers Runtime', () => {
 	describe('パフォーマンス特性', () => {
 		it('コールドスタートでも適切なレスポンス時間', async () => {
 			const startTime = performance.now()
-			const response = await SELF.fetch('/api/health')
+			const response = await SELF.fetch('https://example.com/api/health')
 			const endTime = performance.now()
 
 			expect(response.status).toBe(200)
@@ -132,7 +132,7 @@ describe('Cloudflare Workers Runtime', () => {
 		})
 
 		it('連続リクエストでのレスポンス安定性', async () => {
-			const requests = Array.from({ length: 5 }, () => SELF.fetch('/api/health'))
+			const requests = Array.from({ length: 5 }, () => SELF.fetch('https://example.com/api/health'))
 
 			const responses = await Promise.all(requests)
 
@@ -144,13 +144,13 @@ describe('Cloudflare Workers Runtime', () => {
 
 	describe('エラーハンドリング', () => {
 		it('存在しないルートで適切な404レスポンス', async () => {
-			const response = await SELF.fetch('/nonexistent/route')
+			const response = await SELF.fetch('https://example.com/nonexistent/route')
 
 			expect(response.status).toBe(404)
 		})
 
 		it('不正なHTTPメソッドでの適切なエラーレスポンス', async () => {
-			const response = await SELF.fetch('/api/categories', {
+			const response = await SELF.fetch('https://example.com/api/categories', {
 				method: 'INVALID_METHOD',
 			})
 
@@ -190,7 +190,7 @@ describe('Cloudflare Workers Runtime', () => {
 		})
 
 		it('適切なContent-Typeヘッダーが設定される', async () => {
-			const response = await SELF.fetch('/api/health')
+			const response = await SELF.fetch('https://example.com/api/health')
 
 			expect(response.headers.get('content-type')).toContain('application/json')
 		})
@@ -199,7 +199,7 @@ describe('Cloudflare Workers Runtime', () => {
 	describe('TypeScript統合', () => {
 		it('型定義が正しく適用されている', async () => {
 			// TypeScriptコンパイルが成功していることを間接的に確認
-			const response = await SELF.fetch('/api/health')
+			const response = await SELF.fetch('https://example.com/api/health')
 
 			expect(response.status).toBe(200)
 

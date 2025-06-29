@@ -10,6 +10,10 @@ export default defineWorkersConfig({
         wrangler: {
           configPath: './wrangler.jsonc'
         },
+        // テスト用の設定
+        miniflare: {
+          // 分離されたストレージ環境でテスト実行
+        },
         // 分離されたテスト環境でのテスト実行
         isolatedStorage: true,
         // 各テストファイルごとに独立した実行コンテキスト
@@ -51,7 +55,7 @@ export default defineWorkersConfig({
   envPrefix: 'TEST_',
   esbuild: {
     target: 'esnext',
-    format: 'esm',
+    format: 'esm' as const,
     platform: 'neutral'
   }
 })
