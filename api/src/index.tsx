@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { renderer } from './renderer'
 import { createDatabase, type Env } from './db'
+import { categories } from './db/schema'
 import categoriesRouter from './routes/categories'
 
 const app = new Hono<{ Bindings: Env }>()
@@ -16,7 +17,7 @@ app.get('/api/health', async (c) => {
   try {
     const db = createDatabase(c.env.DB)
     // シンプルなクエリでデータベース接続をテスト
-    const result = await db.select().from(db.schema.categories).limit(1)
+    const result = await db.select().from(categories).limit(1)
     return c.json({ 
       status: 'ok', 
       database: 'connected',
