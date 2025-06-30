@@ -1,6 +1,5 @@
 import type { FC } from "react";
 import { mockSubscriptions } from "../../../.storybook/mocks/data/subscriptions";
-import { Header } from "../../components/layout/Header";
 import {
 	NewSubscriptionButton,
 	SubscriptionList,
@@ -32,9 +31,6 @@ const SubscriptionsPage: FC = () => {
 
 	return (
 		<div className="min-h-screen bg-gray-50">
-			{/* ヘッダー */}
-			<Header title="Saifuu" />
-
 			{/* メインコンテンツ */}
 			<main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 				{/* ページヘッダー */}

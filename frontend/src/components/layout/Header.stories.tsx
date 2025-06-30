@@ -2,6 +2,12 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Header } from "./Header";
 
+// Next.js usePathnameをモック（将来のストーリーで使用予定）
+const _mockUsePathname = (pathname: string) => {
+	const { usePathname } = require("next/navigation");
+	usePathname.mockReturnValue(pathname);
+};
+
 /**
  * Headerコンポーネントのストーリー
  *
