@@ -28,6 +28,8 @@ describe('Optimized D1 Database Integration', () => {
 
 		it('Drizzle ORMでのクエリ実行が可能', async () => {
 			const db = await createTestDatabase(env)
+			// テーブル作成の完了を確実にする
+			await new Promise(resolve => setTimeout(resolve, 100))
 			// 基本的なSELECTクエリ
 			const result = await db.select().from(categories).limit(1)
 			expect(Array.isArray(result)).toBe(true)
@@ -35,14 +37,16 @@ describe('Optimized D1 Database Integration', () => {
 
 		it('データベーステーブルが存在する', async () => {
 			// 最適化されたセットアップでテーブル作成
-			await createTestDatabase(env)
+			const db = await createTestDatabase(env)
+			// テーブル作成の完了を確実にする
+			await new Promise(resolve => setTimeout(resolve, 100))
 
-			const db = env.DB
+			const d1DB = env.DB
 			const requiredTables = ['categories', 'transactions', 'subscriptions']
 
 			// より効率的なテーブル存在チェック
 			for (const tableName of requiredTables) {
-				const result = await db.prepare(`PRAGMA table_info(${tableName})`).all()
+				const result = await d1DB.prepare(`PRAGMA table_info(${tableName})`).all()
 				expect(result.success).toBe(true)
 				expect(result.results?.length).toBeGreaterThan(0)
 			}

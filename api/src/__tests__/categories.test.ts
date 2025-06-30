@@ -235,8 +235,16 @@ describe('/api/categories', () => {
 		})
 
 		it('updatedAtが更新される', async () => {
+			// まずカテゴリを作成
+			const createResponse = await SELF.fetch('https://example.com/api/categories', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ name: 'タイムスタンプテスト', type: 'expense' })
+			})
+			const created = (await createResponse.json()) as CategoryResponse
+			
 			// 元のデータ取得
-			const originalResponse = await SELF.fetch('https://example.com/api/categories/1')
+			const originalResponse = await SELF.fetch(`https://example.com/api/categories/${created.id}`)
 			const originalData = (await originalResponse.json()) as CategoryResponse
 
 			// 少し待機してから更新
@@ -246,7 +254,7 @@ describe('/api/categories', () => {
 				name: 'タイムスタンプ確認',
 			}
 
-			const response = await SELF.fetch('https://example.com/api/categories/1', {
+			const response = await SELF.fetch('https://example.com/api/categories/${created.id}', {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
@@ -361,8 +369,8 @@ describe('/api/categories', () => {
 				expect(typeof category.name).toBe('string')
 				expect(category.type === 'income' || category.type === 'expense').toBe(true)
 				expect(category.color === null || typeof category.color === 'string').toBe(true)
-				expect(typeof category.createdAt).toBe('number') // timestamp
-				expect(typeof category.updatedAt).toBe('number') // timestamp
+				expect(typeof category.createdAt).toBe('string') // timestamp
+				expect(typeof category.updatedAt).toBe('string') // timestamp
 			}
 		})
 	})
