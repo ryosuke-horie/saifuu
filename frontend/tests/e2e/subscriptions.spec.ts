@@ -60,7 +60,7 @@ test.describe("サブスクリプション管理", () => {
 		// カテゴリデータの読み込みを待つ（カテゴリセレクトボックスが有効になるまで）
 		const categorySelect = page.getByLabel("カテゴリ");
 		await expect(categorySelect).toBeEnabled({ timeout: 10000 });
-		
+
 		// カテゴリを選択
 		await categorySelect.click();
 

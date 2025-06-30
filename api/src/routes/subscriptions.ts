@@ -16,18 +16,11 @@ export function createSubscriptionsApp(options: { testDatabase?: Database } = {}
 		}
 	}>()
 
-	// データベース取得のヘルパー関数
-	const getDatabase = (c: Context<{ 
-		Bindings: Env
-		Variables: { db: AnyDatabase }
-	}>) => {
-		return options.testDatabase || c.get('db')
-	}
 
 	// サブスクリプション一覧取得
 	app.get('/', async (c) => {
 		try {
-			const db = getDatabase(c)
+			const db = options.testDatabase || c.get('db')
 			const result = await db
 				.select({
 					id: subscriptions.id,
@@ -62,7 +55,7 @@ export function createSubscriptionsApp(options: { testDatabase?: Database } = {}
 	app.post('/', async (c) => {
 		try {
 			const body = (await c.req.json()) as NewSubscription
-			const db = getDatabase(c)
+			const db = options.testDatabase || c.get('db')
 
 			// Validate required fields and data
 			if (!body.name || typeof body.name !== 'string') {
@@ -114,7 +107,7 @@ export function createSubscriptionsApp(options: { testDatabase?: Database } = {}
 				return c.json({ error: 'Invalid ID format' }, 400)
 			}
 
-			const db = getDatabase(c)
+			const db = options.testDatabase || c.get('db')
 
 			const result = await db
 				.select({
@@ -164,7 +157,7 @@ export function createSubscriptionsApp(options: { testDatabase?: Database } = {}
 			}
 
 			const body = (await c.req.json()) as Partial<NewSubscription>
-			const db = getDatabase(c)
+			const db = options.testDatabase || c.get('db')
 
 			const updateData = {
 				...body,
@@ -199,7 +192,7 @@ export function createSubscriptionsApp(options: { testDatabase?: Database } = {}
 				return c.json({ error: 'Invalid ID format' }, 400)
 			}
 
-			const db = getDatabase(c)
+			const db = options.testDatabase || c.get('db')
 
 			const result = await db.delete(subscriptions).where(eq(subscriptions.id, id)).returning()
 
