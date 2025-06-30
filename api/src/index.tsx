@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { createDatabase, type Env } from './db'
+import { createDatabaseForEnvironment, type Env } from './db'
 import { categories } from './db/schema'
 import { renderer } from './renderer'
 import categoriesRouter from './routes/categories'
@@ -15,7 +15,9 @@ app.get('/', (c) => {
 // データベース接続のテスト用エンドポイント
 app.get('/api/health', async (c) => {
 	try {
-		const db = createDatabase(c.env.DB)
+		// 環境に応じてデータベースを作成（テスト環境では自動テーブル作成）
+		const db = await createDatabaseForEnvironment(c.env.DB)
+
 		// シンプルなクエリでデータベース接続をテスト
 		const _result = await db.select().from(categories).limit(1)
 		return c.json({

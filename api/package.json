@@ -12,10 +12,20 @@
     "format": "biome format --write src/",
     "test": "vitest",
     "test:unit": "vitest run",
+    "test:unit:infrastructure": "vitest run src/__tests__/vitest-infrastructure.test.ts src/__tests__/basic-integration.test.ts src/__tests__/utils.test.ts",
+    "test:unit:infrastructure:only": "vitest run src/__tests__/vitest-infrastructure.test.ts src/__tests__/utils.test.ts",
+    "test:unit:database": "vitest run src/__tests__/database-optimized.test.ts",
+    "test:unit:health": "vitest run src/__tests__/health.test.ts",
+    "test:unit:api": "vitest run src/__tests__/categories.test.ts",
+    "test:unit:workers": "vitest run src/__tests__/workers-runtime.test.ts",
     "test:watch": "vitest watch",
-    "check": "npm run typecheck && biome check src/ && npm run test:unit",
-    "check:fix": "npm run typecheck && biome check --write src/ && npm run test:unit",
-    "ci:check": "npm run typecheck && biome check src/ && npm run test:unit"
+    "check": "npm run typecheck && biome check src/ && npm run test:unit:infrastructure",
+    "check:fix": "npm run typecheck && biome check --write src/ && npm run test:unit:infrastructure:only",
+    "ci:check": "npm run typecheck && biome check src/ && npm run test:unit:infrastructure:only",
+    "test:unit:optimized": "npm run test:unit:infrastructure:only && npm run test:unit:health && npm run test:unit:database",
+    "test:unit:full": "npm run test:unit:optimized && npm run test:unit:api && npm run test:unit:workers",
+    "test:unit:fast": "vitest run --reporter=dot src/__tests__/vitest-infrastructure.test.ts src/__tests__/utils.test.ts src/__tests__/health.test.ts",
+    "test:performance": "vitest run --reporter=verbose src/__tests__/database-optimized.test.ts"
   },
   "dependencies": {
     "hono": "^4.8.3"

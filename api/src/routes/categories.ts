@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { createDatabase, type Env } from '../db'
+import { createDatabaseForEnvironment, type Env } from '../db'
 import { categories, type NewCategory } from '../db/schema'
 
 const app = new Hono<{ Bindings: Env }>()
@@ -8,7 +8,7 @@ const app = new Hono<{ Bindings: Env }>()
 // カテゴリ一覧取得
 app.get('/', async (c) => {
 	try {
-		const db = createDatabase(c.env.DB)
+		const db = await createDatabaseForEnvironment(c.env.DB)
 		const result = await db.select().from(categories)
 		return c.json(result)
 	} catch (_error) {
@@ -20,7 +20,7 @@ app.get('/', async (c) => {
 app.post('/', async (c) => {
 	try {
 		const body = (await c.req.json()) as NewCategory
-		const db = createDatabase(c.env.DB)
+		const db = await createDatabaseForEnvironment(c.env.DB)
 
 		const newCategory: NewCategory = {
 			name: body.name,
@@ -42,7 +42,7 @@ app.put('/:id', async (c) => {
 	try {
 		const id = Number.parseInt(c.req.param('id'))
 		const body = (await c.req.json()) as Partial<NewCategory>
-		const db = createDatabase(c.env.DB)
+		const db = await createDatabaseForEnvironment(c.env.DB)
 
 		const updateData = {
 			...body,
@@ -69,7 +69,7 @@ app.put('/:id', async (c) => {
 app.delete('/:id', async (c) => {
 	try {
 		const id = Number.parseInt(c.req.param('id'))
-		const db = createDatabase(c.env.DB)
+		const db = await createDatabaseForEnvironment(c.env.DB)
 
 		const result = await db.delete(categories).where(eq(categories.id, id)).returning()
 

@@ -29,6 +29,9 @@ describe('D1 Database Integration', () => {
 		})
 
 		it('データベーステーブルが存在する', async () => {
+			// まずデータベースを初期化してテーブルを作成
+			await createTestDatabase(env)
+
 			const db = env.DB
 			const result = await db
 				.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
