@@ -1,9 +1,17 @@
+"use client";
+
 import type { FC } from "react";
+import { useCallback, useState } from "react";
 import { mockSubscriptions } from "../../../.storybook/mocks/data/subscriptions";
 import {
 	NewSubscriptionButton,
+	NewSubscriptionDialog,
 	SubscriptionList,
 } from "../../components/subscriptions";
+import type {
+	Subscription,
+	SubscriptionFormData,
+} from "../../types/subscription";
 
 /**
  * サブスクリプション管理ページ
@@ -25,9 +33,55 @@ import {
  */
 
 const SubscriptionsPage: FC = () => {
-	// 現在はモックデータを使用
-	// 将来的にはAPIやstateから取得予定
-	const subscriptions = mockSubscriptions;
+	// サブスクリプションデータの状態管理
+	// 現在はモックデータを使用、将来的にはAPIやstateから取得予定
+	const [subscriptions, setSubscriptions] =
+		useState<Subscription[]>(mockSubscriptions);
+
+	// ダイアログの状態管理
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	// ダイアログを開く
+	const handleOpenDialog = useCallback(() => {
+		setIsDialogOpen(true);
+	}, []);
+
+	// ダイアログを閉じる
+	const handleCloseDialog = useCallback(() => {
+		setIsDialogOpen(false);
+		setIsSubmitting(false);
+	}, []);
+
+	// 新規サブスクリプション登録処理
+	const handleSubmitNewSubscription = useCallback(
+		async (data: SubscriptionFormData) => {
+			setIsSubmitting(true);
+
+			try {
+				// 新しいサブスクリプションデータを作成
+				const newSubscription: Subscription = {
+					id: `sub_${Date.now()}`, // 簡易的なID生成（実際のプロダクションではUUIDなどを使用）
+					...data,
+				};
+
+				// モックデータに追加（実際のプロダクションではAPI呼び出し）
+				setSubscriptions((prev) => [newSubscription, ...prev]);
+
+				// 成功フィードバック（将来的にはトーストやスナックバーなどを使用）
+				console.log("新しいサブスクリプションを登録しました:", newSubscription);
+
+				// ダイアログを閉じる
+				handleCloseDialog();
+			} catch (error) {
+				console.error("サブスクリプション登録エラー:", error);
+				// エラーハンドリング（将来的にはエラーメッセージ表示）
+			} finally {
+				setIsSubmitting(false);
+			}
+		},
+		[handleCloseDialog],
+	);
 
 	return (
 		<div className="min-h-screen bg-gray-50">
@@ -47,7 +101,7 @@ const SubscriptionsPage: FC = () => {
 
 						{/* 新規登録ボタン */}
 						<div className="flex-shrink-0">
-							<NewSubscriptionButton />
+							<NewSubscriptionButton onClick={handleOpenDialog} />
 						</div>
 					</div>
 				</div>
@@ -128,6 +182,14 @@ const SubscriptionsPage: FC = () => {
 					error={null}
 				/>
 			</main>
+
+			{/* 新規サブスクリプション登録ダイアログ */}
+			<NewSubscriptionDialog
+				isOpen={isDialogOpen}
+				onClose={handleCloseDialog}
+				onSubmit={handleSubmitNewSubscription}
+				isSubmitting={isSubmitting}
+			/>
 		</div>
 	);
 };

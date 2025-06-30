@@ -24,9 +24,6 @@ export const NewSubscriptionButton: FC<NewSubscriptionButtonProps> = ({
 	const handleClick = () => {
 		if (onClick) {
 			onClick();
-		} else {
-			// 現在はUIのみなので、アラートで通知
-			alert("新規登録機能は現在開発中です。");
 		}
 	};
 
