@@ -4,22 +4,15 @@
  * サブスクリプション管理機能で使用されるデータ型を定義
  */
 
-/**
- * 請求サイクル
- */
-export type BillingCycle = "monthly" | "yearly";
+// 基本型をlib/api/types.tsからインポート
+import type { Subscription as ApiSubscription, BillingCycle, Category } from '../lib/api/types';
+
+// 基本型をre-export
+export type { BillingCycle } from '../lib/api/types';
 
 /**
- * サブスクリプションカテゴリ
- */
-export type SubscriptionCategory =
-	| "entertainment"
-	| "work"
-	| "lifestyle"
-	| "other";
-
-/**
- * サブスクリプションデータ
+ * フロントエンド用のサブスクリプションデータ
+ * APIレスポンスから変換されたフロントエンド表示用の型
  */
 export interface Subscription {
 	/**
@@ -50,7 +43,12 @@ export interface Subscription {
 	/**
 	 * カテゴリ
 	 */
-	category: SubscriptionCategory;
+	category: Category;
+
+	/**
+	 * アクティブ状態
+	 */
+	isActive: boolean;
 
 	/**
 	 * 説明（オプション）
@@ -105,7 +103,7 @@ export interface NewSubscriptionButtonProps {
 
 /**
  * サブスクリプションフォームデータ
- * ID以外の全てのフィールドを含む
+ * フォーム入力時に使用する型（カテゴリはIDで管理）
  */
 export interface SubscriptionFormData {
 	/**
@@ -129,9 +127,14 @@ export interface SubscriptionFormData {
 	nextBillingDate: string;
 
 	/**
-	 * カテゴリ
+	 * カテゴリID
 	 */
-	category: SubscriptionCategory;
+	categoryId: string;
+
+	/**
+	 * アクティブ状態
+	 */
+	isActive: boolean;
 
 	/**
 	 * 説明（オプション）
