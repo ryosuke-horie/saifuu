@@ -1,12 +1,14 @@
+import type { Subscription } from "../../../src/types/subscription";
+
 // サブスクリプションデータのモック
-export const mockSubscriptions = [
+export const mockSubscriptions: Subscription[] = [
 	{
 		id: "1",
 		name: "Netflix",
 		amount: 1480,
 		billingCycle: "monthly" as const,
 		nextBillingDate: "2025-07-01",
-		category: "entertainment",
+		category: "entertainment" as const,
 	},
 	{
 		id: "2",
@@ -14,7 +16,7 @@ export const mockSubscriptions = [
 		amount: 980,
 		billingCycle: "monthly" as const,
 		nextBillingDate: "2025-07-15",
-		category: "entertainment",
+		category: "entertainment" as const,
 	},
 	{
 		id: "3",
@@ -22,6 +24,6 @@ export const mockSubscriptions = [
 		amount: 5680,
 		billingCycle: "monthly" as const,
 		nextBillingDate: "2025-07-10",
-		category: "work",
+		category: "work" as const,
 	},
 ];
