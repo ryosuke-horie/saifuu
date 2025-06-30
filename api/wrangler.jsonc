@@ -1,15 +1,15 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "saifuu-api",
-  "compatibility_date": "2025-06-29",
-  "compatibility_flags": ["nodejs_compat"],
-  "main": "./src/index.tsx",
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "saifuu-db",
-      "database_id": "dfb9d1f1-ceb8-425b-abfd-279247ad9b95",
-      "migrations_dir": "drizzle/migrations"
-    }
-  ]
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "saifuu-api",
+	"compatibility_date": "2025-06-29",
+	"compatibility_flags": ["nodejs_compat"],
+	"main": "./src/index.tsx",
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "saifuu-db",
+			"database_id": "dfb9d1f1-ceb8-425b-abfd-279247ad9b95",
+			"migrations_dir": "drizzle/migrations"
+		}
+	]
 }

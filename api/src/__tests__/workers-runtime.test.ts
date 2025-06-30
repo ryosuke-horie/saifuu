@@ -3,8 +3,8 @@
  * Workers 固有の機能とランタイム環境のテスト
  */
 
-import { expect, test, describe } from 'vitest'
-import { SELF, env } from 'cloudflare:test'
+import { env, SELF } from 'cloudflare:test'
+import { describe, expect, test } from 'vitest'
 import app from '../index'
 
 describe('Cloudflare Workers Runtime', () => {
@@ -88,9 +88,9 @@ describe('Cloudflare Workers Runtime', () => {
 			const responses = await Promise.all([
 				SELF.fetch('https://example.com/'),
 				SELF.fetch('https://example.com/'),
-				SELF.fetch('https://example.com/')
+				SELF.fetch('https://example.com/'),
 			])
-			
+
 			for (const response of responses) {
 				expect(response.status).toBe(200)
 			}
@@ -106,7 +106,7 @@ describe('Cloudflare Workers Runtime', () => {
 		test('不正なリクエストでの適切なエラーレスポンス', async () => {
 			const response = await SELF.fetch('https://example.com/api/categories', {
 				method: 'POST',
-				body: 'invalid json'
+				body: 'invalid json',
 			})
 			expect(response.status).toBeGreaterThanOrEqual(400)
 		})
@@ -146,3 +146,4 @@ describe('Cloudflare Workers Runtime', () => {
 		})
 	})
 })
+

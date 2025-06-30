@@ -239,10 +239,10 @@ describe('/api/categories', () => {
 			const createResponse = await SELF.fetch('https://example.com/api/categories', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ name: 'タイムスタンプテスト', type: 'expense' })
+				body: JSON.stringify({ name: 'タイムスタンプテスト', type: 'expense' }),
 			})
 			const created = (await createResponse.json()) as CategoryResponse
-			
+
 			// 元のデータ取得
 			const originalResponse = await SELF.fetch(`https://example.com/api/categories/${created.id}`)
 			const originalData = (await originalResponse.json()) as CategoryResponse
@@ -254,7 +254,7 @@ describe('/api/categories', () => {
 				name: 'タイムスタンプ確認',
 			}
 
-			const response = await SELF.fetch('https://example.com/api/categories/${created.id}', {
+			const response = await SELF.fetch(`https://example.com/api/categories/${created.id}`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
