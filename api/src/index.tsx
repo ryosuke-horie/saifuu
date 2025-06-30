@@ -1,12 +1,12 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { createDatabase, createDevDatabase, type AnyDatabase, type Env } from './db'
+import { type AnyDatabase, createDatabase, createDevDatabase, type Env } from './db'
 import { categories } from './db/schema'
 import { renderer } from './renderer'
 import categoriesRouter from './routes/categories'
 import subscriptionsRouter from './routes/subscriptions'
 
-const app = new Hono<{ 
+const app = new Hono<{
 	Bindings: Env
 	Variables: {
 		db: AnyDatabase
@@ -14,11 +14,14 @@ const app = new Hono<{
 }>()
 
 // CORS設定（開発環境用）
-app.use('/api/*', cors({
-	origin: ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003'],
-	allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-	allowHeaders: ['Content-Type', 'Authorization'],
-}))
+app.use(
+	'/api/*',
+	cors({
+		origin: ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003'],
+		allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+		allowHeaders: ['Content-Type', 'Authorization'],
+	})
+)
 
 // 開発環境判定
 const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV

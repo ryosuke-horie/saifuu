@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import type { AnyDatabase, Env } from '../db'
 import { categories, type NewCategory } from '../db/schema'
 
-const app = new Hono<{ 
+const app = new Hono<{
 	Bindings: Env
 	Variables: {
 		db: AnyDatabase

@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
-import { Hono, type Context } from 'hono'
-import { createDatabase, type AnyDatabase, type Database, type Env } from '../db'
+import { type Context, Hono } from 'hono'
+import { type AnyDatabase, createDatabase, type Database, type Env } from '../db'
 import { categories, type NewSubscription, subscriptions } from '../db/schema'
 
 /**
@@ -9,13 +9,12 @@ import { categories, type NewSubscription, subscriptions } from '../db/schema'
  * @param options.testDatabase - テスト用データベースインスタンス（オプション）
  */
 export function createSubscriptionsApp(options: { testDatabase?: Database } = {}) {
-	const app = new Hono<{ 
+	const app = new Hono<{
 		Bindings: Env
 		Variables: {
 			db: AnyDatabase
 		}
 	}>()
-
 
 	// サブスクリプション一覧取得
 	app.get('/', async (c) => {

@@ -1,6 +1,7 @@
 import SQLiteDatabase from 'better-sqlite3'
 import { drizzle as drizzleSQLite } from 'drizzle-orm/better-sqlite3'
 import { drizzle } from 'drizzle-orm/d1'
+import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import * as schema from './schema'
 
 // Cloudflare Workers環境の型定義
@@ -21,7 +22,7 @@ export function createDatabase(binding: D1Database) {
 export function createDevDatabase(path = './e2e-test.db') {
 	if (!devDatabase) {
 		devDatabase = new SQLiteDatabase(path)
-		
+
 		// テーブルを作成（存在しない場合）
 		devDatabase.exec(`
 			CREATE TABLE IF NOT EXISTS categories (
@@ -47,9 +48,11 @@ export function createDevDatabase(path = './e2e-test.db') {
 				FOREIGN KEY (category_id) REFERENCES categories (id)
 			);
 		`)
-		
+
 		// デフォルトカテゴリを挿入（存在しない場合）
-		const categoryCount = devDatabase.prepare('SELECT COUNT(*) as count FROM categories').get() as { count: number }
+		const categoryCount = devDatabase.prepare('SELECT COUNT(*) as count FROM categories').get() as {
+			count: number
+		}
 		if (categoryCount.count === 0) {
 			devDatabase.exec(`
 				INSERT INTO categories (name, type, description) VALUES
@@ -61,7 +64,7 @@ export function createDevDatabase(path = './e2e-test.db') {
 			`)
 		}
 	}
-	
+
 	return drizzleSQLite(devDatabase, { schema })
 }
 
@@ -79,5 +82,19 @@ export function createTestDatabaseAsD1(binding: SQLiteDatabase.Database) {
 export type Database = ReturnType<typeof createDatabase>
 export type DevDatabase = ReturnType<typeof createDevDatabase>
 export type TestDatabase = ReturnType<typeof createTestDatabase>
-export type AnyDatabase = Database | DevDatabase
+
+// 共通のデータベースインターフェース
+// D1とSQLiteで共通のメソッドのみを含む安全な型定義
+export interface CommonDatabase {
+	select: (...args: any[]) => any
+	insert: (...args: any[]) => any
+	update: (...args: any[]) => any
+	delete: (...args: any[]) => any
+}
+
+// 型安全性を保ちつつ、実行時の柔軟性を提供
+export type AnyDatabase = CommonDatabase & {
+	[key: string]: any
+}
+
 export { schema }
