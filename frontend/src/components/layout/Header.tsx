@@ -1,3 +1,7 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { FC } from "react";
 
 /**
@@ -31,6 +35,13 @@ export const Header: FC<HeaderProps> = ({
 	title = "Saifuu",
 	className = "",
 }) => {
+	const pathname = usePathname();
+
+	// ナビゲーションアイテムの定義
+	const navigationItems = [
+		{ href: "/", label: "ホーム", icon: "🏠" },
+		{ href: "/subscriptions", label: "サブスク管理", icon: "📱" },
+	];
 	return (
 		<header
 			className={[
@@ -70,15 +81,35 @@ export const Header: FC<HeaderProps> = ({
 						</h1>
 					</div>
 
-					{/* 将来的なナビゲーション・ユーザーメニュー用の領域 */}
+					{/* ナビゲーション */}
 					<nav
-						className="flex items-center space-x-4"
+						className="flex items-center space-x-1 sm:space-x-2"
 						aria-label="メインナビゲーション"
 					>
-						{/* 現在は空 - 将来的にメニューボタン、ユーザーアイコン等を配置 */}
-						<div className="flex items-center">
-							{/* プレースホルダー: メニューボタンなど */}
-						</div>
+						{navigationItems.map((item) => {
+							const isActive = pathname === item.href;
+							return (
+								<Link
+									key={item.href}
+									href={item.href}
+									className={[
+										// 基本スタイル
+										"flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+										"hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+										// アクティブ状態
+										isActive
+											? "bg-blue-100 text-blue-700"
+											: "text-gray-600 hover:text-gray-900",
+									].join(" ")}
+									aria-current={isActive ? "page" : undefined}
+								>
+									<span className="text-lg" aria-hidden="true">
+										{item.icon}
+									</span>
+									<span className="hidden sm:inline">{item.label}</span>
+								</Link>
+							);
+						})}
 					</nav>
 				</div>
 			</div>
