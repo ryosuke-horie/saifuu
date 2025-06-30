@@ -3,6 +3,7 @@ import { createDatabase, type Env } from './db'
 import { categories } from './db/schema'
 import { renderer } from './renderer'
 import categoriesRouter from './routes/categories'
+import subscriptionsRouter from './routes/subscriptions'
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -38,5 +39,6 @@ app.get('/api/health', async (c) => {
 
 // APIルートの設定
 app.route('/api/categories', categoriesRouter)
+app.route('/api/subscriptions', subscriptionsRouter)
 
 export default app
