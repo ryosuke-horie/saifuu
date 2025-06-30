@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NewSubscriptionButton } from "./NewSubscriptionButton";
 
 /**
@@ -46,15 +47,12 @@ describe("NewSubscriptionButton", () => {
 	});
 
 	describe("クリックイベント", () => {
-		it("デフォルトクリックでアラートが表示されること", () => {
+		it("onClickが提供されていない場合、何も実行されない", () => {
 			render(<NewSubscriptionButton />);
 
 			const button = screen.getByRole("button");
-			fireEvent.click(button);
-
-			expect(window.alert).toHaveBeenCalledWith(
-				"新規登録機能は現在開発中です。",
-			);
+			// エラーが発生しないことを確認
+			expect(() => fireEvent.click(button)).not.toThrow();
 		});
 
 		it("カスタムクリックハンドラーが実行されること", () => {
@@ -65,7 +63,6 @@ describe("NewSubscriptionButton", () => {
 			fireEvent.click(button);
 
 			expect(mockOnClick).toHaveBeenCalledTimes(1);
-			expect(window.alert).not.toHaveBeenCalled();
 		});
 
 		it("無効状態ではクリックイベントが発火しないこと", () => {
@@ -76,7 +73,6 @@ describe("NewSubscriptionButton", () => {
 			fireEvent.click(button);
 
 			expect(mockOnClick).not.toHaveBeenCalled();
-			expect(window.alert).not.toHaveBeenCalled();
 		});
 	});
 

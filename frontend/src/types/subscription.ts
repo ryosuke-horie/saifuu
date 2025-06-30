@@ -51,6 +51,11 @@ export interface Subscription {
 	 * カテゴリ
 	 */
 	category: SubscriptionCategory;
+
+	/**
+	 * 説明（オプション）
+	 */
+	description?: string;
 }
 
 /**
@@ -96,4 +101,96 @@ export interface NewSubscriptionButtonProps {
 	 * 追加のCSSクラス名
 	 */
 	className?: string;
+}
+
+/**
+ * サブスクリプションフォームデータ
+ * ID以外の全てのフィールドを含む
+ */
+export interface SubscriptionFormData {
+	/**
+	 * サービス名
+	 */
+	name: string;
+
+	/**
+	 * 月額料金（円）
+	 */
+	amount: number;
+
+	/**
+	 * 請求サイクル
+	 */
+	billingCycle: BillingCycle;
+
+	/**
+	 * 次回請求日（YYYY-MM-DD形式）
+	 */
+	nextBillingDate: string;
+
+	/**
+	 * カテゴリ
+	 */
+	category: SubscriptionCategory;
+
+	/**
+	 * 説明（オプション）
+	 */
+	description?: string;
+}
+
+/**
+ * サブスクリプションフォームのプロパティ
+ */
+export interface SubscriptionFormProps {
+	/**
+	 * フォーム送信時のコールバック
+	 */
+	onSubmit: (data: SubscriptionFormData) => void;
+
+	/**
+	 * キャンセル時のコールバック
+	 */
+	onCancel: () => void;
+
+	/**
+	 * 送信中の状態
+	 */
+	isSubmitting?: boolean;
+
+	/**
+	 * 編集用の初期データ（オプション）
+	 */
+	initialData?: SubscriptionFormData;
+
+	/**
+	 * 追加のCSSクラス名
+	 */
+	className?: string;
+}
+
+/**
+ * 新規サブスクリプション登録ダイアログのプロパティ
+ */
+export interface NewSubscriptionDialogProps {
+	/**
+	 * ダイアログの表示状態
+	 */
+	isOpen: boolean;
+
+	/**
+	 * ダイアログを閉じる際のコールバック関数
+	 */
+	onClose: () => void;
+
+	/**
+	 * フォーム送信時のコールバック
+	 * 新規サブスクリプションデータを受け取る
+	 */
+	onSubmit: (data: SubscriptionFormData) => void;
+
+	/**
+	 * 送信中の状態
+	 */
+	isSubmitting?: boolean;
 }
