@@ -1,6 +1,7 @@
 import { action } from "@storybook/addon-actions";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
+import { mockCategories } from "../../../.storybook/mocks/data/categories";
 import type { SubscriptionFormData } from "../../types/subscription";
 import { SubscriptionForm } from "./SubscriptionForm";
 
@@ -73,6 +74,7 @@ const meta: Meta<typeof SubscriptionForm> = {
 		onSubmit: action("form-submitted"),
 		onCancel: action("form-cancelled"),
 		isSubmitting: false,
+		categories: mockCategories,
 		className: "",
 	},
 	tags: ["autodocs"],
@@ -87,7 +89,8 @@ const sampleFormData: SubscriptionFormData = {
 	amount: 1480,
 	billingCycle: "monthly",
 	nextBillingDate: "2025-07-01",
-	category: "entertainment",
+	categoryId: "cat-1",
+	isActive: true,
 	description: "人気の動画配信サービス。映画やドラマ、アニメなどが見放題。",
 };
 

@@ -4,22 +4,15 @@
  * サブスクリプション管理機能で使用されるデータ型を定義
  */
 
-/**
- * 請求サイクル
- */
-export type BillingCycle = "monthly" | "yearly";
+// 基本型をlib/api/types.tsからインポート
+import type { BillingCycle, Category } from "../lib/api/types";
+
+// 基本型をre-export
+export type { BillingCycle } from "../lib/api/types";
 
 /**
- * サブスクリプションカテゴリ
- */
-export type SubscriptionCategory =
-	| "entertainment"
-	| "work"
-	| "lifestyle"
-	| "other";
-
-/**
- * サブスクリプションデータ
+ * フロントエンド用のサブスクリプションデータ
+ * APIレスポンスから変換されたフロントエンド表示用の型
  */
 export interface Subscription {
 	/**
@@ -50,7 +43,12 @@ export interface Subscription {
 	/**
 	 * カテゴリ
 	 */
-	category: SubscriptionCategory;
+	category: Category;
+
+	/**
+	 * アクティブ状態
+	 */
+	isActive: boolean;
 
 	/**
 	 * 説明（オプション）
@@ -76,6 +74,11 @@ export interface SubscriptionListProps {
 	 * エラー状態
 	 */
 	error?: string | null;
+
+	/**
+	 * データ再取得用のコールバック
+	 */
+	onRefresh?: () => void;
 
 	/**
 	 * 追加のCSSクラス名
@@ -105,7 +108,7 @@ export interface NewSubscriptionButtonProps {
 
 /**
  * サブスクリプションフォームデータ
- * ID以外の全てのフィールドを含む
+ * フォーム入力時に使用する型（カテゴリはIDで管理）
  */
 export interface SubscriptionFormData {
 	/**
@@ -129,9 +132,14 @@ export interface SubscriptionFormData {
 	nextBillingDate: string;
 
 	/**
-	 * カテゴリ
+	 * カテゴリID（旧フィールドとの互換性のため、APIでは categoryId を使用）
 	 */
-	category: SubscriptionCategory;
+	categoryId: string;
+
+	/**
+	 * アクティブ状態
+	 */
+	isActive?: boolean;
 
 	/**
 	 * 説明（オプション）
@@ -164,6 +172,11 @@ export interface SubscriptionFormProps {
 	initialData?: SubscriptionFormData;
 
 	/**
+	 * カテゴリ一覧（フォームで選択肢として表示）
+	 */
+	categories: Category[];
+
+	/**
 	 * 追加のCSSクラス名
 	 */
 	className?: string;
@@ -193,4 +206,9 @@ export interface NewSubscriptionDialogProps {
 	 * 送信中の状態
 	 */
 	isSubmitting?: boolean;
+
+	/**
+	 * カテゴリ一覧（フォームで選択肢として表示）
+	 */
+	categories: Category[];
 }

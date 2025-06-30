@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { mockCategories } from "../../../.storybook/mocks/data/categories";
 import type { NewSubscriptionDialogProps } from "../../types/subscription";
 import { NewSubscriptionDialog } from "./NewSubscriptionDialog";
 
@@ -19,6 +20,7 @@ describe("NewSubscriptionDialog", () => {
 		onClose: vi.fn(),
 		onSubmit: vi.fn(),
 		isSubmitting: false,
+		categories: mockCategories,
 	};
 
 	beforeEach(() => {
@@ -154,7 +156,8 @@ describe("NewSubscriptionDialog", () => {
 				amount: 1490,
 				billingCycle: "monthly",
 				nextBillingDate: nextMonthString,
-				category: "other",
+				categoryId: "",
+				isActive: true,
 				description: "",
 			});
 

@@ -36,15 +36,23 @@ const SubscriptionRow: FC<{ subscription: Subscription }> = ({
 		return cycle === "monthly" ? "月額" : "年額";
 	};
 
-	// カテゴリを日本語に変換
-	const formatCategory = (category: string): string => {
-		const categoryMap: Record<string, string> = {
-			entertainment: "エンタメ",
-			work: "仕事",
-			lifestyle: "ライフスタイル",
-			other: "その他",
-		};
-		return categoryMap[category] || category;
+	// カテゴリを表示用に変換
+	const formatCategory = (subscription: Subscription): string => {
+		// 新しい API 構造では category は Category オブジェクトまたは null
+		if (subscription.category && typeof subscription.category === "object") {
+			return subscription.category.name;
+		}
+		// 旧構造との互換性のため
+		if (typeof subscription.category === "string") {
+			const categoryMap: Record<string, string> = {
+				entertainment: "エンタメ",
+				work: "仕事",
+				lifestyle: "ライフスタイル",
+				other: "その他",
+			};
+			return categoryMap[subscription.category] || subscription.category;
+		}
+		return "未分類";
 	};
 
 	// 次回請求日をフォーマット
@@ -69,7 +77,7 @@ const SubscriptionRow: FC<{ subscription: Subscription }> = ({
 				{formatBillingCycle(subscription.billingCycle)}
 			</td>
 			<td className="px-4 py-3 text-sm text-gray-700 hidden md:table-cell">
-				{formatCategory(subscription.category)}
+				{formatCategory(subscription)}
 			</td>
 			<td className="px-4 py-3 text-sm text-gray-700">
 				{formatDate(subscription.nextBillingDate)}
@@ -130,18 +138,38 @@ export const SubscriptionList: FC<SubscriptionListProps> = ({
 	subscriptions,
 	isLoading = false,
 	error = null,
+	onRefresh,
 	className = "",
 }) => {
 	return (
 		<div className={`bg-white rounded-lg shadow ${className}`}>
 			{/* テーブルヘッダー */}
 			<div className="px-4 py-4 border-b border-gray-200">
-				<h2 className="text-lg font-semibold text-gray-900">
-					サブスクリプション一覧
-				</h2>
-				<p className="text-sm text-gray-600 mt-1">
-					現在登録されているサブスクリプションサービス
-				</p>
+				<div className="flex items-center justify-between">
+					<div>
+						<h2 className="text-lg font-semibold text-gray-900">
+							サブスクリプション一覧
+						</h2>
+						<p className="text-sm text-gray-600 mt-1">
+							現在登録されているサブスクリプションサービス
+						</p>
+					</div>
+					{onRefresh && (
+						<button
+							type="button"
+							onClick={onRefresh}
+							disabled={isLoading}
+							className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							{isLoading ? (
+								<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2" />
+							) : (
+								<span className="mr-2">🔄</span>
+							)}
+							更新
+						</button>
+					)}
+				</div>
 			</div>
 
 			{/* テーブル本体 */}

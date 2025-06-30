@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import type { Env } from '../../db'
+import type { AnyDatabase, Env } from '../../db'
 import { createTestDatabase } from './test-db'
 
 /**
@@ -17,7 +17,7 @@ import { createTestDatabase } from './test-db'
  * @returns Responseオブジェクト
  */
 export async function createTestRequest(
-	app: Hono<{ Bindings: Env }>,
+	app: Hono<{ Bindings: Env; Variables: { db: AnyDatabase } }>,
 	method: 'GET' | 'POST' | 'PUT' | 'DELETE',
 	path: string,
 	body?: unknown,

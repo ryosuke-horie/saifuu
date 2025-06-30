@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
+import { mockCategories } from "../../../.storybook/mocks/data/categories";
 import type { SubscriptionFormData } from "../../types/subscription";
 import { SubscriptionForm } from "./SubscriptionForm";
 
@@ -26,6 +27,7 @@ describe("SubscriptionForm", () => {
 		onSubmit: mockOnSubmit,
 		onCancel: mockOnCancel,
 		isSubmitting: false,
+		categories: mockCategories,
 	};
 
 	const validFormData: SubscriptionFormData = {
@@ -33,7 +35,8 @@ describe("SubscriptionForm", () => {
 		amount: 1480,
 		billingCycle: "monthly" as const,
 		nextBillingDate: "2025-07-01",
-		category: "entertainment" as const,
+		categoryId: "cat-1",
+		isActive: true,
 		description: "動画配信サービス",
 	};
 
@@ -266,7 +269,7 @@ describe("SubscriptionForm", () => {
 			);
 			await user.selectOptions(
 				screen.getByLabelText(/カテゴリ/),
-				validFormData.category,
+				validFormData.categoryId,
 			);
 			await user.type(
 				screen.getByLabelText(/説明（任意）/),
@@ -359,7 +362,7 @@ describe("SubscriptionForm", () => {
 				validFormData.billingCycle,
 			);
 			expect(screen.getByLabelText(/カテゴリ/)).toHaveValue(
-				validFormData.category,
+				validFormData.categoryId,
 			);
 		});
 
@@ -438,7 +441,7 @@ describe("SubscriptionForm", () => {
 			expect(screen.getByLabelText(/サービス名/)).toHaveValue(""); // name
 			expect(screen.getByLabelText(/料金（円）/)).toHaveValue(null); // amount (empty number input is null)
 			expect(screen.getByLabelText(/請求サイクル/)).toHaveValue("monthly"); // billingCycle
-			expect(screen.getByLabelText(/カテゴリ/)).toHaveValue("other"); // category
+			expect(screen.getByLabelText(/カテゴリ/)).toHaveValue(""); // categoryId
 		});
 	});
 
@@ -456,8 +459,8 @@ describe("SubscriptionForm", () => {
 		it("カテゴリが日本語で表示されること", () => {
 			render(<SubscriptionForm {...defaultProps} />);
 
-			expect(screen.getByText("エンタメ")).toBeInTheDocument();
-			expect(screen.getByText("仕事")).toBeInTheDocument();
+			expect(screen.getByText("エンターテイメント")).toBeInTheDocument();
+			expect(screen.getByText("仕事・ビジネス")).toBeInTheDocument();
 			expect(screen.getByText("ライフスタイル")).toBeInTheDocument();
 			expect(screen.getByText("その他")).toBeInTheDocument();
 		});

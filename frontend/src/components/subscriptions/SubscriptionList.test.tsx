@@ -82,8 +82,10 @@ describe("SubscriptionList", () => {
 		it("カテゴリが日本語で表示されること", () => {
 			render(<SubscriptionList {...defaultProps} />);
 
-			expect(screen.getAllByText("エンタメ").length).toBeGreaterThan(0);
-			expect(screen.getByText("仕事")).toBeInTheDocument();
+			expect(screen.getAllByText("エンターテイメント").length).toBeGreaterThan(
+				0,
+			);
+			expect(screen.getByText("仕事・ビジネス")).toBeInTheDocument();
 		});
 
 		it("次回請求日が正しい形式で表示されること", () => {

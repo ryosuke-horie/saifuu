@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
-import { Hono } from 'hono'
-import { createDatabase, type Database, type Env } from '../db'
+import { type Context, Hono } from 'hono'
+import { type AnyDatabase, createDatabase, type Database, type Env } from '../db'
 import { categories, type NewSubscription, subscriptions } from '../db/schema'
 
 /**
@@ -9,17 +9,17 @@ import { categories, type NewSubscription, subscriptions } from '../db/schema'
  * @param options.testDatabase - テスト用データベースインスタンス（オプション）
  */
 export function createSubscriptionsApp(options: { testDatabase?: Database } = {}) {
-	const app = new Hono<{ Bindings: Env }>()
-
-	// データベース取得のヘルパー関数
-	const getDatabase = (c: any) => {
-		return options.testDatabase || createDatabase(c.env.DB)
-	}
+	const app = new Hono<{
+		Bindings: Env
+		Variables: {
+			db: AnyDatabase
+		}
+	}>()
 
 	// サブスクリプション一覧取得
 	app.get('/', async (c) => {
 		try {
-			const db = getDatabase(c)
+			const db = options.testDatabase || c.get('db')
 			const result = await db
 				.select({
 					id: subscriptions.id,
@@ -54,7 +54,7 @@ export function createSubscriptionsApp(options: { testDatabase?: Database } = {}
 	app.post('/', async (c) => {
 		try {
 			const body = (await c.req.json()) as NewSubscription
-			const db = getDatabase(c)
+			const db = options.testDatabase || c.get('db')
 
 			// Validate required fields and data
 			if (!body.name || typeof body.name !== 'string') {
@@ -106,7 +106,7 @@ export function createSubscriptionsApp(options: { testDatabase?: Database } = {}
 				return c.json({ error: 'Invalid ID format' }, 400)
 			}
 
-			const db = getDatabase(c)
+			const db = options.testDatabase || c.get('db')
 
 			const result = await db
 				.select({
@@ -156,7 +156,7 @@ export function createSubscriptionsApp(options: { testDatabase?: Database } = {}
 			}
 
 			const body = (await c.req.json()) as Partial<NewSubscription>
-			const db = getDatabase(c)
+			const db = options.testDatabase || c.get('db')
 
 			const updateData = {
 				...body,
@@ -191,7 +191,7 @@ export function createSubscriptionsApp(options: { testDatabase?: Database } = {}
 				return c.json({ error: 'Invalid ID format' }, 400)
 			}
 
-			const db = getDatabase(c)
+			const db = options.testDatabase || c.get('db')
 
 			const result = await db.delete(subscriptions).where(eq(subscriptions.id, id)).returning()
 
