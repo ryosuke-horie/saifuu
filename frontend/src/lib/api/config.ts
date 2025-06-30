@@ -60,6 +60,7 @@ function getCurrentEnvironment(): Environment {
 
 /**
  * 環境別のベースURLを取得する
+ * CI環境での安全なビルドのため、実行時のみ環境変数をチェック
  */
 function getBaseUrl(environment: Environment): string {
 	switch (environment) {
@@ -75,13 +76,9 @@ function getBaseUrl(environment: Environment): string {
 
 		case "production":
 			// 本番環境: Cloudflare Workersのエンドポイント
-			// 環境変数が設定されていない場合はエラーとする
-			if (!process.env.NEXT_PUBLIC_API_URL) {
-				throw new Error(
-					"NEXT_PUBLIC_API_URL environment variable is required in production",
-				);
-			}
-			return process.env.NEXT_PUBLIC_API_URL;
+			// CI環境での安全なビルドのため、環境変数が未設定の場合はプレースホルダーを返す
+			// 実際の使用時にバリデーションを行う
+			return process.env.NEXT_PUBLIC_API_URL || "https://api.placeholder.local";
 
 		case "test":
 			// テスト環境: テスト用のモックサーバーまたはローカル
@@ -169,10 +166,31 @@ export const endpoints = {
 } as const;
 
 /**
+ * 本番環境での実行時バリデーション
+ * API使用時に適切な環境変数が設定されているかチェック
+ */
+function validateProductionConfig(): void {
+	if (apiConfig.environment === "production") {
+		// プレースホルダーURLが使用されている場合、本番環境で必要な環境変数が未設定
+		if (apiConfig.baseUrl === "https://api.placeholder.local") {
+			throw new Error(
+				"NEXT_PUBLIC_API_URL environment variable is required in production. " +
+					"This error occurs at runtime when the API is actually used, " +
+					"allowing CI builds to succeed while ensuring production safety.",
+			);
+		}
+	}
+}
+
+/**
  * 完全なURLを生成する
  * ベースURLとエンドポイントパスを結合
+ * 本番環境では実行時にバリデーションを行う
  */
 export function buildUrl(endpoint: string): string {
+	// 本番環境での実行時バリデーション
+	validateProductionConfig();
+
 	const baseUrl = apiConfig.baseUrl.replace(/\/$/, ""); // 末尾のスラッシュを除去
 	const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
 	return `${baseUrl}${path}`;

@@ -147,4 +147,70 @@ describe("API Config", () => {
 			expect(apiConfig.maxRetries).toBe(3);
 		});
 	});
+
+	describe("本番環境での実行時バリデーション", () => {
+		it("本番環境でNEXT_PUBLIC_API_URLが設定されている場合、正常に動作する", async () => {
+			vi.stubEnv("NODE_ENV", "production");
+			vi.stubEnv("NEXT_PUBLIC_API_URL", "https://api.example.com");
+
+			const { buildUrl } = await import("../config");
+
+			// エラーが発生しないことを確認
+			expect(() => buildUrl("/subscriptions")).not.toThrow();
+			expect(buildUrl("/subscriptions")).toBe(
+				"https://api.example.com/subscriptions",
+			);
+		});
+
+		it("本番環境でNEXT_PUBLIC_API_URLが未設定の場合、ビルド時はエラーが発生しない", async () => {
+			vi.stubEnv("NODE_ENV", "production");
+			vi.stubEnv("NEXT_PUBLIC_API_URL", "");
+
+			// config.tsモジュールの読み込みでエラーが発生しないことを確認
+			expect(async () => {
+				const { apiConfig } = await import("../config");
+				// 設定の読み込み自体は成功する
+				expect(apiConfig.environment).toBe("production");
+				expect(apiConfig.baseUrl).toBe("https://api.placeholder.local");
+			}).not.toThrow();
+		});
+
+		it("本番環境でNEXT_PUBLIC_API_URLが未設定の場合、実行時にエラーが発生する", async () => {
+			vi.stubEnv("NODE_ENV", "production");
+			vi.stubEnv("NEXT_PUBLIC_API_URL", "");
+
+			const { buildUrl } = await import("../config");
+
+			// buildUrl実行時にエラーが発生することを確認
+			expect(() => buildUrl("/subscriptions")).toThrow(
+				"NEXT_PUBLIC_API_URL environment variable is required in production",
+			);
+		});
+
+		it("開発環境では環境変数未設定でも動作する", async () => {
+			vi.stubEnv("NODE_ENV", "development");
+			vi.stubEnv("NEXT_PUBLIC_API_URL", "");
+
+			const { buildUrl } = await import("../config");
+
+			// エラーが発生しないことを確認
+			expect(() => buildUrl("/subscriptions")).not.toThrow();
+			expect(buildUrl("/subscriptions")).toBe(
+				"http://localhost:5173/api/subscriptions",
+			);
+		});
+
+		it("テスト環境では環境変数未設定でも動作する", async () => {
+			vi.stubEnv("NODE_ENV", "test");
+			vi.stubEnv("NEXT_PUBLIC_API_URL", "");
+
+			const { buildUrl } = await import("../config");
+
+			// エラーが発生しないことを確認
+			expect(() => buildUrl("/subscriptions")).not.toThrow();
+			expect(buildUrl("/subscriptions")).toBe(
+				"http://localhost:3001/api/subscriptions",
+			);
+		});
+	});
 });
