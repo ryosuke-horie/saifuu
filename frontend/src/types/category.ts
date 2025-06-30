@@ -5,41 +5,46 @@
  */
 
 // 基本的なカテゴリ型をre-export
-export type { Category, CategoryType, CreateCategoryRequest, UpdateCategoryRequest } from '../lib/api/types';
+export type {
+	Category,
+	CategoryType,
+	CreateCategoryRequest,
+	UpdateCategoryRequest,
+} from "../lib/api/types";
 
 /**
  * カテゴリ選択用の簡易型
  * フォームのselect要素などで使用
  */
 export interface CategoryOption {
-  id: string;
-  name: string;
+	id: string;
+	name: string;
 }
 
 // 基本的なカテゴリ型をインポート
-import type { Category } from '../lib/api/types';
+import type { Category } from "../lib/api/types";
 
 /**
  * カテゴリ一覧表示用のプロパティ
  */
 export interface CategoryListProps {
-  /**
-   * カテゴリデータの配列
-   */
-  categories: Category[];
+	/**
+	 * カテゴリデータの配列
+	 */
+	categories: Category[];
 
-  /**
-   * ローディング状態
-   */
-  isLoading?: boolean;
+	/**
+	 * ローディング状態
+	 */
+	isLoading?: boolean;
 
-  /**
-   * エラー状態
-   */
-  error?: string | null;
+	/**
+	 * エラー状態
+	 */
+	error?: string | null;
 
-  /**
-   * 追加のCSSクラス名
-   */
-  className?: string;
+	/**
+	 * 追加のCSSクラス名
+	 */
+	className?: string;
 }

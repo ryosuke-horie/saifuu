@@ -3,13 +3,16 @@
  * フロントエンド型とバックエンドAPI型の間での変換を行う
  */
 
-import type { Subscription, SubscriptionFormData } from '../../../types/subscription';
-import type { Category } from '../../../types/category';
+import type { Category } from "../../../types/category";
 import type {
-  ApiSubscriptionResponse,
-  ApiCreateSubscriptionRequest,
-  ApiUpdateSubscriptionRequest,
-} from './types';
+	Subscription,
+	SubscriptionFormData,
+} from "../../../types/subscription";
+import type {
+	ApiCreateSubscriptionRequest,
+	ApiSubscriptionResponse,
+	ApiUpdateSubscriptionRequest,
+} from "./types";
 
 /**
  * バックエンドAPIレスポンスをフロントエンド型に変換
@@ -18,26 +21,28 @@ import type {
  * @returns フロントエンド用のサブスクリプション型
  */
 export function transformApiSubscriptionToFrontend(
-  apiSubscription: ApiSubscriptionResponse,
-  categories: Category[]
+	apiSubscription: ApiSubscriptionResponse,
+	categories: Category[],
 ): Subscription {
-  // カテゴリIDからカテゴリオブジェクトを検索
-  const category = categories.find(cat => Number(cat.id) === apiSubscription.categoryId);
-  
-  if (!category) {
-    throw new Error(`Category with ID ${apiSubscription.categoryId} not found`);
-  }
+	// カテゴリIDからカテゴリオブジェクトを検索
+	const category = categories.find(
+		(cat) => Number(cat.id) === apiSubscription.categoryId,
+	);
 
-  return {
-    id: apiSubscription.id.toString(), // number -> string変換
-    name: apiSubscription.name,
-    amount: apiSubscription.amount,
-    category: category, // categoryId -> categoryオブジェクト変換
-    billingCycle: apiSubscription.billingCycle,
-    nextBillingDate: formatDateToYYYYMMDD(apiSubscription.nextBillingDate), // ISO -> YYYY-MM-DD変換
-    isActive: apiSubscription.isActive,
-    description: apiSubscription.description || undefined,
-  };
+	if (!category) {
+		throw new Error(`Category with ID ${apiSubscription.categoryId} not found`);
+	}
+
+	return {
+		id: apiSubscription.id.toString(), // number -> string変換
+		name: apiSubscription.name,
+		amount: apiSubscription.amount,
+		category: category, // categoryId -> categoryオブジェクト変換
+		billingCycle: apiSubscription.billingCycle,
+		nextBillingDate: formatDateToYYYYMMDD(apiSubscription.nextBillingDate), // ISO -> YYYY-MM-DD変換
+		isActive: apiSubscription.isActive,
+		description: apiSubscription.description || undefined,
+	};
 }
 
 /**
@@ -46,17 +51,17 @@ export function transformApiSubscriptionToFrontend(
  * @returns API作成リクエスト
  */
 export function transformFormDataToCreateRequest(
-  formData: SubscriptionFormData
+	formData: SubscriptionFormData,
 ): ApiCreateSubscriptionRequest {
-  return {
-    name: formData.name,
-    amount: formData.amount,
-    categoryId: Number(formData.categoryId), // string -> number変換
-    billingCycle: formData.billingCycle,
-    nextBillingDate: formatDateToISO(formData.nextBillingDate), // YYYY-MM-DD -> ISO変換
-    isActive: formData.isActive,
-    description: formData.description,
-  };
+	return {
+		name: formData.name,
+		amount: formData.amount,
+		categoryId: Number(formData.categoryId), // string -> number変換
+		billingCycle: formData.billingCycle,
+		nextBillingDate: formatDateToISO(formData.nextBillingDate), // YYYY-MM-DD -> ISO変換
+		isActive: formData.isActive ?? true, // デフォルトでアクティブ
+		description: formData.description,
+	};
 }
 
 /**
@@ -65,21 +70,24 @@ export function transformFormDataToCreateRequest(
  * @returns API更新リクエスト
  */
 export function transformFormDataToUpdateRequest(
-  formData: Partial<SubscriptionFormData>
+	formData: Partial<SubscriptionFormData>,
 ): ApiUpdateSubscriptionRequest {
-  const request: ApiUpdateSubscriptionRequest = {};
+	const request: ApiUpdateSubscriptionRequest = {};
 
-  if (formData.name !== undefined) request.name = formData.name;
-  if (formData.amount !== undefined) request.amount = formData.amount;
-  if (formData.categoryId !== undefined) request.categoryId = Number(formData.categoryId);
-  if (formData.billingCycle !== undefined) request.billingCycle = formData.billingCycle;
-  if (formData.nextBillingDate !== undefined) {
-    request.nextBillingDate = formatDateToISO(formData.nextBillingDate);
-  }
-  if (formData.isActive !== undefined) request.isActive = formData.isActive;
-  if (formData.description !== undefined) request.description = formData.description;
+	if (formData.name !== undefined) request.name = formData.name;
+	if (formData.amount !== undefined) request.amount = formData.amount;
+	if (formData.categoryId !== undefined)
+		request.categoryId = Number(formData.categoryId);
+	if (formData.billingCycle !== undefined)
+		request.billingCycle = formData.billingCycle;
+	if (formData.nextBillingDate !== undefined) {
+		request.nextBillingDate = formatDateToISO(formData.nextBillingDate);
+	}
+	if (formData.isActive !== undefined) request.isActive = formData.isActive;
+	if (formData.description !== undefined)
+		request.description = formData.description;
 
-  return request;
+	return request;
 }
 
 /**
@@ -88,13 +96,13 @@ export function transformFormDataToUpdateRequest(
  * @returns YYYY-MM-DD形式の日付文字列
  */
 function formatDateToYYYYMMDD(isoDate: string): string {
-  const date = new Date(isoDate);
-  
-  if (isNaN(date.getTime())) {
-    throw new Error(`Invalid date format: ${isoDate}`);
-  }
+	const date = new Date(isoDate);
 
-  return date.toISOString().split('T')[0];
+	if (Number.isNaN(date.getTime())) {
+		throw new Error(`Invalid date format: ${isoDate}`);
+	}
+
+	return date.toISOString().split("T")[0];
 }
 
 /**
@@ -103,11 +111,11 @@ function formatDateToYYYYMMDD(isoDate: string): string {
  * @returns ISO 8601形式の日付文字列
  */
 function formatDateToISO(dateString: string): string {
-  const date = new Date(dateString);
-  
-  if (isNaN(date.getTime())) {
-    throw new Error(`Invalid date format: ${dateString}`);
-  }
+	const date = new Date(dateString);
 
-  return date.toISOString();
+	if (Number.isNaN(date.getTime())) {
+		throw new Error(`Invalid date format: ${dateString}`);
+	}
+
+	return date.toISOString();
 }

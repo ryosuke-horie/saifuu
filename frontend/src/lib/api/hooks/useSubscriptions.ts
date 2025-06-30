@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { ApiError, handleApiError, subscriptionService } from "../index";
+import { handleApiError, subscriptionService } from "../index";
 import type {
 	CreateSubscriptionRequest,
 	GetSubscriptionsQuery,

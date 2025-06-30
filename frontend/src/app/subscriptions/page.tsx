@@ -2,16 +2,14 @@
 
 import type { FC } from "react";
 import { useCallback, useState } from "react";
-import { mockSubscriptions } from "../../../.storybook/mocks/data/subscriptions";
 import {
 	NewSubscriptionButton,
 	NewSubscriptionDialog,
 	SubscriptionList,
 } from "../../components/subscriptions";
-import type {
-	Subscription,
-	SubscriptionFormData,
-} from "../../types/subscription";
+import { useCategories } from "../../hooks/useCategories";
+import { useSubscriptions } from "../../hooks/useSubscriptions";
+import type { SubscriptionFormData } from "../../types/subscription";
 
 /**
  * サブスクリプション管理ページ
@@ -33,14 +31,26 @@ import type {
  */
 
 const SubscriptionsPage: FC = () => {
-	// サブスクリプションデータの状態管理
-	// 現在はモックデータを使用、将来的にはAPIやstateから取得予定
-	const [subscriptions, setSubscriptions] =
-		useState<Subscription[]>(mockSubscriptions);
+	// カテゴリデータの取得
+	const {
+		categories,
+		loading: categoriesLoading,
+		error: categoriesError,
+		refetch: refetchCategories,
+	} = useCategories();
+
+	// サブスクリプションデータの取得（カテゴリが必要）
+	const {
+		subscriptions,
+		loading: subscriptionsLoading,
+		error: subscriptionsError,
+		operationLoading,
+		refetch: refetchSubscriptions,
+		createSubscriptionMutation,
+	} = useSubscriptions(categories);
 
 	// ダイアログの状態管理
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	// ダイアログを開く
 	const handleOpenDialog = useCallback(() => {
@@ -50,37 +60,26 @@ const SubscriptionsPage: FC = () => {
 	// ダイアログを閉じる
 	const handleCloseDialog = useCallback(() => {
 		setIsDialogOpen(false);
-		setIsSubmitting(false);
 	}, []);
 
 	// 新規サブスクリプション登録処理
 	const handleSubmitNewSubscription = useCallback(
 		async (data: SubscriptionFormData) => {
-			setIsSubmitting(true);
-
 			try {
-				// 新しいサブスクリプションデータを作成
-				const newSubscription: Subscription = {
-					id: `sub_${Date.now()}`, // 簡易的なID生成（実際のプロダクションではUUIDなどを使用）
-					...data,
-				};
+				// API経由でサブスクリプションを作成
+				await createSubscriptionMutation(data);
 
-				// モックデータに追加（実際のプロダクションではAPI呼び出し）
-				setSubscriptions((prev) => [newSubscription, ...prev]);
+				// 成功時にダイアログを閉じる
+				handleCloseDialog();
 
 				// 成功フィードバック（将来的にはトーストやスナックバーなどを使用）
-				console.log("新しいサブスクリプションを登録しました:", newSubscription);
-
-				// ダイアログを閉じる
-				handleCloseDialog();
+				console.log("新しいサブスクリプションを登録しました");
 			} catch (error) {
 				console.error("サブスクリプション登録エラー:", error);
-				// エラーハンドリング（将来的にはエラーメッセージ表示）
-			} finally {
-				setIsSubmitting(false);
+				// エラーはフォーム内で表示されるため、ここでは特別な処理不要
 			}
 		},
-		[handleCloseDialog],
+		[createSubscriptionMutation, handleCloseDialog],
 	);
 
 	return (
@@ -113,7 +112,7 @@ const SubscriptionsPage: FC = () => {
 							<div className="flex-shrink-0">
 								<div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
 									<span className="text-blue-600 text-sm font-medium">
-										{subscriptions.length}
+										{subscriptionsLoading ? "..." : subscriptions.length}
 									</span>
 								</div>
 							</div>
@@ -122,7 +121,9 @@ const SubscriptionsPage: FC = () => {
 									登録サービス数
 								</p>
 								<p className="text-lg font-semibold text-gray-900">
-									{subscriptions.length} サービス
+									{subscriptionsLoading
+										? "読み込み中..."
+										: `${subscriptions.length} サービス`}
 								</p>
 							</div>
 						</div>
@@ -138,10 +139,19 @@ const SubscriptionsPage: FC = () => {
 							<div className="ml-4">
 								<p className="text-sm font-medium text-gray-500">月間合計</p>
 								<p className="text-lg font-semibold text-gray-900">
-									¥
-									{subscriptions
-										.reduce((sum, sub) => sum + sub.amount, 0)
-										.toLocaleString()}
+									{subscriptionsLoading
+										? "読み込み中..."
+										: `¥${subscriptions
+												.filter((sub) => sub.isActive)
+												.reduce((sum, sub) => {
+													// 月額換算に統一
+													const monthlyAmount =
+														sub.billingCycle === "yearly"
+															? sub.amount / 12
+															: sub.amount;
+													return sum + monthlyAmount;
+												}, 0)
+												.toLocaleString()}`}
 								</p>
 							</div>
 						</div>
@@ -157,29 +167,67 @@ const SubscriptionsPage: FC = () => {
 							<div className="ml-4">
 								<p className="text-sm font-medium text-gray-500">次回請求</p>
 								<p className="text-lg font-semibold text-gray-900">
-									{subscriptions.length > 0
-										? new Date(
-												Math.min(
-													...subscriptions.map((s) =>
-														new Date(s.nextBillingDate).getTime(),
+									{subscriptionsLoading
+										? "読み込み中..."
+										: subscriptions.filter((s) => s.isActive).length > 0
+											? new Date(
+													Math.min(
+														...subscriptions
+															.filter((s) => s.isActive)
+															.map((s) =>
+																new Date(s.nextBillingDate).getTime(),
+															),
 													),
-												),
-											).toLocaleDateString("ja-JP", {
-												month: "short",
-												day: "numeric",
-											})
-										: "---"}
+												).toLocaleDateString("ja-JP", {
+													month: "short",
+													day: "numeric",
+												})
+											: "---"}
 								</p>
 							</div>
 						</div>
 					</div>
 				</div>
 
+				{/* エラーメッセージ表示 */}
+				{(categoriesError || subscriptionsError) && (
+					<div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+						<div className="flex">
+							<div className="flex-shrink-0">
+								<span className="text-red-400">⚠️</span>
+							</div>
+							<div className="ml-3">
+								<h3 className="text-sm font-medium text-red-800">
+									データの読み込みに失敗しました
+								</h3>
+								<div className="mt-2 text-sm text-red-700">
+									<p>{categoriesError || subscriptionsError}</p>
+								</div>
+								<div className="mt-4">
+									<div className="flex space-x-3">
+										<button
+											type="button"
+											onClick={() => {
+												if (categoriesError) refetchCategories();
+												if (subscriptionsError) refetchSubscriptions();
+											}}
+											className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200 transition-colors"
+										>
+											再試行
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				)}
+
 				{/* サブスクリプション一覧 */}
 				<SubscriptionList
 					subscriptions={subscriptions}
-					isLoading={false}
-					error={null}
+					isLoading={subscriptionsLoading || categoriesLoading}
+					error={subscriptionsError || categoriesError}
+					onRefresh={refetchSubscriptions}
 				/>
 			</main>
 
@@ -188,7 +236,8 @@ const SubscriptionsPage: FC = () => {
 				isOpen={isDialogOpen}
 				onClose={handleCloseDialog}
 				onSubmit={handleSubmitNewSubscription}
-				isSubmitting={isSubmitting}
+				isSubmitting={operationLoading}
+				categories={categories}
 			/>
 		</div>
 	);

@@ -3,37 +3,41 @@
  * バックエンドのサブスクリプションAPIとの通信を担当
  */
 
-import { apiClient } from '../client';
-import type { Category } from '../../../types/category';
-import type { Subscription, SubscriptionFormData } from '../../../types/subscription';
+import type { Category } from "../../../types/category";
 import type {
-  ApiSubscriptionResponse,
-  ApiCreateSubscriptionRequest,
-  ApiUpdateSubscriptionRequest,
-  ApiSubscriptionListResponse,
-} from './types';
+	Subscription,
+	SubscriptionFormData,
+} from "../../../types/subscription";
+import { apiClient } from "../client";
 import {
-  transformApiSubscriptionToFrontend,
-  transformFormDataToCreateRequest,
-  transformFormDataToUpdateRequest,
-} from './transformers';
+	transformApiSubscriptionToFrontend,
+	transformFormDataToCreateRequest,
+	transformFormDataToUpdateRequest,
+} from "./transformers";
+import type {
+	ApiSubscriptionListResponse,
+	ApiSubscriptionResponse,
+} from "./types";
 
 /**
  * サブスクリプション一覧を取得
  * @param categories - カテゴリ一覧（変換に使用）
  * @returns サブスクリプション一覧
  */
-export async function fetchSubscriptions(categories: Category[]): Promise<Subscription[]> {
-  try {
-    const response = await apiClient.get<ApiSubscriptionListResponse>('/subscriptions');
-    
-    return response.subscriptions.map(apiSubscription =>
-      transformApiSubscriptionToFrontend(apiSubscription, categories)
-    );
-  } catch (error) {
-    console.error('Failed to fetch subscriptions:', error);
-    throw new Error('サブスクリプション一覧の取得に失敗しました');
-  }
+export async function fetchSubscriptions(
+	categories: Category[],
+): Promise<Subscription[]> {
+	try {
+		const response =
+			await apiClient.get<ApiSubscriptionListResponse>("/subscriptions");
+
+		return response.subscriptions.map((apiSubscription) =>
+			transformApiSubscriptionToFrontend(apiSubscription, categories),
+		);
+	} catch (error) {
+		console.error("Failed to fetch subscriptions:", error);
+		throw new Error("サブスクリプション一覧の取得に失敗しました");
+	}
 }
 
 /**
@@ -43,17 +47,19 @@ export async function fetchSubscriptions(categories: Category[]): Promise<Subscr
  * @returns サブスクリプション詳細
  */
 export async function fetchSubscriptionById(
-  id: string,
-  categories: Category[]
+	id: string,
+	categories: Category[],
 ): Promise<Subscription> {
-  try {
-    const response = await apiClient.get<ApiSubscriptionResponse>(`/subscriptions/${id}`);
-    
-    return transformApiSubscriptionToFrontend(response, categories);
-  } catch (error) {
-    console.error(`Failed to fetch subscription ${id}:`, error);
-    throw new Error('サブスクリプション詳細の取得に失敗しました');
-  }
+	try {
+		const response = await apiClient.get<ApiSubscriptionResponse>(
+			`/subscriptions/${id}`,
+		);
+
+		return transformApiSubscriptionToFrontend(response, categories);
+	} catch (error) {
+		console.error(`Failed to fetch subscription ${id}:`, error);
+		throw new Error("サブスクリプション詳細の取得に失敗しました");
+	}
 }
 
 /**
@@ -63,18 +69,21 @@ export async function fetchSubscriptionById(
  * @returns 作成されたサブスクリプション
  */
 export async function createSubscription(
-  formData: SubscriptionFormData,
-  categories: Category[]
+	formData: SubscriptionFormData,
+	categories: Category[],
 ): Promise<Subscription> {
-  try {
-    const requestData = transformFormDataToCreateRequest(formData);
-    const response = await apiClient.post<ApiSubscriptionResponse>('/subscriptions', requestData);
-    
-    return transformApiSubscriptionToFrontend(response, categories);
-  } catch (error) {
-    console.error('Failed to create subscription:', error);
-    throw new Error('サブスクリプションの作成に失敗しました');
-  }
+	try {
+		const requestData = transformFormDataToCreateRequest(formData);
+		const response = await apiClient.post<ApiSubscriptionResponse>(
+			"/subscriptions",
+			requestData,
+		);
+
+		return transformApiSubscriptionToFrontend(response, categories);
+	} catch (error) {
+		console.error("Failed to create subscription:", error);
+		throw new Error("サブスクリプションの作成に失敗しました");
+	}
 }
 
 /**
@@ -85,19 +94,22 @@ export async function createSubscription(
  * @returns 更新されたサブスクリプション
  */
 export async function updateSubscription(
-  id: string,
-  formData: Partial<SubscriptionFormData>,
-  categories: Category[]
+	id: string,
+	formData: Partial<SubscriptionFormData>,
+	categories: Category[],
 ): Promise<Subscription> {
-  try {
-    const requestData = transformFormDataToUpdateRequest(formData);
-    const response = await apiClient.put<ApiSubscriptionResponse>(`/subscriptions/${id}`, requestData);
-    
-    return transformApiSubscriptionToFrontend(response, categories);
-  } catch (error) {
-    console.error(`Failed to update subscription ${id}:`, error);
-    throw new Error('サブスクリプションの更新に失敗しました');
-  }
+	try {
+		const requestData = transformFormDataToUpdateRequest(formData);
+		const response = await apiClient.put<ApiSubscriptionResponse>(
+			`/subscriptions/${id}`,
+			requestData,
+		);
+
+		return transformApiSubscriptionToFrontend(response, categories);
+	} catch (error) {
+		console.error(`Failed to update subscription ${id}:`, error);
+		throw new Error("サブスクリプションの更新に失敗しました");
+	}
 }
 
 /**
@@ -105,12 +117,12 @@ export async function updateSubscription(
  * @param id - サブスクリプションID
  */
 export async function deleteSubscription(id: string): Promise<void> {
-  try {
-    await apiClient.delete(`/subscriptions/${id}`);
-  } catch (error) {
-    console.error(`Failed to delete subscription ${id}:`, error);
-    throw new Error('サブスクリプションの削除に失敗しました');
-  }
+	try {
+		await apiClient.delete(`/subscriptions/${id}`);
+	} catch (error) {
+		console.error(`Failed to delete subscription ${id}:`, error);
+		throw new Error("サブスクリプションの削除に失敗しました");
+	}
 }
 
 /**
@@ -121,9 +133,9 @@ export async function deleteSubscription(id: string): Promise<void> {
  * @returns 更新されたサブスクリプション
  */
 export async function updateSubscriptionStatus(
-  id: string,
-  isActive: boolean,
-  categories: Category[]
+	id: string,
+	isActive: boolean,
+	categories: Category[],
 ): Promise<Subscription> {
-  return updateSubscription(id, { isActive }, categories);
+	return updateSubscription(id, { isActive }, categories);
 }

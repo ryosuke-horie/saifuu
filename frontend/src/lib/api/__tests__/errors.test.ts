@@ -254,12 +254,8 @@ describe("getValidationErrors", () => {
 
 describe("logApiError", () => {
 	it("開発環境では詳細情報をログ出力する", () => {
-		const originalEnv = process.env.NODE_ENV;
-		Object.defineProperty(process.env, "NODE_ENV", {
-			value: "development",
-			configurable: true,
-			writable: true,
-		});
+		const _originalEnv = process.env.NODE_ENV;
+		vi.stubEnv("NODE_ENV", "development");
 
 		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -271,21 +267,13 @@ describe("logApiError", () => {
 			error.getDebugInfo(),
 		);
 
-		Object.defineProperty(process.env, "NODE_ENV", {
-			value: originalEnv,
-			configurable: true,
-			writable: true,
-		});
+		vi.unstubAllEnvs();
 		consoleSpy.mockRestore();
 	});
 
 	it("本番環境では最小限の情報をログ出力する", () => {
-		const originalEnv = process.env.NODE_ENV;
-		Object.defineProperty(process.env, "NODE_ENV", {
-			value: "production",
-			configurable: true,
-			writable: true,
-		});
+		const _originalEnv = process.env.NODE_ENV;
+		vi.stubEnv("NODE_ENV", "production");
 
 		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -298,11 +286,7 @@ describe("logApiError", () => {
 			message: "ネットワークエラー",
 		});
 
-		Object.defineProperty(process.env, "NODE_ENV", {
-			value: originalEnv,
-			configurable: true,
-			writable: true,
-		});
+		vi.unstubAllEnvs();
 		consoleSpy.mockRestore();
 	});
 });

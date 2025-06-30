@@ -7,11 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 describe("API Config", () => {
 	beforeEach(() => {
 		// テスト実行時の環境をセット
-		Object.defineProperty(process.env, "NODE_ENV", {
-			value: "test",
-			configurable: true,
-			writable: true,
-		});
+		vi.stubEnv("NODE_ENV", "test");
 		// モジュールキャッシュをクリア
 		vi.resetModules();
 	});
@@ -80,7 +76,7 @@ describe("API Config", () => {
 
 		it("現在の環境変数値を含む", async () => {
 			const testUrl = "https://test.api.com";
-			process.env.NEXT_PUBLIC_API_URL = testUrl;
+			vi.stubEnv("NEXT_PUBLIC_API_URL", testUrl);
 
 			const { getDebugInfo } = await import("../config");
 			const debugInfo = getDebugInfo();
@@ -128,22 +124,22 @@ describe("API Config", () => {
 
 	describe("環境変数処理", () => {
 		it("カスタムタイムアウト値を適用する", async () => {
-			process.env.NEXT_PUBLIC_API_TIMEOUT = "60000";
+			vi.stubEnv("NEXT_PUBLIC_API_TIMEOUT", "60000");
 			const { apiConfig } = await import("../config");
 			expect(apiConfig.timeout).toBe(60000);
 		});
 
 		it("カスタムリトライ設定を適用する", async () => {
-			process.env.NEXT_PUBLIC_API_MAX_RETRIES = "5";
-			process.env.NEXT_PUBLIC_API_RETRY_DELAY = "2000";
+			vi.stubEnv("NEXT_PUBLIC_API_MAX_RETRIES", "5");
+			vi.stubEnv("NEXT_PUBLIC_API_RETRY_DELAY", "2000");
 			const { apiConfig } = await import("../config");
 			expect(apiConfig.maxRetries).toBe(5);
 			expect(apiConfig.retryDelay).toBe(2000);
 		});
 
 		it("不正な数値の場合はデフォルト値を使用する", async () => {
-			process.env.NEXT_PUBLIC_API_TIMEOUT = "invalid";
-			process.env.NEXT_PUBLIC_API_MAX_RETRIES = "not-a-number";
+			vi.stubEnv("NEXT_PUBLIC_API_TIMEOUT", "invalid");
+			vi.stubEnv("NEXT_PUBLIC_API_MAX_RETRIES", "not-a-number");
 			const { apiConfig } = await import("../config");
 
 			// NaNの場合はデフォルト値が使用されることを確認

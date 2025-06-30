@@ -8,16 +8,16 @@
  * バックエンドはnumber型のIDと ISO形式の日付を使用
  */
 export interface ApiSubscriptionResponse {
-  id: number;
-  name: string;
-  amount: number;
-  categoryId: number;
-  billingCycle: 'monthly' | 'yearly' | 'weekly';
-  nextBillingDate: string; // ISO 8601形式
-  isActive: boolean;
-  description: string | null;
-  createdAt: string;
-  updatedAt: string;
+	id: number;
+	name: string;
+	amount: number;
+	categoryId: number;
+	billingCycle: "monthly" | "yearly" | "weekly";
+	nextBillingDate: string; // ISO 8601形式
+	isActive: boolean;
+	description: string | null;
+	createdAt: string;
+	updatedAt: string;
 }
 
 /**
@@ -25,13 +25,13 @@ export interface ApiSubscriptionResponse {
  * IDは自動生成されるため含まない
  */
 export interface ApiCreateSubscriptionRequest {
-  name: string;
-  amount: number;
-  categoryId: number;
-  billingCycle: 'monthly' | 'yearly' | 'weekly';
-  nextBillingDate: string; // ISO 8601形式
-  isActive: boolean;
-  description?: string | null;
+	name: string;
+	amount: number;
+	categoryId: number;
+	billingCycle: "monthly" | "yearly" | "weekly";
+	nextBillingDate: string; // ISO 8601形式
+	isActive: boolean;
+	description?: string | null;
 }
 
 /**
@@ -39,28 +39,28 @@ export interface ApiCreateSubscriptionRequest {
  * 部分更新をサポート
  */
 export interface ApiUpdateSubscriptionRequest {
-  name?: string;
-  amount?: number;
-  categoryId?: number;
-  billingCycle?: 'monthly' | 'yearly';
-  nextBillingDate?: string; // ISO 8601形式
-  isActive?: boolean;
-  description?: string | null;
+	name?: string;
+	amount?: number;
+	categoryId?: number;
+	billingCycle?: "monthly" | "yearly" | "weekly";
+	nextBillingDate?: string; // ISO 8601形式
+	isActive?: boolean;
+	description?: string | null;
 }
 
 /**
  * サブスクリプション一覧レスポンス型
  */
 export interface ApiSubscriptionListResponse {
-  subscriptions: ApiSubscriptionResponse[];
-  total: number;
+	subscriptions: ApiSubscriptionResponse[];
+	total: number;
 }
 
 /**
  * サブスクリプションエラーレスポンス型
  */
 export interface ApiSubscriptionErrorResponse {
-  error: string;
-  message: string;
-  statusCode: number;
+	error: string;
+	message: string;
+	statusCode: number;
 }

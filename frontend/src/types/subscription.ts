@@ -5,10 +5,10 @@
  */
 
 // 基本型をlib/api/types.tsからインポート
-import type { Subscription as ApiSubscription, BillingCycle, Category } from '../lib/api/types';
+import type { BillingCycle, Category } from "../lib/api/types";
 
 // 基本型をre-export
-export type { BillingCycle } from '../lib/api/types';
+export type { BillingCycle } from "../lib/api/types";
 
 /**
  * フロントエンド用のサブスクリプションデータ
@@ -76,6 +76,11 @@ export interface SubscriptionListProps {
 	error?: string | null;
 
 	/**
+	 * データ再取得用のコールバック
+	 */
+	onRefresh?: () => void;
+
+	/**
 	 * 追加のCSSクラス名
 	 */
 	className?: string;
@@ -127,14 +132,14 @@ export interface SubscriptionFormData {
 	nextBillingDate: string;
 
 	/**
-	 * カテゴリID
+	 * カテゴリID（旧フィールドとの互換性のため、APIでは categoryId を使用）
 	 */
 	categoryId: string;
 
 	/**
 	 * アクティブ状態
 	 */
-	isActive: boolean;
+	isActive?: boolean;
 
 	/**
 	 * 説明（オプション）
@@ -167,6 +172,11 @@ export interface SubscriptionFormProps {
 	initialData?: SubscriptionFormData;
 
 	/**
+	 * カテゴリ一覧（フォームで選択肢として表示）
+	 */
+	categories: Category[];
+
+	/**
 	 * 追加のCSSクラス名
 	 */
 	className?: string;
@@ -196,4 +206,9 @@ export interface NewSubscriptionDialogProps {
 	 * 送信中の状態
 	 */
 	isSubmitting?: boolean;
+
+	/**
+	 * カテゴリ一覧（フォームで選択肢として表示）
+	 */
+	categories: Category[];
 }

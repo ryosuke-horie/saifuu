@@ -10,15 +10,9 @@ import {
 	ApiError,
 	createApiErrorFromResponse,
 	createNetworkError,
-	handleApiError,
 	isRetryableError,
 } from "./errors";
-import type {
-	ApiResponse,
-	HttpMethod,
-	RequestOptions,
-	RetryConfig,
-} from "./types";
+import type { ApiResponse, RequestOptions, RetryConfig } from "./types";
 
 /**
  * リクエストの設定オプション
@@ -209,8 +203,8 @@ class ApiClient {
 		}
 
 		// Accept ヘッダーを設定
-		if (!headers["Accept"]) {
-			headers["Accept"] = "application/json";
+		if (!headers.Accept) {
+			headers.Accept = "application/json";
 		}
 
 		return headers;
@@ -317,7 +311,7 @@ class ApiClient {
 	/**
 	 * リクエストエラーを処理する
 	 */
-	private handleRequestError(error: unknown, endpoint: string): ApiError {
+	private handleRequestError(error: unknown, _endpoint: string): ApiError {
 		if (error instanceof ApiError) {
 			return error;
 		}

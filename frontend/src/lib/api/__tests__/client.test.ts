@@ -2,7 +2,7 @@
  * APIクライアントのテスト
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { addQueryParams, createCancelToken } from "../client";
 
 // fetchのモック

@@ -3,7 +3,6 @@
 import { type FC, useCallback, useEffect, useState } from "react";
 import type {
 	BillingCycle,
-	SubscriptionCategory,
 	SubscriptionFormData,
 	SubscriptionFormProps,
 } from "../../types/subscription";
@@ -32,7 +31,8 @@ interface FormErrors {
 	amount?: string;
 	billingCycle?: string;
 	nextBillingDate?: string;
-	category?: string;
+	categoryId?: string;
+	isActive?: string;
 	description?: string;
 }
 
@@ -42,22 +42,16 @@ const defaultFormData: SubscriptionFormData = {
 	amount: 0,
 	billingCycle: "monthly",
 	nextBillingDate: "",
-	category: "other",
+	categoryId: "",
+	isActive: true,
 	description: "",
-};
-
-// カテゴリマッピング（日本語表示用）
-const categoryLabels: Record<SubscriptionCategory, string> = {
-	entertainment: "エンタメ",
-	work: "仕事",
-	lifestyle: "ライフスタイル",
-	other: "その他",
 };
 
 // 請求サイクルマッピング（日本語表示用）
 const billingCycleLabels: Record<BillingCycle, string> = {
 	monthly: "月額",
 	yearly: "年額",
+	weekly: "週額",
 };
 
 export const SubscriptionForm: FC<SubscriptionFormProps> = ({
@@ -65,6 +59,7 @@ export const SubscriptionForm: FC<SubscriptionFormProps> = ({
 	onCancel,
 	isSubmitting = false,
 	initialData,
+	categories,
 	className = "",
 }) => {
 	// フォームデータの状態管理
@@ -79,7 +74,8 @@ export const SubscriptionForm: FC<SubscriptionFormProps> = ({
 		amount: false,
 		billingCycle: false,
 		nextBillingDate: false,
-		category: false,
+		categoryId: false,
+		isActive: false,
 		description: false,
 	});
 
@@ -218,7 +214,8 @@ export const SubscriptionForm: FC<SubscriptionFormProps> = ({
 				amount: true,
 				billingCycle: true,
 				nextBillingDate: true,
-				category: true,
+				categoryId: true,
+				isActive: true,
 				description: true,
 			});
 
@@ -422,45 +419,45 @@ export const SubscriptionForm: FC<SubscriptionFormProps> = ({
 				</label>
 				<select
 					id="subscription-category"
-					value={formData.category}
-					onChange={(e) =>
-						handleFieldChange(
-							"category",
-							e.target.value as SubscriptionCategory,
-						)
-					}
-					onBlur={() => handleFieldBlur("category")}
-					disabled={isSubmitting}
+					value={formData.categoryId}
+					onChange={(e) => handleFieldChange("categoryId", e.target.value)}
+					onBlur={() => handleFieldBlur("categoryId")}
+					disabled={isSubmitting || categories.length === 0}
 					className={`
 						block w-full px-3 py-2 border rounded-md shadow-sm
 						focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
 						disabled:bg-gray-100 disabled:cursor-not-allowed
 						${
-							errors.category
+							errors.categoryId
 								? "border-red-300 focus:ring-red-500 focus:border-red-500"
 								: "border-gray-300"
 						}
 					`}
-					aria-invalid={!!errors.category}
-					aria-describedby={errors.category ? "category-error" : undefined}
+					aria-invalid={!!errors.categoryId}
+					aria-describedby={errors.categoryId ? "category-error" : undefined}
 				>
-					{(
-						Object.entries(categoryLabels) as Array<
-							[SubscriptionCategory, string]
-						>
-					).map(([value, label]) => (
-						<option key={value} value={value}>
-							{label}
-						</option>
-					))}
+					{categories.length === 0 ? (
+						<option value="">カテゴリを読み込み中...</option>
+					) : (
+						<>
+							<option value="">カテゴリを選択してください</option>
+							{categories
+								.filter((cat) => cat.type === "expense") // 支出カテゴリのみ表示
+								.map((category) => (
+									<option key={category.id} value={category.id}>
+										{category.name}
+									</option>
+								))}
+						</>
+					)}
 				</select>
-				{errors.category && (
+				{errors.categoryId && (
 					<p
 						id="category-error"
 						className="mt-1 text-sm text-red-600"
 						role="alert"
 					>
-						{errors.category}
+						{errors.categoryId}
 					</p>
 				)}
 			</div>
