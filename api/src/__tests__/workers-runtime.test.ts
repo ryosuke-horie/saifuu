@@ -146,4 +146,3 @@ describe('Cloudflare Workers Runtime', () => {
 		})
 	})
 })
-
