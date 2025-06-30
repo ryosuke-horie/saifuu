@@ -81,9 +81,9 @@ function getBaseUrl(environment: Environment): string {
 			return process.env.NEXT_PUBLIC_API_URL || "https://api.placeholder.local";
 
 		case "test":
-			// テスト環境: テスト用のモックサーバーまたはローカル
+			// テスト環境: テスト用のAPIサーバー（E2E用）
 			return (
-				process.env.NEXT_PUBLIC_TEST_API_URL || "http://localhost:3001/api"
+				process.env.NEXT_PUBLIC_TEST_API_URL || "http://localhost:3003/api"
 			);
 
 		default:

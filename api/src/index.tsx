@@ -15,7 +15,7 @@ const app = new Hono<{
 
 // CORS設定（開発環境用）
 app.use('/api/*', cors({
-	origin: ['http://localhost:3000', 'http://localhost:3001'],
+	origin: ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003'],
 	allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 	allowHeaders: ['Content-Type', 'Authorization'],
 }))
