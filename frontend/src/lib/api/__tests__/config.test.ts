@@ -209,7 +209,7 @@ describe("API Config", () => {
 			// エラーが発生しないことを確認
 			expect(() => buildUrl("/subscriptions")).not.toThrow();
 			expect(buildUrl("/subscriptions")).toBe(
-				"http://localhost:3001/api/subscriptions",
+				"http://localhost:3003/api/subscriptions",
 			);
 		});
 	});
