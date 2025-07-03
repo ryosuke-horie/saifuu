@@ -274,7 +274,7 @@ describe("useCategories", () => {
 			// 並行してrefetchを実行 - より確実なタイミング制御
 			let resolveRefetch1: (value: Category[]) => void;
 			let resolveRefetch2: (value: Category[]) => void;
-			
+
 			const refetch1Promise = new Promise<Category[]>((resolve) => {
 				resolveRefetch1 = resolve;
 			});

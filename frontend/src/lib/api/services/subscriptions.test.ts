@@ -325,7 +325,7 @@ describe("subscriptions service", () => {
 			});
 
 			it("年次請求サイクルのサブスクリプションを取得する", async () => {
-				const result = await getSubscriptionsByBillingCycle("yearly");
+				const _result = await getSubscriptionsByBillingCycle("yearly");
 
 				expect(mockApiClient.get).toHaveBeenCalledWith(
 					expect.stringContaining("billingCycle=yearly"),
@@ -333,7 +333,7 @@ describe("subscriptions service", () => {
 			});
 
 			it("週次請求サイクルのサブスクリプションを取得する", async () => {
-				const result = await getSubscriptionsByBillingCycle("weekly");
+				const _result = await getSubscriptionsByBillingCycle("weekly");
 
 				expect(mockApiClient.get).toHaveBeenCalledWith(
 					expect.stringContaining("billingCycle=weekly"),
