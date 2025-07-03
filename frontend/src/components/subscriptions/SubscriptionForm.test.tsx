@@ -34,7 +34,7 @@ describe("SubscriptionForm", () => {
 		name: "Netflix",
 		amount: 1480,
 		billingCycle: "monthly" as const,
-		nextBillingDate: "2025-07-01",
+		nextBillingDate: "2025-12-01",
 		categoryId: "cat-1",
 		isActive: true,
 		description: "動画配信サービス",
