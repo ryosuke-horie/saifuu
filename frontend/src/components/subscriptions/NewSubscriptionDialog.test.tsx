@@ -146,6 +146,9 @@ describe("NewSubscriptionDialog", () => {
 			const nextMonthString = nextMonth.toISOString().split("T")[0];
 			await user.type(screen.getByLabelText(/次回請求日/), nextMonthString);
 
+			// カテゴリを選択
+			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "cat-1");
+
 			// 登録ボタンをクリック
 			const submitButton = screen.getByRole("button", { name: "登録" });
 			await user.click(submitButton);
@@ -156,7 +159,7 @@ describe("NewSubscriptionDialog", () => {
 				amount: 1490,
 				billingCycle: "monthly",
 				nextBillingDate: nextMonthString,
-				categoryId: "",
+				categoryId: "cat-1",
 				isActive: true,
 				description: "",
 			});
@@ -229,6 +232,28 @@ describe("NewSubscriptionDialog", () => {
 				expect(
 					screen.getByText("次回請求日は今日以降の日付を入力してください"),
 				).toBeInTheDocument();
+			});
+		});
+
+		it("カテゴリが選択されていない場合、エラーが表示される", async () => {
+			const user = userEvent.setup();
+			render(<NewSubscriptionDialog {...defaultProps} />);
+
+			// 全ての必須フィールドを入力（カテゴリ以外）
+			await user.type(screen.getByLabelText(/サービス名/), "Netflix");
+			await user.type(screen.getByLabelText(/料金/), "1490");
+
+			const nextMonth = new Date();
+			nextMonth.setMonth(nextMonth.getMonth() + 1);
+			const nextMonthString = nextMonth.toISOString().split("T")[0];
+			await user.type(screen.getByLabelText(/次回請求日/), nextMonthString);
+
+			// カテゴリは選択せずに送信
+			const submitButton = screen.getByRole("button", { name: "登録" });
+			await user.click(submitButton);
+
+			await waitFor(() => {
+				expect(screen.getByText("カテゴリは必須です")).toBeInTheDocument();
 			});
 		});
 	});

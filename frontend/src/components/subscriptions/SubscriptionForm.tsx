@@ -132,6 +132,15 @@ export const SubscriptionForm: FC<SubscriptionFormProps> = ({
 					}
 					return undefined;
 
+				case "categoryId":
+					if (
+						!value ||
+						(typeof value === "string" && value.trim().length === 0)
+					) {
+						return "カテゴリは必須です";
+					}
+					return undefined;
+
 				case "description":
 					if (typeof value === "string" && value.length > 500) {
 						return "説明は500文字以内で入力してください";
