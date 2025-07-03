@@ -4,6 +4,7 @@ import { expect, test } from "@playwright/test";
  * サブスクリプション管理のE2Eテスト
  * - 正常系のサブスクリプション登録フローのみテスト
  * - GitHub Actions無料枠節約のため最小限のテストケース
+ * - 基本的な表示確認と統合フロー確認を含む
  */
 test.describe("サブスクリプション管理", () => {
 	test("新規サブスクリプション登録と一覧表示", async ({ page }) => {
@@ -18,21 +19,22 @@ test.describe("サブスクリプション管理", () => {
 			page.getByRole("heading", { name: "サブスクリプション管理" }),
 		).toBeVisible();
 
+		// 説明文が表示されているか確認
+		await expect(
+			page.getByText("定期購読サービスの管理と費用の把握"),
+		).toBeVisible();
+
+		// 統計情報の基本表示確認
+		await expect(page.getByText("登録サービス数")).toBeVisible();
+		await expect(page.getByText("月間合計")).toBeVisible();
+
+		// サブスクリプション一覧の基本表示確認
+		await expect(
+			page.getByRole("heading", { name: "サブスクリプション一覧" }),
+		).toBeVisible();
+
 		// ページのローディングを待つ
 		await page.waitForTimeout(2000);
-
-		// デバッグ: 利用可能なボタンを全てログ出力
-		const buttons = await page.locator("button").all();
-		console.log(
-			"Available buttons:",
-			await Promise.all(
-				buttons.map(async (btn) => {
-					const text = await btn.textContent();
-					const visible = await btn.isVisible();
-					return { text, visible };
-				}),
-			),
-		);
 
 		// 新規登録ボタンを検索してクリック
 		const addButton = page.getByText("新規登録");
@@ -89,6 +91,14 @@ test.describe("サブスクリプション管理", () => {
 		// サブスクリプション一覧テーブルが表示されていることを確認
 		const subscriptionTable = page.getByRole("table");
 		await expect(subscriptionTable).toBeVisible();
+
+		// テーブルヘッダーが正しく表示されていることを確認
+		await expect(
+			page.getByRole("columnheader", { name: "サービス名" }),
+		).toBeVisible();
+		await expect(
+			page.getByRole("columnheader", { name: "料金" }),
+		).toBeVisible();
 
 		// 登録したNetflixが一覧に表示されていることを確認
 		const netflixRow = page.getByRole("row").filter({ hasText: "Netflix" });
