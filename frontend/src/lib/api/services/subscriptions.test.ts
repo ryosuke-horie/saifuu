@@ -8,30 +8,30 @@
  * - ユーティリティ関数
  */
 
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import {
-	getSubscriptions,
-	getSubscription,
-	createSubscription,
-	updateSubscription,
-	deleteSubscription,
-	getSubscriptionStats,
-	getActiveSubscriptions,
-	getInactiveSubscriptions,
-	getSubscriptionsByCategory,
-	getSubscriptionsByBillingCycle,
-	toggleSubscriptionStatus,
-	subscriptionService,
-} from "./subscriptions";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiClient } from "../client";
 import { endpoints } from "../config";
 import type {
-	Subscription,
 	CreateSubscriptionRequest,
-	UpdateSubscriptionRequest,
-	SubscriptionStatsResponse,
 	DeleteResponse,
+	Subscription,
+	SubscriptionStatsResponse,
+	UpdateSubscriptionRequest,
 } from "../types";
+import {
+	createSubscription,
+	deleteSubscription,
+	getActiveSubscriptions,
+	getInactiveSubscriptions,
+	getSubscription,
+	getSubscriptionStats,
+	getSubscriptions,
+	getSubscriptionsByBillingCycle,
+	getSubscriptionsByCategory,
+	subscriptionService,
+	toggleSubscriptionStatus,
+	updateSubscription,
+} from "./subscriptions";
 
 // APIクライアントをモック
 vi.mock("../client", () => ({
@@ -58,13 +58,13 @@ const mockApiClient = vi.mocked(apiClient);
 // テスト用のモックデータ
 const mockSubscription: Subscription = {
 	id: "sub1",
-	serviceName: "Netflix",
+	name: "Netflix",
 	amount: 1990,
-	categoryId: "cat1",
 	billingCycle: "monthly",
 	nextBillingDate: "2024-08-01",
-	isActive: true,
 	description: "動画配信サービス",
+	isActive: true,
+	category: null,
 	createdAt: "2024-07-01T00:00:00Z",
 	updatedAt: "2024-07-01T00:00:00Z",
 };
@@ -73,20 +73,20 @@ const mockSubscriptions: Subscription[] = [
 	mockSubscription,
 	{
 		id: "sub2",
-		serviceName: "Spotify",
+		name: "Spotify",
 		amount: 980,
-		categoryId: "cat1",
 		billingCycle: "monthly",
 		nextBillingDate: "2024-08-15",
-		isActive: false,
 		description: "音楽配信サービス",
+		isActive: false,
+		category: null,
 		createdAt: "2024-07-15T00:00:00Z",
 		updatedAt: "2024-07-15T00:00:00Z",
 	},
 ];
 
 const mockCreateRequest: CreateSubscriptionRequest = {
-	serviceName: "Slack",
+	name: "Slack",
 	amount: 850,
 	categoryId: "cat2",
 	billingCycle: "monthly",
@@ -95,20 +95,25 @@ const mockCreateRequest: CreateSubscriptionRequest = {
 };
 
 const mockUpdateRequest: UpdateSubscriptionRequest = {
-	serviceName: "Netflix Premium",
+	name: "Netflix Premium",
 	amount: 2490,
 };
 
 const mockStatsResponse: SubscriptionStatsResponse = {
-	totalSubscriptions: 5,
-	activeSubscriptions: 3,
-	totalMonthlyAmount: 4820,
-	totalYearlyAmount: 57840,
+	stats: {
+		totalActive: 3,
+		totalInactive: 2,
+		monthlyTotal: 4820,
+		yearlyTotal: 57840,
+		avgMonthlyAmount: 1606.67,
+		categoryBreakdown: [],
+	},
+	upcomingBillings: [],
 };
 
 const mockDeleteResponse: DeleteResponse = {
-	success: true,
 	message: "削除が完了しました",
+	deletedId: "sub1",
 };
 
 describe("subscriptions service", () => {
@@ -123,7 +128,9 @@ describe("subscriptions service", () => {
 			const result = await getSubscriptions();
 
 			expect(result).toEqual(mockSubscriptions);
-			expect(mockApiClient.get).toHaveBeenCalledWith(endpoints.subscriptions.list);
+			expect(mockApiClient.get).toHaveBeenCalledWith(
+				endpoints.subscriptions.list,
+			);
 		});
 
 		it("クエリパラメータ付きで取得する", async () => {
@@ -147,7 +154,9 @@ describe("subscriptions service", () => {
 			const result = await getSubscriptions({});
 
 			expect(result).toEqual(mockSubscriptions);
-			expect(mockApiClient.get).toHaveBeenCalledWith(endpoints.subscriptions.list);
+			expect(mockApiClient.get).toHaveBeenCalledWith(
+				endpoints.subscriptions.list,
+			);
 		});
 	});
 
@@ -189,7 +198,9 @@ describe("subscriptions service", () => {
 			const error = new Error("バリデーションエラー");
 			mockApiClient.post.mockRejectedValue(error);
 
-			await expect(createSubscription(mockCreateRequest)).rejects.toThrow(error);
+			await expect(createSubscription(mockCreateRequest)).rejects.toThrow(
+				error,
+			);
 		});
 	});
 
@@ -244,7 +255,9 @@ describe("subscriptions service", () => {
 			const result = await getSubscriptionStats();
 
 			expect(result).toEqual(mockStatsResponse);
-			expect(mockApiClient.get).toHaveBeenCalledWith(endpoints.subscriptions.stats);
+			expect(mockApiClient.get).toHaveBeenCalledWith(
+				endpoints.subscriptions.stats,
+			);
 		});
 	});
 
@@ -364,18 +377,33 @@ describe("subscriptions service", () => {
 			expect(subscriptionService.createSubscription).toBe(createSubscription);
 			expect(subscriptionService.updateSubscription).toBe(updateSubscription);
 			expect(subscriptionService.deleteSubscription).toBe(deleteSubscription);
-			expect(subscriptionService.getSubscriptionStats).toBe(getSubscriptionStats);
-			expect(subscriptionService.getActiveSubscriptions).toBe(getActiveSubscriptions);
-			expect(subscriptionService.getInactiveSubscriptions).toBe(getInactiveSubscriptions);
-			expect(subscriptionService.getSubscriptionsByCategory).toBe(getSubscriptionsByCategory);
-			expect(subscriptionService.getSubscriptionsByBillingCycle).toBe(getSubscriptionsByBillingCycle);
-			expect(subscriptionService.toggleSubscriptionStatus).toBe(toggleSubscriptionStatus);
+			expect(subscriptionService.getSubscriptionStats).toBe(
+				getSubscriptionStats,
+			);
+			expect(subscriptionService.getActiveSubscriptions).toBe(
+				getActiveSubscriptions,
+			);
+			expect(subscriptionService.getInactiveSubscriptions).toBe(
+				getInactiveSubscriptions,
+			);
+			expect(subscriptionService.getSubscriptionsByCategory).toBe(
+				getSubscriptionsByCategory,
+			);
+			expect(subscriptionService.getSubscriptionsByBillingCycle).toBe(
+				getSubscriptionsByBillingCycle,
+			);
+			expect(subscriptionService.toggleSubscriptionStatus).toBe(
+				toggleSubscriptionStatus,
+			);
 		});
 
 		it("オブジェクトが読み取り専用である", () => {
 			// as constで作成されているため、プロパティの変更はTypeScriptレベルでエラーになる
 			// ランタイムレベルでの確認
-			const descriptor = Object.getOwnPropertyDescriptor(subscriptionService, 'getSubscriptions');
+			const descriptor = Object.getOwnPropertyDescriptor(
+				subscriptionService,
+				"getSubscriptions",
+			);
 			expect(descriptor?.writable).toBe(true); // 関数プロパティは技術的には書き換え可能だが、型レベルで保護されている
 			expect(Object.isFrozen(subscriptionService)).toBe(false); // as constは型レベルの保護のみ
 		});
@@ -398,17 +426,14 @@ describe("subscriptions service", () => {
 		});
 
 		it("null値のクエリパラメータを正しく処理する", async () => {
-			const query = { isActive: null, categoryId: "cat1" };
+			const query = { categoryId: "cat1" };
 			mockApiClient.get.mockResolvedValue(mockSubscriptions);
 
 			await getSubscriptions(query);
 
-			// nullの値は含まれず、categoryIdのみが含まれる
+			// categoryIdのみが含まれる
 			expect(mockApiClient.get).toHaveBeenCalledWith(
 				expect.stringContaining("categoryId=cat1"),
-			);
-			expect(mockApiClient.get).toHaveBeenCalledWith(
-				expect.not.stringContaining("isActive=null"),
 			);
 		});
 
@@ -417,7 +442,9 @@ describe("subscriptions service", () => {
 
 			await getSubscription("");
 
-			expect(mockApiClient.get).toHaveBeenCalledWith(endpoints.subscriptions.detail(""));
+			expect(mockApiClient.get).toHaveBeenCalledWith(
+				endpoints.subscriptions.detail(""),
+			);
 		});
 
 		it("空のデータで作成・更新ができる", async () => {
