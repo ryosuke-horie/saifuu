@@ -27,8 +27,8 @@ export default defineConfig({
 
 	// 共通設定
 	use: {
-		// ベースURL（開発サーバー）
-		baseURL: "http://localhost:3000",
+		// ベースURL（E2E用開発サーバー）
+		baseURL: "http://localhost:3002",
 
 		// 失敗時のスクリーンショット
 		screenshot: "only-on-failure",
@@ -53,10 +53,18 @@ export default defineConfig({
 	],
 
 	// 開発サーバーの起動設定（テスト実行前に自動起動）
-	webServer: {
-		command: "npm run dev",
-		url: "http://localhost:3000",
-		reuseExistingServer: !process.env.CI,
-		timeout: 120 * 1000,
-	},
+	webServer: [
+		{
+			command: "npm run dev:e2e",
+			url: "http://localhost:3002",
+			reuseExistingServer: !process.env.CI,
+			timeout: 120 * 1000,
+		},
+		{
+			command: "cd ../api && npm run dev:e2e",
+			url: "http://localhost:3003/api/health",
+			reuseExistingServer: !process.env.CI,
+			timeout: 120 * 1000,
+		},
+	],
 });
