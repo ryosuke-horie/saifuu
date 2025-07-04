@@ -31,8 +31,8 @@ app.post('/', async (c) => {
 			name: body.name,
 			type: body.type,
 			color: body.color,
-			createdAt: new Date(),
-			updatedAt: new Date(),
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
 		}
 
 		const result = await db.insert(categories).values(newCategory).returning()
@@ -51,7 +51,7 @@ app.put('/:id', async (c) => {
 
 		const updateData = {
 			...body,
-			updatedAt: new Date(),
+			updatedAt: new Date().toISOString(),
 		}
 
 		const result = await db

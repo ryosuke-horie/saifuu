@@ -19,17 +19,23 @@ export function createDatabase(binding: D1Database) {
 }
 
 // E2E テスト用のローカルSQLiteデータベース接続
-export function createDevDatabase(path = './e2e-test.db') {
+export function createDevDatabase(path = './dev.db') {
 	if (!devDatabase) {
-		devDatabase = new SQLiteDatabase(path)
+		try {
+			devDatabase = new SQLiteDatabase(path)
+		} catch (error) {
+			console.error('Failed to create SQLite database:', error)
+			throw error
+		}
 
 		// テーブルを作成（存在しない場合）
-		devDatabase.exec(`
+		try {
+			devDatabase.exec(`
 			CREATE TABLE IF NOT EXISTS categories (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				name TEXT NOT NULL,
 				type TEXT NOT NULL,
-				description TEXT,
+				color TEXT,
 				created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 			);
@@ -49,19 +55,25 @@ export function createDevDatabase(path = './e2e-test.db') {
 			);
 		`)
 
-		// デフォルトカテゴリを挿入（存在しない場合）
-		const categoryCount = devDatabase.prepare('SELECT COUNT(*) as count FROM categories').get() as {
-			count: number
-		}
-		if (categoryCount.count === 0) {
-			devDatabase.exec(`
-				INSERT INTO categories (name, type, description) VALUES
-				('エンターテイメント', 'expense', '動画配信、音楽配信、ゲームなど'),
-				('仕事・ビジネス', 'expense', 'クラウドサービス、ソフトウェアライセンスなど'),
-				('学習・教育', 'expense', 'オンライン学習、電子書籍など'),
-				('健康・フィットネス', 'expense', 'フィットネスアプリ、健康管理など'),
-				('その他', 'expense', 'その他のサブスクリプション');
+			// デフォルトカテゴリを挿入（存在しない場合）
+			const categoryCount = devDatabase
+				.prepare('SELECT COUNT(*) as count FROM categories')
+				.get() as {
+				count: number
+			}
+			if (categoryCount.count === 0) {
+				devDatabase.exec(`
+				INSERT INTO categories (name, type, color) VALUES
+				('エンターテイメント', 'expense', '#FF6B6B'),
+				('仕事・ビジネス', 'expense', '#4ECDC4'),
+				('学習・教育', 'expense', '#45B7D1'),
+				('健康・フィットネス', 'expense', '#96CEB4'),
+				('その他', 'expense', '#FFEAA7');
 			`)
+			}
+		} catch (error) {
+			console.error('Failed to create database tables:', error)
+			throw error
 		}
 	}
 

@@ -7,12 +7,12 @@ export const categories = sqliteTable('categories', {
 	name: text('name').notNull(),
 	type: text('type', { enum: ['income', 'expense'] }).notNull(),
 	color: text('color'), // UIでの色表示用
-	createdAt: integer('created_at', { mode: 'timestamp' })
+	createdAt: text('created_at')
 		.notNull()
-		.$defaultFn(() => new Date()),
-	updatedAt: integer('updated_at', { mode: 'timestamp' })
+		.$defaultFn(() => new Date().toISOString()),
+	updatedAt: text('updated_at')
 		.notNull()
-		.$defaultFn(() => new Date()),
+		.$defaultFn(() => new Date().toISOString()),
 })
 
 // 取引テーブル
@@ -23,13 +23,13 @@ export const transactions = sqliteTable('transactions', {
 	type: text('type', { enum: ['income', 'expense'] }).notNull(),
 	categoryId: integer('category_id').references(() => categories.id),
 	description: text('description'), // 説明・メモ
-	date: integer('date', { mode: 'timestamp' }).notNull(), // 取引日
-	createdAt: integer('created_at', { mode: 'timestamp' })
+	date: text('date').notNull(), // 取引日
+	createdAt: text('created_at')
 		.notNull()
-		.$defaultFn(() => new Date()),
-	updatedAt: integer('updated_at', { mode: 'timestamp' })
+		.$defaultFn(() => new Date().toISOString()),
+	updatedAt: text('updated_at')
 		.notNull()
-		.$defaultFn(() => new Date()),
+		.$defaultFn(() => new Date().toISOString()),
 })
 
 // サブスクリプションテーブル
@@ -41,16 +41,16 @@ export const subscriptions = sqliteTable('subscriptions', {
 	billingCycle: text('billing_cycle', { enum: ['monthly', 'yearly', 'weekly'] })
 		.notNull()
 		.default('monthly'),
-	nextBillingDate: integer('next_billing_date', { mode: 'timestamp' }).notNull(),
+	nextBillingDate: text('next_billing_date').notNull(),
 	categoryId: integer('category_id').references(() => categories.id),
 	description: text('description'),
 	isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
-	createdAt: integer('created_at', { mode: 'timestamp' })
+	createdAt: text('created_at')
 		.notNull()
-		.$defaultFn(() => new Date()),
-	updatedAt: integer('updated_at', { mode: 'timestamp' })
+		.$defaultFn(() => new Date().toISOString()),
+	updatedAt: text('updated_at')
 		.notNull()
-		.$defaultFn(() => new Date()),
+		.$defaultFn(() => new Date().toISOString()),
 })
 
 // 型推論のためのエクスポート
