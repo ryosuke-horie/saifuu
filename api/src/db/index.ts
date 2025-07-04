@@ -22,7 +22,9 @@ export function createDatabase(binding: D1Database) {
 export function createDevDatabase(path = './dev.db') {
 	if (!devDatabase) {
 		try {
+			console.log('Creating SQLite database at:', path)
 			devDatabase = new SQLiteDatabase(path)
+			console.log('SQLite database created successfully')
 		} catch (error) {
 			console.error('Failed to create SQLite database:', error)
 			throw error

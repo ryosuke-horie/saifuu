@@ -50,21 +50,34 @@ app.get('/', (c) => {
 app.get('/api/health', async (c) => {
 	try {
 		const db = c.get('db')
+		console.log('Health check: database instance retrieved')
 		// シンプルなクエリでデータベース接続をテスト
-		const _result = await db.select().from(categories).limit(1)
+		const result = await db.select().from(categories).limit(1)
+		console.log('Health check: query successful, result:', result)
 		return c.json({
 			status: 'ok',
 			database: 'connected',
 			environment: isDev ? 'development' : 'production',
 			timestamp: new Date().toISOString(),
+			debug: {
+				categoriesCount: result.length,
+				branch: 'issue-53',
+				schemaFixed: true,
+			},
 		})
 	} catch (error) {
+		console.error('Health check error:', error)
 		return c.json(
 			{
 				status: 'error',
 				database: 'failed',
 				error: error instanceof Error ? error.message : 'Unknown error',
+				stack: error instanceof Error ? error.stack : undefined,
 				timestamp: new Date().toISOString(),
+				debug: {
+					branch: 'issue-53',
+					schemaFixed: true,
+				},
 			},
 			500
 		)
