@@ -24,7 +24,39 @@ npm install
 
 # APIの依存関係もインストール
 cd api && npm install
+
+# 環境変数ファイルの作成（詳細は下記参照）
+cp api/.env.example api/.env
+cp frontend/.env.example frontend/.env
 ```
+
+### 環境変数の設定
+
+#### API環境変数 (`api/.env`)
+```bash
+# 開発環境用SQLiteデータベースパス
+DEV_DB_PATH=./dev.db
+
+# 開発環境フラグ (development/production/test)
+NODE_ENV=development
+```
+
+#### フロントエンド環境変数 (`frontend/.env`)
+```bash
+# API Base URL - 開発環境用
+NEXT_PUBLIC_API_URL=http://localhost:5173/api
+
+# API設定
+NEXT_PUBLIC_API_TIMEOUT=30000       # タイムアウト（ミリ秒）
+NEXT_PUBLIC_API_MAX_RETRIES=3       # 最大リトライ回数
+NEXT_PUBLIC_API_RETRY_DELAY=1000    # リトライ間隔（ミリ秒）
+NEXT_PUBLIC_API_PORT=5173           # APIポート番号
+```
+
+**注意事項:**
+- `.env`ファイルは`.gitignore`に含まれており、リポジトリにはコミットされません
+- 本番環境では、Cloudflare WorkersのシークレットやNext.jsの環境変数を使用します
+- 開発時は`.env.example`をコピーして`.env`を作成してください
 
 ## 開発サーバーの起動
 
