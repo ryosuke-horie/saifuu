@@ -5,9 +5,9 @@ import ssrPlugin from 'vite-ssr-components/plugin'
 export default defineConfig({
   plugins: [cloudflare(), ssrPlugin()],
   optimizeDeps: {
-    exclude: ['better-sqlite3']
+    exclude: []
   },
   ssr: {
-    noExternal: ['better-sqlite3']
+    noExternal: []
   }
 })

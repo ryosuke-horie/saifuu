@@ -28,16 +28,33 @@ const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV
 
 // ミドルウェア: データベース接続を設定
 app.use('/api/*', async (c, next) => {
-	if (isDev) {
-		// 開発環境ではローカルSQLiteを使用
-		const db = createDevDatabase()
-		c.set('db', db)
-	} else {
-		// 本番環境ではCloudflare D1を使用
+	try {
+		console.log('=== Database middleware start ===')
+		console.log('Environment isDev:', isDev)
+		console.log('Request path:', c.req.path)
+		
+		// 開発環境・本番環境の両方でCloudflare D1を使用
+		// wrangler dev では c.env.DB がローカルD1インスタンスを提供
 		const db = createDatabase(c.env.DB)
+		console.log('D1 database created successfully')
 		c.set('db', db)
+		console.log('Database set in context')
+		
+		console.log('Database middleware completed, calling next()')
+		await next()
+		console.log('Next() completed successfully')
+	} catch (error) {
+		console.error('=== Database middleware error ===')
+		console.error('Error in database middleware:', error)
+		console.error('Error type:', typeof error)
+		console.error('Error message:', error instanceof Error ? error.message : String(error))
+		console.error('Error stack:', error instanceof Error ? error.stack : undefined)
+		
+		return c.json({
+			error: 'Database initialization failed',
+			details: error instanceof Error ? error.message : String(error)
+		}, 500)
 	}
-	await next()
 })
 
 app.use(renderer)
@@ -49,8 +66,15 @@ app.get('/', (c) => {
 // データベース接続のテスト用エンドポイント
 app.get('/api/health', async (c) => {
 	try {
+		console.log('=== Health check start ===')
 		const db = c.get('db')
-		console.log('Health check: database instance retrieved')
+		console.log('Health check: database instance retrieved', typeof db)
+		
+		if (!db) {
+			throw new Error('Database instance is null or undefined')
+		}
+		
+		console.log('Health check: attempting database query')
 		// シンプルなクエリでデータベース接続をテスト
 		const result = await db.select().from(categories).limit(1)
 		console.log('Health check: query successful, result:', result)
@@ -66,7 +90,12 @@ app.get('/api/health', async (c) => {
 			},
 		})
 	} catch (error) {
-		console.error('Health check error:', error)
+		console.error('=== Health check error ===')
+		console.error('Error type:', typeof error)
+		console.error('Error message:', error instanceof Error ? error.message : String(error))
+		console.error('Error stack:', error instanceof Error ? error.stack : undefined)
+		console.error('Full error object:', error)
+		
 		return c.json(
 			{
 				status: 'error',

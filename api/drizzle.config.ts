@@ -1,6 +1,14 @@
 import { defineConfig } from 'drizzle-kit';
 
-export default defineConfig({
+// ローカル開発とリモート環境の分岐設定
+export default process.env.LOCAL_DB_PATH ? {
+  schema: './src/db/schema.ts',
+  out: './drizzle/migrations',
+  dialect: 'sqlite',
+  dbCredentials: {
+    url: process.env.LOCAL_DB_PATH,
+  },
+} : defineConfig({
   schema: './src/db/schema.ts',
   out: './drizzle/migrations',
   dialect: 'sqlite',
