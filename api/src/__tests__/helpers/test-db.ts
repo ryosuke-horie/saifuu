@@ -1,9 +1,7 @@
 import type { D1Database } from '@cloudflare/workers-types'
 import Database from 'better-sqlite3'
-import { sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import * as schema from '../../db/schema'
-import { categories, subscriptions } from '../../db/schema'
 
 /**
  * テスト用データベースヘルパー
