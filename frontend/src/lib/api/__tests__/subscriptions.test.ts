@@ -1,330 +1,342 @@
 /**
  * Subscriptions API のテスト
- * 
+ *
  * Issue #53 修正対応:
  * - APIレスポンス形式変更（オブジェクト→配列）の検証
  * - fetchSubscriptions() の動作確認とカテゴリ連携テスト
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Category } from "../../../types/category";
+import type { SubscriptionFormData } from "../../../types/subscription";
+import { apiClient } from "../client";
 import {
-  fetchSubscriptions,
-  fetchSubscriptionById,
-  createSubscription,
-  updateSubscription,
-  deleteSubscription,
-  updateSubscriptionStatus,
-} from '../subscriptions/api'
-import { apiClient } from '../client'
-import type { ApiSubscriptionResponse } from '../subscriptions/types'
-import type { Category } from '../../../types/category'
-import type { SubscriptionFormData } from '../../../types/subscription'
+	createSubscription,
+	deleteSubscription,
+	fetchSubscriptionById,
+	fetchSubscriptions,
+	updateSubscription,
+	updateSubscriptionStatus,
+} from "../subscriptions/api";
+import type { ApiSubscriptionResponse } from "../subscriptions/types";
 
 // apiClientをモック化
-vi.mock('../client', () => ({
-  apiClient: {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    delete: vi.fn(),
-  },
-}))
+vi.mock("../client", () => ({
+	apiClient: {
+		get: vi.fn(),
+		post: vi.fn(),
+		put: vi.fn(),
+		delete: vi.fn(),
+	},
+}));
 
-describe('Subscriptions API', () => {
-  const mockCategories: Category[] = [
-    {
-      id: '1',
-      name: 'エンターテイメント',
-      type: 'expense',
-      color: '#FF6B6B',
-      createdAt: '2025-07-05T07:06:39Z',
-      updatedAt: '2025-07-05T07:06:39Z',
-    },
-    {
-      id: '2',
-      name: '仕事・ビジネス',
-      type: 'expense',
-      color: '#4ECDC4',
-      createdAt: '2025-07-05T07:06:39Z',
-      updatedAt: '2025-07-05T07:06:39Z',
-    },
-  ]
+describe("Subscriptions API", () => {
+	const mockCategories: Category[] = [
+		{
+			id: "1",
+			name: "エンターテイメント",
+			type: "expense",
+			color: "#FF6B6B",
+			createdAt: "2025-07-05T07:06:39Z",
+			updatedAt: "2025-07-05T07:06:39Z",
+		},
+		{
+			id: "2",
+			name: "仕事・ビジネス",
+			type: "expense",
+			color: "#4ECDC4",
+			createdAt: "2025-07-05T07:06:39Z",
+			updatedAt: "2025-07-05T07:06:39Z",
+		},
+	];
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
 
-  describe('fetchSubscriptions', () => {
-    it('should fetch subscriptions successfully with array response format', async () => {
-      // 今回の修正: APIが配列を直接返すケース
-      const mockApiResponse: ApiSubscriptionResponse[] = [
-        {
-          id: 1,
-          name: 'Netflix',
-          amount: 1980,
-          categoryId: 1,
-          billingCycle: 'monthly',
-          nextBillingDate: '2025-08-01T00:00:00Z',
-          isActive: true,
-          description: '動画ストリーミング',
-          createdAt: '2025-07-05T07:06:39Z',
-          updatedAt: '2025-07-05T07:06:39Z',
-        },
-        {
-          id: 2,
-          name: 'GitHub Pro',
-          amount: 400,
-          categoryId: 2,
-          billingCycle: 'monthly',
-          nextBillingDate: '2025-08-01T00:00:00Z',
-          isActive: true,
-          description: null,
-          createdAt: '2025-07-05T07:06:39Z',
-          updatedAt: '2025-07-05T07:06:39Z',
-        },
-      ]
+	describe("fetchSubscriptions", () => {
+		it("should fetch subscriptions successfully with array response format", async () => {
+			// 今回の修正: APIが配列を直接返すケース
+			const mockApiResponse: ApiSubscriptionResponse[] = [
+				{
+					id: 1,
+					name: "Netflix",
+					amount: 1980,
+					categoryId: 1,
+					billingCycle: "monthly",
+					nextBillingDate: "2025-08-01T00:00:00Z",
+					isActive: true,
+					description: "動画ストリーミング",
+					createdAt: "2025-07-05T07:06:39Z",
+					updatedAt: "2025-07-05T07:06:39Z",
+				},
+				{
+					id: 2,
+					name: "GitHub Pro",
+					amount: 400,
+					categoryId: 2,
+					billingCycle: "monthly",
+					nextBillingDate: "2025-08-01T00:00:00Z",
+					isActive: true,
+					description: null,
+					createdAt: "2025-07-05T07:06:39Z",
+					updatedAt: "2025-07-05T07:06:39Z",
+				},
+			];
 
-      const mockGet = vi.mocked(apiClient.get)
-      mockGet.mockResolvedValueOnce(mockApiResponse)
+			const mockGet = vi.mocked(apiClient.get);
+			mockGet.mockResolvedValueOnce(mockApiResponse);
 
-      const result = await fetchSubscriptions(mockCategories)
+			const result = await fetchSubscriptions(mockCategories);
 
-      expect(mockGet).toHaveBeenCalledWith('/subscriptions')
-      expect(result).toHaveLength(2)
-      
-      // 第1サブスクリプションの検証
-      expect(result[0]).toEqual({
-        id: '1',
-        name: 'Netflix',
-        amount: 1980,
-        category: mockCategories[0], // カテゴリ連携の確認
-        billingCycle: 'monthly',
-        nextBillingDate: '2025-08-01', // YYYY-MM-DD形式に変換される
-        isActive: true,
-        description: '動画ストリーミング',
-      })
+			expect(mockGet).toHaveBeenCalledWith("/subscriptions");
+			expect(result).toHaveLength(2);
 
-      // 第2サブスクリプションの検証
-      expect(result[1]).toEqual({
-        id: '2',
-        name: 'GitHub Pro',
-        amount: 400,
-        category: mockCategories[1], // カテゴリ連携の確認
-        billingCycle: 'monthly',
-        nextBillingDate: '2025-08-01', // YYYY-MM-DD形式に変換される
-        isActive: true,
-        description: undefined, // null -> undefined 変換
-      })
-    })
+			// 第1サブスクリプションの検証
+			expect(result[0]).toEqual({
+				id: "1",
+				name: "Netflix",
+				amount: 1980,
+				category: mockCategories[0], // カテゴリ連携の確認
+				billingCycle: "monthly",
+				nextBillingDate: "2025-08-01", // YYYY-MM-DD形式に変換される
+				isActive: true,
+				description: "動画ストリーミング",
+			});
 
-    it('should handle empty subscriptions array', async () => {
-      // 空配列レスポンスのテスト
-      const mockGet = vi.mocked(apiClient.get)
-      mockGet.mockResolvedValueOnce([])
+			// 第2サブスクリプションの検証
+			expect(result[1]).toEqual({
+				id: "2",
+				name: "GitHub Pro",
+				amount: 400,
+				category: mockCategories[1], // カテゴリ連携の確認
+				billingCycle: "monthly",
+				nextBillingDate: "2025-08-01", // YYYY-MM-DD形式に変換される
+				isActive: true,
+				description: undefined, // null -> undefined 変換
+			});
+		});
 
-      const result = await fetchSubscriptions(mockCategories)
+		it("should handle empty subscriptions array", async () => {
+			// 空配列レスポンスのテスト
+			const mockGet = vi.mocked(apiClient.get);
+			mockGet.mockResolvedValueOnce([]);
 
-      expect(mockGet).toHaveBeenCalledWith('/subscriptions')
-      expect(result).toEqual([])
-    })
+			const result = await fetchSubscriptions(mockCategories);
 
-    it('should handle missing category with error', async () => {
-      // 存在しないカテゴリIDを持つサブスクリプション
-      const mockApiResponse: ApiSubscriptionResponse[] = [
-        {
-          id: 1,
-          name: 'Unknown Service',
-          amount: 1000,
-          categoryId: 999, // 存在しないカテゴリID
-          billingCycle: 'monthly',
-          nextBillingDate: '2025-08-01T00:00:00Z',
-          isActive: true,
-          description: null,
-          createdAt: '2025-07-05T07:06:39Z',
-          updatedAt: '2025-07-05T07:06:39Z',
-        },
-      ]
+			expect(mockGet).toHaveBeenCalledWith("/subscriptions");
+			expect(result).toEqual([]);
+		});
 
-      const mockGet = vi.mocked(apiClient.get)
-      mockGet.mockResolvedValueOnce(mockApiResponse)
+		it("should handle missing category with error", async () => {
+			// 存在しないカテゴリIDを持つサブスクリプション
+			const mockApiResponse: ApiSubscriptionResponse[] = [
+				{
+					id: 1,
+					name: "Unknown Service",
+					amount: 1000,
+					categoryId: 999, // 存在しないカテゴリID
+					billingCycle: "monthly",
+					nextBillingDate: "2025-08-01T00:00:00Z",
+					isActive: true,
+					description: null,
+					createdAt: "2025-07-05T07:06:39Z",
+					updatedAt: "2025-07-05T07:06:39Z",
+				},
+			];
 
-      // 存在しないカテゴリの場合、エラーが投げられることを確認
-      await expect(fetchSubscriptions(mockCategories)).rejects.toThrow(
-        'サブスクリプション一覧の取得に失敗しました'
-      )
-    })
+			const mockGet = vi.mocked(apiClient.get);
+			mockGet.mockResolvedValueOnce(mockApiResponse);
 
-    it('should handle API errors', async () => {
-      const mockGet = vi.mocked(apiClient.get)
-      mockGet.mockRejectedValueOnce(new Error('Network Error'))
+			// 存在しないカテゴリの場合、エラーが投げられることを確認
+			await expect(fetchSubscriptions(mockCategories)).rejects.toThrow(
+				"サブスクリプション一覧の取得に失敗しました",
+			);
+		});
 
-      await expect(fetchSubscriptions(mockCategories)).rejects.toThrow(
-        'サブスクリプション一覧の取得に失敗しました'
-      )
-    })
-  })
+		it("should handle API errors", async () => {
+			const mockGet = vi.mocked(apiClient.get);
+			mockGet.mockRejectedValueOnce(new Error("Network Error"));
 
-  describe('fetchSubscriptionById', () => {
-    it('should fetch single subscription by id', async () => {
-      const mockApiResponse: ApiSubscriptionResponse = {
-        id: 1,
-        name: 'Netflix',
-        amount: 1980,
-        categoryId: 1,
-        billingCycle: 'monthly',
-        nextBillingDate: '2025-08-01T00:00:00Z',
-        isActive: true,
-        description: '動画ストリーミング',
-        createdAt: '2025-07-05T07:06:39Z',
-        updatedAt: '2025-07-05T07:06:39Z',
-      }
+			await expect(fetchSubscriptions(mockCategories)).rejects.toThrow(
+				"サブスクリプション一覧の取得に失敗しました",
+			);
+		});
+	});
 
-      const mockGet = vi.mocked(apiClient.get)
-      mockGet.mockResolvedValueOnce(mockApiResponse)
+	describe("fetchSubscriptionById", () => {
+		it("should fetch single subscription by id", async () => {
+			const mockApiResponse: ApiSubscriptionResponse = {
+				id: 1,
+				name: "Netflix",
+				amount: 1980,
+				categoryId: 1,
+				billingCycle: "monthly",
+				nextBillingDate: "2025-08-01T00:00:00Z",
+				isActive: true,
+				description: "動画ストリーミング",
+				createdAt: "2025-07-05T07:06:39Z",
+				updatedAt: "2025-07-05T07:06:39Z",
+			};
 
-      const result = await fetchSubscriptionById('1', mockCategories)
+			const mockGet = vi.mocked(apiClient.get);
+			mockGet.mockResolvedValueOnce(mockApiResponse);
 
-      expect(mockGet).toHaveBeenCalledWith('/subscriptions/1')
-      expect(result.id).toBe('1')
-      expect(result.name).toBe('Netflix')
-      expect(result.category).toEqual(mockCategories[0])
-    })
-  })
+			const result = await fetchSubscriptionById("1", mockCategories);
 
-  describe('createSubscription', () => {
-    it('should create subscription successfully', async () => {
-      const mockFormData: SubscriptionFormData = {
-        name: 'Spotify',
-        amount: 980,
-        categoryId: '1',
-        billingCycle: 'monthly',
-        nextBillingDate: '2025-08-01',
-        isActive: true,
-        description: '音楽ストリーミング',
-      }
+			expect(mockGet).toHaveBeenCalledWith("/subscriptions/1");
+			expect(result.id).toBe("1");
+			expect(result.name).toBe("Netflix");
+			expect(result.category).toEqual(mockCategories[0]);
+		});
+	});
 
-      const mockApiResponse: ApiSubscriptionResponse = {
-        id: 3,
-        name: 'Spotify',
-        amount: 980,
-        categoryId: 1,
-        billingCycle: 'monthly',
-        nextBillingDate: '2025-08-01T00:00:00Z',
-        isActive: true,
-        description: '音楽ストリーミング',
-        createdAt: '2025-07-05T07:06:39Z',
-        updatedAt: '2025-07-05T07:06:39Z',
-      }
+	describe("createSubscription", () => {
+		it("should create subscription successfully", async () => {
+			const mockFormData: SubscriptionFormData = {
+				name: "Spotify",
+				amount: 980,
+				categoryId: "1",
+				billingCycle: "monthly",
+				nextBillingDate: "2025-08-01",
+				isActive: true,
+				description: "音楽ストリーミング",
+			};
 
-      const mockPost = vi.mocked(apiClient.post)
-      mockPost.mockResolvedValueOnce(mockApiResponse)
+			const mockApiResponse: ApiSubscriptionResponse = {
+				id: 3,
+				name: "Spotify",
+				amount: 980,
+				categoryId: 1,
+				billingCycle: "monthly",
+				nextBillingDate: "2025-08-01T00:00:00Z",
+				isActive: true,
+				description: "音楽ストリーミング",
+				createdAt: "2025-07-05T07:06:39Z",
+				updatedAt: "2025-07-05T07:06:39Z",
+			};
 
-      const result = await createSubscription(mockFormData, mockCategories)
+			const mockPost = vi.mocked(apiClient.post);
+			mockPost.mockResolvedValueOnce(mockApiResponse);
 
-      expect(mockPost).toHaveBeenCalledWith('/subscriptions', expect.any(Object))
-      expect(result.id).toBe('3')
-      expect(result.name).toBe('Spotify')
-    })
-  })
+			const result = await createSubscription(mockFormData, mockCategories);
 
-  describe('updateSubscription', () => {
-    it('should update subscription successfully', async () => {
-      const mockFormData: Partial<SubscriptionFormData> = {
-        name: 'Spotify Premium',
-        amount: 1480,
-      }
+			expect(mockPost).toHaveBeenCalledWith(
+				"/subscriptions",
+				expect.any(Object),
+			);
+			expect(result.id).toBe("3");
+			expect(result.name).toBe("Spotify");
+		});
+	});
 
-      const mockApiResponse: ApiSubscriptionResponse = {
-        id: 1,
-        name: 'Spotify Premium',
-        amount: 1480,
-        categoryId: 1,
-        billingCycle: 'monthly',
-        nextBillingDate: '2025-08-01T00:00:00Z',
-        isActive: true,
-        description: '音楽ストリーミング',
-        createdAt: '2025-07-05T07:06:39Z',
-        updatedAt: '2025-07-05T07:06:39Z',
-      }
+	describe("updateSubscription", () => {
+		it("should update subscription successfully", async () => {
+			const mockFormData: Partial<SubscriptionFormData> = {
+				name: "Spotify Premium",
+				amount: 1480,
+			};
 
-      const mockPut = vi.mocked(apiClient.put)
-      mockPut.mockResolvedValueOnce(mockApiResponse)
+			const mockApiResponse: ApiSubscriptionResponse = {
+				id: 1,
+				name: "Spotify Premium",
+				amount: 1480,
+				categoryId: 1,
+				billingCycle: "monthly",
+				nextBillingDate: "2025-08-01T00:00:00Z",
+				isActive: true,
+				description: "音楽ストリーミング",
+				createdAt: "2025-07-05T07:06:39Z",
+				updatedAt: "2025-07-05T07:06:39Z",
+			};
 
-      const result = await updateSubscription('1', mockFormData, mockCategories)
+			const mockPut = vi.mocked(apiClient.put);
+			mockPut.mockResolvedValueOnce(mockApiResponse);
 
-      expect(mockPut).toHaveBeenCalledWith('/subscriptions/1', expect.any(Object))
-      expect(result.name).toBe('Spotify Premium')
-      expect(result.amount).toBe(1480)
-    })
-  })
+			const result = await updateSubscription(
+				"1",
+				mockFormData,
+				mockCategories,
+			);
 
-  describe('deleteSubscription', () => {
-    it('should delete subscription successfully', async () => {
-      const mockDelete = vi.mocked(apiClient.delete)
-      mockDelete.mockResolvedValueOnce(undefined)
+			expect(mockPut).toHaveBeenCalledWith(
+				"/subscriptions/1",
+				expect.any(Object),
+			);
+			expect(result.name).toBe("Spotify Premium");
+			expect(result.amount).toBe(1480);
+		});
+	});
 
-      await deleteSubscription('1')
+	describe("deleteSubscription", () => {
+		it("should delete subscription successfully", async () => {
+			const mockDelete = vi.mocked(apiClient.delete);
+			mockDelete.mockResolvedValueOnce(undefined);
 
-      expect(mockDelete).toHaveBeenCalledWith('/subscriptions/1')
-    })
-  })
+			await deleteSubscription("1");
 
-  describe('updateSubscriptionStatus', () => {
-    it('should update subscription status successfully', async () => {
-      const mockApiResponse: ApiSubscriptionResponse = {
-        id: 1,
-        name: 'Netflix',
-        amount: 1980,
-        categoryId: 1,
-        billingCycle: 'monthly',
-        nextBillingDate: '2025-08-01T00:00:00Z',
-        isActive: false, // ステータス更新後
-        description: '動画ストリーミング',
-        createdAt: '2025-07-05T07:06:39Z',
-        updatedAt: '2025-07-05T07:06:39Z',
-      }
+			expect(mockDelete).toHaveBeenCalledWith("/subscriptions/1");
+		});
+	});
 
-      const mockPut = vi.mocked(apiClient.put)
-      mockPut.mockResolvedValueOnce(mockApiResponse)
+	describe("updateSubscriptionStatus", () => {
+		it("should update subscription status successfully", async () => {
+			const mockApiResponse: ApiSubscriptionResponse = {
+				id: 1,
+				name: "Netflix",
+				amount: 1980,
+				categoryId: 1,
+				billingCycle: "monthly",
+				nextBillingDate: "2025-08-01T00:00:00Z",
+				isActive: false, // ステータス更新後
+				description: "動画ストリーミング",
+				createdAt: "2025-07-05T07:06:39Z",
+				updatedAt: "2025-07-05T07:06:39Z",
+			};
 
-      const result = await updateSubscriptionStatus('1', false, mockCategories)
+			const mockPut = vi.mocked(apiClient.put);
+			mockPut.mockResolvedValueOnce(mockApiResponse);
 
-      expect(mockPut).toHaveBeenCalledWith('/subscriptions/1', { isActive: false })
-      expect(result.isActive).toBe(false)
-    })
-  })
+			const result = await updateSubscriptionStatus("1", false, mockCategories);
 
-  describe('API Response Format Validation', () => {
-    it('should handle array response format correctly (Issue #53 fix)', async () => {
-      // 今回の修正の核心: 配列レスポンス形式の正しい処理
-      const mockArrayResponse: ApiSubscriptionResponse[] = [
-        {
-          id: 1,
-          name: 'Service 1',
-          amount: 1000,
-          categoryId: 1,
-          billingCycle: 'monthly',
-          nextBillingDate: '2025-08-01T00:00:00Z',
-          isActive: true,
-          description: null,
-          createdAt: '2025-01-01',
-          updatedAt: '2025-01-01',
-        },
-      ]
+			expect(mockPut).toHaveBeenCalledWith("/subscriptions/1", {
+				isActive: false,
+			});
+			expect(result.isActive).toBe(false);
+		});
+	});
 
-      const mockGet = vi.mocked(apiClient.get)
-      mockGet.mockResolvedValueOnce(mockArrayResponse)
+	describe("API Response Format Validation", () => {
+		it("should handle array response format correctly (Issue #53 fix)", async () => {
+			// 今回の修正の核心: 配列レスポンス形式の正しい処理
+			const mockArrayResponse: ApiSubscriptionResponse[] = [
+				{
+					id: 1,
+					name: "Service 1",
+					amount: 1000,
+					categoryId: 1,
+					billingCycle: "monthly",
+					nextBillingDate: "2025-08-01T00:00:00Z",
+					isActive: true,
+					description: null,
+					createdAt: "2025-01-01",
+					updatedAt: "2025-01-01",
+				},
+			];
 
-      const result = await fetchSubscriptions(mockCategories)
+			const mockGet = vi.mocked(apiClient.get);
+			mockGet.mockResolvedValueOnce(mockArrayResponse);
 
-      // 配列が正しく処理されることを確認
-      expect(Array.isArray(result)).toBe(true)
-      expect(result).toHaveLength(1)
-      
-      // 要素が正しく変換されることを確認
-      expect(result[0].id).toBe('1')
-      expect(result[0].name).toBe('Service 1')
-      expect(result[0].category).toEqual(mockCategories[0])
-    })
-  })
-})
+			const result = await fetchSubscriptions(mockCategories);
+
+			// 配列が正しく処理されることを確認
+			expect(Array.isArray(result)).toBe(true);
+			expect(result).toHaveLength(1);
+
+			// 要素が正しく変換されることを確認
+			expect(result[0].id).toBe("1");
+			expect(result[0].name).toBe("Service 1");
+			expect(result[0].category).toEqual(mockCategories[0]);
+		});
+	});
+});
