@@ -21,7 +21,7 @@
 	 */
 	"vars": {
 		"NEXT_PUBLIC_API_URL": "https://saifuu-api.ryosuke-horie37.workers.dev/api"
-	}
+	},
 
 	/**
 	 * Smart Placement
