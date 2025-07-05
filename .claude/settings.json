@@ -6,11 +6,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd frontend && npm run check:fix"
+            "command": "cd /Users/r-horie/private/saifuu/sub/frontend && npm run check:fix"
           },
           {
             "type": "command",
-            "command": "cd api && npm run check:fix"
+            "command": "cd /Users/r-horie/private/saifuu/sub/api && npm run check:fix"
           }
         ]
       }
