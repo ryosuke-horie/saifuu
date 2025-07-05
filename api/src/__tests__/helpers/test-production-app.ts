@@ -1,16 +1,17 @@
-import { createTestDatabase } from '../../db'
+import { drizzle } from 'drizzle-orm/better-sqlite3'
+import * as schema from '../../db/schema'
 import { createSubscriptionsApp } from '../../routes/subscriptions'
 import { getTestSqliteInstance } from './test-db'
 
 /**
  * テスト用の本番APIアプリインスタンス作成ヘルパー
  * 本番のsubscriptions.tsを使用しつつ、テスト用データベースを注入する
- * D1対応版: better-sqlite3インスタンスをD1として扱う
+ * better-sqlite3版: テスト環境ではbetter-sqlite3のdrizzleアダプターを使用
  */
 export function createTestProductionApp() {
 	const sqliteInstance = getTestSqliteInstance()
-	// D1型としてキャストして統合テストで使用
-	const testDatabase = createTestDatabase(sqliteInstance as any)
+	// テスト環境ではbetter-sqlite3版のdrizzleを使用
+	const testDatabase = drizzle(sqliteInstance, { schema })
 
 	return createSubscriptionsApp({ testDatabase })
 }
