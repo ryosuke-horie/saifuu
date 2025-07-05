@@ -1,0 +1,19 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd frontend && npm run check:fix"
+          },
+          {
+            "type": "command",
+            "command": "cd api && npm run check:fix"
+          }
+        ]
+      }
+    ]
+  }
+}
