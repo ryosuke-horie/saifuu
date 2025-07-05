@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "saifuu-api",
-  "compatibility_date": "2025-06-29",
+  "compatibility_date": "2025-06-17",
   "compatibility_flags": ["nodejs_compat"],
   "main": "./src/index.tsx",
   "d1_databases": [
