@@ -8,7 +8,7 @@ import { categories, type NewSubscription, subscriptions } from '../db/schema'
  * テスト時にはテスト用データベースを注入可能にする
  * @param options.testDatabase - テスト用データベースインスタンス（オプション）
  */
-export function createSubscriptionsApp(options: { testDatabase?: Database } = {}) {
+export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } = {}) {
 	const app = new Hono<{
 		Bindings: Env
 		Variables: {

@@ -32,14 +32,14 @@ app.use('/api/*', async (c, next) => {
 		console.log('=== Database middleware start ===')
 		console.log('Environment isDev:', isDev)
 		console.log('Request path:', c.req.path)
-		
+
 		// 開発環境・本番環境の両方でCloudflare D1を使用
 		// wrangler dev では c.env.DB がローカルD1インスタンスを提供
 		const db = createDatabase(c.env.DB)
 		console.log('D1 database created successfully')
 		c.set('db', db)
 		console.log('Database set in context')
-		
+
 		console.log('Database middleware completed, calling next()')
 		await next()
 		console.log('Next() completed successfully')
@@ -49,11 +49,14 @@ app.use('/api/*', async (c, next) => {
 		console.error('Error type:', typeof error)
 		console.error('Error message:', error instanceof Error ? error.message : String(error))
 		console.error('Error stack:', error instanceof Error ? error.stack : undefined)
-		
-		return c.json({
-			error: 'Database initialization failed',
-			details: error instanceof Error ? error.message : String(error)
-		}, 500)
+
+		return c.json(
+			{
+				error: 'Database initialization failed',
+				details: error instanceof Error ? error.message : String(error),
+			},
+			500
+		)
 	}
 })
 
@@ -69,11 +72,11 @@ app.get('/api/health', async (c) => {
 		console.log('=== Health check start ===')
 		const db = c.get('db')
 		console.log('Health check: database instance retrieved', typeof db)
-		
+
 		if (!db) {
 			throw new Error('Database instance is null or undefined')
 		}
-		
+
 		console.log('Health check: attempting database query')
 		// シンプルなクエリでデータベース接続をテスト
 		const result = await db.select().from(categories).limit(1)
@@ -95,7 +98,7 @@ app.get('/api/health', async (c) => {
 		console.error('Error message:', error instanceof Error ? error.message : String(error))
 		console.error('Error stack:', error instanceof Error ? error.stack : undefined)
 		console.error('Full error object:', error)
-		
+
 		return c.json(
 			{
 				status: 'error',

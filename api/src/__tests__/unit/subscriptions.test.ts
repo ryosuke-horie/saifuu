@@ -21,7 +21,7 @@ describe('Subscriptions API - Unit Tests', () => {
 	describe('GET /subscriptions', () => {
 		it('should return empty array when no subscriptions exist', async () => {
 			// Red: まずテストを書く（現在は失敗する）
-			const response = await createTestRequest(testProductionApp, 'GET', '/')
+			const response = await createTestRequest(testProductionApp, 'GET', '/subscriptions')
 
 			// Debug: Check what error is returned
 			if (response.status !== 200) {
@@ -38,7 +38,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 		it('should return list of subscriptions with category information', async () => {
 			// Red: サブスクリプション一覧取得のテスト
-			const response = await createTestRequest(testProductionApp, 'GET', '/')
+			const response = await createTestRequest(testProductionApp, 'GET', '/subscriptions')
 
 			expect(response.status).toBe(200)
 			// Hono returns just 'application/json' without charset specification
@@ -82,7 +82,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			// Red: データベースエラー時の処理テスト
 			// モックでエラーを発生させる想定
 
-			const response = await createTestRequest(testProductionApp, 'GET', '/')
+			const response = await createTestRequest(testProductionApp, 'GET', '/subscriptions')
 
 			// 実装によってはエラーが返される場合もある
 			if (response.status === 500) {
@@ -99,7 +99,12 @@ describe('Subscriptions API - Unit Tests', () => {
 			// Red: サブスクリプション作成のテスト
 			const newSubscription = testRequestPayloads.createSubscription
 
-			const response = await createTestRequest(testProductionApp, 'POST', '/', newSubscription)
+			const response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/subscriptions',
+				newSubscription
+			)
 
 			expect(response.status).toBe(201)
 
@@ -124,7 +129,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			const response = await createTestRequest(
 				testProductionApp,
 				'POST',
-				'/',
+				'/subscriptions',
 				invalidSubscriptionData.missingName
 			)
 
@@ -137,7 +142,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			const response = await createTestRequest(
 				testProductionApp,
 				'POST',
-				'/',
+				'/subscriptions',
 				invalidSubscriptionData.invalidBillingCycle
 			)
 
@@ -149,7 +154,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			const response = await createTestRequest(
 				testProductionApp,
 				'POST',
-				'/',
+				'/subscriptions',
 				invalidSubscriptionData.negativeAmount
 			)
 
@@ -161,7 +166,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			const response = await createTestRequest(
 				testProductionApp,
 				'POST',
-				'/',
+				'/subscriptions',
 				testRequestPayloads.createSubscription
 			)
 
@@ -178,7 +183,7 @@ describe('Subscriptions API - Unit Tests', () => {
 	describe('GET /subscriptions/:id', () => {
 		it('should return subscription by id', async () => {
 			// Red: ID指定でのサブスクリプション取得テスト
-			const response = await createTestRequest(testProductionApp, 'GET', '/1')
+			const response = await createTestRequest(testProductionApp, 'GET', '/subscriptions/1')
 
 			// データが存在しない場合は404、存在する場合は200
 			if (response.status === 200) {
@@ -201,7 +206,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 		it('should return 404 for non-existent subscription', async () => {
 			// Red: 存在しないサブスクリプションのテスト
-			const response = await createTestRequest(testProductionApp, 'GET', '/99999')
+			const response = await createTestRequest(testProductionApp, 'GET', '/subscriptions/99999')
 
 			expect(response.status).toBe(404)
 			const data = await getResponseJson(response)
@@ -210,7 +215,11 @@ describe('Subscriptions API - Unit Tests', () => {
 
 		it('should handle invalid id format', async () => {
 			// Red: 無効なID形式のテスト
-			const response = await createTestRequest(testProductionApp, 'GET', '/invalid-id')
+			const response = await createTestRequest(
+				testProductionApp,
+				'GET',
+				'/subscriptions/invalid-id'
+			)
 
 			// parseInt()でNaNになるため、エラーが発生する
 			expect([400, 500]).toContain(response.status)
@@ -222,7 +231,12 @@ describe('Subscriptions API - Unit Tests', () => {
 			// Red: サブスクリプション更新のテスト
 			const updateData = testRequestPayloads.updateSubscription
 
-			const response = await createTestRequest(testProductionApp, 'PUT', '/1', updateData)
+			const response = await createTestRequest(
+				testProductionApp,
+				'PUT',
+				'/subscriptions/1',
+				updateData
+			)
 
 			if (response.status === 200) {
 				const data = await getResponseJson(response)
@@ -242,7 +256,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			const response = await createTestRequest(
 				testProductionApp,
 				'PUT',
-				'/99999',
+				'/subscriptions/99999',
 				testRequestPayloads.updateSubscription
 			)
 
@@ -255,7 +269,7 @@ describe('Subscriptions API - Unit Tests', () => {
 	describe('DELETE /subscriptions/:id', () => {
 		it('should delete existing subscription', async () => {
 			// Red: サブスクリプション削除のテスト
-			const response = await createTestRequest(testProductionApp, 'DELETE', '/1')
+			const response = await createTestRequest(testProductionApp, 'DELETE', '/subscriptions/1')
 
 			if (response.status === 200) {
 				const data = await getResponseJson(response)
@@ -270,7 +284,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 		it('should return 404 for non-existent subscription deletion', async () => {
 			// Red: 存在しないサブスクリプションの削除テスト
-			const response = await createTestRequest(testProductionApp, 'DELETE', '/99999')
+			const response = await createTestRequest(testProductionApp, 'DELETE', '/subscriptions/99999')
 
 			expect(response.status).toBe(404)
 			const data = await getResponseJson(response)
