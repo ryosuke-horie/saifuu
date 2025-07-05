@@ -68,7 +68,7 @@ jobs:
           
           # Create coverage comment
           {
-            echo "## 📊 Test Coverage Report"
+            echo "## 📊 Frontend Test Coverage Report"
             echo ""
             echo "| Metric | Coverage |"
             echo "|--------|----------|"
