@@ -2,7 +2,7 @@
 // fakerを使用してリアルなテストデータを生成
 // 一貫性のあるテストデータを提供し、エッジケースのテストを容易にする
 
-import { faker } from "@faker-js/faker/locale/ja";
+import { fakerJA as faker } from "@faker-js/faker";
 import type { Category } from "@/types/category";
 import type { Subscription } from "@/types/subscription";
 
