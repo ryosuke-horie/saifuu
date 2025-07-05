@@ -6,7 +6,7 @@
 import type { Category } from "../../../types/category";
 import { apiClient } from "../client";
 import { transformApiCategoriesToFrontend } from "./transformers";
-import type { ApiCategoryListResponse, ApiCategoryResponse } from "./types";
+import type { ApiCategoryResponse } from "./types";
 
 /**
  * カテゴリ一覧を取得
@@ -14,10 +14,9 @@ import type { ApiCategoryListResponse, ApiCategoryResponse } from "./types";
  */
 export async function fetchCategories(): Promise<Category[]> {
 	try {
-		const response =
-			await apiClient.get<ApiCategoryListResponse>("/categories");
+		const response = await apiClient.get<ApiCategoryResponse[]>("/categories");
 
-		return transformApiCategoriesToFrontend(response.categories);
+		return transformApiCategoriesToFrontend(response);
 	} catch (error) {
 		console.error("Failed to fetch categories:", error);
 		throw new Error("カテゴリ一覧の取得に失敗しました");

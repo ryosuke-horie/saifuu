@@ -50,11 +50,12 @@ export interface ApiUpdateSubscriptionRequest {
 
 /**
  * サブスクリプション一覧レスポンス型
+ * APIは配列を直接返すため、ApiSubscriptionResponse[]を使用
  */
-export interface ApiSubscriptionListResponse {
-	subscriptions: ApiSubscriptionResponse[];
-	total: number;
-}
+// export interface ApiSubscriptionListResponse {
+// 	subscriptions: ApiSubscriptionResponse[];
+// 	total: number;
+// }
 
 /**
  * サブスクリプションエラーレスポンス型

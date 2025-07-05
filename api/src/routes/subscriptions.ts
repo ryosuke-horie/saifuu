@@ -8,7 +8,7 @@ import { categories, type NewSubscription, subscriptions } from '../db/schema'
  * テスト時にはテスト用データベースを注入可能にする
  * @param options.testDatabase - テスト用データベースインスタンス（オプション）
  */
-export function createSubscriptionsApp(options: { testDatabase?: Database } = {}) {
+export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } = {}) {
 	const app = new Hono<{
 		Bindings: Env
 		Variables: {
@@ -69,11 +69,11 @@ export function createSubscriptionsApp(options: { testDatabase?: Database } = {}
 				return c.json({ error: 'Invalid billing cycle' }, 400)
 			}
 
-			// Convert string dates to Date objects if needed
+			// Convert string dates to ISO string format
 			const nextBillingDate =
 				typeof body.nextBillingDate === 'string'
-					? new Date(body.nextBillingDate)
-					: body.nextBillingDate || new Date()
+					? new Date(body.nextBillingDate).toISOString()
+					: body.nextBillingDate || new Date().toISOString()
 
 			const newSubscription: NewSubscription = {
 				name: body.name,
@@ -83,8 +83,8 @@ export function createSubscriptionsApp(options: { testDatabase?: Database } = {}
 				categoryId: body.categoryId,
 				description: body.description,
 				isActive: body.isActive,
-				createdAt: new Date(),
-				updatedAt: new Date(),
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
 			}
 
 			const result = await db.insert(subscriptions).values(newSubscription).returning()
@@ -160,7 +160,7 @@ export function createSubscriptionsApp(options: { testDatabase?: Database } = {}
 
 			const updateData = {
 				...body,
-				updatedAt: new Date(),
+				updatedAt: new Date().toISOString(),
 			}
 
 			const result = await db

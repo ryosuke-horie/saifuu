@@ -1,8 +1,7 @@
 import type { D1Database } from '@cloudflare/workers-types'
 import Database from 'better-sqlite3'
-import { sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
-import { categories, subscriptions } from '../../db/schema'
+import * as schema from '../../db/schema'
 
 /**
  * テスト用データベースヘルパー
@@ -22,17 +21,17 @@ function initializeTestDatabase() {
 	if (!globalSqliteInstance) {
 		// インメモリSQLiteデータベースを作成
 		globalSqliteInstance = new Database(':memory:')
-		globalDrizzleInstance = drizzle(globalSqliteInstance)
+		globalDrizzleInstance = drizzle(globalSqliteInstance, { schema })
 
-		// テーブルを作成
+		// テーブルを作成（新しいスキーマに合わせてTEXT型のタイムスタンプを使用）
 		globalSqliteInstance.exec(`
 			CREATE TABLE IF NOT EXISTS categories (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				name TEXT NOT NULL,
 				type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
 				color TEXT,
-				created_at INTEGER NOT NULL,
-				updated_at INTEGER NOT NULL
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
 			);
 			
 			CREATE TABLE IF NOT EXISTS subscriptions (
@@ -40,17 +39,17 @@ function initializeTestDatabase() {
 				name TEXT NOT NULL,
 				amount REAL NOT NULL,
 				billing_cycle TEXT NOT NULL DEFAULT 'monthly' CHECK (billing_cycle IN ('monthly', 'yearly', 'weekly')),
-				next_billing_date INTEGER NOT NULL,
+				next_billing_date TEXT NOT NULL,
 				category_id INTEGER REFERENCES categories(id),
 				description TEXT,
 				is_active INTEGER NOT NULL DEFAULT 1,
-				created_at INTEGER NOT NULL,
-				updated_at INTEGER NOT NULL
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
 			);
 		`)
 
-		// テスト用のカテゴリを挿入
-		const now = Date.now()
+		// テスト用のカテゴリを挿入（ISO文字列形式のタイムスタンプを使用）
+		const now = new Date().toISOString()
 		globalSqliteInstance
 			.prepare(`
 			INSERT INTO categories (id, name, type, color, created_at, updated_at)
@@ -69,7 +68,7 @@ function initializeTestDatabase() {
 
 /**
  * テスト用データベースインスタンスを取得
- * @returns テスト用のDrizzleデータベースインスタンス
+ * @returns テスト用のDrizzleデータベースインスタンス（better-sqlite3版）
  */
 export function createTestDatabase() {
 	initializeTestDatabase()

@@ -12,6 +12,5 @@ export {
 // 型定義
 export type {
 	ApiCategoryErrorResponse,
-	ApiCategoryListResponse,
 	ApiCategoryResponse,
 } from "./types";

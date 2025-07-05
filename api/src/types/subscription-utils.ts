@@ -32,8 +32,8 @@ export function transformCategoryDbToApi(category: Category): ApiCategory {
 		name: category.name,
 		type: category.type,
 		color: category.color,
-		createdAt: category.createdAt.toISOString(),
-		updatedAt: category.updatedAt.toISOString(),
+		createdAt: category.createdAt,
+		updatedAt: category.updatedAt,
 	}
 }
 
@@ -60,12 +60,12 @@ export function transformSubscriptionDbToApi(
 		name: dbSubscription.name,
 		amount: dbSubscription.amount,
 		billingCycle: dbSubscription.billingCycle,
-		nextBillingDate: dbSubscription.nextBillingDate.toISOString(),
+		nextBillingDate: dbSubscription.nextBillingDate,
 		description: dbSubscription.description,
 		isActive: dbSubscription.isActive,
 		category: dbSubscription.category ? transformCategoryDbToApi(dbSubscription.category) : null,
-		createdAt: dbSubscription.createdAt.toISOString(),
-		updatedAt: dbSubscription.updatedAt.toISOString(),
+		createdAt: dbSubscription.createdAt,
+		updatedAt: dbSubscription.updatedAt,
 	}
 }
 
