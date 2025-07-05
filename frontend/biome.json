@@ -24,6 +24,7 @@
 			"!**/storybook-static/**",
 			"!**/stories/**",
 			"!**/.next/**",
+			"!**/.open-next/**",
 			"!**/test-results/**",
 			"!**/playwright-report/**",
 			"!**/cloudflare-env.d.ts",
