@@ -21,10 +21,13 @@
     "check": "npm run typecheck && biome check src/ && npm run test:unit",
     "check:fix": "npm run typecheck && biome check --write src/ && npm run test:unit",
     "db:studio": "LOCAL_DB_PATH=$(find .wrangler/state/v3/d1 -name '*.sqlite' -type f | head -n 1) drizzle-kit studio",
+    "db:studio:dev": "LOCAL_DB_PATH=./dev.db drizzle-kit studio",
+    "db:migrate:dev": "node scripts/migrate-dev.js",
     "db:migrate:local": "wrangler d1 migrations apply saifuu-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply saifuu-db --remote",
     "db:generate": "drizzle-kit generate",
-    "db:seed": "wrangler d1 execute saifuu-db --local --file=./drizzle/seed.sql"
+    "db:seed": "wrangler d1 execute saifuu-db --local --file=./drizzle/seed.sql",
+    "db:setup:dev": "npm run db:migrate:dev && echo '開発環境データベースの準備完了'"
   },
   "dependencies": {
     "hono": "^4.8.3"

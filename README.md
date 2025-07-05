@@ -28,6 +28,41 @@ cd api && npm install
 # 環境変数ファイルの作成（詳細は下記参照）
 cp api/.env.example api/.env
 cp frontend/.env.example frontend/.env
+
+# 開発環境データベースのセットアップ
+cd api && npm run db:setup:dev
+```
+
+## データベース管理
+
+### 開発環境でのマイグレーション
+
+```bash
+# データベーススキーマの初期化/更新
+cd api && npm run db:migrate:dev
+
+# マイグレーションファイルの生成（スキーマ変更時）
+cd api && npm run db:generate
+
+# Drizzle Studioでデータベース確認
+cd api && npm run db:studio:dev
+```
+
+### マイグレーション管理の仕組み
+
+- **スキーマ定義**: `api/src/db/schema.ts` - Drizzle ORMスキーマ
+- **マイグレーション履歴**: `api/drizzle/migrations/` - 自動生成されたSQLファイル
+- **シードデータ**: `api/drizzle/seed.sql` - 初期データ
+- **設定ファイル**: `api/drizzle.config.ts` - 環境別の設定
+
+### 本番環境（Cloudflare D1）でのマイグレーション
+
+```bash
+# 本番環境にマイグレーション適用
+cd api && npm run db:migrate:remote
+
+# ローカルのwrangler環境にマイグレーション適用
+cd api && npm run db:migrate:local
 ```
 
 ### 環境変数の設定
