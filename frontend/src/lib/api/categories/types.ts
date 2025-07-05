@@ -16,11 +16,12 @@ export interface ApiCategoryResponse {
 
 /**
  * カテゴリ一覧レスポンス型
+ * APIは配列を直接返すため、ApiCategoryResponse[]を使用
  */
-export interface ApiCategoryListResponse {
-	categories: ApiCategoryResponse[];
-	total: number;
-}
+// export interface ApiCategoryListResponse {
+// 	categories: ApiCategoryResponse[];
+// 	total: number;
+// }
 
 /**
  * カテゴリエラーレスポンス型

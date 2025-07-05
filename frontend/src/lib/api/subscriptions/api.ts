@@ -14,10 +14,7 @@ import {
 	transformFormDataToCreateRequest,
 	transformFormDataToUpdateRequest,
 } from "./transformers";
-import type {
-	ApiSubscriptionListResponse,
-	ApiSubscriptionResponse,
-} from "./types";
+import type { ApiSubscriptionResponse } from "./types";
 
 /**
  * サブスクリプション一覧を取得
@@ -29,9 +26,9 @@ export async function fetchSubscriptions(
 ): Promise<Subscription[]> {
 	try {
 		const response =
-			await apiClient.get<ApiSubscriptionListResponse>("/subscriptions");
+			await apiClient.get<ApiSubscriptionResponse[]>("/subscriptions");
 
-		return response.subscriptions.map((apiSubscription) =>
+		return response.map((apiSubscription) =>
 			transformApiSubscriptionToFrontend(apiSubscription, categories),
 		);
 	} catch (error) {

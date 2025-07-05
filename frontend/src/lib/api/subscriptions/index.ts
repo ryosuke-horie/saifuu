@@ -21,7 +21,6 @@ export {
 export type {
 	ApiCreateSubscriptionRequest,
 	ApiSubscriptionErrorResponse,
-	ApiSubscriptionListResponse,
 	ApiSubscriptionResponse,
 	ApiUpdateSubscriptionRequest,
 } from "./types";
