@@ -22,7 +22,7 @@
 		"ci:check": "npm run typecheck && npm run lint:biome && npm run test:unit",
 		"storybook": "storybook dev -p 6006",
 		"build-storybook": "storybook build",
-		"deploy": "NODE_ENV=production opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+		"deploy": "opennextjs-cloudflare deploy",
 		"deploy:manual": "NODE_ENV=production opennextjs-cloudflare build && opennextjs-cloudflare deploy",
 		"preview": "NODE_ENV=production opennextjs-cloudflare build && opennextjs-cloudflare preview",
 		"cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts",
