@@ -174,7 +174,8 @@ npm run test:e2e
 npm run test:unit
 
 # デプロイ（Cloudflare Workers）
-npm run deploy
+# 注意: Workers Build自動化との競合を避けるため、手動デプロイスクリプトは deploy:manual に変更されています
+npm run deploy:manual
 ```
 
 ## プロジェクト構造
