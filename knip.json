@@ -12,6 +12,7 @@
         "src/app/not-found.tsx",
         "src/app/subscriptions/page.tsx",
         "next.config.ts",
+        "open-next.config.ts",
         "playwright.config.ts",
         "vitest.config.ts",
         ".storybook/main.ts",
@@ -22,7 +23,8 @@
         "storybook-static/**",
         "coverage/**",
         "test-results/**",
-        "playwright-report/**"
+        "playwright-report/**",
+        "open-next.config.ts"
       ]
     },
     "api": {
