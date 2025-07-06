@@ -2,9 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 /**
  * Playwright設定ファイル
- * - 開発環境でのみE2Eテストを実行
- * - ChromeデスクトップとAndroid Chromeのみでテスト
- * - その他のブラウザやデバイスは不要
+ * - ローカル環境でのみE2Eテストを実行（CI環境では実行しない）
+ * - Chrome専用: PC ChromeとスマホChromeのみサポート
+ * - 正常系テストのみ実装（エラーハンドリング・パフォーマンステストは対象外）
  */
 export default defineConfig({
 	// テストディレクトリの設定
@@ -13,14 +13,14 @@ export default defineConfig({
 	// 並列実行設定
 	fullyParallel: true,
 
-	// CIでのテスト失敗時の動作
-	forbidOnly: !!process.env.CI,
+	// test.only()の使用を禁止（ローカル開発では許可）
+	forbidOnly: false,
 
-	// 再試行回数（CIでは2回、ローカルでは0回）
-	retries: process.env.CI ? 2 : 0,
+	// 再試行回数（ローカル環境では再試行なし）
+	retries: 0,
 
-	// 並列ワーカー数（CIでは1、ローカルでは半分のCPU数）
-	workers: process.env.CI ? 1 : undefined,
+	// 並列ワーカー数（ローカル専用のため、CIでの実行は想定しない）
+	workers: undefined,
 
 	// レポーター設定
 	reporter: "html",
@@ -41,6 +41,7 @@ export default defineConfig({
 	},
 
 	// テスト対象のプロジェクト設定
+	// Chrome専用: 開発者のみが利用するため、PC ChromeとスマホChromeのみサポート
 	projects: [
 		{
 			name: "Desktop Chrome",
@@ -53,17 +54,18 @@ export default defineConfig({
 	],
 
 	// 開発サーバーの起動設定（テスト実行前に自動起動）
+	// ローカル環境専用: 既存サーバーを再利用して効率化
 	webServer: [
 		{
 			command: "npm run dev:e2e",
 			url: "http://localhost:3002",
-			reuseExistingServer: !process.env.CI,
+			reuseExistingServer: true,
 			timeout: 120 * 1000,
 		},
 		{
 			command: "cd ../api && npm run dev:e2e",
 			url: "http://localhost:3003/api/health",
-			reuseExistingServer: !process.env.CI,
+			reuseExistingServer: true,
 			timeout: 120 * 1000,
 		},
 	],
