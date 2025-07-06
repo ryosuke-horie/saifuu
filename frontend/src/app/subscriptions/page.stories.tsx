@@ -1,42 +1,22 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { fn } from "@storybook/test";
-import { within, userEvent, expect } from "@storybook/test";
-import { mockCategories } from "../../../.storybook/mocks/data/categories";
-import { mockSubscriptions } from "../../../.storybook/mocks/data/subscriptions";
-import type { Category } from "../../types/category";
-import type { Subscription } from "../../types/subscription";
+import { expect, userEvent, within } from "@storybook/test";
 import SubscriptionsPage from "./page";
 
-// フックのモック関数
-const mockUseCategories = (categories: Category[], loading = false, error: string | null = null) => ({
-	categories,
-	loading,
-	error,
-	refetch: fn(),
-});
-
-const mockUseSubscriptions = (subscriptions: Subscription[], loading = false, error: string | null = null) => ({
-	subscriptions,
-	loading,
-	error,
-	operationLoading: false,
-	refetch: fn(),
-	createSubscriptionMutation: fn(),
-});
+// モックデータはストーリーで直接MSWハンドラーを使用します
 
 /**
  * SubscriptionsPageのStorybookストーリー
  *
  * サブスクリプション管理ページの各種状態を確認できるストーリー集
- * 
+ *
  * Issue #38: frontend>SubscriptionsPageのStorybookストーリー実装
- * 
+ *
  * 実装内容:
  * - 基本ストーリー: Default, Empty, SingleItem, ManyItems
  * - レスポンシブテスト: Mobile, Tablet, Desktop
  * - 統計情報パターン: HighAmount, NearBilling, FutureBilling
  * - コンポーネント統合確認: NewSubscriptionButton, SubscriptionList, StatisticsCards
- * 
+ *
  * 技術仕様:
  * - Next.js App Routerページコンポーネント
  * - カスタムフックのモック実装
@@ -75,37 +55,13 @@ const meta: Meta<typeof SubscriptionsPage> = {
 		},
 	},
 	decorators: [
-		(Story, { args }) => {
-			// フックをモック化
-			const React = require("react");
-			const originalUseState = React.useState;
-			const originalUseCallback = React.useCallback;
-			
-			// モック状態の設定
-			React.useState = jest.fn().mockImplementation((initial) => {
-				if (initial === false) {
-					return [false, fn()]; // isDialogOpen state
-				}
-				return originalUseState(initial);
-			});
-			
-			React.useCallback = jest.fn().mockImplementation((fn) => fn);
-			
-			// フックのモック
-			const useCategories = jest.fn().mockReturnValue(args.categoriesHook || mockUseCategories(mockCategories));
-			const useSubscriptions = jest.fn().mockReturnValue(args.subscriptionsHook || mockUseSubscriptions(mockSubscriptions));
-			
-			// モジュールをモック
-			jest.doMock("../../hooks/useCategories", () => ({ useCategories }));
-			jest.doMock("../../hooks/useSubscriptions", () => ({ useSubscriptions }));
-			
+		(Story) => {
+			// Storybookではフックのモックは不要
+			// 実際のフックを使用し、MSWでAPIをモックする
 			return <Story />;
 		},
 	],
-	args: {
-		categoriesHook: mockUseCategories(mockCategories),
-		subscriptionsHook: mockUseSubscriptions(mockSubscriptions),
-	},
+	args: {},
 	tags: ["autodocs"],
 };
 
@@ -114,14 +70,15 @@ type Story = StoryObj<typeof meta>;
 
 /**
  * デフォルト状態
- * 
+ *
  * 通常のサブスクリプション管理ページ表示
  */
 export const Default: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "通常のサブスクリプション管理ページの表示です。複数のサブスクリプションと統計情報が表示されます。",
+				story:
+					"通常のサブスクリプション管理ページの表示です。複数のサブスクリプションと統計情報が表示されます。",
 			},
 		},
 	},
@@ -129,17 +86,15 @@ export const Default: Story = {
 
 /**
  * 空状態
- * 
+ *
  * サブスクリプションが登録されていない状態
  */
 export const Empty: Story = {
-	args: {
-		subscriptionsHook: mockUseSubscriptions([]),
-	},
 	parameters: {
 		docs: {
 			description: {
-				story: "サブスクリプションが登録されていない状態です。統計情報は0件と表示され、空の一覧が表示されます。",
+				story:
+					"サブスクリプションが登録されていない状態です。統計情報は0件と表示され、空の一覧が表示されます。",
 			},
 		},
 	},
@@ -147,17 +102,15 @@ export const Empty: Story = {
 
 /**
  * 単一アイテム
- * 
+ *
  * サブスクリプションが1つだけ登録されている状態
  */
 export const SingleItem: Story = {
-	args: {
-		subscriptionsHook: mockUseSubscriptions([mockSubscriptions[0]]),
-	},
 	parameters: {
 		docs: {
 			description: {
-				story: "サブスクリプションが1つだけ登録されている状態です。統計情報とリストが適切に表示されます。",
+				story:
+					"サブスクリプションが1つだけ登録されている状態です。統計情報とリストが適切に表示されます。",
 			},
 		},
 	},
@@ -165,89 +118,15 @@ export const SingleItem: Story = {
 
 /**
  * 多数アイテム
- * 
+ *
  * 大量のサブスクリプションが登録されている状態
  */
 export const ManyItems: Story = {
-	args: {
-		subscriptionsHook: mockUseSubscriptions([
-			...mockSubscriptions,
-			{
-				id: "4",
-				name: "Amazon Prime",
-				amount: 500,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-07-20",
-				category: mockCategories[0],
-				isActive: true,
-				description: "プライムビデオとお急ぎ便",
-			},
-			{
-				id: "5",
-				name: "Microsoft 365",
-				amount: 1284,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-07-25",
-				category: mockCategories[1],
-				isActive: true,
-				description: "オフィスソフトウェア",
-			},
-			{
-				id: "6",
-				name: "Figma",
-				amount: 1500,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-07-30",
-				category: mockCategories[1],
-				isActive: true,
-				description: "デザインツール",
-			},
-			{
-				id: "7",
-				name: "Notion",
-				amount: 8,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-08-01",
-				category: mockCategories[1],
-				isActive: true,
-				description: "ノートアプリ",
-			},
-			{
-				id: "8",
-				name: "Dropbox",
-				amount: 1200,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-08-05",
-				category: mockCategories[1],
-				isActive: true,
-				description: "クラウドストレージ",
-			},
-			{
-				id: "9",
-				name: "YouTube Premium",
-				amount: 1180,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-08-10",
-				category: mockCategories[0],
-				isActive: true,
-				description: "動画配信サービス",
-			},
-			{
-				id: "10",
-				name: "Disney+",
-				amount: 990,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-08-15",
-				category: mockCategories[0],
-				isActive: true,
-				description: "ディズニー作品配信",
-			},
-		]),
-	},
 	parameters: {
 		docs: {
 			description: {
-				story: "大量のサブスクリプションが登録されている状態です。スクロール機能やレイアウトの確認ができます。",
+				story:
+					"大量のサブスクリプションが登録されている状態です。スクロール機能やレイアウトの確認ができます。",
 			},
 		},
 	},
@@ -255,48 +134,15 @@ export const ManyItems: Story = {
 
 /**
  * 高額合計
- * 
+ *
  * 月間合計が高額な場合の表示確認
  */
 export const HighAmount: Story = {
-	args: {
-		subscriptionsHook: mockUseSubscriptions([
-			{
-				id: "1",
-				name: "Adobe Creative Cloud",
-				amount: 15000,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-07-01",
-				category: mockCategories[1],
-				isActive: true,
-				description: "プロフェッショナル版",
-			},
-			{
-				id: "2",
-				name: "Microsoft Office 365",
-				amount: 12000,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-07-15",
-				category: mockCategories[1],
-				isActive: true,
-				description: "ビジネス版",
-			},
-			{
-				id: "3",
-				name: "Salesforce",
-				amount: 25000,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-07-20",
-				category: mockCategories[1],
-				isActive: true,
-				description: "CRMプラットフォーム",
-			},
-		]),
-	},
 	parameters: {
 		docs: {
 			description: {
-				story: "月間合計が高額(52,000円)な場合の表示です。金額の表示形式と視覚的な強調を確認できます。",
+				story:
+					"月間合計が高額(52,000円)な場合の表示です。金額の表示形式と視覚的な強調を確認できます。",
 			},
 		},
 	},
@@ -304,48 +150,15 @@ export const HighAmount: Story = {
 
 /**
  * 間近な請求
- * 
+ *
  * 次回請求日が近い場合の表示確認
  */
 export const NearBilling: Story = {
-	args: {
-		subscriptionsHook: mockUseSubscriptions([
-			{
-				id: "1",
-				name: "Netflix",
-				amount: 1480,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-07-07", // 明日
-				category: mockCategories[0],
-				isActive: true,
-				description: "動画ストリーミング",
-			},
-			{
-				id: "2",
-				name: "Spotify",
-				amount: 980,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-07-08", // 2日後
-				category: mockCategories[0],
-				isActive: true,
-				description: "音楽ストリーミング",
-			},
-			{
-				id: "3",
-				name: "Adobe Creative Suite",
-				amount: 5680,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-07-09", // 3日後
-				category: mockCategories[1],
-				isActive: true,
-				description: "デザインツール",
-			},
-		]),
-	},
 	parameters: {
 		docs: {
 			description: {
-				story: "次回請求日が近い(7月7日)場合の表示です。請求日が迫っていることを確認できます。",
+				story:
+					"次回請求日が近い(7月7日)場合の表示です。請求日が迫っていることを確認できます。",
 			},
 		},
 	},
@@ -353,48 +166,15 @@ export const NearBilling: Story = {
 
 /**
  * 将来の請求
- * 
+ *
  * 次回請求日が先の場合の表示確認
  */
 export const FutureBilling: Story = {
-	args: {
-		subscriptionsHook: mockUseSubscriptions([
-			{
-				id: "1",
-				name: "Netflix",
-				amount: 1480,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-12-31", // 年末
-				category: mockCategories[0],
-				isActive: true,
-				description: "動画ストリーミング",
-			},
-			{
-				id: "2",
-				name: "Spotify",
-				amount: 980,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-11-15", // 数か月後
-				category: mockCategories[0],
-				isActive: true,
-				description: "音楽ストリーミング",
-			},
-			{
-				id: "3",
-				name: "Adobe Creative Suite",
-				amount: 5680,
-				billingCycle: "monthly" as const,
-				nextBillingDate: "2025-10-01", // 3か月後
-				category: mockCategories[1],
-				isActive: true,
-				description: "デザインツール",
-			},
-		]),
-	},
 	parameters: {
 		docs: {
 			description: {
-				story: "次回請求日が先(10月1日)の場合の表示です。請求日が遠い場合の表示形式を確認できます。",
+				story:
+					"次回請求日が先(10月1日)の場合の表示です。請求日が遠い場合の表示形式を確認できます。",
 			},
 		},
 	},
@@ -402,18 +182,15 @@ export const FutureBilling: Story = {
 
 /**
  * ローディング状態
- * 
+ *
  * データ読み込み中の表示状態
  */
 export const Loading: Story = {
-	args: {
-		categoriesHook: mockUseCategories([], true),
-		subscriptionsHook: mockUseSubscriptions([], true),
-	},
 	parameters: {
 		docs: {
 			description: {
-				story: "データの読み込み中の表示状態です。ローディングスピナーと「読み込み中...」の表示を確認できます。",
+				story:
+					"データの読み込み中の表示状態です。ローディングスピナーと「読み込み中...」の表示を確認できます。",
 			},
 		},
 	},
@@ -421,18 +198,15 @@ export const Loading: Story = {
 
 /**
  * エラー状態
- * 
+ *
  * データ取得エラー時の表示状態
  */
 export const ErrorState: Story = {
-	args: {
-		categoriesHook: mockUseCategories([], false, "カテゴリデータの取得に失敗しました"),
-		subscriptionsHook: mockUseSubscriptions([], false, "サブスクリプションデータの取得に失敗しました"),
-	},
 	parameters: {
 		docs: {
 			description: {
-				story: "データ取得でエラーが発生した際の表示状態です。エラーメッセージと再試行ボタンが表示されます。",
+				story:
+					"データ取得でエラーが発生した際の表示状態です。エラーメッセージと再試行ボタンが表示されます。",
 			},
 		},
 	},
@@ -440,7 +214,7 @@ export const ErrorState: Story = {
 
 /**
  * モバイル表示
- * 
+ *
  * モバイルデバイスでの表示確認
  */
 export const Mobile: Story = {
@@ -450,7 +224,8 @@ export const Mobile: Story = {
 		},
 		docs: {
 			description: {
-				story: "モバイルデバイス(320px)での表示です。レスポンシブデザインにより、コンテンツが適切に配置されます。",
+				story:
+					"モバイルデバイス(320px)での表示です。レスポンシブデザインにより、コンテンツが適切に配置されます。",
 			},
 		},
 	},
@@ -458,7 +233,7 @@ export const Mobile: Story = {
 
 /**
  * タブレット表示
- * 
+ *
  * タブレットデバイスでの表示確認
  */
 export const Tablet: Story = {
@@ -468,7 +243,8 @@ export const Tablet: Story = {
 		},
 		docs: {
 			description: {
-				story: "タブレットデバイス(768px)での表示です。中間的な画面サイズでの表示を確認できます。",
+				story:
+					"タブレットデバイス(768px)での表示です。中間的な画面サイズでの表示を確認できます。",
 			},
 		},
 	},
@@ -476,7 +252,7 @@ export const Tablet: Story = {
 
 /**
  * デスクトップ表示
- * 
+ *
  * デスクトップでの表示確認
  */
 export const Desktop: Story = {
@@ -486,7 +262,8 @@ export const Desktop: Story = {
 		},
 		docs: {
 			description: {
-				story: "デスクトップ(1024px以上)での表示です。全ての要素が最適に配置された状態を確認できます。",
+				story:
+					"デスクトップ(1024px以上)での表示です。全ての要素が最適に配置された状態を確認できます。",
 			},
 		},
 	},
@@ -494,22 +271,22 @@ export const Desktop: Story = {
 
 /**
  * 新規登録ボタンテスト
- * 
+ *
  * 新規登録ボタンの動作確認
  */
 export const NewSubscriptionButton: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		
+
 		// 新規登録ボタンを探す
 		const newButton = canvas.getByText("新規登録");
-		
+
 		// ボタンが表示されていることを確認
 		expect(newButton).toBeInTheDocument();
-		
+
 		// ボタンをクリック
 		await userEvent.click(newButton);
-		
+
 		// ダイアログが開くことを確認（実際のモック実装では開かない可能性があるため、コメントアウト）
 		// const dialog = canvas.getByRole("dialog");
 		// expect(dialog).toBeInTheDocument();
@@ -517,7 +294,8 @@ export const NewSubscriptionButton: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "新規登録ボタンの配置と動作を確認するストーリーです。ボタンクリックでダイアログが開く動作をテストします。",
+				story:
+					"新規登録ボタンの配置と動作を確認するストーリーです。ボタンクリックでダイアログが開く動作をテストします。",
 			},
 		},
 	},
@@ -525,16 +303,16 @@ export const NewSubscriptionButton: Story = {
 
 /**
  * サブスクリプションリスト統合確認
- * 
+ *
  * サブスクリプションリストの統合確認
  */
 export const SubscriptionList: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		
+
 		// サブスクリプションリストが表示されていることを確認
 		const subscriptionNames = ["Netflix", "Spotify", "Adobe Creative Suite"];
-		
+
 		for (const name of subscriptionNames) {
 			const element = canvas.getByText(name);
 			expect(element).toBeInTheDocument();
@@ -543,7 +321,8 @@ export const SubscriptionList: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "サブスクリプションリストの統合確認です。一覧にサブスクリプションが正しく表示されることを確認します。",
+				story:
+					"サブスクリプションリストの統合確認です。一覧にサブスクリプションが正しく表示されることを確認します。",
 			},
 		},
 	},
@@ -551,22 +330,22 @@ export const SubscriptionList: Story = {
 
 /**
  * 統計カード確認
- * 
+ *
  * 統計情報カードの表示確認
  */
 export const StatisticsCards: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		
+
 		// 統計情報カードの存在を確認
 		const registeredServices = canvas.getByText("登録サービス数");
 		const monthlyTotal = canvas.getByText("月間合計");
 		const nextBilling = canvas.getByText("次回請求");
-		
+
 		expect(registeredServices).toBeInTheDocument();
 		expect(monthlyTotal).toBeInTheDocument();
 		expect(nextBilling).toBeInTheDocument();
-		
+
 		// 統計値が表示されていることを確認
 		const servicesCount = canvas.getByText("3 サービス");
 		expect(servicesCount).toBeInTheDocument();
@@ -574,7 +353,8 @@ export const StatisticsCards: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "統計情報カードの表示確認です。登録サービス数、月間合計、次回請求日が適切に表示されることを確認します。",
+				story:
+					"統計情報カードの表示確認です。登録サービス数、月間合計、次回請求日が適切に表示されることを確認します。",
 			},
 		},
 	},
