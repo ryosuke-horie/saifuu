@@ -1,6 +1,6 @@
 import type { Preview } from "@storybook/nextjs";
 import { initialize, mswLoader } from "msw-storybook-addon";
-import "../src/app/globals.css";
+import "./test-globals.css";
 
 // MSWを初期化
 initialize();
