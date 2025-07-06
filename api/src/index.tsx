@@ -13,11 +13,16 @@ const app = new Hono<{
 	}
 }>()
 
-// CORS設定（開発環境用）
+// CORS設定（開発環境・本番環境対応）
 app.use(
 	'/api/*',
 	cors({
-		origin: ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003'],
+		origin: [
+			'http://localhost:3000',
+			'http://localhost:3002',
+			'http://localhost:3003',
+			'https://saifuu.ryosuke-horie37.workers.dev',
+		],
 		allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 		allowHeaders: ['Content-Type', 'Authorization'],
 	})
