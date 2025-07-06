@@ -2,7 +2,7 @@
 
 ## 概要
 
-Saifuu家計管理アプリケーションのAPIロギングシステムの設計仕様書です。Cloudflare Workers環境での高性能な構造化ログ機能を提供し、財務データのプライバシーを保護しながら、包括的な監査証跡を実現します。
+Saifuu家計管理アプリケーションのAPIロギングシステムの設計仕様書です。Cloudflare Workers環境での高性能な構造化ログ機能を提供し、開発・運用の効率化を実現します。
 
 ## 設計目標
 
@@ -11,15 +11,11 @@ Saifuu家計管理アプリケーションのAPIロギングシステムの設�
 - コールドスタート時間の最小化
 - 非同期処理によるレスポンス時間への影響軽減
 
-### 2. 財務データプライバシー
-- 金額データの自動マスキング
-- 個人情報の適切な保護
-- PCI DSS・GDPR準拠
-
-### 3. 開発・運用効率化
+### 2. 開発・運用効率化
 - 構造化ログによる分析・検索の容易性
 - 開発環境と本番環境の適切な分離
 - 既存コードベースとの最小限の統合
+- デバッグとトラブルシューティングの簡素化
 
 ## アーキテクチャ設計
 
@@ -42,7 +38,7 @@ export interface LogMeta {
   path?: string;
   method?: string;
   statusCode?: number;
-  maskedData?: Record<string, any>;
+  data?: Record<string, any>;
   [key: string]: any;
 }
 
@@ -82,7 +78,7 @@ class CloudflareLogger implements Logger {
       environment: this.config.environment,
       service: 'saifuu-api',
       version: this.config.version,
-      meta: this.sanitizeMeta(meta)
+      meta
     };
 
     if (this.config.environment === 'development') {
@@ -143,74 +139,6 @@ export const loggingMiddleware = async (c: Context, next: Next) => {
 };
 ```
 
-## 財務データプライバシー戦略
-
-### 1. データマスキング
-
-```typescript
-// src/logger/privacy-masker.ts
-export class FinancialDataMasker {
-  private static readonly SENSITIVE_FIELDS = [
-    'amount', 'balance', 'salary', 'income', 'expense'
-  ];
-  
-  private static readonly PERSONAL_PATTERNS = [
-    /\b\d{4}-\d{4}-\d{4}-\d{4}\b/g,  // カード番号
-    /\b\d{3}-\d{4}-\d{4}\b/g,        // 電話番号
-    /\b[\w\.-]+@[\w\.-]+\.\w+\b/g    // メールアドレス
-  ];
-
-  static maskObject(obj: any): any {
-    if (!obj || typeof obj !== 'object') return obj;
-    
-    const masked = Array.isArray(obj) ? [] : {};
-    
-    for (const [key, value] of Object.entries(obj)) {
-      if (this.SENSITIVE_FIELDS.includes(key.toLowerCase())) {
-        masked[key] = this.maskAmount(value);
-      } else if (typeof value === 'string') {
-        masked[key] = this.maskPersonalInfo(value);
-      } else if (typeof value === 'object' && value !== null) {
-        masked[key] = this.maskObject(value);
-      } else {
-        masked[key] = value;
-      }
-    }
-    
-    return masked;
-  }
-
-  private static maskAmount(value: any): string {
-    if (typeof value === 'number') {
-      return `***${value.toString().slice(-2)}`;
-    }
-    return '***';
-  }
-
-  private static maskPersonalInfo(text: string): string {
-    let masked = text;
-    this.PERSONAL_PATTERNS.forEach(pattern => {
-      masked = masked.replace(pattern, '***');
-    });
-    return masked;
-  }
-}
-```
-
-### 2. プライバシー保護方針
-
-#### 金額データ
-- 完全な金額ではなく、最後の数桁のみを表示
-- 集計値は範囲として記録（例：1000-5000円）
-
-#### 個人情報
-- カード番号、電話番号、メールアドレスの自動マスキング
-- 取引明細の個人特定情報の除去
-
-#### 監査証跡
-- 誰が、いつ、何を操作したかの記録
-- データアクセスパターンの追跡
-- 異常なアクセスの検出
 
 ## パフォーマンス最適化
 
@@ -269,7 +197,6 @@ export interface LoggerConfig {
   level: 'debug' | 'info' | 'warn' | 'error';
   bufferSize: number;
   flushInterval: number;
-  enableMasking: boolean;
   version: string;
 }
 
@@ -278,7 +205,6 @@ export const createLoggerConfig = (env: any): LoggerConfig => ({
   level: env.LOG_LEVEL || (env.NODE_ENV === 'development' ? 'debug' : 'info'),
   bufferSize: Number(env.LOG_BUFFER_SIZE) || 50,
   flushInterval: Number(env.LOG_FLUSH_INTERVAL) || 5000,
-  enableMasking: env.NODE_ENV === 'production',
   version: env.VERSION || '1.0.0',
 });
 ```
@@ -397,35 +323,6 @@ app.get('/subscriptions', async (c) => {
 });
 ```
 
-## セキュリティ・コンプライアンス
-
-### 1. PCI DSS要件
-
-#### ログ保持期間
-- 最低1年間の保持
-- 90日間の即座アクセス可能性
-
-#### アクセス制御
-- 認可されたスタッフのみがログにアクセス
-- アクセス履歴の記録
-
-#### 改ざん防止
-- ログの暗号化
-- 不変性の保証
-
-### 2. GDPR準拠
-
-#### データ保護
-- 転送時・保存時の暗号化
-- 個人データの適切な匿名化
-
-#### データ主体の権利
-- アクセス要求への対応
-- 消去要求への対応
-
-#### 処理の透明性
-- ログ処理の目的明示
-- 保持期間の明確化
 
 ## 監視・アラート
 
@@ -466,12 +363,7 @@ app.get('/subscriptions', async (c) => {
 2. 既存API routes への統合
 3. エラーハンドリングの強化
 
-### フェーズ3: セキュリティ
-1. データマスキング機能の実装
-2. プライバシー保護機能の追加
-3. コンプライアンス対応
-
-### フェーズ4: 監視・運用
+### フェーズ3: 監視・運用
 1. 監視ダッシュボードの構築
 2. アラート設定
 3. 運用手順の確立
@@ -480,7 +372,7 @@ app.get('/subscriptions', async (c) => {
 
 ### 1. ユニットテスト
 - ロガーコンポーネントの単体テスト
-- データマスキング機能のテスト
+- バッファリング機能のテスト
 - パフォーマンス最適化機能のテスト
 
 ### 2. 統合テスト
@@ -504,10 +396,6 @@ app.get('/subscriptions', async (c) => {
 - メモリ使用量の追跡
 - バッファサイズの最適化
 
-### 3. セキュリティ監査
-- ログアクセスの監査
-- データマスキングの有効性確認
-- コンプライアンス要件の継続的確認
 
 ## 今後の拡張
 
@@ -528,4 +416,4 @@ app.get('/subscriptions', async (c) => {
 
 ---
 
-この設計により、Saifuuアプリケーションは堅牢で効率的なログ機能を獲得し、財務データの適切な管理と監査証跡の確保を実現します。
+この設計により、Saifuuアプリケーションは堅牢で効率的なログ機能を獲得し、開発・運用の効率化とデバッグの容易性を実現します。

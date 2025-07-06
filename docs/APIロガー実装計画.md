@@ -44,7 +44,7 @@ export interface LogMeta {
   path?: string;
   method?: string;
   statusCode?: number;
-  maskedData?: Record<string, any>;
+  data?: Record<string, any>;
   error?: string;
   stack?: string;
   [key: string]: any;
@@ -73,7 +73,6 @@ export interface LoggerConfig {
   level: LogLevel;
   bufferSize: number;
   flushInterval: number;
-  enableMasking: boolean;
   version: string;
 }
 
@@ -109,7 +108,6 @@ export const createLoggerConfig = (env: any): LoggerConfig => {
     level: (env.LOG_LEVEL as LogLevel) || (isDevelopment ? 'debug' : 'info'),
     bufferSize: Number(env.LOG_BUFFER_SIZE) || (isDevelopment ? 10 : 50),
     flushInterval: Number(env.LOG_FLUSH_INTERVAL) || (isDevelopment ? 1000 : 5000),
-    enableMasking: !isDevelopment,
     version: env.VERSION || '1.0.0',
   };
 };
@@ -139,82 +137,6 @@ export const shouldLog = (currentLevel: LogLevel, targetLevel: LogLevel): boolea
 };
 ```
 
-#### 1.4 データマスキング機能の実装
-
-**ファイル: `api/src/logger/privacy-masker.ts`**
-
-```typescript
-/**
- * 財務データのプライバシー保護機能
- * 機密データの自動マスキングを提供
- */
-export class FinancialDataMasker {
-  // 機密性の高いフィールド名
-  private static readonly SENSITIVE_FIELDS = [
-    'amount', 'balance', 'salary', 'income', 'expense', 'price', 'cost', 'fee'
-  ];
-  
-  // 個人情報パターン
-  private static readonly PERSONAL_PATTERNS = [
-    /\b\d{4}-\d{4}-\d{4}-\d{4}\b/g,     // カード番号
-    /\b\d{3}-\d{4}-\d{4}\b/g,           // 電話番号
-    /\b[\w\.-]+@[\w\.-]+\.\w+\b/g,      // メールアドレス
-    /\b\d{4}-\d{2}-\d{2}\b/g,           // 生年月日
-  ];
-
-  /**
-   * オブジェクトの機密データをマスクする
-   * @param obj マスク対象のオブジェクト
-   * @returns マスクされたオブジェクト
-   */
-  static maskObject(obj: any): any {
-    if (!obj || typeof obj !== 'object') return obj;
-    
-    const masked = Array.isArray(obj) ? [] : {};
-    
-    for (const [key, value] of Object.entries(obj)) {
-      if (this.SENSITIVE_FIELDS.includes(key.toLowerCase())) {
-        masked[key] = this.maskAmount(value);
-      } else if (typeof value === 'string') {
-        masked[key] = this.maskPersonalInfo(value);
-      } else if (typeof value === 'object' && value !== null) {
-        masked[key] = this.maskObject(value);
-      } else {
-        masked[key] = value;
-      }
-    }
-    
-    return masked;
-  }
-
-  /**
-   * 金額データをマスクする
-   * @param value 金額値
-   * @returns マスクされた文字列
-   */
-  private static maskAmount(value: any): string {
-    if (typeof value === 'number') {
-      const str = value.toString();
-      if (str.length <= 2) return '***';
-      return `***${str.slice(-2)}`;
-    }
-    return '***';
-  }
-
-  /**
-   * 個人情報をマスクする
-   * @param text マスク対象のテキスト
-   * @returns マスクされたテキスト
-   */
-  private static maskPersonalInfo(text: string): string {
-    let masked = text;
-    this.PERSONAL_PATTERNS.forEach(pattern => {
-      masked = masked.replace(pattern, '***');
-    });
-    return masked;
-  }
-}
-```
 
 ### フェーズ2: コアロガーの実装（優先度: 高）
 
@@ -225,7 +147,6 @@ export class FinancialDataMasker {
 ```typescript
 import { Logger, LogLevel, LogEntry, LogMeta, LoggerConfig } from './types';
 import { shouldLog } from './config';
-import { FinancialDataMasker } from './privacy-masker';
 
 /**
  * Cloudflare Workers環境向けに最適化されたロガー
@@ -286,7 +207,7 @@ export class CloudflareLogger implements Logger {
       environment: this.config.environment,
       service: 'saifuu-api',
       version: this.config.version,
-      meta: this.sanitizeMeta(meta)
+      meta
     };
 
     if (this.config.environment === 'development') {
@@ -303,18 +224,6 @@ export class CloudflareLogger implements Logger {
     }
   }
 
-  /**
-   * メタデータのサニタイズ
-   */
-  private sanitizeMeta(meta: LogMeta): LogMeta {
-    const sanitized = { ...meta };
-    
-    if (this.config.enableMasking && sanitized.maskedData) {
-      sanitized.maskedData = FinancialDataMasker.maskObject(sanitized.maskedData);
-    }
-    
-    return sanitized;
-  }
 
   /**
    * 定期的なフラッシュの設定
@@ -656,7 +565,7 @@ app.post('/subscriptions', async (c) => {
     logger.info('Creating subscription', {
       requestId,
       operationType: 'write',
-      maskedData: body // 自動的にマスクされる
+      data: body
     });
     
     const result = await db.insert(subscriptions).values(body).returning();
@@ -707,7 +616,6 @@ describe('CloudflareLogger', () => {
       level: 'debug',
       bufferSize: 10,
       flushInterval: 1000,
-      enableMasking: false,
       version: '1.0.0',
     };
     
@@ -727,19 +635,6 @@ describe('CloudflareLogger', () => {
     );
   });
 
-  it('should mask sensitive data when enabled', () => {
-    const productionConfig = { ...mockConfig, enableMasking: true };
-    const productionLogger = new CloudflareLogger(productionConfig);
-    
-    productionLogger.info('Transaction created', {
-      requestId: 'test-123',
-      maskedData: { amount: 1000, description: 'Test transaction' }
-    });
-    
-    expect(console.log).toHaveBeenCalledWith(
-      expect.stringContaining('***00')
-    );
-  });
 
   it('should respect log level filtering', () => {
     const infoLogger = new CloudflareLogger({ ...mockConfig, level: 'info' });
@@ -852,7 +747,6 @@ VERSION = "1.0.0"
 - [ ] プロジェクト構造の準備
 - [ ] 型定義の実装
 - [ ] 設定システムの実装
-- [ ] データマスキング機能の実装
 
 ### 週2: コアロガーの実装
 - [ ] CloudflareLoggerの実装
@@ -875,7 +769,6 @@ VERSION = "1.0.0"
 - [ ] 型安全性の確保
 - [ ] エラーハンドリングの網羅
 - [ ] パフォーマンスの最適化
-- [ ] セキュリティの考慮
 
 ### テスト品質
 - [ ] ユニットテストカバレッジ 80%以上
@@ -901,12 +794,8 @@ VERSION = "1.0.0"
 - CPU使用量の監視
 - メモリ使用量の最適化
 
-### 3. セキュリティ
-- 機密データの適切な保護
-- アクセス制御の実装
-- 監査証跡の確保
 
-### 4. 保守性
+### 3. 保守性
 - 明確なコードコメント
 - 適切なエラーメッセージ
 - 変更しやすい設計
