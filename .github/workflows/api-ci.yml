@@ -87,7 +87,3 @@ jobs:
           gh pr comment ${{ github.event.number }} --body-file coverage_comment.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      # Cloudflare Workers向けの追加チェック
-      # NOTE: Wrangler dry-run validation removed to avoid conflicts with Workers Build automation
-      # See issue #74 for details
