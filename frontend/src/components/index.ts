@@ -4,9 +4,12 @@
  * アプリケーション全体のコンポーネント統一エクスポート
  * カテゴリ別に整理されたコンポーネントを再エクスポート
  *
+ * 注意: 現在このファイルは使用されていません。
+ * 実際のコンポーネントは個別にインポートして使用してください。
+ *
  * 使用例:
- * import { Header } from "@/components";
  * import { Header } from "@/components/layout";
+ * import { NewSubscriptionButton } from "@/components/subscriptions";
  */
 
 // Layout Components

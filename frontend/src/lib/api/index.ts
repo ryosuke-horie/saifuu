@@ -3,6 +3,14 @@
  *
  * APIクライアント、設定、サービス、型定義を統一的にエクスポート
  * アプリケーション全体でのAPI利用の統一エントリーポイント
+ *
+ * 注意: 現在このファイルは使用されていません。
+ * 実際のAPIモジュールは個別にインポートして使用してください。
+ *
+ * 使用例:
+ * import { apiConfig } from "@/lib/api/config";
+ * import { fetchCategories } from "@/lib/api/categories";
+ * import type { Category } from "@/lib/api/types";
  */
 
 // =============================================================================
