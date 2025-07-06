@@ -1,5 +1,6 @@
 // Storybookストーリーファイル
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect, userEvent, within } from "@storybook/test";
 import { Header } from "./Header";
 
 // Next.js usePathnameをモック（将来のストーリーで使用予定）
@@ -305,5 +306,202 @@ export const PerformanceTest: Story = {
 					"複数のHeaderコンポーネントを同時にレンダリングした場合のパフォーマンステスト。メモリ使用量やレンダリング速度を確認できます。",
 			},
 		},
+	},
+};
+
+/**
+ * インタラクティブテスト
+ *
+ * ナビゲーション、アクティブ状態、キーボード操作、レスポンシブ動作の
+ * 包括的なインタラクションテストを実行します。
+ */
+export const Interactive: Story = {
+	parameters: {
+		docs: {
+			description: {
+				story: `
+インタラクティブテストストーリー:
+
+- **ナビゲーションリンク**: 各リンクのクリック動作を検証
+- **アクティブ状態**: 現在のパスに基づくアクティブ状態のハイライト
+- **キーボードナビゲーション**: Tabキーでのフォーカス移動とEnterキーでの選択
+- **レスポンシブ動作**: 画面サイズに応じたラベル表示/非表示の切り替え
+- **フォーカス管理**: 適切なフォーカス状態とアクセシビリティ機能
+- **ARIA属性**: スクリーンリーダーサポートの検証
+
+テストは自動的に実行され、各機能の動作を確認します。
+				`,
+			},
+		},
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// ========================
+		// 1. 基本要素の存在確認
+		// ========================
+
+		// ヘッダー要素の存在確認
+		const header = canvas.getByRole("banner");
+		await expect(header).toBeInTheDocument();
+
+		// タイトルの存在確認
+		const title = canvas.getByRole("heading", { level: 1 });
+		await expect(title).toBeInTheDocument();
+		await expect(title).toHaveTextContent("Saifuu");
+
+		// ロゴの存在確認
+		const logo = canvas.getByRole("img", { name: "Saifuuロゴ" });
+		await expect(logo).toBeInTheDocument();
+
+		// ナビゲーションの存在確認
+		const nav = canvas.getByRole("navigation", {
+			name: "メインナビゲーション",
+		});
+		await expect(nav).toBeInTheDocument();
+
+		// ========================
+		// 2. ナビゲーションリンクの確認
+		// ========================
+
+		// ホームリンクの存在確認
+		const homeLink = canvas.getByRole("link", { name: /ホーム/i });
+		await expect(homeLink).toBeInTheDocument();
+		await expect(homeLink).toHaveAttribute("href", "/");
+
+		// サブスクリンクの存在確認
+		const subscriptionsLink = canvas.getByRole("link", {
+			name: /サブスク管理/i,
+		});
+		await expect(subscriptionsLink).toBeInTheDocument();
+		await expect(subscriptionsLink).toHaveAttribute("href", "/subscriptions");
+
+		// ========================
+		// 3. アクティブ状態の確認
+		// ========================
+
+		// デフォルトでホームリンクがアクティブ状態（pathname="/"をモック）
+		await expect(homeLink).toHaveAttribute("aria-current", "page");
+		await expect(homeLink).toHaveClass("bg-blue-100", "text-blue-700");
+
+		// サブスクリンクは非アクティブ状態
+		await expect(subscriptionsLink).not.toHaveAttribute("aria-current");
+		await expect(subscriptionsLink).toHaveClass("text-gray-600");
+
+		// ========================
+		// 4. キーボードナビゲーションテスト
+		// ========================
+
+		// Tabキーでナビゲーションリンクにフォーカス
+		await userEvent.tab();
+		await expect(homeLink).toHaveFocus();
+
+		// 次のリンクへのTab移動
+		await userEvent.tab();
+		await expect(subscriptionsLink).toHaveFocus();
+
+		// フォーカスリング（アウトライン）のスタイルが適用されているか確認
+		await expect(subscriptionsLink).toHaveClass(
+			"focus:ring-2",
+			"focus:ring-blue-500",
+		);
+
+		// Enterキーでリンクをアクティベート（実際のナビゲーションはStorybookでは制限されるため、フォーカス状態のみ確認）
+		await userEvent.keyboard("{Enter}");
+		await expect(subscriptionsLink).toHaveFocus();
+
+		// ========================
+		// 5. ホバー状態の確認
+		// ========================
+
+		// ホバー状態のスタイルクラスが適用されているか確認
+		await expect(homeLink).toHaveClass(
+			"hover:bg-gray-100",
+			"hover:text-gray-900",
+		);
+		await expect(subscriptionsLink).toHaveClass(
+			"hover:bg-gray-100",
+			"hover:text-gray-900",
+		);
+
+		// マウスホバーでのスタイル変更（視覚的確認）
+		await userEvent.hover(subscriptionsLink);
+		await userEvent.unhover(subscriptionsLink);
+
+		// ========================
+		// 6. アクセシビリティ属性の確認
+		// ========================
+
+		// ナビゲーションのaria-labelが正しく設定されているか
+		await expect(nav).toHaveAttribute("aria-label", "メインナビゲーション");
+
+		// ロゴのaria-labelが正しく設定されているか
+		await expect(logo).toHaveAttribute("aria-label", "Saifuuロゴ");
+
+		// アイコンがaria-hidden="true"で装飾的要素として適切にマークされているか
+		const homeIcon = canvas.getByText("🏠");
+		await expect(homeIcon).toHaveAttribute("aria-hidden", "true");
+
+		const subscriptionsIcon = canvas.getByText("📱");
+		await expect(subscriptionsIcon).toHaveAttribute("aria-hidden", "true");
+
+		// ========================
+		// 7. レスポンシブ動作の確認
+		// ========================
+
+		// モバイル画面でのラベル非表示の確認
+		// Note: Storybookでは実際のCSSメディアクエリーのテストは制限されるため、
+		// クラス名の存在確認で代替
+		const homeLabel = canvas.getByText("ホーム");
+		const subscriptionsLabel = canvas.getByText("サブスク管理");
+
+		// レスポンシブクラスが正しく適用されているか確認
+		await expect(homeLabel).toHaveClass("hidden", "sm:inline");
+		await expect(subscriptionsLabel).toHaveClass("hidden", "sm:inline");
+
+		// ========================
+		// 8. 構造とセマンティクスの確認
+		// ========================
+
+		// ヘッダーがsticky位置に配置されているか
+		await expect(header).toHaveClass("sticky", "top-0");
+
+		// 背景のblur効果が適用されているか
+		await expect(header).toHaveClass("backdrop-blur-md");
+
+		// 適切なz-indexが設定されているか（オーバーレイ対応）
+		await expect(header).toHaveClass("z-50");
+
+		// ========================
+		// 9. レイアウトの確認
+		// ========================
+
+		// コンテナの最大幅設定
+		const container = header.querySelector(".container");
+		await expect(container).toBeInTheDocument();
+		await expect(container).toHaveClass("mx-auto");
+
+		// フレックスボックスレイアウトの確認
+		const flexContainer = header.querySelector(
+			".flex.items-center.justify-between",
+		);
+		await expect(flexContainer).toBeInTheDocument();
+		await expect(flexContainer).toHaveClass("h-16");
+
+		// ========================
+		// 10. 最終的な統合確認
+		// ========================
+
+		// 全体的なレイアウトが崩れていないか確認
+		await expect(header).toBeVisible();
+		await expect(title).toBeVisible();
+		await expect(homeLink).toBeVisible();
+		await expect(subscriptionsLink).toBeVisible();
+
+		// コンポーネントが正常に機能することを示すために、
+		// 最後にもう一度キーボード操作をテスト
+		await userEvent.tab();
+		await userEvent.tab();
+		await expect(homeLink).toHaveFocus();
 	},
 };
