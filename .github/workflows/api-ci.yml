@@ -89,8 +89,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       # Cloudflare Workers向けの追加チェック
-      - name: Wrangler validation
-        run: npx wrangler deploy --dry-run --compatibility-date=2025-06-29
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # NOTE: Wrangler dry-run validation removed to avoid conflicts with Workers Build automation
+      # See issue #74 for details
