@@ -24,10 +24,12 @@ if (!process.env.CI && typeof window !== "undefined" && window.location) {
 	try {
 		// 動的インポートでブラウザモード専用モジュールを読み込み
 		import("@storybook/react").then(({ setProjectAnnotations }) => {
-			import("storybook-addon-vis/vitest-setup").then(({ vis, visAnnotations }) => {
-				setProjectAnnotations([visAnnotations]);
-				vis.setup({ auto: true }); // 自動スナップショット設定
-			});
+			import("storybook-addon-vis/vitest-setup").then(
+				({ vis, visAnnotations }) => {
+					setProjectAnnotations([visAnnotations]);
+					vis.setup({ auto: true }); // 自動スナップショット設定
+				},
+			);
 		});
 	} catch (error) {
 		console.warn("Visual regression test setup skipped:", error);
