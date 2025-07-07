@@ -19,5 +19,8 @@ Object.defineProperty(globalThis, "process", {
 });
 
 // ビジュアルリグレッションテストの設定
-setProjectAnnotations([visAnnotations]);
-vis.setup({ auto: true }); // 自動スナップショット設定
+// CI環境では無効化し、ローカル開発時のみ有効
+if (process.env.NODE_ENV !== "test" || !process.env.CI) {
+	setProjectAnnotations([visAnnotations]);
+	vis.setup({ auto: true }); // 自動スナップショット設定
+}

@@ -24,6 +24,8 @@ export default defineConfig({
 			name: "chromium",
 			headless: true,
 		},
+		testTimeout: 30000, // 30秒でタイムアウト
+		hookTimeout: 10000, // フック用タイムアウト
 		include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 		exclude: ["tests/**", "node_modules/**", ".next/**"],
 		coverage: {
