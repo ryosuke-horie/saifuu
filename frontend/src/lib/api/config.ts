@@ -76,9 +76,9 @@ function getBaseUrl(environment: Environment): string {
 
 		case "production":
 			// 本番環境: Cloudflare Workersのエンドポイント
-			// CI環境での安全なビルドのため、環境変数が未設定の場合はプレースホルダーを返す
-			// 実際の使用時にバリデーションを行う
-			return process.env.NEXT_PUBLIC_API_URL || "https://api.placeholder.local";
+			// 環境変数が設定されていない場合は、ハードコードされたURLを使用
+			// TODO: ビルド時に環境変数を適切に設定する方法を検討
+			return process.env.NEXT_PUBLIC_API_URL || "https://saifuu-api.ryosuke-horie37.workers.dev/api";
 
 		case "test":
 			// テスト環境: テスト用のAPIサーバー（E2E用）

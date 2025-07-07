@@ -17,22 +17,14 @@ const app = new Hono<{
 app.use(
 	'/api/*',
 	cors({
-		origin: (origin, c) => {
-			console.log('CORS request from origin:', origin)
-			// 開発環境のオリジン
-			const allowedOrigins = [
-				'http://localhost:3000',
-				'http://localhost:3002',
-				'http://localhost:3003',
-				'https://saifuu.ryosuke-horie37.workers.dev',
-			]
-			// 一時的にすべてのオリジンを許可（デバッグ用）
-			// TODO: 本番環境では必ず制限すること
-			return origin || '*'
-		},
+		origin: [
+			'http://localhost:3000',
+			'http://localhost:3002',
+			'http://localhost:3003',
+			'https://saifuu.ryosuke-horie37.workers.dev',
+		],
 		allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 		allowHeaders: ['Content-Type', 'Authorization'],
-		credentials: true,
 	})
 )
 

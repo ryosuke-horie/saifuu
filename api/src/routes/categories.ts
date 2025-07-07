@@ -13,23 +13,10 @@ const app = new Hono<{
 // カテゴリ一覧取得
 app.get('/', async (c) => {
 	try {
-		console.log('=== Categories GET request ===')
-		console.log('Origin:', c.req.header('origin'))
-		console.log('Host:', c.req.header('host'))
-		console.log('User-Agent:', c.req.header('user-agent'))
-		
 		const db = c.get('db')
-		console.log('Database instance:', typeof db)
-		
 		const result = await db.select().from(categories)
-		console.log('Categories found:', result.length)
-		
 		return c.json(result)
-	} catch (error) {
-		console.error('Categories error:', error)
-		console.error('Error type:', typeof error)
-		console.error('Error message:', error instanceof Error ? error.message : String(error))
-		console.error('Error stack:', error instanceof Error ? error.stack : undefined)
+	} catch (_error) {
 		return c.json({ error: 'Failed to fetch categories' }, 500)
 	}
 })
