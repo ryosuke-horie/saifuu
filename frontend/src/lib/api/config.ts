@@ -81,7 +81,7 @@ function getBaseUrl(environment: Environment): string {
 			if (!process.env.NEXT_PUBLIC_API_URL) {
 				console.warn(
 					"NEXT_PUBLIC_API_URL is not defined. Using placeholder URL. " +
-					"Please set it in .env.production for production builds."
+						"Please set it in .env.production for production builds.",
 				);
 			}
 			return process.env.NEXT_PUBLIC_API_URL || "https://api.placeholder.local";

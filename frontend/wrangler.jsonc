@@ -14,7 +14,7 @@
 	},
 	"observability": {
 		"enabled": true
-	},
+	}
 	/**
 	 * Environment Variables
 	 * 注意: NEXT_PUBLIC_ プレフィックスの環境変数は .env.production で設定する必要があります
