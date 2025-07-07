@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- 
+    Saifuu - 家計管理アプリ
+    プライバシー重視のため、検索エンジンからのアクセスは制限されています
+    このサイトマップは個人用アプリケーションのため、公開ページはありません
+  -->
+  
+  <!-- 基本的なページ構成（参考用） -->
+  <url>
+    <loc>https://saifuu.example.com/</loc>
+    <lastmod>2025-07-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- 
+    注意: このアプリケーションは個人用のため、
+    実際の運用では robots.txt で検索エンジンを制限しています
+  -->
+</urlset>

@@ -1,0 +1,21 @@
+# Saifuu - 家計管理アプリ
+# プライバシー重視のため、検索エンジンのインデックスを制限
+
+User-agent: *
+Disallow: /
+Noindex: /
+Nofollow: /
+Noarchive: /
+Nosnippet: /
+Noimageindex: /
+Nocache: /
+
+# セキュリティ上重要なファイルへのアクセス制限
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+Disallow: /config/
+Disallow: /logs/
+
+# サイトマップなし（プライベートアプリのため）
+# Sitemap: 
