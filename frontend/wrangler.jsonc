@@ -17,10 +17,20 @@
 	},
 	/**
 	 * Environment Variables
-	 * 本番環境用の環境変数設定
+	 *
+	 * 重要: Next.js + Cloudflare Workers での環境変数の扱い
+	 * 1. クライアントサイド変数 (NEXT_PUBLIC_*)
+	 *    → .env.production で設定（ビルド時に埋め込まれる）
+	 * 2. サーバーサイド変数
+	 *    → このvarsセクションで設定（実行時のみ参照可能）
+	 *
+	 * 本番環境のAPI URL設定:
+	 * - APIベースURL: https://saifuu-api.ryosuke-horie37.workers.dev/api
+	 * - 設定場所: .env.production の NEXT_PUBLIC_API_URL
 	 */
 	"vars": {
-		"NEXT_PUBLIC_API_URL": "https://saifuu-api.ryosuke-horie37.workers.dev/api"
+		// サーバーサイド専用の環境変数をここに設定
+		// 例: SECRET_KEY, DATABASE_URL など（クライアントに露出させたくない値）
 	}
 	/**
 	 * Smart Placement
