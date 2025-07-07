@@ -10,6 +10,7 @@ import {
 import { useCategories } from "../../hooks/useCategories";
 import { useSubscriptions } from "../../hooks/useSubscriptions";
 import type { SubscriptionFormData } from "../../types/subscription";
+import { DebugInfo } from "./debug";
 
 /**
  * サブスクリプション管理ページ
@@ -84,6 +85,9 @@ const SubscriptionsPage: FC = () => {
 
 	return (
 		<div className="min-h-screen bg-gray-50">
+			{/* デバッグ情報（本番環境での問題調査用） */}
+			<DebugInfo />
+			
 			{/* メインコンテンツ */}
 			<main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 				{/* ページヘッダー */}
