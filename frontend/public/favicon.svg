@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="walletGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e3a8a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d97706;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Wallet body -->
+  <rect x="15" y="25" width="70" height="55" rx="8" ry="8" fill="url(#walletGradient)" stroke="#1e3a8a" stroke-width="2"/>
+  
+  <!-- Wallet fold line -->
+  <line x1="15" y1="35" x2="85" y2="35" stroke="#1e3a8a" stroke-width="1.5" opacity="0.7"/>
+  
+  <!-- Credit card 1 (visible) -->
+  <rect x="20" y="30" width="35" height="22" rx="3" ry="3" fill="url(#cardGradient)" stroke="#059669" stroke-width="1"/>
+  
+  <!-- Credit card 2 (partially visible) -->
+  <rect x="25" y="27" width="35" height="22" rx="3" ry="3" fill="url(#cardGradient2)" stroke="#d97706" stroke-width="1"/>
+  
+  <!-- Card details (chip) -->
+  <rect x="28" y="32" width="6" height="5" rx="1" ry="1" fill="#ffffff" opacity="0.9"/>
+  
+  <!-- Card details (stripe) -->
+  <rect x="28" y="40" width="20" height="2" rx="1" ry="1" fill="#ffffff" opacity="0.7"/>
+  <rect x="28" y="44" width="15" height="2" rx="1" ry="1" fill="#ffffff" opacity="0.7"/>
+  
+  <!-- Money/bills -->
+  <rect x="65" y="40" width="15" height="25" rx="2" ry="2" fill="#10b981" stroke="#059669" stroke-width="1" opacity="0.8"/>
+  <rect x="67" y="42" width="15" height="25" rx="2" ry="2" fill="#22c55e" stroke="#16a34a" stroke-width="1" opacity="0.9"/>
+  
+  <!-- Dollar sign on money -->
+  <text x="74.5" y="57" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#ffffff" text-anchor="middle">$</text>
+  
+  <!-- Wallet closure -->
+  <rect x="80" y="30" width="8" height="15" rx="4" ry="4" fill="#374151" stroke="#1f2937" stroke-width="1"/>
+  <circle cx="84" cy="37.5" r="2" fill="#6b7280"/>
+  
+  <!-- Subtle shadow -->
+  <ellipse cx="50" cy="85" rx="30" ry="3" fill="#000000" opacity="0.1"/>
+</svg>
