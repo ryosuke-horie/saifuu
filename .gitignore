@@ -60,6 +60,10 @@ chromatic-*
 .storybook/cache
 **/.storybook/*.css
 
+# visual regression testing
+**/__screenshots__/
+**/__vis__/
+
 # database files
 api/dev.db
 api/*.db

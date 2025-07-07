@@ -9,10 +9,26 @@ export default defineConfig({
 			"@": path.resolve(__dirname, "./src"),
 		},
 	},
+	// Node.jsグローバルをブラウザ環境で利用可能にする
+	define: {
+		"process.env": "process.env",
+		global: "globalThis",
+	},
 	test: {
 		environment: "jsdom",
 		setupFiles: ["./vitest.setup.ts"],
 		globals: true,
+		// CI環境ではブラウザテストを無効化
+		browser: process.env.CI
+			? undefined
+			: {
+					enabled: true,
+					provider: "playwright",
+					name: "chromium",
+					headless: true,
+				},
+		testTimeout: 30000, // 30秒でタイムアウト
+		hookTimeout: 10000, // フック用タイムアウト
 		include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 		exclude: ["tests/**", "node_modules/**", ".next/**"],
 		coverage: {
