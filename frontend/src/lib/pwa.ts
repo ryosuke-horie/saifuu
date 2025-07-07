@@ -26,6 +26,7 @@ export function isPWAInstalled(): boolean {
 
 /**
  * オフライン状態かどうかを判定
+ * @deprecated 信頼性の問題があるため、isReallyOnline() を使用してください
  */
 export function isOffline(): boolean {
 	return typeof window !== "undefined" && !navigator.onLine;
@@ -33,9 +34,165 @@ export function isOffline(): boolean {
 
 /**
  * オンライン状態かどうかを判定
+ * @deprecated 信頼性の問題があるため、isReallyOnline() を使用してください
  */
 export function isOnline(): boolean {
 	return typeof window !== "undefined" && navigator.onLine;
+}
+
+/**
+ * 実際のネットワーク接続をテストしてオンライン状態を判定
+ * navigator.onLine の信頼性問題を解決するため、実際のHTTPリクエストでテスト
+ */
+export async function isReallyOnline(): Promise<boolean> {
+	// サーバーサイドレンダリング環境では false を返す
+	if (typeof window === "undefined") {
+		return false;
+	}
+
+	// navigator.onLine が false の場合、実際のネットワーク接続がない可能性が高い
+	if (!navigator.onLine) {
+		return false;
+	}
+
+	try {
+		// ヘルスチェックエンドポイントへの軽量リクエスト
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+		const response = await fetch("/api/health", {
+			method: "HEAD",
+			cache: "no-store",
+			signal: controller.signal,
+		});
+
+		clearTimeout(timeoutId);
+		return response.ok;
+	} catch (_error) {
+		// ネットワークエラーやタイムアウトの場合はオフライン
+		return false;
+	}
+}
+
+/**
+ * オンライン状態の変更を監視するためのユーティリティ
+ */
+export class NetworkStatusMonitor {
+	private listeners: ((isOnline: boolean) => void)[] = [];
+	private currentStatus = false;
+	private checkInterval: NodeJS.Timeout | null = null;
+	private lastCheckTime = 0;
+	private readonly CHECK_INTERVAL = 30000; // 30秒ごとにチェック
+	private readonly DEBOUNCE_TIME = 2000; // 2秒のデバウンス
+
+	constructor() {
+		if (typeof window !== "undefined") {
+			this.initialize();
+		}
+	}
+
+	private async initialize() {
+		// 初期状態を設定
+		this.currentStatus = await this.checkConnectivity();
+
+		// ブラウザのオンライン/オフラインイベントを監視
+		window.addEventListener("online", () => this.handleBrowserEvent(true));
+		window.addEventListener("offline", () => this.handleBrowserEvent(false));
+
+		// 定期的な接続チェック
+		this.startPeriodicCheck();
+	}
+
+	private async handleBrowserEvent(browserOnline: boolean) {
+		// ブラウザイベントをデバウンス
+		const now = Date.now();
+		if (now - this.lastCheckTime < this.DEBOUNCE_TIME) {
+			return;
+		}
+		this.lastCheckTime = now;
+
+		// オフラインイベントの場合はすぐに反映
+		if (!browserOnline) {
+			await this.updateStatus(false);
+			return;
+		}
+
+		// オンラインイベントの場合は実際の接続をテスト
+		const reallyOnline = await this.checkConnectivity();
+		await this.updateStatus(reallyOnline);
+	}
+
+	private async checkConnectivity(): Promise<boolean> {
+		return await isReallyOnline();
+	}
+
+	private async updateStatus(newStatus: boolean) {
+		if (this.currentStatus !== newStatus) {
+			this.currentStatus = newStatus;
+			this.notifyListeners(newStatus);
+		}
+	}
+
+	private startPeriodicCheck() {
+		this.checkInterval = setInterval(async () => {
+			const status = await this.checkConnectivity();
+			await this.updateStatus(status);
+		}, this.CHECK_INTERVAL);
+	}
+
+	private notifyListeners(isOnline: boolean) {
+		this.listeners.forEach((listener) => {
+			try {
+				listener(isOnline);
+			} catch (error) {
+				console.error("[PWA] Error in network status listener:", error);
+			}
+		});
+	}
+
+	/**
+	 * ネットワーク状態変更のリスナーを追加
+	 */
+	addListener(listener: (isOnline: boolean) => void): () => void {
+		this.listeners.push(listener);
+
+		// 現在の状態を即座に通知
+		listener(this.currentStatus);
+
+		// アンサブスクライブ関数を返す
+		return () => {
+			const index = this.listeners.indexOf(listener);
+			if (index > -1) {
+				this.listeners.splice(index, 1);
+			}
+		};
+	}
+
+	/**
+	 * 現在のネットワーク状態を取得
+	 */
+	isOnline(): boolean {
+		return this.currentStatus;
+	}
+
+	/**
+	 * 監視を停止
+	 */
+	destroy() {
+		if (this.checkInterval) {
+			clearInterval(this.checkInterval);
+			this.checkInterval = null;
+		}
+
+		if (typeof window !== "undefined") {
+			window.removeEventListener("online", () => this.handleBrowserEvent(true));
+			window.removeEventListener("offline", () =>
+				this.handleBrowserEvent(false),
+			);
+		}
+
+		this.listeners = [];
+	}
 }
 
 /**
@@ -312,8 +469,8 @@ export async function checkPWAHealth(): Promise<{
 			results.manifest = false;
 		}
 
-		// オフライン対応
-		results.offline = "onLine" in navigator;
+		// オフライン対応（実際の接続性をテスト）
+		results.offline = await isReallyOnline();
 
 		// プッシュ通知
 		results.notifications = "Notification" in window;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { NetworkStatusMonitor } from "@/lib/pwa";
 
 /**
  * サービスワーカー登録コンポーネント
@@ -21,10 +22,13 @@ export function useServiceWorker() {
 	const [state, setState] = useState<ServiceWorkerState>({
 		isRegistered: false,
 		isUpdateAvailable: false,
-		isOffline: !navigator.onLine,
+		isOffline: true, // デフォルトはオフライン状態として開始
 		registration: null,
 		error: null,
 	});
+
+	// ネットワーク状態監視
+	const [networkMonitor] = useState(() => new NetworkStatusMonitor());
 
 	/**
 	 * サービスワーカーを登録
@@ -99,23 +103,26 @@ export function useServiceWorker() {
 			return;
 		}
 
-		// オンライン/オフライン状態の監視
-		const handleOnline = () =>
-			setState((prev) => ({ ...prev, isOffline: false }));
-		const handleOffline = () =>
-			setState((prev) => ({ ...prev, isOffline: true }));
-
-		window.addEventListener("online", handleOnline);
-		window.addEventListener("offline", handleOffline);
+		// ネットワーク状態の監視を開始
+		const unsubscribe = networkMonitor.addListener((isOnline) => {
+			setState((prev) => ({ ...prev, isOffline: !isOnline }));
+		});
 
 		// サービスワーカーの登録
 		registerServiceWorker();
 
 		return () => {
-			window.removeEventListener("online", handleOnline);
-			window.removeEventListener("offline", handleOffline);
+			// ネットワーク監視を停止
+			unsubscribe();
 		};
-	}, [registerServiceWorker]);
+	}, [registerServiceWorker, networkMonitor]);
+
+	// コンポーネントのアンマウント時にネットワーク監視を停止
+	useEffect(() => {
+		return () => {
+			networkMonitor.destroy();
+		};
+	}, [networkMonitor]);
 
 	/**
 	 * サービスワーカーのアップデートを適用
@@ -198,6 +205,8 @@ export function useServiceWorker() {
 		applyUpdate,
 		clearCache,
 		getCacheStatus,
+		// ネットワーク監視機能を公開
+		getNetworkStatus: () => networkMonitor.isOnline(),
 	};
 }
 

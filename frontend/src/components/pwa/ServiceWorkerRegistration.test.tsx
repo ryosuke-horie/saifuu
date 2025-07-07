@@ -42,6 +42,12 @@ const mockNotification = {
 
 describe("ServiceWorkerRegistration", () => {
 	beforeEach(() => {
+		// fetch をモック（ヘルスチェック用）
+		global.fetch = vi.fn().mockResolvedValue({
+			ok: true,
+			status: 200,
+		} as Response);
+
 		// グローバルオブジェクトのモック
 		Object.defineProperty(window, "navigator", {
 			value: {
@@ -82,10 +88,17 @@ describe("ServiceWorkerRegistration", () => {
 	});
 
 	describe("基本的なレンダリング", () => {
-		it("正常にレンダリングされる", () => {
+		it("正常にレンダリングされる", async () => {
 			render(<ServiceWorkerRegistration />);
-			// コンポーネントは通常時に何も表示しない
-			expect(screen.queryByText(/オフライン状態です/)).not.toBeInTheDocument();
+			
+			// 初期状態では接続チェック中のためオフライン表示
+			expect(screen.getByText(/オフライン状態です/)).toBeInTheDocument();
+			
+			// 接続チェック完了後にオンライン状態になる
+			await waitFor(() => {
+				expect(screen.queryByText(/オフライン状態です/)).not.toBeInTheDocument();
+			}, { timeout: 6000 }); // ヘルスチェックのタイムアウト + バッファ
+			
 			expect(
 				screen.queryByText(/アップデート利用可能/),
 			).not.toBeInTheDocument();
@@ -100,8 +113,13 @@ describe("ServiceWorkerRegistration", () => {
 
 			render(<ServiceWorkerRegistration />);
 
-			// 通常のレンダリングが動作することを確認
-			expect(screen.queryByText(/オフライン状態です/)).not.toBeInTheDocument();
+			// 初期状態ではオフライン表示
+			expect(screen.getByText(/オフライン状態です/)).toBeInTheDocument();
+			
+			// 接続チェック完了後にオンライン状態になる（ServiceWorkerがなくてもネットワーク監視は動作）
+			await waitFor(() => {
+				expect(screen.queryByText(/オフライン状態です/)).not.toBeInTheDocument();
+			}, { timeout: 6000 });
 		});
 	});
 
@@ -122,6 +140,9 @@ describe("ServiceWorkerRegistration", () => {
 		});
 
 		it("オンライン状態に戻った時に通知が非表示になる", async () => {
+			// fetchをオフライン状態にモック
+			global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+			
 			// オフライン状態から開始
 			Object.defineProperty(window.navigator, "onLine", {
 				value: false,
@@ -140,17 +161,23 @@ describe("ServiceWorkerRegistration", () => {
 				value: true,
 				writable: true,
 			});
+			
+			// fetchをオンライン状態にモック
+			global.fetch = vi.fn().mockResolvedValue({
+				ok: true,
+				status: 200,
+			} as Response);
 
 			// オンラインイベントをディスパッチ
 			const onlineEvent = new Event("online");
 			window.dispatchEvent(onlineEvent);
 
-			// オフライン通知が非表示になることを確認
+			// オフライン通知が非表示になることを確認（実際の接続テスト後）
 			await waitFor(() => {
 				expect(
 					screen.queryByText(/オフライン状態です/),
 				).not.toBeInTheDocument();
-			});
+			}, { timeout: 6000 });
 		});
 	});
 
@@ -174,8 +201,13 @@ describe("ServiceWorkerRegistration", () => {
 
 			render(<ServiceWorkerRegistration />);
 
-			// エラーが発生してもコンポーネントがクラッシュしないことを確認
-			expect(screen.queryByText(/オフライン状態です/)).not.toBeInTheDocument();
+			// 初期状態ではオフライン表示
+			expect(screen.getByText(/オフライン状態です/)).toBeInTheDocument();
+			
+			// エラーが発生してもコンポーネントがクラッシュせず、接続チェック後にオンライン状態になる
+			await waitFor(() => {
+				expect(screen.queryByText(/オフライン状態です/)).not.toBeInTheDocument();
+			}, { timeout: 6000 });
 		});
 	});
 
@@ -237,7 +269,7 @@ describe("ServiceWorkerRegistration", () => {
 
 			expect(hookResult.isRegistered).toBe(false);
 			expect(hookResult.isUpdateAvailable).toBe(false);
-			expect(hookResult.isOffline).toBe(false);
+			expect(hookResult.isOffline).toBe(true); // 新しい実装では初期状態はオフライン
 			expect(hookResult.registration).toBe(null);
 			expect(hookResult.error).toBe(null);
 		});
