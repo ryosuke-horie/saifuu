@@ -195,11 +195,11 @@ export const conditionalLog = (
 export const logPropertyChange = (
 	logger: Logger,
 	objectName: string,
-	oldValue: any,
-	newValue: any,
+	oldValue: unknown,
+	newValue: unknown,
 	meta: LogMeta = {}
 ): void => {
-	const changes: Record<string, any> = {}
+	const changes: Record<string, unknown> = {}
 
 	// プリミティブ値の場合
 	if (typeof oldValue !== 'object' || typeof newValue !== 'object') {
@@ -207,13 +207,15 @@ export const logPropertyChange = (
 		changes.newValue = newValue
 	} else {
 		// オブジェクトの場合は差分を計算
-		const oldKeys = Object.keys(oldValue || {})
-		const newKeys = Object.keys(newValue || {})
+		const oldObj = (oldValue as Record<string, unknown>) || ({} as Record<string, unknown>)
+		const newObj = (newValue as Record<string, unknown>) || ({} as Record<string, unknown>)
+		const oldKeys = Object.keys(oldObj)
+		const newKeys = Object.keys(newObj)
 		const allKeys = [...new Set([...oldKeys, ...newKeys])]
 
 		for (const key of allKeys) {
-			const oldVal = oldValue?.[key]
-			const newVal = newValue?.[key]
+			const oldVal = oldObj[key]
+			const newVal = newObj[key]
 
 			if (oldVal !== newVal) {
 				changes[key] = {
@@ -326,7 +328,7 @@ export const truncateString = (str: string, maxLength = 1000): string => {
 		return str
 	}
 
-	return str.substring(0, maxLength) + '...'
+	return `${str.substring(0, maxLength)}...`
 }
 
 /**
@@ -338,16 +340,16 @@ export const truncateString = (str: string, maxLength = 1000): string => {
  * @param obj 対象のオブジェクト
  * @returns JSON文字列
  */
-export const safeStringify = (obj: any): string => {
+export const safeStringify = (obj: unknown): string => {
 	try {
 		return JSON.stringify(obj, null, 2)
-	} catch (error) {
+	} catch (_error) {
 		try {
 			// 循環参照の回避
 			const seen = new WeakSet()
 			return JSON.stringify(
 				obj,
-				(key, value) => {
+				(_key, value) => {
 					if (typeof value === 'object' && value !== null) {
 						if (seen.has(value)) {
 							return '[Circular]'
@@ -358,7 +360,7 @@ export const safeStringify = (obj: any): string => {
 				},
 				2
 			)
-		} catch (fallbackError) {
+		} catch (_fallbackError) {
 			return '[Unserializable Object]'
 		}
 	}

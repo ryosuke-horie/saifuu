@@ -38,13 +38,13 @@ export interface LogMeta {
 	/** HTTPステータスコード */
 	statusCode?: number
 	/** 追加のデータ（リクエストボディ、レスポンスデータ等） */
-	data?: Record<string, any>
+	data?: Record<string, unknown>
 	/** エラーメッセージ */
 	error?: string
 	/** スタックトレース */
 	stack?: string
 	/** その他の任意のメタデータ */
-	[key: string]: any
+	[key: string]: unknown
 }
 
 /**

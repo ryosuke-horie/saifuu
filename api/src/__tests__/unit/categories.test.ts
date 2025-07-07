@@ -37,15 +37,22 @@ describe('Categories API - Unit Tests', () => {
 			expect(data.length).toBeGreaterThan(0)
 
 			// カテゴリの構造を検証
-			data.forEach((category: any) => {
+			data.forEach((category: unknown) => {
+				const cat = category as {
+					id: number
+					name: string
+					type: string
+					createdAt: string
+					updatedAt: string
+				}
 				expect(category).toHaveProperty('id')
 				expect(category).toHaveProperty('name')
 				expect(category).toHaveProperty('type')
 				expect(category).toHaveProperty('createdAt')
 				expect(category).toHaveProperty('updatedAt')
-				expect(typeof category.id).toBe('number')
-				expect(typeof category.name).toBe('string')
-				expect(['income', 'expense']).toContain(category.type)
+				expect(typeof cat.id).toBe('number')
+				expect(typeof cat.name).toBe('string')
+				expect(['income', 'expense']).toContain(cat.type)
 			})
 		})
 
@@ -240,7 +247,9 @@ describe('Categories API - Unit Tests', () => {
 			// 削除されたことを確認
 			const getResponse = await createTestRequest(testProductionApp, 'GET', '/categories')
 			const categories = await getResponseJson(getResponse)
-			expect(categories.find((c: any) => c.id === createdCategory.id)).toBeUndefined()
+			expect(
+				categories.find((c: unknown) => (c as { id: number }).id === createdCategory.id)
+			).toBeUndefined()
 		})
 
 		it('should return 404 for non-existent category deletion', async () => {

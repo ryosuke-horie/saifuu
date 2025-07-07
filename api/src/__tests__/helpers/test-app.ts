@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
 import type { AnyDatabase, Env } from '../../db'
-import { createTestDatabase } from './test-db'
 
 /**
  * テスト用Honoアプリヘルパー
@@ -40,7 +39,7 @@ export async function createTestRequest(
 
 	// Create a dummy environment - the actual database will be injected differently
 	const env = {
-		DB: {} as any, // This won't be used since we'll override database creation
+		DB: {} as unknown as import('@cloudflare/workers-types').D1Database, // This won't be used since we'll override database creation
 	}
 
 	const executionContext = {
@@ -121,16 +120,9 @@ export function expectErrorResponse(data: unknown, expectedMessage: string) {
 	}
 }
 
-/**
- * APIレスポンスのアサーション用ヘルパー
- * @deprecated Use individual functions instead
- */
-export class ApiTestHelper {
-	/**
-	 * ステータスコードをチェック
-	 */
-	static expectStatus = expectStatus
-	static expectHeader = expectHeader
-	static expectJsonStructure = expectJsonStructure
-	static expectErrorResponse = expectErrorResponse
-}
+// 注意: ApiTestHelperクラスは削除されました
+// 代わりに個別の関数を直接使用してください:
+// - expectStatus
+// - expectHeader
+// - expectJsonStructure
+// - expectErrorResponse

@@ -33,16 +33,11 @@ export type TestDatabase = ReturnType<typeof createTestDatabase>
 
 // 共通のデータベースインターフェース
 // D1環境で統一された型定義
-export interface CommonDatabase {
-	select: (...args: any[]) => any
-	insert: (...args: any[]) => any
-	update: (...args: any[]) => any
-	delete: (...args: any[]) => any
-}
+// Drizzleの型システムを活用した型安全なデータベース操作
+export type CommonDatabase = ReturnType<typeof createDatabase>
 
 // 型安全性を保ちつつ、実行時の柔軟性を提供
-export type AnyDatabase = CommonDatabase & {
-	[key: string]: any
-}
+// テスト環境などで使用される汎用的なデータベース型
+export type AnyDatabase = Database | DevDatabase | TestDatabase
 
 export { schema }

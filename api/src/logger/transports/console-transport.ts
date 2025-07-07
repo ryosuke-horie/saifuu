@@ -40,7 +40,7 @@ export class ConsoleTransport implements LogTransport {
 			} else {
 				this.writeStructured(entry)
 			}
-		} catch (error) {
+		} catch (_error) {
 			// フォールバック出力
 			this.writeFallback(entry)
 		}
@@ -100,7 +100,7 @@ export class ConsoleTransport implements LogTransport {
 
 		try {
 			console.log(fallbackMessage)
-		} catch (error) {
+		} catch (_error) {
 			// 最終的なフォールバック
 			console.log(`Log output failed: ${entry.message}`)
 		}
@@ -126,7 +126,7 @@ export class ConsoleTransport implements LogTransport {
 				second: '2-digit',
 				fractionalSecondDigits: 3,
 			})
-		} catch (error) {
+		} catch (_error) {
 			return timestamp
 		}
 	}
@@ -173,14 +173,14 @@ export class ConsoleTransport implements LogTransport {
 	 * @param meta メタデータ
 	 * @returns フォーマットされたメタデータ文字列
 	 */
-	private formatMeta(meta: any): string {
+	private formatMeta(meta: Record<string, unknown>): string {
 		if (!meta || Object.keys(meta).length === 0) {
 			return ''
 		}
 
 		const importantKeys = ['duration', 'statusCode', 'error', 'operationType', 'method', 'path']
 
-		const filteredMeta: any = {}
+		const filteredMeta: Record<string, unknown> = {}
 		for (const key of importantKeys) {
 			if (meta[key] !== undefined) {
 				filteredMeta[key] = meta[key]
@@ -193,7 +193,7 @@ export class ConsoleTransport implements LogTransport {
 
 		try {
 			return ` ${JSON.stringify(filteredMeta)}`
-		} catch (error) {
+		} catch (_error) {
 			return ' [meta formatting failed]'
 		}
 	}

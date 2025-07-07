@@ -43,9 +43,13 @@ export { CloudflareLogger } from './core/cloudflare-logger'
 export {
 	createLogger,
 	createLogger as getDefaultLogger,
+	getLoggerConfig,
 	getLoggerIfInitialized,
-	LoggerFactory,
+	getLoggerInstance,
+	isLoggerInitialized,
+	resetLogger,
 	safeLog,
+	updateLoggerConfig,
 } from './factory'
 // トランスポートのエクスポート
 export {

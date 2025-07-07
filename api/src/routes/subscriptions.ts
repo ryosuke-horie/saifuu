@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
-import { type Context, Hono } from 'hono'
-import { type AnyDatabase, createDatabase, type Database, type Env } from '../db'
+import { Hono } from 'hono'
+import { type AnyDatabase, type Env } from '../db'
 import { categories, type NewSubscription, subscriptions } from '../db/schema'
 
 /**

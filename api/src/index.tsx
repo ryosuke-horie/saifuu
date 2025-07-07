@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { type AnyDatabase, createDatabase, createDevDatabase, type Env } from './db'
+import { type AnyDatabase, createDatabase, type Env } from './db'
 import { categories } from './db/schema'
 import { renderer } from './renderer'
 import categoriesRouter from './routes/categories'

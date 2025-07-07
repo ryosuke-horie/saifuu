@@ -148,7 +148,7 @@ export class CloudflareLogger implements Logger {
 		try {
 			// 開発環境では見やすい形式で出力
 			console.log(JSON.stringify(entry, null, 2))
-		} catch (error) {
+		} catch (_error) {
 			// JSON化に失敗した場合のフォールバック
 			console.log(`[${entry.timestamp}] ${entry.level.toUpperCase()}: ${entry.message}`)
 		}
@@ -185,8 +185,8 @@ export class CloudflareLogger implements Logger {
 			// 本番環境では適切なログ出力先へ送信
 			// 現在はコンソール出力（将来的に外部ログサービスへ拡張可能）
 			await this.outputEntries(entries)
-		} catch (error) {
-			console.error('Failed to flush logs:', error)
+		} catch (_error) {
+			console.error('Failed to flush logs:', _error)
 			// エラー時は標準出力にフォールバック
 			this.fallbackOutput(entries)
 		}
@@ -214,7 +214,7 @@ export class CloudflareLogger implements Logger {
 		entries.forEach((entry) => {
 			try {
 				console.log(`[${entry.timestamp}] ${entry.level.toUpperCase()}: ${entry.message}`)
-			} catch (error) {
+			} catch (_error) {
 				// 最終的なフォールバック
 				console.log(`Log output failed: ${entry.message}`)
 			}
@@ -240,7 +240,7 @@ export class CloudflareLogger implements Logger {
 				// 循環参照の回避
 				try {
 					sanitized[key] = JSON.parse(JSON.stringify(value))
-				} catch (error) {
+				} catch (_error) {
 					sanitized[key] = '[CIRCULAR_REFERENCE]'
 				}
 			} else {

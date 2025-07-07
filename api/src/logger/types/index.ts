@@ -33,10 +33,10 @@ export interface LogMeta {
 	statusCode?: number
 
 	/** 追加データ - 任意の構造化データ */
-	data?: Record<string, any>
+	data?: Record<string, unknown>
 
 	/** 追加のキー・バリューペア - 柔軟なメタデータ拡張 */
-	[key: string]: any
+	[key: string]: unknown
 }
 
 /**

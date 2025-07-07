@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { invalidSubscriptionData, testRequestPayloads } from '../helpers/fixtures'
-import { ApiTestHelper, createTestRequest, getResponseJson } from '../helpers/test-app'
+import {
+	createTestRequest,
+	expectErrorResponse,
+	expectHeader,
+	expectJsonStructure,
+	getResponseJson,
+} from '../helpers/test-app'
 import testProductionApp from '../helpers/test-production-app'
 
 /**
@@ -42,7 +48,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 			expect(response.status).toBe(200)
 			// Hono returns just 'application/json' without charset specification
-			ApiTestHelper.expectHeader(response, 'content-type', 'application/json')
+			expectHeader(response, 'content-type', 'application/json')
 
 			const data = await getResponseJson(response)
 			expect(Array.isArray(data)).toBe(true)
@@ -50,7 +56,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			// データが存在する場合の構造チェック
 			if (data.length > 0) {
 				const subscription = data[0]
-				ApiTestHelper.expectJsonStructure(subscription, [
+				expectJsonStructure(subscription, [
 					'id',
 					'name',
 					'amount',
@@ -66,7 +72,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 				// カテゴリ情報の構造チェック
 				if (subscription.category) {
-					ApiTestHelper.expectJsonStructure(subscription.category, [
+					expectJsonStructure(subscription.category, [
 						'id',
 						'name',
 						'type',
@@ -87,7 +93,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			// 実装によってはエラーが返される場合もある
 			if (response.status === 500) {
 				const data = await getResponseJson(response)
-				ApiTestHelper.expectErrorResponse(data, 'Failed to fetch subscriptions')
+				expectErrorResponse(data, 'Failed to fetch subscriptions')
 			} else {
 				expect(response.status).toBe(200)
 			}
@@ -109,7 +115,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			expect(response.status).toBe(201)
 
 			const data = await getResponseJson(response)
-			ApiTestHelper.expectJsonStructure(data, [
+			expectJsonStructure(data, [
 				'id',
 				'name',
 				'amount',
@@ -173,7 +179,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			// 現在のモック実装では500エラーまたは正常作成
 			if (response.status === 500) {
 				const data = await getResponseJson(response)
-				ApiTestHelper.expectErrorResponse(data, 'Failed to create subscription')
+				expectErrorResponse(data, 'Failed to create subscription')
 			} else {
 				expect(response.status).toBe(201)
 			}
@@ -188,7 +194,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			// データが存在しない場合は404、存在する場合は200
 			if (response.status === 200) {
 				const data = await getResponseJson(response)
-				ApiTestHelper.expectJsonStructure(data, [
+				expectJsonStructure(data, [
 					'id',
 					'name',
 					'amount',
@@ -200,7 +206,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			} else {
 				expect(response.status).toBe(404)
 				const data = await getResponseJson(response)
-				ApiTestHelper.expectErrorResponse(data, 'Subscription not found')
+				expectErrorResponse(data, 'Subscription not found')
 			}
 		})
 
@@ -210,7 +216,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 			expect(response.status).toBe(404)
 			const data = await getResponseJson(response)
-			ApiTestHelper.expectErrorResponse(data, 'Subscription not found')
+			expectErrorResponse(data, 'Subscription not found')
 		})
 
 		it('should handle invalid id format', async () => {
@@ -245,7 +251,7 @@ describe('Subscriptions API - Unit Tests', () => {
 				expect(data.description).toBe(updateData.description)
 			} else if (response.status === 404) {
 				const data = await getResponseJson(response)
-				ApiTestHelper.expectErrorResponse(data, 'Subscription not found')
+				expectErrorResponse(data, 'Subscription not found')
 			} else {
 				expect([400, 500]).toContain(response.status)
 			}
@@ -262,7 +268,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 			expect(response.status).toBe(404)
 			const data = await getResponseJson(response)
-			ApiTestHelper.expectErrorResponse(data, 'Subscription not found')
+			expectErrorResponse(data, 'Subscription not found')
 		})
 	})
 
@@ -276,7 +282,7 @@ describe('Subscriptions API - Unit Tests', () => {
 				expect(data.message).toBe('Subscription deleted successfully')
 			} else if (response.status === 404) {
 				const data = await getResponseJson(response)
-				ApiTestHelper.expectErrorResponse(data, 'Subscription not found')
+				expectErrorResponse(data, 'Subscription not found')
 			} else {
 				expect([400, 500]).toContain(response.status)
 			}
@@ -288,7 +294,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 			expect(response.status).toBe(404)
 			const data = await getResponseJson(response)
-			ApiTestHelper.expectErrorResponse(data, 'Subscription not found')
+			expectErrorResponse(data, 'Subscription not found')
 		})
 	})
 })

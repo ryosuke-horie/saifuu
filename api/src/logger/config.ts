@@ -16,7 +16,7 @@ import { LoggerConfig, LogLevel } from './types'
  * @param env 環境変数オブジェクト
  * @returns ロガー設定
  */
-export const createLoggerConfig = (env: any): LoggerConfig => {
+export const createLoggerConfig = (env: Record<string, unknown>): LoggerConfig => {
 	const isDevelopment = env.NODE_ENV === 'development'
 
 	return {
@@ -24,7 +24,7 @@ export const createLoggerConfig = (env: any): LoggerConfig => {
 		level: (env.LOG_LEVEL as LogLevel) || (isDevelopment ? 'debug' : 'info'),
 		bufferSize: Number(env.LOG_BUFFER_SIZE) || (isDevelopment ? 10 : 50),
 		flushInterval: Number(env.LOG_FLUSH_INTERVAL) || (isDevelopment ? 1000 : 5000),
-		version: env.VERSION || '1.0.0',
+		version: (env.VERSION as string) || '1.0.0',
 	}
 }
 

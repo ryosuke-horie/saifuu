@@ -14,7 +14,8 @@ import { getTestSqliteInstance } from './test-db'
 export function createTestProductionApp() {
 	const sqliteInstance = getTestSqliteInstance()
 	// テスト環境ではbetter-sqlite3版のdrizzleを使用
-	const testDatabase = drizzle(sqliteInstance, { schema }) as AnyDatabase
+	// テスト環境では異なるDBドライバーを使用するため、型の変換が必要
+	const testDatabase = drizzle(sqliteInstance, { schema }) as unknown as AnyDatabase
 
 	// メインアプリと同じ構成のテストアプリを作成
 	const app = new Hono<{
