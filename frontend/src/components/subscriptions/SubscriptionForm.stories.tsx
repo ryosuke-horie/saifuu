@@ -107,7 +107,12 @@ export const Default: Story = {
 					"新規サブスクリプション作成時のフォーム表示です。全てのフィールドが空の状態で表示されます。",
 			},
 		},
+		visualTest: {
+			description: "Clean form layout with all empty fields",
+			viewports: ["mobile", "tablet", "desktop"],
+		},
 	},
+	tags: ["autodocs", "visual-test"],
 };
 
 /**
@@ -126,7 +131,12 @@ export const EditMode: Story = {
 					"既存のサブスクリプションを編集する際の表示です。初期データが各フィールドに設定され、ボタンが「更新」になります。",
 			},
 		},
+		visualTest: {
+			description: "Pre-filled form appearance with existing data",
+			viewports: ["desktop"],
+		},
 	},
+	tags: ["autodocs", "visual-test"],
 };
 
 /**
@@ -172,7 +182,13 @@ export const WithValidationErrors: Story = {
 					"バリデーションエラーが発生した際の表示状態です。各フィールドでエラーが発生している状態を確認できます。",
 			},
 		},
+		visualTest: {
+			description: "Form with multiple validation errors displayed",
+			viewports: ["mobile", "desktop"],
+			captureAfterInteraction: true,
+		},
 	},
+	tags: ["autodocs", "visual-test"],
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 
@@ -328,7 +344,13 @@ export const AmountBoundaryTest: Story = {
 					"料金フィールドの境界値テストです。0円、1円、100万円、100万1円の入力でバリデーションが正しく動作することを確認します。",
 			},
 		},
+		visualTest: {
+			description: "Field validation display for boundary values",
+			viewports: ["desktop"],
+			captureAfterInteraction: true,
+		},
 	},
+	tags: ["autodocs", "visual-test"],
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const amountInput = canvas.getByLabelText(/料金（円）/);
@@ -412,7 +434,12 @@ export const Mobile: Story = {
 					"モバイルデバイスでの表示です。フォームがモバイル画面に適したレイアウトで表示されます。",
 			},
 		},
+		visualTest: {
+			description: "Mobile responsive form layout",
+			viewports: ["mobile"],
+		},
 	},
+	tags: ["autodocs", "visual-test"],
 };
 
 /**
@@ -431,7 +458,12 @@ export const Tablet: Story = {
 					"タブレットデバイスでの表示です。中程度の画面サイズに最適化されたレイアウトで表示されます。",
 			},
 		},
+		visualTest: {
+			description: "Tablet responsive form layout",
+			viewports: ["tablet"],
+		},
 	},
+	tags: ["autodocs", "visual-test"],
 };
 
 /**
@@ -450,7 +482,12 @@ export const Desktop: Story = {
 					"デスクトップでの表示です。広い画面を活用した最適なレイアウトで表示されます。",
 			},
 		},
+		visualTest: {
+			description: "Desktop responsive form layout",
+			viewports: ["desktop"],
+		},
 	},
+	tags: ["autodocs", "visual-test"],
 };
 
 /**

@@ -156,6 +156,10 @@ export const Default: Story = {
 			</div>
 		),
 	},
+	tags: ["visual-test"],
+	parameters: {
+		chromatic: { delay: 300 }, // アニメーション完了を待つ
+	},
 };
 
 /**
@@ -175,6 +179,10 @@ export const WithTitle: Story = {
 				</p>
 			</div>
 		),
+	},
+	tags: ["visual-test"],
+	parameters: {
+		chromatic: { delay: 300 }, // アニメーション完了を待つ
 	},
 };
 
@@ -305,6 +313,13 @@ export const LongContent: Story = {
 			</div>
 		),
 	},
+	tags: ["visual-test"],
+	parameters: {
+		chromatic: {
+			delay: 300, // アニメーション完了を待つ
+			diffThreshold: 0.2, // スクロールバーの差異を許容
+		},
+	},
 };
 
 /**
@@ -405,6 +420,10 @@ export const AlertDialog: Story = {
 				</p>
 			</div>
 		),
+	},
+	tags: ["visual-test"],
+	parameters: {
+		chromatic: { delay: 300 }, // アニメーション完了を待つ
 	},
 };
 
@@ -516,9 +535,14 @@ export const Mobile: Story = {
 			</div>
 		),
 	},
+	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "mobile1",
+		},
+		chromatic: {
+			delay: 300, // アニメーション完了を待つ
+			viewports: [320], // モバイルビューポート幅
 		},
 	},
 };
@@ -540,9 +564,14 @@ export const Tablet: Story = {
 			</div>
 		),
 	},
+	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "ipad",
+		},
+		chromatic: {
+			delay: 300, // アニメーション完了を待つ
+			viewports: [768], // タブレットビューポート幅
 		},
 	},
 };

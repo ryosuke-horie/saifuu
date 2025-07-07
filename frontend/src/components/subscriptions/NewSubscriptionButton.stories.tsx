@@ -121,12 +121,16 @@ export const WithCustomClass: Story = {
 	args: {
 		className: "w-full text-lg py-3",
 	},
+	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story:
 					"カスタムCSSクラスを適用した例です。ここでは幅を100%、文字サイズを大きく、パディングを増やしています。",
 			},
+		},
+		chromatic: {
+			delay: 100,
 		},
 	},
 };
