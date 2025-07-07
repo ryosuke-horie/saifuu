@@ -9,10 +9,21 @@ export default defineConfig({
 			"@": path.resolve(__dirname, "./src"),
 		},
 	},
+	// Node.jsグローバルをブラウザ環境で利用可能にする
+	define: {
+		"process.env": "process.env",
+		global: "globalThis",
+	},
 	test: {
 		environment: "jsdom",
 		setupFiles: ["./vitest.setup.ts"],
 		globals: true,
+		browser: {
+			enabled: true,
+			provider: "playwright",
+			name: "chromium",
+			headless: true,
+		},
 		include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 		exclude: ["tests/**", "node_modules/**", ".next/**"],
 		coverage: {
