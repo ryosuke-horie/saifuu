@@ -62,6 +62,12 @@ export const Default: Story = {
 		isOpen: true,
 		isSubmitting: false,
 	},
+	tags: ["visual-test"],
+	parameters: {
+		chromatic: {
+			delay: 300, // ダイアログアニメーション完了を待つ
+		},
+	},
 };
 
 // 送信中の状態
@@ -70,12 +76,16 @@ export const Submitting: Story = {
 		isOpen: true,
 		isSubmitting: true,
 	},
+	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story:
 					"フォーム送信中の状態。送信ボタンにローディングアイコンが表示され、オーバーレイクリックやESCキーでの閉じる操作が無効化されます。",
 			},
+		},
+		chromatic: {
+			delay: 300,
 		},
 	},
 };
@@ -239,6 +249,7 @@ export const MobileView: Story = {
 		isOpen: true,
 		isSubmitting: false,
 	},
+	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "mobile1",
@@ -249,6 +260,9 @@ export const MobileView: Story = {
 					"モバイル画面でのダイアログ表示。画面幅に応じて適切にレイアウトされます。",
 			},
 		},
+		chromatic: {
+			delay: 300,
+		},
 	},
 };
 
@@ -258,6 +272,7 @@ export const TabletView: Story = {
 		isOpen: true,
 		isSubmitting: false,
 	},
+	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "tablet",
@@ -266,6 +281,9 @@ export const TabletView: Story = {
 			description: {
 				story: "タブレット画面でのダイアログ表示。",
 			},
+		},
+		chromatic: {
+			delay: 300,
 		},
 	},
 };

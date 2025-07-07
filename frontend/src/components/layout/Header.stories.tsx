@@ -113,7 +113,14 @@ type Story = StoryObj<typeof meta>;
  * 最も基本的な使用パターンです。
  * デフォルトのタイトル「Saifuu」が表示されます。
  */
-export const Default: Story = {};
+export const Default: Story = {
+	tags: ["visual-test"],
+	parameters: {
+		chromatic: {
+			delay: 100, // ナビゲーションレンダリング完了を待つ
+		},
+	},
+};
 
 /**
  * カスタムタイトル
@@ -125,12 +132,16 @@ export const CustomTitle: Story = {
 	args: {
 		title: "家計管理アプリ",
 	},
+	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story:
 					"カスタムタイトルを設定した例。アプリケーションの用途に応じてタイトルを変更できます。",
 			},
+		},
+		chromatic: {
+			delay: 100,
 		},
 	},
 };
@@ -203,6 +214,7 @@ export const WithCustomClass: Story = {
  * レスポンシブデザインの動作を確認できます。
  */
 export const Mobile: Story = {
+	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "mobile",
@@ -213,6 +225,9 @@ export const Mobile: Story = {
 					"モバイル画面サイズでの表示例。フォントサイズやパディングがモバイル向けに調整されます。",
 			},
 		},
+		chromatic: {
+			delay: 100,
+		},
 	},
 };
 
@@ -222,6 +237,7 @@ export const Mobile: Story = {
  * タブレット画面サイズでの表示確認用ストーリーです。
  */
 export const Tablet: Story = {
+	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "tablet",
@@ -232,6 +248,9 @@ export const Tablet: Story = {
 					"タブレット画面サイズでの表示例。中間的な画面サイズでの動作を確認します。",
 			},
 		},
+		chromatic: {
+			delay: 100,
+		},
 	},
 };
 
@@ -241,6 +260,7 @@ export const Tablet: Story = {
  * デスクトップ画面サイズでの表示確認用ストーリーです。
  */
 export const Desktop: Story = {
+	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "desktop",
@@ -250,6 +270,9 @@ export const Desktop: Story = {
 				story:
 					"デスクトップ画面サイズでの表示例。最大限の画面幅でのレイアウトを確認します。",
 			},
+		},
+		chromatic: {
+			delay: 100,
 		},
 	},
 };

@@ -79,7 +79,12 @@ type Story = StoryObj<typeof meta>;
  *
  * 通常のサブスクリプション一覧表示
  */
-export const Default: Story = {};
+export const Default: Story = {
+	tags: ["visual-test"],
+	parameters: {
+		chromatic: { viewports: [1200] },
+	},
+};
 
 /**
  * ローディング状態
@@ -91,6 +96,7 @@ export const Loading: Story = {
 		subscriptions: [],
 		isLoading: true,
 	},
+	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
@@ -98,6 +104,7 @@ export const Loading: Story = {
 					"データの読み込み中に表示される状態です。スピナーとローディングメッセージが表示されます。",
 			},
 		},
+		chromatic: { viewports: [375, 768, 1200] },
 	},
 };
 
@@ -112,6 +119,7 @@ export const ErrorState: Story = {
 		isLoading: false,
 		error: "サブスクリプションデータの取得に失敗しました",
 	},
+	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
@@ -119,6 +127,7 @@ export const ErrorState: Story = {
 					"データ取得でエラーが発生した際に表示される状態です。エラーメッセージが表示されます。",
 			},
 		},
+		chromatic: { viewports: [375, 768, 1200] },
 	},
 };
 
@@ -133,6 +142,7 @@ export const Empty: Story = {
 		isLoading: false,
 		error: null,
 	},
+	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
@@ -140,6 +150,7 @@ export const Empty: Story = {
 					"サブスクリプションが登録されていない状態です。新規登録を促すメッセージが表示されます。",
 			},
 		},
+		chromatic: { viewports: [375, 768, 1200] },
 	},
 };
 
@@ -196,6 +207,7 @@ export const ManyItems: Story = {
 			},
 		],
 	},
+	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
@@ -203,6 +215,7 @@ export const ManyItems: Story = {
 					"多数のサブスクリプションが登録されている状態です。スクロール表示の確認ができます。",
 			},
 		},
+		chromatic: { viewports: [375, 768, 1200] },
 	},
 };
 
@@ -231,6 +244,7 @@ export const WithCustomClass: Story = {
  * モバイルデバイスでの表示確認
  */
 export const Mobile: Story = {
+	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "mobile1",
@@ -241,6 +255,7 @@ export const Mobile: Story = {
 					"モバイルデバイスでの表示です。一部のカラムが非表示になり、見やすさを保ちます。",
 			},
 		},
+		chromatic: { viewports: [375] },
 	},
 };
 
@@ -250,6 +265,7 @@ export const Mobile: Story = {
  * タブレットデバイスでの表示確認
  */
 export const Tablet: Story = {
+	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "tablet",
@@ -260,6 +276,7 @@ export const Tablet: Story = {
 					"タブレットデバイスでの表示です。中程度の画面サイズに最適化されています。",
 			},
 		},
+		chromatic: { viewports: [768] },
 	},
 };
 
@@ -269,6 +286,7 @@ export const Tablet: Story = {
  * デスクトップでの表示確認
  */
 export const Desktop: Story = {
+	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "desktop",
@@ -279,5 +297,6 @@ export const Desktop: Story = {
 					"デスクトップでの表示です。全てのカラムが表示され、最も詳細な情報を確認できます。",
 			},
 		},
+		chromatic: { viewports: [1200] },
 	},
 };
