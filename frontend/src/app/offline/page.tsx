@@ -1,9 +1,4 @@
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-	title: "オフライン - Saifuu",
-	description: "現在オフライン状態です",
-};
+"use client";
 
 /**
  * オフライン用フォールバックページ

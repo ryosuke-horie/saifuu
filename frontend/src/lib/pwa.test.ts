@@ -67,12 +67,25 @@ describe("PWA Utilities", () => {
 		});
 
 		it("ServiceWorkerがサポートされていない場合はfalseを返す", () => {
-			Object.defineProperty(window.navigator, "serviceWorker", {
-				value: undefined,
-				writable: true,
-			});
+			// Store original value
+			const originalServiceWorker = Object.getOwnPropertyDescriptor(
+				window.navigator,
+				"serviceWorker",
+			);
+
+			// Delete the property entirely (in operator checks for property existence)
+			delete (window.navigator as any).serviceWorker;
 
 			expect(isPWAInstallable()).toBe(false);
+
+			// Restore original property
+			if (originalServiceWorker) {
+				Object.defineProperty(
+					window.navigator,
+					"serviceWorker",
+					originalServiceWorker,
+				);
+			}
 		});
 
 		it("windowが存在しない場合（SSR）はfalseを返す", () => {
@@ -342,6 +355,21 @@ describe("PWA Utilities", () => {
 
 	describe("collectPWAAnalytics", () => {
 		it("アナリティクス情報を正しく収集する", () => {
+			// Ensure window.matchMedia is mocked for this test
+			Object.defineProperty(window, "matchMedia", {
+				writable: true,
+				value: vi.fn().mockImplementation((query: string) => ({
+					matches: false,
+					media: query,
+					onchange: null,
+					addListener: vi.fn(),
+					removeListener: vi.fn(),
+					addEventListener: vi.fn(),
+					removeEventListener: vi.fn(),
+					dispatchEvent: vi.fn(),
+				})),
+			});
+
 			Object.defineProperty(window, "location", {
 				value: { href: "https://example.com/page" },
 				writable: true,

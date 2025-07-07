@@ -18,6 +18,21 @@ if (typeof process === "undefined") {
 	});
 }
 
+// window.matchMediaをモック化（PWAテスト用）
+Object.defineProperty(window, "matchMedia", {
+	writable: true,
+	value: vi.fn().mockImplementation((query: string) => ({
+		matches: false,
+		media: query,
+		onchange: null,
+		addListener: vi.fn(), // deprecated
+		removeListener: vi.fn(), // deprecated
+		addEventListener: vi.fn(),
+		removeEventListener: vi.fn(),
+		dispatchEvent: vi.fn(),
+	})),
+});
+
 // ビジュアルリグレッションテストの設定
 // CI環境では無効化し、ブラウザモード時のみ有効
 if (!process.env.CI && typeof window !== "undefined" && window.location) {
