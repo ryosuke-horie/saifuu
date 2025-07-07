@@ -28,7 +28,7 @@ describe('Subscriptions API - Integration Tests', () => {
 	describe('Full CRUD Operations', () => {
 		it('should perform complete subscription lifecycle', async () => {
 			// 1. 初期状態で空の一覧を取得
-			let response = await createTestRequest(testProductionApp, 'GET', '/')
+			let response = await createTestRequest(testProductionApp, 'GET', '/api/subscriptions')
 			expect(response.status).toBe(200)
 
 			let data = await getResponseJson(response)
@@ -41,7 +41,12 @@ describe('Subscriptions API - Integration Tests', () => {
 				categoryId: 1, // テスト用カテゴリID
 			}
 
-			response = await createTestRequest(testProductionApp, 'POST', '/', newSubscription)
+			response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/subscriptions',
+				newSubscription
+			)
 			expect(response.status).toBe(201)
 
 			data = await getResponseJson(response)
@@ -50,7 +55,11 @@ describe('Subscriptions API - Integration Tests', () => {
 			expect(data.amount).toBe(newSubscription.amount)
 
 			// 3. 作成されたサブスクリプションを取得
-			response = await createTestRequest(testProductionApp, 'GET', `/${createdId}`)
+			response = await createTestRequest(
+				testProductionApp,
+				'GET',
+				`/api/subscriptions/${createdId}`
+			)
 			expect(response.status).toBe(200)
 
 			data = await getResponseJson(response)
@@ -58,7 +67,7 @@ describe('Subscriptions API - Integration Tests', () => {
 			expect(data.name).toBe(newSubscription.name)
 
 			// 4. 一覧に追加されていることを確認
-			response = await createTestRequest(testProductionApp, 'GET', '/')
+			response = await createTestRequest(testProductionApp, 'GET', '/api/subscriptions')
 			expect(response.status).toBe(200)
 
 			data = await getResponseJson(response)
@@ -75,7 +84,12 @@ describe('Subscriptions API - Integration Tests', () => {
 				description: 'Updated description',
 			}
 
-			response = await createTestRequest(testProductionApp, 'PUT', `/${createdId}`, updateData)
+			response = await createTestRequest(
+				testProductionApp,
+				'PUT',
+				`/api/subscriptions/${createdId}`,
+				updateData
+			)
 			expect(response.status).toBe(200)
 
 			data = await getResponseJson(response)
@@ -84,7 +98,11 @@ describe('Subscriptions API - Integration Tests', () => {
 			expect(data.description).toBe(updateData.description)
 
 			// 6. 更新が反映されていることを確認
-			response = await createTestRequest(testProductionApp, 'GET', `/${createdId}`)
+			response = await createTestRequest(
+				testProductionApp,
+				'GET',
+				`/api/subscriptions/${createdId}`
+			)
 			expect(response.status).toBe(200)
 
 			data = await getResponseJson(response)
@@ -92,18 +110,26 @@ describe('Subscriptions API - Integration Tests', () => {
 			expect(data.amount).toBe(updateData.amount)
 
 			// 7. サブスクリプションを削除
-			response = await createTestRequest(testProductionApp, 'DELETE', `/${createdId}`)
+			response = await createTestRequest(
+				testProductionApp,
+				'DELETE',
+				`/api/subscriptions/${createdId}`
+			)
 			expect(response.status).toBe(200)
 
 			data = await getResponseJson(response)
 			expect(data.message).toBe('Subscription deleted successfully')
 
 			// 8. 削除されていることを確認
-			response = await createTestRequest(testProductionApp, 'GET', `/${createdId}`)
+			response = await createTestRequest(
+				testProductionApp,
+				'GET',
+				`/api/subscriptions/${createdId}`
+			)
 			expect(response.status).toBe(404)
 
 			// 9. 一覧から削除されていることを確認
-			response = await createTestRequest(testProductionApp, 'GET', '/')
+			response = await createTestRequest(testProductionApp, 'GET', '/api/subscriptions')
 			expect(response.status).toBe(200)
 
 			data = await getResponseJson(response)
@@ -119,7 +145,12 @@ describe('Subscriptions API - Integration Tests', () => {
 				categoryId: 1,
 			}
 
-			let response = await createTestRequest(testProductionApp, 'POST', '/', subscription1)
+			let response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/subscriptions',
+				subscription1
+			)
 			expect(response.status).toBe(201)
 			const sub1Data = await getResponseJson(response)
 
@@ -129,12 +160,17 @@ describe('Subscriptions API - Integration Tests', () => {
 				categoryId: 2,
 			}
 
-			response = await createTestRequest(testProductionApp, 'POST', '/', subscription2)
+			response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/subscriptions',
+				subscription2
+			)
 			expect(response.status).toBe(201)
 			const sub2Data = await getResponseJson(response)
 
 			// 一覧取得でカテゴリ情報が含まれることを確認
-			response = await createTestRequest(testProductionApp, 'GET', '/')
+			response = await createTestRequest(testProductionApp, 'GET', '/api/subscriptions')
 			expect(response.status).toBe(200)
 
 			const data = await getResponseJson(response)
@@ -165,7 +201,12 @@ describe('Subscriptions API - Integration Tests', () => {
 				categoryId: 99999, // 存在しないカテゴリID
 			}
 
-			const response = await createTestRequest(testProductionApp, 'POST', '/', invalidSubscription)
+			const response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/subscriptions',
+				invalidSubscription
+			)
 
 			// 外部キー制約により失敗するはず（実装依存）
 			if (response.status !== 201) {
@@ -182,22 +223,37 @@ describe('Subscriptions API - Integration Tests', () => {
 				categoryId: 1,
 			}
 
-			let response = await createTestRequest(testProductionApp, 'POST', '/', newSubscription)
+			let response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/subscriptions',
+				newSubscription
+			)
 			expect(response.status).toBe(201)
 
 			const data = await getResponseJson(response)
 			const subscriptionId = data.id
 
 			// 同時に2つの更新リクエストを送信
-			const update1 = createTestRequest(testProductionApp, 'PUT', `/${subscriptionId}`, {
-				name: 'Update 1',
-				amount: 1000,
-			})
+			const update1 = createTestRequest(
+				testProductionApp,
+				'PUT',
+				`/api/subscriptions/${subscriptionId}`,
+				{
+					name: 'Update 1',
+					amount: 1000,
+				}
+			)
 
-			const update2 = createTestRequest(testProductionApp, 'PUT', `/${subscriptionId}`, {
-				name: 'Update 2',
-				amount: 2000,
-			})
+			const update2 = createTestRequest(
+				testProductionApp,
+				'PUT',
+				`/api/subscriptions/${subscriptionId}`,
+				{
+					name: 'Update 2',
+					amount: 2000,
+				}
+			)
 
 			const [response1, response2] = await Promise.all([update1, update2])
 
@@ -206,7 +262,11 @@ describe('Subscriptions API - Integration Tests', () => {
 			expect([200, 409, 500]).toContain(response2.status)
 
 			// 最終状態を確認
-			response = await createTestRequest(testProductionApp, 'GET', `/${subscriptionId}`)
+			response = await createTestRequest(
+				testProductionApp,
+				'GET',
+				`/api/subscriptions/${subscriptionId}`
+			)
 			expect(response.status).toBe(200)
 
 			const finalData = await getResponseJson(response)
@@ -228,7 +288,7 @@ describe('Subscriptions API - Integration Tests', () => {
 					amount: 1000 + i * 100,
 					categoryId: 1,
 				}
-				return createTestRequest(testProductionApp, 'POST', '/', subscription)
+				return createTestRequest(testProductionApp, 'POST', '/api/subscriptions', subscription)
 			})
 
 			const responses = await Promise.all(createPromises)
@@ -240,7 +300,7 @@ describe('Subscriptions API - Integration Tests', () => {
 
 			// 一覧取得のパフォーマンス測定
 			const start = Date.now()
-			const response = await createTestRequest(testProductionApp, 'GET', '/')
+			const response = await createTestRequest(testProductionApp, 'GET', '/api/subscriptions')
 			const duration = Date.now() - start
 
 			expect(response.status).toBe(200)

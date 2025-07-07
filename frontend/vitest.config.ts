@@ -18,17 +18,12 @@ export default defineConfig({
 		environment: "jsdom",
 		setupFiles: ["./vitest.setup.ts"],
 		globals: true,
-		// CI環境ではブラウザテストを無効化
-		browser: process.env.CI
-			? undefined
-			: {
-					enabled: true,
-					provider: "playwright",
-					name: "chromium",
-					headless: true,
-				},
-		testTimeout: 30000, // 30秒でタイムアウト
-		hookTimeout: 10000, // フック用タイムアウト
+		// ブラウザテストを完全に無効化（jsdom環境でユニットテストを実行）
+		browser: {
+			enabled: false,
+		},
+		testTimeout: 10000, // 10秒に短縮
+		hookTimeout: 5000, // 5秒に短縮
 		include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 		exclude: ["tests/**", "node_modules/**", ".next/**"],
 		coverage: {

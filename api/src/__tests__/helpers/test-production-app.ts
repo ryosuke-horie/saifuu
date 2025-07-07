@@ -25,14 +25,14 @@ export function createTestProductionApp() {
 	}>()
 
 	// ミドルウェア: テスト用データベースを設定
-	app.use('/*', async (c, next) => {
+	app.use('/api/*', async (c, next) => {
 		c.set('db', testDatabase)
 		await next()
 	})
 
 	// ルートの設定（メインアプリと同じ構成）
-	app.route('/categories', categoriesRouter)
-	app.route('/subscriptions', createSubscriptionsApp({ testDatabase }))
+	app.route('/api/categories', categoriesRouter)
+	app.route('/api/subscriptions', createSubscriptionsApp({ testDatabase }))
 
 	return app
 }

@@ -3,8 +3,7 @@
 // 一貫性のあるテストデータを提供し、エッジケースのテストを容易にする
 
 import { fakerJA as faker } from "@faker-js/faker";
-import type { Category } from "@/types/category";
-import type { Subscription } from "@/types/subscription";
+import type { Category, Subscription } from "@/lib/api/types";
 
 // 日本語ロケールの設定
 faker.seed([123]); // 再現可能なランダムデータのためのシード設定
@@ -48,7 +47,9 @@ export const createMockSubscription = (
 		billingCycle: faker.helpers.arrayElement(["monthly", "yearly"] as const),
 		nextBillingDate: faker.date.future().toISOString(),
 		isActive: true,
-		description: faker.datatype.boolean() ? faker.lorem.sentence() : undefined,
+		description: faker.datatype.boolean() ? faker.lorem.sentence() : null,
+		createdAt: faker.date.past().toISOString(),
+		updatedAt: faker.date.recent().toISOString(),
 		...overrides,
 	};
 };

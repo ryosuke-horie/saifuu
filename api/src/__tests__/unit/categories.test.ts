@@ -24,7 +24,7 @@ describe('Categories API - Unit Tests', () => {
 	describe('GET /categories', () => {
 		it('should return categories array (Issue #53 fix validation)', async () => {
 			// フロントエンドで期待する配列レスポンス形式を検証
-			const response = await createTestRequest(testProductionApp, 'GET', '/categories')
+			const response = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 
 			expect(response.status).toBe(200)
 
@@ -50,7 +50,7 @@ describe('Categories API - Unit Tests', () => {
 		})
 
 		it('should return seeded categories', async () => {
-			const response = await createTestRequest(testProductionApp, 'GET', '/categories')
+			const response = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 			const data = await getResponseJson(response)
 
 			expect(response.status).toBe(200)
@@ -72,7 +72,7 @@ describe('Categories API - Unit Tests', () => {
 
 		it('should handle database errors gracefully', async () => {
 			// データベースエラーをシミュレート（実際の環境では困難だが、構造の確認）
-			const response = await createTestRequest(testProductionApp, 'GET', '/categories')
+			const response = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 
 			// 正常な場合のレスポンス検証
 			expect([200, 500]).toContain(response.status)
@@ -97,7 +97,7 @@ describe('Categories API - Unit Tests', () => {
 			const response = await createTestRequest(
 				testProductionApp,
 				'POST',
-				'/categories',
+				'/api/categories',
 				newCategory
 			)
 
@@ -124,7 +124,7 @@ describe('Categories API - Unit Tests', () => {
 			const response = await createTestRequest(
 				testProductionApp,
 				'POST',
-				'/categories',
+				'/api/categories',
 				invalidCategory
 			)
 
@@ -145,7 +145,7 @@ describe('Categories API - Unit Tests', () => {
 			const response = await createTestRequest(
 				testProductionApp,
 				'POST',
-				'/categories',
+				'/api/categories',
 				invalidCategory
 			)
 
@@ -156,7 +156,7 @@ describe('Categories API - Unit Tests', () => {
 	describe('PUT /categories/:id', () => {
 		it('should update existing category', async () => {
 			// まず既存のカテゴリを確認
-			const getResponse = await createTestRequest(testProductionApp, 'GET', '/categories')
+			const getResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 			const categories = await getResponseJson(getResponse)
 			const firstCategory = categories[0]
 
@@ -168,7 +168,7 @@ describe('Categories API - Unit Tests', () => {
 			const response = await createTestRequest(
 				testProductionApp,
 				'PUT',
-				`/categories/${firstCategory.id}`,
+				`/api/categories/${firstCategory.id}`,
 				updateData
 			)
 
@@ -197,7 +197,7 @@ describe('Categories API - Unit Tests', () => {
 			const response = await createTestRequest(
 				testProductionApp,
 				'PUT',
-				'/categories/9999',
+				'/api/categories/9999',
 				updateData
 			)
 
@@ -221,7 +221,7 @@ describe('Categories API - Unit Tests', () => {
 			const createResponse = await createTestRequest(
 				testProductionApp,
 				'POST',
-				'/categories',
+				'/api/categories',
 				newCategory
 			)
 			const createdCategory = await getResponseJson(createResponse)
@@ -230,7 +230,7 @@ describe('Categories API - Unit Tests', () => {
 			const deleteResponse = await createTestRequest(
 				testProductionApp,
 				'DELETE',
-				`/categories/${createdCategory.id}`
+				`/api/categories/${createdCategory.id}`
 			)
 
 			expect(deleteResponse.status).toBe(200)
@@ -238,13 +238,13 @@ describe('Categories API - Unit Tests', () => {
 			expect(data).toHaveProperty('message', 'Category deleted successfully')
 
 			// 削除されたことを確認
-			const getResponse = await createTestRequest(testProductionApp, 'GET', '/categories')
+			const getResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 			const categories = await getResponseJson(getResponse)
 			expect(categories.find((c: any) => c.id === createdCategory.id)).toBeUndefined()
 		})
 
 		it('should return 404 for non-existent category deletion', async () => {
-			const response = await createTestRequest(testProductionApp, 'DELETE', '/categories/9999')
+			const response = await createTestRequest(testProductionApp, 'DELETE', '/api/categories/9999')
 
 			expect(response.status).toBe(404)
 			const data = await getResponseJson(response)
@@ -255,7 +255,7 @@ describe('Categories API - Unit Tests', () => {
 	describe('Response Format Validation', () => {
 		it('should ensure response format matches frontend expectations', async () => {
 			// フロントエンドの型修正と整合性確認
-			const response = await createTestRequest(testProductionApp, 'GET', '/categories')
+			const response = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 			const data = await getResponseJson(response)
 
 			expect(response.status).toBe(200)
