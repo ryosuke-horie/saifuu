@@ -58,7 +58,7 @@ next-env.d.ts
 storybook-static
 chromatic-*
 .storybook/cache
-.storybook/*.css
+**/.storybook/*.css
 
 # database files
 api/dev.db
