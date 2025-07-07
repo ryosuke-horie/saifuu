@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 /**
  * サービスワーカー登録コンポーネント
@@ -26,39 +26,10 @@ export function useServiceWorker() {
 		error: null,
 	});
 
-	useEffect(() => {
-		// サービスワーカーがサポートされていない場合
-		if (!("serviceWorker" in navigator)) {
-			setState((prev) => ({
-				...prev,
-				error: "このブラウザではサービスワーカーがサポートされていません。",
-			}));
-			return;
-		}
-
-		// オンライン/オフライン状態の監視
-		const handleOnline = () =>
-			setState((prev) => ({ ...prev, isOffline: false }));
-		const handleOffline = () =>
-			setState((prev) => ({ ...prev, isOffline: true }));
-
-		window.addEventListener("online", handleOnline);
-		window.addEventListener("offline", handleOffline);
-
-		// サービスワーカーの登録
-		registerServiceWorker();
-
-		return () => {
-			window.removeEventListener("online", handleOnline);
-			window.removeEventListener("offline", handleOffline);
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
 	/**
 	 * サービスワーカーを登録
 	 */
-	const registerServiceWorker = async () => {
+	const registerServiceWorker = useCallback(async () => {
 		try {
 			console.log("[PWA] Registering service worker...");
 
@@ -116,7 +87,35 @@ export function useServiceWorker() {
 						: "サービスワーカーの登録に失敗しました。",
 			}));
 		}
-	};
+	}, []);
+
+	useEffect(() => {
+		// サービスワーカーがサポートされていない場合
+		if (!("serviceWorker" in navigator)) {
+			setState((prev) => ({
+				...prev,
+				error: "このブラウザではサービスワーカーがサポートされていません。",
+			}));
+			return;
+		}
+
+		// オンライン/オフライン状態の監視
+		const handleOnline = () =>
+			setState((prev) => ({ ...prev, isOffline: false }));
+		const handleOffline = () =>
+			setState((prev) => ({ ...prev, isOffline: true }));
+
+		window.addEventListener("online", handleOnline);
+		window.addEventListener("offline", handleOffline);
+
+		// サービスワーカーの登録
+		registerServiceWorker();
+
+		return () => {
+			window.removeEventListener("online", handleOnline);
+			window.removeEventListener("offline", handleOffline);
+		};
+	}, [registerServiceWorker]);
 
 	/**
 	 * サービスワーカーのアップデートを適用

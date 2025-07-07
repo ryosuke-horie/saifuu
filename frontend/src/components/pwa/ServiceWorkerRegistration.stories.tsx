@@ -107,10 +107,16 @@ export const UpdateAvailable: Story = {
 						</p>
 					</div>
 					<div className="flex gap-2">
-						<button className="bg-white text-blue-600 px-3 py-1 rounded text-sm font-medium hover:bg-blue-50">
+						<button
+							type="button"
+							className="bg-white text-blue-600 px-3 py-1 rounded text-sm font-medium hover:bg-blue-50"
+						>
 							更新
 						</button>
-						<button className="bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-800">
+						<button
+							type="button"
+							className="bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-800"
+						>
 							後で
 						</button>
 					</div>
@@ -193,10 +199,16 @@ export const ResponsiveDesign: Story = {
 						</p>
 					</div>
 					<div className="flex gap-2">
-						<button className="bg-white text-blue-600 px-3 py-1 rounded text-sm font-medium hover:bg-blue-50">
+						<button
+							type="button"
+							className="bg-white text-blue-600 px-3 py-1 rounded text-sm font-medium hover:bg-blue-50"
+						>
 							更新
 						</button>
-						<button className="bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-800">
+						<button
+							type="button"
+							className="bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-800"
+						>
 							後で
 						</button>
 					</div>
@@ -232,12 +244,14 @@ export const InteractionTest: Story = {
 					</div>
 					<div className="flex gap-2">
 						<button
+							type="button"
 							className="bg-white text-blue-600 px-3 py-1 rounded text-sm font-medium hover:bg-blue-50"
 							data-testid="update-button"
 						>
 							更新
 						</button>
 						<button
+							type="button"
 							className="bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-800"
 							data-testid="later-button"
 						>
@@ -297,12 +311,14 @@ export const AccessibilityTest: Story = {
 					</div>
 					<div className="flex gap-2">
 						<button
+							type="button"
 							className="bg-white text-blue-600 px-3 py-1 rounded text-sm font-medium hover:bg-blue-50"
 							aria-label="アプリケーションを更新する"
 						>
 							更新
 						</button>
 						<button
+							type="button"
 							className="bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-800"
 							aria-label="後で更新する"
 						>

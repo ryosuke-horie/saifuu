@@ -361,8 +361,8 @@ describe("ServiceWorkerRegistration", () => {
 				<div>
 					<ServiceWorkerRegistration />
 					<div className="fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm">
-						<button>更新</button>
-						<button>後で</button>
+						<button type="button">更新</button>
+						<button type="button">後で</button>
 					</div>
 				</div>,
 			);
