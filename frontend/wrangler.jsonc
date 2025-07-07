@@ -17,11 +17,12 @@
 	},
 	/**
 	 * Environment Variables
-	 * 本番環境用の環境変数設定
+	 * 注意: NEXT_PUBLIC_ プレフィックスの環境変数は .env.production で設定する必要があります
+	 * ここで設定してもビルド時には反映されません（実行時のみ）
 	 */
-	"vars": {
-		"NEXT_PUBLIC_API_URL": "https://saifuu-api.ryosuke-horie37.workers.dev/api"
-	}
+	// "vars": {
+	//   サーバーサイド専用の環境変数をここに設定
+	// }
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
