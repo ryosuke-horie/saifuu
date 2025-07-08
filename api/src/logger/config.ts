@@ -1,11 +1,23 @@
 import { LoggerConfig, LogLevel } from './types'
 
 /**
+ * 環境変数の型定義
+ */
+interface EnvironmentVariables {
+	NODE_ENV?: string
+	LOG_LEVEL?: string
+	LOG_BUFFER_SIZE?: string
+	LOG_FLUSH_INTERVAL?: string
+	VERSION?: string
+	[key: string]: string | undefined
+}
+
+/**
  * 環境変数からロガー設定を生成
  * @param env 環境変数オブジェクト
  * @returns ロガー設定
  */
-export const createLoggerConfig = (env: any): LoggerConfig => {
+export const createLoggerConfig = (env: EnvironmentVariables): LoggerConfig => {
 	const isDevelopment = env.NODE_ENV === 'development'
 
 	return {

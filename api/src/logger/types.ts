@@ -19,10 +19,10 @@ export interface LogMeta {
 	path?: string
 	method?: string
 	statusCode?: number
-	data?: Record<string, any>
+	data?: Record<string, unknown>
 	error?: string
 	stack?: string
-	[key: string]: any
+	[key: string]: unknown
 }
 
 /**
