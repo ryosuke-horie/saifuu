@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "vite",
     "dev:node": "node server-node.js",
-    "dev:e2e": "node server-e2e.js",
+    "dev:e2e": "tsx server-e2e.js",
     "build": "vite build",
     "preview": "$npm_execpath run build && vite preview",
     "deploy": "wrangler deploy",
@@ -48,6 +48,7 @@
     "better-sqlite3": "^12.2.0",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.2",
+    "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "vite-ssr-components": "^0.3.0",

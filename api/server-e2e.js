@@ -7,7 +7,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import SQLiteDatabase from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import * as schema from './src/db/schema.js';
+import * as schema from './src/db/schema.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -44,47 +44,19 @@ const db = drizzle(sqlite, { schema });
 try {
   const seedSQL = readFileSync(join(__dirname, 'drizzle', 'seed.sql'), 'utf8');
   
-  // SQLファイルを文毎に実行（better-sqlite3用に調整）
-  const statements = seedSQL
-    .split(';')
-    .map(stmt => stmt.trim())
-    .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
+  // datetime関数を事前に置換
+  const processedSQL = seedSQL
+    .replace(/datetime\('now'\)/g, `'${new Date().toISOString()}'`)
+    .replace(/datetime\('now', '\+15 days'\)/g, `'${new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString()}'`)
+    .replace(/datetime\('now', '\+7 days'\)/g, `'${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()}'`)
+    .replace(/datetime\('now', '\+22 days'\)/g, `'${new Date(Date.now() + 22 * 24 * 60 * 60 * 1000).toISOString()}'`)
+    .replace(/datetime\('now', '\+120 days'\)/g, `'${new Date(Date.now() + 120 * 24 * 60 * 60 * 1000).toISOString()}'`)
+    .replace(/datetime\('now', '\+3 days'\)/g, `'${new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()}'`);
   
-  for (const statement of statements) {
-    if (statement.toLowerCase().includes('datetime(')) {
-      // SQLiteのdatetime関数をJavaScriptの日付文字列に置換
-      const modifiedStatement = statement
-        .replace(/datetime\('now'\)/g, `'${new Date().toISOString()}'`)
-        .replace(/datetime\('now', '[^']*'\)/g, function(match) {
-          // 相対日付の計算（簡略化）
-          if (match.includes('+15 days')) {
-            const date = new Date();
-            date.setDate(date.getDate() + 15);
-            return `'${date.toISOString()}'`;
-          } else if (match.includes('+7 days')) {
-            const date = new Date();
-            date.setDate(date.getDate() + 7);
-            return `'${date.toISOString()}'`;
-          } else if (match.includes('+22 days')) {
-            const date = new Date();
-            date.setDate(date.getDate() + 22);
-            return `'${date.toISOString()}'`;
-          } else if (match.includes('+120 days')) {
-            const date = new Date();
-            date.setDate(date.getDate() + 120);
-            return `'${date.toISOString()}'`;
-          } else if (match.includes('+3 days')) {
-            const date = new Date();
-            date.setDate(date.getDate() + 3);
-            return `'${date.toISOString()}'`;
-          }
-          return `'${new Date().toISOString()}'`;
-        });
-      sqlite.exec(modifiedStatement);
-    } else {
-      sqlite.exec(statement);
-    }
-  }
+  console.log('📝 Executing complete SQL script...');
+  
+  // 完全なSQLスクリプトを一度に実行
+  sqlite.exec(processedSQL);
   
   console.log('✅ Database seeded successfully');
   
@@ -92,8 +64,14 @@ try {
   const categoryCount = sqlite.prepare('SELECT COUNT(*) as count FROM categories').get();
   console.log(`✅ Categories initialized: ${categoryCount.count} categories`);
   
+  // サブスクリプション数も確認
+  const subscriptionCount = sqlite.prepare('SELECT COUNT(*) as count FROM subscriptions').get();
+  console.log(`✅ Subscriptions initialized: ${subscriptionCount.count} subscriptions`);
+  
 } catch (error) {
   console.error('❌ Failed to seed database:', error);
+  console.error('❌ Error details:', error.message);
+  console.error('❌ Error stack:', error.stack);
   process.exit(1);
 }
 
@@ -327,7 +305,41 @@ console.log(`Database path: ${E2E_DB_PATH}`);
 
 const server = createServer(async (req, res) => {
   try {
-    const response = await app.fetch(req);
+    // Node.jsリクエストをWeb標準Requestに変換
+    const url = `http://localhost:${port}${req.url}`;
+    const method = req.method || 'GET';
+    
+    // リクエストボディを読み取り（POST/PUT/PATCHの場合）
+    let body = undefined;
+    if (method !== 'GET' && method !== 'HEAD') {
+      const chunks = [];
+      for await (const chunk of req) {
+        chunks.push(chunk);
+      }
+      body = Buffer.concat(chunks);
+    }
+    
+    // ヘッダーを変換
+    const headers = new Headers();
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          headers.append(key, v);
+        }
+      } else if (value) {
+        headers.set(key, value);
+      }
+    }
+    
+    // Web標準Requestオブジェクトを作成
+    const request = new Request(url, {
+      method,
+      headers,
+      body: body || undefined,
+    });
+    
+    // Honoアプリケーションで処理
+    const response = await app.fetch(request);
     
     // レスポンスヘッダーをコピー
     for (const [key, value] of response.headers.entries()) {
@@ -337,10 +349,12 @@ const server = createServer(async (req, res) => {
     res.writeHead(response.status);
     
     // レスポンスボディを読み取り
-    const body = await response.text();
-    res.end(body);
+    const responseBody = await response.text();
+    res.end(responseBody);
   } catch (error) {
     console.error('[E2E] Server error:', error);
+    console.error('[E2E] Error details:', error.message);
+    console.error('[E2E] Error stack:', error.stack);
     res.writeHead(500, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Internal server error' }));
   }

@@ -61,6 +61,9 @@ export default defineConfig({
 			url: "http://localhost:3002",
 			reuseExistingServer: true,
 			timeout: 120 * 1000,
+			env: {
+				NEXT_PUBLIC_API_URL: "http://localhost:3003/api", // E2E環境のAPIサーバーを指定
+			},
 		},
 		{
 			command: "cd ../api && npm run dev:e2e",
