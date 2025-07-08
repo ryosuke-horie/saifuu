@@ -1,0 +1,29 @@
+{
+  "name": "saifuu",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "api"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=frontend",
+    "dev:api": "npm run dev --workspace=api",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspace=frontend && npm run build --workspace=api",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:api": "npm run build --workspace=api",
+    "test": "npm run test --workspace=frontend && npm run test --workspace=api",
+    "test:frontend": "npm run test --workspace=frontend",
+    "test:api": "npm run test --workspace=api",
+    "check": "npm run check --workspace=frontend && npm run check --workspace=api",
+    "check:fix": "npm run check:fix --workspace=frontend && npm run check:fix --workspace=api",
+    "typecheck": "npm run typecheck --workspace=frontend && npm run typecheck --workspace=api",
+    "lint": "npm run lint --workspace=frontend && npm run lint --workspace=api",
+    "format": "npm run format --workspace=frontend && npm run format --workspace=api"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "packageManager": "npm@10.0.0"
+}
