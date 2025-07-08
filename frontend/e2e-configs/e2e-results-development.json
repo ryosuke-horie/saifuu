@@ -1,0 +1,83 @@
+{
+	"config": {
+		"configFile": "/Users/r-horie/private/saifuu/saifuu-main/frontend/e2e-configs/development.config.ts",
+		"rootDir": "/Users/r-horie/private/saifuu/saifuu-main/frontend/e2e/development",
+		"forbidOnly": false,
+		"fullyParallel": false,
+		"globalSetup": null,
+		"globalTeardown": null,
+		"globalTimeout": 0,
+		"grep": {},
+		"grepInvert": null,
+		"maxFailures": 0,
+		"metadata": {},
+		"preserveOutput": "always",
+		"reporter": [
+			["list", null],
+			[
+				"html",
+				{
+					"outputFolder": "e2e-results-development"
+				}
+			],
+			[
+				"json",
+				{
+					"outputFile": "e2e-results-development.json"
+				}
+			]
+		],
+		"reportSlowTests": {
+			"max": 5,
+			"threshold": 300000
+		},
+		"quiet": false,
+		"projects": [
+			{
+				"outputDir": "/Users/r-horie/private/saifuu/saifuu-main/frontend/test-results",
+				"repeatEach": 1,
+				"retries": 0,
+				"metadata": {},
+				"id": "Desktop Chrome",
+				"name": "Desktop Chrome",
+				"testDir": "/Users/r-horie/private/saifuu/saifuu-main/frontend/e2e/development",
+				"testIgnore": [],
+				"testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+				"timeout": 120000
+			},
+			{
+				"outputDir": "/Users/r-horie/private/saifuu/saifuu-main/frontend/test-results",
+				"repeatEach": 1,
+				"retries": 0,
+				"metadata": {},
+				"id": "Mobile Chrome",
+				"name": "Mobile Chrome",
+				"testDir": "/Users/r-horie/private/saifuu/saifuu-main/frontend/e2e/development",
+				"testIgnore": [],
+				"testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+				"timeout": 120000
+			}
+		],
+		"shard": null,
+		"updateSnapshots": "missing",
+		"updateSourceMethod": "patch",
+		"version": "1.53.1",
+		"workers": 1,
+		"webServer": null
+	},
+	"suites": [],
+	"errors": [
+		{
+			"message": "Error: No tests found",
+			"stack": "Error: No tests found"
+		}
+	],
+	"stats": {
+		"startTime": "2025-07-08T11:09:13.547Z",
+		"duration": 2.2269999999999754,
+		"expected": 0,
+		"skipped": 0,
+		"unexpected": 0,
+		"flaky": 0
+	}
+}
