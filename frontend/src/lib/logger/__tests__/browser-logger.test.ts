@@ -90,7 +90,20 @@ describe("BrowserLogger", () => {
 			screen: {
 				width: 1920,
 				height: 1080,
-			},
+				availWidth: 1920,
+				availHeight: 1040,
+				colorDepth: 24,
+				pixelDepth: 24,
+				orientation: {
+					angle: 0,
+					type: "landscape-primary",
+					addEventListener: vi.fn(),
+					removeEventListener: vi.fn(),
+					onchange: null,
+					unlock: vi.fn().mockReturnValue(Promise.resolve()),
+					dispatchEvent: vi.fn(),
+				} as ScreenOrientation,
+			} as Screen,
 			addEventListener: vi.fn(),
 			removeEventListener: vi.fn(),
 		};
@@ -138,7 +151,7 @@ describe("BrowserLogger", () => {
 				})),
 				{
 					supportedLocalesOf: vi.fn(),
-				}
+				},
 			),
 		};
 	}
@@ -374,7 +387,7 @@ describe("BrowserLogger", () => {
 
 			logger.info("Test message"); // バッファにログを追加
 
-			if (handler) {
+			if (handler && typeof handler === "function") {
 				handler(event);
 			}
 
@@ -387,7 +400,7 @@ describe("BrowserLogger", () => {
 				document.addEventListener as MockedFunction<any>
 			).mock.calls.find((call) => call[0] === "visibilitychange")?.[1];
 
-			if (handler) {
+			if (handler && typeof handler === "function") {
 				handler(new Event("visibilitychange"));
 			}
 
@@ -411,7 +424,7 @@ describe("BrowserLogger", () => {
 				error: new Error("Test error"),
 			});
 
-			if (handler) {
+			if (handler && typeof handler === "function") {
 				handler(errorEvent);
 			}
 
@@ -427,11 +440,11 @@ describe("BrowserLogger", () => {
 				window.addEventListener as MockedFunction<any>
 			).mock.calls.find((call) => call[0] === "offline")?.[1];
 
-			if (offlineHandler) {
+			if (offlineHandler && typeof offlineHandler === "function") {
 				offlineHandler(new Event("offline"));
 			}
 
-			if (onlineHandler) {
+			if (onlineHandler && typeof onlineHandler === "function") {
 				onlineHandler(new Event("online"));
 			}
 
