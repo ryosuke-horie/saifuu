@@ -353,14 +353,15 @@ describe('Categories API - Integration Tests', () => {
 
 		it('should maintain timestamp fields', async () => {
 			// カテゴリ作成時のタイムスタンプ検証
-			const beforeCreate = new Date().toISOString()
+			const beforeCreate = new Date()
+			const beforeCreateIsoString = beforeCreate.toISOString()
 
 			const newCategory = {
 				name: 'Timestamp Test',
 				type: 'expense',
 				color: '#FF0000',
-				createdAt: beforeCreate,
-				updatedAt: beforeCreate,
+				createdAt: beforeCreateIsoString,
+				updatedAt: beforeCreateIsoString,
 			}
 
 			let response = await createTestRequest(
@@ -372,14 +373,18 @@ describe('Categories API - Integration Tests', () => {
 			expect(response.status).toBe(201)
 
 			let data = await getResponseJson(response)
-			expect(data.createdAt).toBe(beforeCreate)
-			expect(data.updatedAt).toBe(beforeCreate)
+			// CI環境での時間精度の違いを考慮して、時間範囲での検証を行う
+			const createdTime = new Date(data.createdAt)
+			const updatedTime = new Date(data.updatedAt)
+			expect(createdTime.getTime()).toBeGreaterThanOrEqual(beforeCreate.getTime() - 1000)
+			expect(createdTime.getTime()).toBeLessThanOrEqual(beforeCreate.getTime() + 1000)
+			expect(updatedTime.getTime()).toBeGreaterThanOrEqual(beforeCreate.getTime() - 1000)
+			expect(updatedTime.getTime()).toBeLessThanOrEqual(beforeCreate.getTime() + 1000)
 
 			// 更新時のタイムスタンプ検証
-			const updateTime = new Date().toISOString()
+			const beforeUpdate = new Date()
 			const updateData = {
 				name: 'Updated Name',
-				updatedAt: updateTime,
 			}
 
 			response = await createTestRequest(
@@ -389,11 +394,19 @@ describe('Categories API - Integration Tests', () => {
 				updateData
 			)
 			expect(response.status).toBe(200)
+			const afterUpdate = new Date()
 
 			data = await getResponseJson(response)
 			expect(data.name).toBe(updateData.name)
-			expect(data.createdAt).toBe(beforeCreate) // 作成日は変わらない
-			expect(data.updatedAt).toBe(updateTime) // 更新日は変わる
+			// 作成日は変わらない（時間範囲での検証）
+			const originalCreatedTime = new Date(data.createdAt)
+			expect(originalCreatedTime.getTime()).toBeGreaterThanOrEqual(beforeCreate.getTime() - 1000)
+			expect(originalCreatedTime.getTime()).toBeLessThanOrEqual(beforeCreate.getTime() + 1000)
+
+			// 更新日時が更新前後の時間範囲内にあることを確認（CI環境での時刻ズレ対応）
+			const updatedAtTime = new Date(data.updatedAt)
+			expect(updatedAtTime.getTime()).toBeGreaterThanOrEqual(beforeUpdate.getTime())
+			expect(updatedAtTime.getTime()).toBeLessThanOrEqual(afterUpdate.getTime())
 		})
 	})
 

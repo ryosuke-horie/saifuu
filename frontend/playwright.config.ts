@@ -57,7 +57,7 @@ export default defineConfig({
 	// ローカル環境専用: 既存サーバーを再利用して効率化
 	webServer: [
 		{
-			command: "npm run dev:e2e",
+			command: "NEXT_PUBLIC_API_URL=http://localhost:3003/api npm run dev:e2e",
 			url: "http://localhost:3002",
 			reuseExistingServer: true,
 			timeout: 120 * 1000,
@@ -66,7 +66,10 @@ export default defineConfig({
 			command: "cd ../api && npm run dev:e2e",
 			url: "http://localhost:3003/api/health",
 			reuseExistingServer: true,
-			timeout: 120 * 1000,
+			timeout: 150 * 1000, // E2Eサーバーはデータベース初期化時間を考慮して延長
+			// カテゴリデータが確実に準備されるまで待機
+			stdout: "pipe", // サーバーログを確認可能にする
+			stderr: "pipe",
 		},
 	],
 });
