@@ -8,6 +8,26 @@ import { expect, test } from "@playwright/test";
  */
 test.describe("サブスクリプション管理", () => {
 	test("新規サブスクリプション登録と一覧表示", async ({ page }) => {
+		// E2E環境のAPI準備状態を確認
+		console.log("[E2E] API準備状態の確認を開始");
+		const apiHealthResponse = await page.request.get(
+			"http://localhost:3003/api/health",
+		);
+		expect(apiHealthResponse.status()).toBe(200);
+
+		const healthData = await apiHealthResponse.json();
+		console.log("[E2E] API Health Check:", healthData);
+
+		// カテゴリデータの事前確認
+		const categoriesResponse = await page.request.get(
+			"http://localhost:3003/api/categories",
+		);
+		expect(categoriesResponse.status()).toBe(200);
+
+		const categories = await categoriesResponse.json();
+		console.log("[E2E] Available categories:", categories.length);
+		expect(categories.length).toBeGreaterThan(0); // カテゴリが少なくとも1つは存在することを確認
+
 		// サブスクリプション管理画面にアクセス
 		await page.goto("/subscriptions");
 
@@ -61,11 +81,28 @@ test.describe("サブスクリプション管理", () => {
 
 		// カテゴリデータの読み込みを待つ（カテゴリセレクトボックスが有効になるまで）
 		const categorySelect = page.getByLabel("カテゴリ");
-		await expect(categorySelect).toBeEnabled({ timeout: 10000 });
+		console.log("[E2E] カテゴリセレクトボックスの有効化を待機中...");
+		await expect(categorySelect).toBeEnabled({ timeout: 15000 });
+
+		// カテゴリが実際に読み込まれていることを確認（プレースホルダーではないことを確認）
+		await page.waitForFunction(
+			() => {
+				const select = document.querySelector('select[aria-label="カテゴリ"]');
+				return (
+					select &&
+					select instanceof HTMLSelectElement &&
+					select.options.length > 1
+				); // デフォルトオプション以外にも選択肢があることを確認
+			},
+			{ timeout: 10000 },
+		);
+
+		console.log("[E2E] カテゴリセレクトボックスが有効化され、選択肢が準備完了");
 
 		// カテゴリを選択（最初の利用可能なカテゴリを選択）
 		// selectOption()メソッドを使用してより確実に選択
 		await categorySelect.selectOption({ index: 1 });
+		console.log("[E2E] カテゴリを選択しました");
 
 		// 登録ボタンをクリック（ダイアログ内の登録ボタンを明確に指定）
 		const dialog = page.getByRole("dialog", {
@@ -73,16 +110,28 @@ test.describe("サブスクリプション管理", () => {
 		});
 		const registerButton = dialog.getByRole("button", { name: "登録" });
 		await expect(registerButton).toBeEnabled();
+
+		console.log("[E2E] サブスクリプション登録を実行中...");
 		await registerButton.click();
 
 		// ダイアログが閉じることを確認
+		console.log("[E2E] ダイアログクローズの確認中...");
 		await expect(
 			page.getByRole("dialog", { name: "新規サブスクリプション登録" }),
-		).not.toBeVisible();
+		).not.toBeVisible({ timeout: 10000 });
 
 		// 一覧に新しく登録したサブスクリプションが表示されることを確認
-		// ローディング状態が終了するまで少し待つ
+		// APIへの登録とページ更新を待つ
+		console.log("[E2E] サブスクリプション一覧の更新を待機中...");
 		await page.waitForTimeout(3000);
+
+		// 登録後のAPIでの確認
+		const subscriptionsResponse = await page.request.get(
+			"http://localhost:3003/api/subscriptions",
+		);
+		expect(subscriptionsResponse.status()).toBe(200);
+		const subscriptions = await subscriptionsResponse.json();
+		console.log("[E2E] 登録後のサブスクリプション数:", subscriptions.length);
 
 		// サブスクリプション一覧テーブルが表示されていることを確認
 		const subscriptionTable = page.getByRole("table");

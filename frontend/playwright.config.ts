@@ -66,7 +66,10 @@ export default defineConfig({
 			command: "cd ../api && npm run dev:e2e",
 			url: "http://localhost:3003/api/health",
 			reuseExistingServer: true,
-			timeout: 120 * 1000,
+			timeout: 150 * 1000, // E2Eサーバーはデータベース初期化時間を考慮して延長
+			// カテゴリデータが確実に準備されるまで待機
+			stdout: "pipe", // サーバーログを確認可能にする
+			stderr: "pipe",
 		},
 	],
 });
