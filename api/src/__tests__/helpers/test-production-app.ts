@@ -2,6 +2,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { Hono } from 'hono'
 import type { AnyDatabase, Env } from '../../db'
 import * as schema from '../../db/schema'
+import { type LoggingVariables, loggingMiddleware } from '../../middleware/logging'
 import categoriesRouter from '../../routes/categories'
 import { createSubscriptionsApp } from '../../routes/subscriptions'
 import { getTestSqliteInstance } from './test-db'
@@ -21,8 +22,11 @@ export function createTestProductionApp() {
 		Bindings: Env
 		Variables: {
 			db: AnyDatabase
-		}
+		} & LoggingVariables
 	}>()
+
+	// ミドルウェア: ロギングミドルウェアを適用（テスト環境用の設定）
+	app.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
 
 	// ミドルウェア: テスト用データベースを設定
 	app.use('/api/*', async (c, next) => {

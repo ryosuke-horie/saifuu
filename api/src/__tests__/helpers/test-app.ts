@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { AnyDatabase, Env } from '../../db'
+import type { LoggingVariables } from '../../middleware/logging'
 
 /**
  * テスト用Honoアプリヘルパー
@@ -16,7 +17,7 @@ import type { AnyDatabase, Env } from '../../db'
  * @returns Responseオブジェクト
  */
 export async function createTestRequest(
-	app: Hono<{ Bindings: Env; Variables: { db: AnyDatabase } }>,
+	app: Hono<{ Bindings: Env; Variables: { db: AnyDatabase } & LoggingVariables }>,
 	method: 'GET' | 'POST' | 'PUT' | 'DELETE',
 	path: string,
 	body?: unknown,

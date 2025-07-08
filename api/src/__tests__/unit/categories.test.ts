@@ -128,7 +128,7 @@ describe('Categories API - Unit Tests', () => {
 				invalidCategory
 			)
 
-			expect(response.status).toBe(500) // データベース制約エラー
+			expect(response.status).toBe(400) // バリデーションエラー（改善）
 			const data = await getResponseJson(response)
 			expect(data).toHaveProperty('error')
 		})
@@ -149,7 +149,7 @@ describe('Categories API - Unit Tests', () => {
 				invalidCategory
 			)
 
-			expect(response.status).toBe(500) // データベース制約エラー
+			expect(response.status).toBe(400) // バリデーションエラー（改善）
 		})
 	})
 

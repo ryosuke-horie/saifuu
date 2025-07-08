@@ -2,13 +2,14 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { type AnyDatabase, createDatabase, type Env } from './db'
 import { categories } from './db/schema'
+import { type LoggingVariables, loggingMiddleware, logWithContext } from './middleware/logging'
 import { renderer } from './renderer'
 import categoriesRouter from './routes/categories'
 import subscriptionsRouter from './routes/subscriptions'
 
 const app = new Hono<{
 	Bindings: Env
-	Variables: {
+	Variables: LoggingVariables & {
 		db: AnyDatabase
 	}
 }>()
@@ -31,29 +32,35 @@ app.use(
 // 開発環境判定
 const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV
 
+// ロギングミドルウェアの設定（CORSの後、他のミドルウェアの前に適用）
+app.use('/api/*', loggingMiddleware(process.env as Record<string, string>))
+
 // ミドルウェア: データベース接続を設定
 app.use('/api/*', async (c, next) => {
 	try {
-		console.log('=== Database middleware start ===')
-		console.log('Environment isDev:', isDev)
-		console.log('Request path:', c.req.path)
+		// 構造化ログでデータベースミドルウェアの開始をログ記録
+		logWithContext(c, 'debug', 'Database middleware start', {
+			environment: isDev ? 'development' : 'production',
+			path: c.req.path,
+		})
 
 		// 開発環境・本番環境の両方でCloudflare D1を使用
 		// wrangler dev では c.env.DB がローカルD1インスタンスを提供
 		const db = createDatabase(c.env.DB)
-		console.log('D1 database created successfully')
+		logWithContext(c, 'debug', 'D1 database created successfully')
 		c.set('db', db)
-		console.log('Database set in context')
+		logWithContext(c, 'debug', 'Database set in context')
 
-		console.log('Database middleware completed, calling next()')
+		logWithContext(c, 'debug', 'Database middleware completed, calling next()')
 		await next()
-		console.log('Next() completed successfully')
+		logWithContext(c, 'debug', 'Next() completed successfully')
 	} catch (error) {
-		console.error('=== Database middleware error ===')
-		console.error('Error in database middleware:', error)
-		console.error('Error type:', typeof error)
-		console.error('Error message:', error instanceof Error ? error.message : String(error))
-		console.error('Error stack:', error instanceof Error ? error.stack : undefined)
+		// 構造化ログでエラーを記録
+		logWithContext(c, 'error', 'Database middleware error', {
+			error: error instanceof Error ? error.message : String(error),
+			stack: error instanceof Error ? error.stack : undefined,
+			errorType: typeof error,
+		})
 
 		return c.json(
 			{
@@ -74,18 +81,24 @@ app.get('/', (c) => {
 // データベース接続のテスト用エンドポイント
 app.get('/api/health', async (c) => {
 	try {
-		console.log('=== Health check start ===')
+		// 構造化ログでヘルスチェック開始をログ記録
+		logWithContext(c, 'info', 'Health check start')
 		const db = c.get('db')
-		console.log('Health check: database instance retrieved', typeof db)
+		logWithContext(c, 'debug', 'Health check: database instance retrieved', {
+			databaseType: typeof db,
+		})
 
 		if (!db) {
 			throw new Error('Database instance is null or undefined')
 		}
 
-		console.log('Health check: attempting database query')
+		logWithContext(c, 'debug', 'Health check: attempting database query')
 		// シンプルなクエリでデータベース接続をテスト
 		const result = await db.select().from(categories).limit(1)
-		console.log('Health check: query successful, result:', result)
+		logWithContext(c, 'info', 'Health check: query successful', {
+			categoriesCount: result.length,
+		})
+
 		return c.json({
 			status: 'ok',
 			database: 'connected',
@@ -98,11 +111,13 @@ app.get('/api/health', async (c) => {
 			},
 		})
 	} catch (error) {
-		console.error('=== Health check error ===')
-		console.error('Error type:', typeof error)
-		console.error('Error message:', error instanceof Error ? error.message : String(error))
-		console.error('Error stack:', error instanceof Error ? error.stack : undefined)
-		console.error('Full error object:', error)
+		// 構造化ログでエラーを記録
+		logWithContext(c, 'error', 'Health check error', {
+			error: error instanceof Error ? error.message : String(error),
+			stack: error instanceof Error ? error.stack : undefined,
+			errorType: typeof error,
+			fullError: error,
+		})
 
 		return c.json(
 			{
