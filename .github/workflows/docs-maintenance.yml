@@ -22,6 +22,7 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      id-token: write  # OIDC トークン取得のために追加
       
     steps:
       - name: Checkout repository
@@ -67,7 +68,7 @@ jobs:
             - 論理的で分かりやすい構造に整理
             
             推奨ディレクトリ構成：
-            ```
+            \`\`\`
             docs/
             ├── README.md (ディレクトリ全体の案内)
             ├── 開発環境/
@@ -101,7 +102,7 @@ jobs:
                 ├── ログ管理.md
                 ├── モニタリング.md
                 └── バックアップ.md
-            ```
+            \`\`\`
             
             ## 3. docsディレクトリのREADME作成・更新
             - docs/README.mdを作成または更新
@@ -125,7 +126,7 @@ jobs:
             - 相互リンクを追加してナビゲーションを改善
             
             ## 6. プルリクエスト作成
-            - 新しいブランチ `docs/maintenance-$(date +%Y%m%d-%H%M%S)` を作成
+            - 新しいブランチ \`docs/maintenance-$(date +%Y%m%d-%H%M%S)\` を作成
             - 変更内容をコミット（日本語コミットメッセージ）
             - 以下の内容でプルリクエストを作成：
               - タイトル: "docs: ドキュメント構成の整理とメンテナンス"
