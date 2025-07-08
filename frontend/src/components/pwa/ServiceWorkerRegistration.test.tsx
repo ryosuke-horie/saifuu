@@ -114,6 +114,7 @@ describe("ServiceWorkerRegistration", () => {
 
 	afterEach(() => {
 		vi.resetAllMocks();
+		vi.unstubAllGlobals();
 		// イベントリスナーをクリア
 		mockServiceWorker.clearListeners();
 		mockRegistration.clearListeners();
@@ -255,9 +256,8 @@ describe("ServiceWorkerRegistration", () => {
 		it("アップデートボタンクリック時にページがリロードされる", async () => {
 			// window.location.reloadをモック
 			const mockReload = vi.fn();
-			Object.defineProperty(window, "location", {
-				value: { reload: mockReload },
-				writable: true,
+			vi.stubGlobal("location", {
+				reload: mockReload,
 			});
 
 			// 実際のUIをテストするのではなく、useServiceWorkerフックの機能をテスト

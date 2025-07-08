@@ -59,6 +59,7 @@ describe("PWA Utilities", () => {
 
 	afterEach(() => {
 		vi.resetAllMocks();
+		vi.unstubAllGlobals();
 	});
 
 	describe("isPWAInstallable", () => {
@@ -89,15 +90,13 @@ describe("PWA Utilities", () => {
 		});
 
 		it("windowが存在しない場合（SSR）はfalseを返す", () => {
-			// windowを一時的に削除
-			const originalWindow = global.window;
-			// @ts-ignore
-			delete global.window;
+			// windowを一時的に無効化
+			vi.stubGlobal("window", undefined);
 
 			expect(isPWAInstallable()).toBe(false);
 
 			// windowを復元
-			global.window = originalWindow;
+			vi.unstubAllGlobals();
 		});
 	});
 
@@ -370,9 +369,8 @@ describe("PWA Utilities", () => {
 				})),
 			});
 
-			Object.defineProperty(window, "location", {
-				value: { href: "https://example.com/page" },
-				writable: true,
+			vi.stubGlobal("location", {
+				href: "https://example.com/page",
 			});
 
 			Object.defineProperty(document, "referrer", {
@@ -395,17 +393,15 @@ describe("PWA Utilities", () => {
 		});
 
 		it("SSR環境ではnullを返す", () => {
-			// windowを一時的に削除
-			const originalWindow = global.window;
-			// @ts-ignore
-			delete global.window;
+			// windowを一時的に無効化
+			vi.stubGlobal("window", undefined);
 
 			const analytics = collectPWAAnalytics();
 
 			expect(analytics).toBe(null);
 
 			// windowを復元
-			global.window = originalWindow;
+			vi.unstubAllGlobals();
 		});
 	});
 
@@ -454,9 +450,9 @@ describe("PWA Utilities", () => {
 				json: () => Promise.resolve({ name: "Test App" }),
 			});
 
-			Object.defineProperty(window, "location", {
-				value: { protocol: "https:", hostname: "example.com" },
-				writable: true,
+			vi.stubGlobal("location", {
+				protocol: "https:",
+				hostname: "example.com",
 			});
 
 			Object.defineProperty(window, "Notification", {
@@ -476,9 +472,9 @@ describe("PWA Utilities", () => {
 		});
 
 		it("HTTPS以外の環境でのチェック", async () => {
-			Object.defineProperty(window, "location", {
-				value: { protocol: "http:", hostname: "example.com" },
-				writable: true,
+			vi.stubGlobal("location", {
+				protocol: "http:",
+				hostname: "example.com",
 			});
 
 			const health = await checkPWAHealth();
@@ -487,9 +483,9 @@ describe("PWA Utilities", () => {
 		});
 
 		it("localhostでのHTTPS判定", async () => {
-			Object.defineProperty(window, "location", {
-				value: { protocol: "http:", hostname: "localhost" },
-				writable: true,
+			vi.stubGlobal("location", {
+				protocol: "http:",
+				hostname: "localhost",
 			});
 
 			const health = await checkPWAHealth();
