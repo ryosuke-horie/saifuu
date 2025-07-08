@@ -393,7 +393,7 @@ describe('Categories API - Integration Tests', () => {
 			data = await getResponseJson(response)
 			expect(data.name).toBe(updateData.name)
 			expect(data.createdAt).toBe(beforeCreate) // 作成日は変わらない
-			
+
 			// 更新日時が更新前後の時間範囲内にあることを確認（CI環境での時刻ズレ対応）
 			const updatedAtTime = new Date(data.updatedAt)
 			expect(updatedAtTime.getTime()).toBeGreaterThanOrEqual(beforeUpdate.getTime())
