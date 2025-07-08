@@ -62,7 +62,20 @@ chromatic-*
 
 # visual regression testing
 **/__screenshots__/
-**/__vis__/
+# ベースライン画像は管理対象（削除）
+# **/__vis__/
+
+# ビジュアルテストアーティファクト（Git除外）
+**/__vis_backup__/
+**/visual-test-artifacts/
+**/visual-test-reports/
+**/__vis__/**/*-diff.png
+**/__vis__/**/*-actual.png
+**/__vis__/**/*-received.png
+**/__vis__/**/*-expected.png
+**/baseline_stats.json
+**/visual-test-summary.txt
+**/pr_comment.md
 
 # database files
 api/dev.db

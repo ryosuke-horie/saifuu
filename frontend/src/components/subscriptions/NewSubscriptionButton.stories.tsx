@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect, within } from "@storybook/test";
 import { NewSubscriptionButton } from "./NewSubscriptionButton";
 
 /**
@@ -70,7 +71,15 @@ type Story = StoryObj<typeof meta>;
  *
  * 通常の新規登録ボタン
  */
-export const Default: Story = {};
+export const Default: Story = {
+	tags: ["visual-test"],
+	parameters: {
+		vis: {
+			description: "Default button appearance with icon and text",
+			viewports: ["mobile", "tablet", "desktop"],
+		},
+	},
+};
 
 /**
  * 無効状態
@@ -81,12 +90,17 @@ export const Disabled: Story = {
 	args: {
 		disabled: true,
 	},
+	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story:
 					"ボタンが無効化されている状態です。透明度が下がり、クリックできなくなります。",
 			},
+		},
+		vis: {
+			description: "Disabled button state with reduced opacity",
+			viewports: ["mobile", "desktop"],
 		},
 	},
 };
@@ -132,6 +146,10 @@ export const WithCustomClass: Story = {
 		chromatic: {
 			delay: 100,
 		},
+		vis: {
+			description: "Button with custom styling - full width and larger text",
+			viewports: ["mobile", "tablet", "desktop"],
+		},
 	},
 };
 
@@ -153,4 +171,156 @@ export const Interactive: Story = {
 			},
 		},
 	},
+};
+
+// Visual Testing: フォーカス状態
+export const FocusState: Story = {
+	tags: ["visual-test"],
+	parameters: {
+		docs: {
+			description: {
+				story: "ボタンにフォーカスが当たった状態の視覚テスト",
+			},
+		},
+		vis: {
+			delay: 300,
+			description: "Button with keyboard focus ring",
+			viewports: ["desktop"],
+			captureAfterInteraction: true,
+		},
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const button = canvas.getByRole("button");
+
+		// ボタンにフォーカスを当てる
+		button.focus();
+
+		// フォーカスリングが表示されることを確認
+		await expect(button).toHaveFocus();
+	},
+};
+
+// Visual Testing: ホバー状態のシミュレーション
+export const HoverState: Story = {
+	tags: ["visual-test"],
+	parameters: {
+		docs: {
+			description: {
+				story: "ボタンのホバー状態をCSSで再現した視覚テスト",
+			},
+		},
+		vis: {
+			description: "Button hover state appearance",
+			viewports: ["desktop"],
+		},
+	},
+	args: {
+		className: "hover:bg-blue-600 hover:scale-105", // ホバー状態をCSSで表現
+	},
+};
+
+// Visual Testing: 異なるサイズバリエーション
+export const SizeVariations: Story = {
+	tags: ["visual-test"],
+	parameters: {
+		docs: {
+			description: {
+				story: "ボタンの異なるサイズバリエーションの比較",
+			},
+		},
+		vis: {
+			description: "Multiple button size variations",
+			viewports: ["desktop"],
+		},
+		layout: "padded",
+	},
+	render: () => (
+		<div className="space-y-4">
+			<NewSubscriptionButton className="text-sm py-1 px-2" />
+			<NewSubscriptionButton />
+			<NewSubscriptionButton className="text-lg py-3 px-6" />
+			<NewSubscriptionButton className="text-xl py-4 px-8" />
+		</div>
+	),
+};
+
+// Visual Testing: 複数ボタンレイアウト
+export const MultipleButtons: Story = {
+	tags: ["visual-test"],
+	parameters: {
+		docs: {
+			description: {
+				story: "複数ボタンが配置された際のレイアウト確認",
+			},
+		},
+		vis: {
+			description: "Multiple buttons layout and spacing",
+			viewports: ["mobile", "tablet", "desktop"],
+		},
+		layout: "padded",
+	},
+	render: () => (
+		<div className="flex flex-col sm:flex-row gap-4">
+			<NewSubscriptionButton />
+			<NewSubscriptionButton disabled />
+			<NewSubscriptionButton className="bg-green-500 hover:bg-green-600" />
+		</div>
+	),
+};
+
+// Visual Testing: モバイル特化テスト
+export const MobileOptimized: Story = {
+	tags: ["visual-test"],
+	parameters: {
+		viewport: {
+			defaultViewport: "mobile1",
+		},
+		docs: {
+			description: {
+				story: "モバイル画面に最適化されたボタンの表示テスト",
+			},
+		},
+		vis: {
+			description: "Mobile-optimized button with touch-friendly size",
+			viewports: ["mobile"],
+		},
+	},
+	args: {
+		className: "w-full py-4 text-lg", // モバイルに最適化されたサイズ
+	},
+};
+
+// Visual Testing: アクセシビリティ確認
+export const AccessibilityDemo: Story = {
+	tags: ["visual-test"],
+	parameters: {
+		docs: {
+			description: {
+				story: "アクセシビリティ要素の視覚的確認",
+			},
+		},
+		vis: {
+			description: "Button with accessibility features highlighted",
+			viewports: ["desktop"],
+		},
+	},
+	render: () => (
+		<div className="space-y-4">
+			<div>
+				<p className="text-sm text-gray-600 mb-2">
+					通常のボタン（aria-label付き）
+				</p>
+				<NewSubscriptionButton />
+			</div>
+			<div>
+				<p className="text-sm text-gray-600 mb-2">高コントラストモード対応</p>
+				<NewSubscriptionButton className="border-2 border-black bg-white text-black hover:bg-gray-100" />
+			</div>
+			<div>
+				<p className="text-sm text-gray-600 mb-2">無効状態（適切な透明度）</p>
+				<NewSubscriptionButton disabled />
+			</div>
+		</div>
+	),
 };

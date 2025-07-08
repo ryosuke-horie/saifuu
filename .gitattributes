@@ -1,0 +1,48 @@
+# Visual testing baseline images
+# バイナリファイルとして扱い、マージ衝突を防ぐ
+**/__vis__/**/*.png binary
+**/__screenshots__/**/*.png binary
+
+# テスト結果のアーティファクト
+**/test-results/**/*.png binary
+**/playwright-report/**/*.png binary
+
+# Storybook静的ファイル
+**/storybook-static/**/*.png binary
+**/storybook-static/**/*.jpg binary
+**/storybook-static/**/*.jpeg binary
+
+# PWAアイコンファイル
+**/public/**/*.png binary
+**/public/**/*.ico binary
+**/public/**/*.svg text
+
+# その他のメディアファイル
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+
+# フォントファイル
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+
+# 改行コード統一
+* text=auto
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.jsx text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
