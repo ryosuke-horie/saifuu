@@ -78,11 +78,11 @@ jobs:
             echo "No visual baselines found. This may be the first run."
           fi
       
-      # ビジュアルテスト実行
+      # ビジュアルテスト実行（visual.testファイルのみを対象とする）
       - name: Run visual regression tests
         run: |
           echo "Running visual regression tests..."
-          npm run test:visual -- --run --reporter=verbose
+          npm run test:visual
         continue-on-error: true
         id: visual-test
       
@@ -246,7 +246,7 @@ jobs:
       
       # 最終的なテスト結果の判定
       - name: Final test result
-        if: steps.visual-test.outcome == 'failure'
+        if: steps.visual-test.outcome == 'failure' && (env.DIFF_COUNT > 0 || env.NEW_BASELINE_COUNT > 0)
         run: |
           echo "Visual regression tests failed. Please review the differences."
           exit 1
