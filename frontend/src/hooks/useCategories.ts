@@ -34,6 +34,7 @@ export function useCategories(): UseCategoriesReturn {
 			const categories = await fetchCategories();
 			setState((prev) => ({ ...prev, categories, loading: false }));
 		} catch (error) {
+			console.error("Failed to load categories:", error);
 			const errorMessage =
 				error instanceof Error ? error.message : "カテゴリの取得に失敗しました";
 			setState((prev) => ({ ...prev, error: errorMessage, loading: false }));

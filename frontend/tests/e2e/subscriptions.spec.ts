@@ -87,7 +87,7 @@ test.describe("サブスクリプション管理", () => {
 		// カテゴリが実際に読み込まれていることを確認（プレースホルダーではないことを確認）
 		await page.waitForFunction(
 			() => {
-				const select = document.querySelector('select[aria-label="カテゴリ"]');
+				const select = document.querySelector("#subscription-category");
 				return (
 					select &&
 					select instanceof HTMLSelectElement &&

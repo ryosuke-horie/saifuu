@@ -15,7 +15,6 @@ import type { ApiCategoryResponse } from "./types";
 export async function fetchCategories(): Promise<Category[]> {
 	try {
 		const response = await apiClient.get<ApiCategoryResponse[]>("/categories");
-
 		return transformApiCategoriesToFrontend(response);
 	} catch (error) {
 		console.error("Failed to fetch categories:", error);
