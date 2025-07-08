@@ -34,15 +34,13 @@ export type TestDatabase = ReturnType<typeof createTestDatabase>
 // 共通のデータベースインターフェース
 // D1環境で統一された型定義
 export interface CommonDatabase {
-	select: (...args: any[]) => any
-	insert: (...args: any[]) => any
-	update: (...args: any[]) => any
-	delete: (...args: any[]) => any
+	select: Database['select']
+	insert: Database['insert']
+	update: Database['update']
+	delete: Database['delete']
 }
 
 // 型安全性を保ちつつ、実行時の柔軟性を提供
-export type AnyDatabase = CommonDatabase & {
-	[key: string]: any
-}
+export type AnyDatabase = Database
 
 export { schema }
