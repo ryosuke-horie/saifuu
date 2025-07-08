@@ -325,7 +325,17 @@ export function useLoggedCallback<TArgs extends unknown[], TReturn>(
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[logger, name, logLevel, logStart, logEnd, logError, meta, callback, ...deps],
+		[
+			logger,
+			name,
+			logLevel,
+			logStart,
+			logEnd,
+			logError,
+			meta,
+			callback,
+			...deps,
+		],
 	);
 }
 
@@ -378,7 +388,7 @@ export function usePerformanceLogger(
 
 	// カスタムパフォーマンス測定
 	const measureCustom = useCallback(
-		(name: string, fn: () => void | Promise<void>) => {
+		(name: string, _fn: () => void | Promise<void>) => {
 			return logger.performance(name, 0, {
 				component: componentName,
 				customMeasurement: name,

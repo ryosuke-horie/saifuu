@@ -61,7 +61,11 @@ const ConditionalThrowingComponent = () => {
 	return (
 		<div>
 			<div data-testid="working-component">Working component</div>
-			<button data-testid="throw-error" onClick={() => setShouldThrow(true)}>
+			<button
+				type="button"
+				data-testid="throw-error"
+				onClick={() => setShouldThrow(true)}
+			>
 				Throw Error
 			</button>
 		</div>
@@ -77,7 +81,7 @@ const CustomErrorFallback = ({
 	<div data-testid="custom-fallback">
 		<h2>Custom Error: {error.message}</h2>
 		{canRetry && (
-			<button data-testid="custom-retry" onClick={retry}>
+			<button type="button" data-testid="custom-retry" onClick={retry}>
 				Custom Retry
 			</button>
 		)}
@@ -407,6 +411,7 @@ describe("useErrorHandler", () => {
 
 			return (
 				<button
+					type="button"
 					data-testid="handle-error"
 					onClick={() => handleError(new Error("Manual error"))}
 				>
@@ -432,6 +437,7 @@ describe("useErrorHandler", () => {
 
 			return (
 				<button
+					type="button"
 					data-testid="handle-error"
 					onClick={() => handleError(new Error("Manual error"))}
 				>

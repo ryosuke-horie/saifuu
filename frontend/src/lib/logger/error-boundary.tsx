@@ -120,10 +120,7 @@ class LoggedErrorBoundaryClass extends Component<
 		const { hasError } = this.state;
 
 		if (hasError && prevProps.resetKeys !== resetKeys && resetOnPropsChange) {
-			if (
-				resetKeys &&
-				resetKeys.some((key, idx) => key !== prevProps.resetKeys?.[idx])
-			) {
+			if (resetKeys?.some((key, idx) => key !== prevProps.resetKeys?.[idx])) {
 				this.resetErrorBoundary();
 			}
 		}
@@ -134,7 +131,7 @@ class LoggedErrorBoundaryClass extends Component<
 		errorInfo: ErrorInfo,
 		errorId: string,
 		componentName?: string,
-		logLevel: "warn" | "error" = "error",
+		_logLevel: "warn" | "error" = "error",
 		additionalMetadata: FrontendLogMeta = {},
 	) => {
 		// グローバルロガーへのアクセス（実装環境に応じて調整）
@@ -352,6 +349,7 @@ function DefaultErrorFallback({
 
 			{canRetry && (
 				<button
+					type="button"
 					onClick={retry}
 					style={{
 						padding: "8px 16px",
@@ -369,6 +367,7 @@ function DefaultErrorFallback({
 			)}
 
 			<button
+				type="button"
 				onClick={() => window.location.reload()}
 				style={{
 					padding: "8px 16px",

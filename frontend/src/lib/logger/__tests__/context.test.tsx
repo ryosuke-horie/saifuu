@@ -7,7 +7,7 @@
 
 import { act, render, renderHook, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
 	DefaultLoggerProvider,
 	LoggerProvider,
@@ -75,7 +75,7 @@ describe("LoggerContext", () => {
 describe("LoggerProvider", () => {
 	it("基本設定でロガーを作成", () => {
 		const TestComponent = () => {
-			const { logger, config } = useLoggerContext();
+			const { config } = useLoggerContext();
 			return (
 				<div>
 					<span data-testid="environment">{config.environment}</span>
@@ -96,8 +96,6 @@ describe("LoggerProvider", () => {
 
 	it("userIdとcomponentを自動設定", () => {
 		const TestComponent = () => {
-			const { logger } = useLoggerContext();
-
 			// ロガーのsetUserIdとsetComponentが呼ばれているかテスト
 			// 実際のテストではスパイを使用してメソッド呼び出しを確認
 			return <div data-testid="component">Test</div>;
@@ -183,6 +181,7 @@ describe("LoggerProvider", () => {
 				<div>
 					<span data-testid="level">{config.level}</span>
 					<button
+						type="button"
 						onClick={() => updateConfig({ level: "error" })}
 						data-testid="update-button"
 					>
@@ -231,7 +230,6 @@ describe("LoggerScope", () => {
 describe("DefaultLoggerProvider", () => {
 	it("デフォルト設定でロガーを作成", () => {
 		const TestComponent = () => {
-			const { config } = useLoggerContext();
 			return <span data-testid="service">saifuu-frontend</span>;
 		};
 
@@ -282,8 +280,6 @@ describe("withLoggerProvider HOC", () => {
 describe("ライフサイクルとクリーンアップ", () => {
 	it("アンマウント時にロガーが破棄される", () => {
 		const TestComponent = () => {
-			const { logger } = useLoggerContext();
-
 			// ロガーのdestroyメソッドが呼ばれるかテスト
 			// 実際のテストではスパイを使用してdestroy呼び出しを確認
 			return <div data-testid="component">Test</div>;
@@ -311,8 +307,6 @@ describe("ライフサイクルとクリーンアップ", () => {
 		});
 
 		const TestComponent = () => {
-			const { logger } = useLoggerContext();
-
 			// pageViewメソッドが呼ばれることを確認
 			// 実際のテストではスパイを使用してpageView呼び出しを確認
 			return <div data-testid="component">Test</div>;

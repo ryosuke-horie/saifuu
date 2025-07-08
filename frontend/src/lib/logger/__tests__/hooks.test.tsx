@@ -5,7 +5,7 @@
  * パフォーマンス最適化とReact 19並行レンダリング対応の検証
  */
 
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { LoggerProvider } from "../context";
