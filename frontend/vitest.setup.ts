@@ -18,7 +18,7 @@ if (typeof process === "undefined") {
 	});
 }
 
-// window.matchMediaをモック化（PWAテスト用）
+// window.matchMediaをモック化（レスポンシブテスト用）
 Object.defineProperty(window, "matchMedia", {
 	writable: true,
 	value: vi.fn().mockImplementation((query: string) => ({

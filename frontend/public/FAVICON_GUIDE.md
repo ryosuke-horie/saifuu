@@ -35,17 +35,17 @@ These files should be generated from the base `icon.svg`:
 
 5. **icon-72x72.png** ❌ (Need to generate)
    - Size: 72x72 pixels
-   - Purpose: Android Chrome, PWA icons
+   - Purpose: Android Chrome, browser icons
    - Location: `/public/icon-72x72.png`
 
 6. **icon-96x96.png** ❌ (Need to generate)
    - Size: 96x96 pixels
-   - Purpose: Android Chrome, PWA icons
+   - Purpose: Android Chrome, browser icons
    - Location: `/public/icon-96x96.png`
 
 7. **icon-144x144.png** ❌ (Need to generate)
    - Size: 144x144 pixels
-   - Purpose: Android Chrome, PWA icons
+   - Purpose: Android Chrome, browser icons
    - Location: `/public/icon-144x144.png`
 
 8. **icon-192x192.png** ❌ (Need to generate)
