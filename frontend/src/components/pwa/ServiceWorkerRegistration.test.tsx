@@ -1,28 +1,59 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ServiceWorkerRegistration, {
 	useServiceWorker,
 } from "./ServiceWorkerRegistration";
 
+// イベントリスナーを管理するためのヘルパー
+class MockEventTarget {
+	private listeners = new Map<string, Function[]>();
+
+	addEventListener(type: string, listener: Function) {
+		if (!this.listeners.has(type)) {
+			this.listeners.set(type, []);
+		}
+		this.listeners.get(type)?.push(listener);
+	}
+
+	removeEventListener(type: string, listener: Function) {
+		const listeners = this.listeners.get(type);
+		if (listeners) {
+			const index = listeners.indexOf(listener);
+			if (index > -1) {
+				listeners.splice(index, 1);
+			}
+		}
+	}
+
+	dispatchEvent(event: { type: string; [key: string]: any }) {
+		const listeners = this.listeners.get(event.type);
+		if (listeners) {
+			listeners.forEach((listener) => listener(event));
+		}
+	}
+
+	clearListeners() {
+		this.listeners.clear();
+	}
+}
+
 // ServiceWorkerのモック
-const mockServiceWorker = {
+const mockServiceWorker = new MockEventTarget() as any;
+Object.assign(mockServiceWorker, {
 	register: vi.fn(),
 	getRegistration: vi.fn(),
 	ready: vi.fn(),
 	controller: null,
-	addEventListener: vi.fn(),
-	removeEventListener: vi.fn(),
 	postMessage: vi.fn(),
-};
+});
 
 // ServiceWorkerRegistrationのモック
-const mockRegistration = {
+const mockRegistration = new MockEventTarget() as any;
+Object.assign(mockRegistration, {
 	installing: null,
 	waiting: null,
 	active: { postMessage: vi.fn() },
-	addEventListener: vi.fn(),
-	removeEventListener: vi.fn(),
 	update: vi.fn(),
 	unregister: vi.fn(),
 	pushManager: {
@@ -32,7 +63,7 @@ const mockRegistration = {
 	scope: "/",
 	updateViaCache: "imports",
 	showNotification: vi.fn(),
-};
+});
 
 // Notificationのモック
 const mockNotification = {
@@ -42,6 +73,13 @@ const mockNotification = {
 
 describe("ServiceWorkerRegistration", () => {
 	beforeEach(() => {
+		// モック関数をリセット
+		vi.clearAllMocks();
+
+		// イベントリスナーをクリア
+		mockServiceWorker.clearListeners();
+		mockRegistration.clearListeners();
+
 		// グローバルオブジェクトのモック
 		Object.defineProperty(window, "navigator", {
 			value: {
@@ -72,18 +110,23 @@ describe("ServiceWorkerRegistration", () => {
 			},
 			writable: true,
 		});
-
-		// モック関数をリセット
-		vi.clearAllMocks();
 	});
 
 	afterEach(() => {
 		vi.resetAllMocks();
+		// イベントリスナーをクリア
+		mockServiceWorker.clearListeners();
+		mockRegistration.clearListeners();
 	});
 
 	describe("基本的なレンダリング", () => {
-		it("正常にレンダリングされる", () => {
-			render(<ServiceWorkerRegistration />);
+		it("正常にレンダリングされる", async () => {
+			mockServiceWorker.register.mockResolvedValue(mockRegistration);
+
+			await act(async () => {
+				render(<ServiceWorkerRegistration />);
+			});
+
 			// コンポーネントは通常時に何も表示しない
 			expect(screen.queryByText(/オフライン状態です/)).not.toBeInTheDocument();
 			expect(
@@ -98,7 +141,9 @@ describe("ServiceWorkerRegistration", () => {
 				writable: true,
 			});
 
-			render(<ServiceWorkerRegistration />);
+			await act(async () => {
+				render(<ServiceWorkerRegistration />);
+			});
 
 			// 通常のレンダリングが動作することを確認
 			expect(screen.queryByText(/オフライン状態です/)).not.toBeInTheDocument();
@@ -107,13 +152,17 @@ describe("ServiceWorkerRegistration", () => {
 
 	describe("オフライン状態の処理", () => {
 		it("オフライン状態になった時に通知が表示される", async () => {
-			// オンライン状態から開始
+			// オフライン状態に設定
 			Object.defineProperty(window.navigator, "onLine", {
 				value: false,
 				writable: true,
 			});
 
-			render(<ServiceWorkerRegistration />);
+			mockServiceWorker.register.mockResolvedValue(mockRegistration);
+
+			await act(async () => {
+				render(<ServiceWorkerRegistration />);
+			});
 
 			// オフライン通知が表示されることを確認
 			await waitFor(() => {
@@ -128,7 +177,11 @@ describe("ServiceWorkerRegistration", () => {
 				writable: true,
 			});
 
-			render(<ServiceWorkerRegistration />);
+			mockServiceWorker.register.mockResolvedValue(mockRegistration);
+
+			await act(async () => {
+				render(<ServiceWorkerRegistration />);
+			});
 
 			// オフライン通知が表示されることを確認
 			await waitFor(() => {
@@ -142,8 +195,10 @@ describe("ServiceWorkerRegistration", () => {
 			});
 
 			// オンラインイベントをディスパッチ
-			const onlineEvent = new Event("online");
-			window.dispatchEvent(onlineEvent);
+			await act(async () => {
+				const onlineEvent = new Event("online");
+				window.dispatchEvent(onlineEvent);
+			});
 
 			// オフライン通知が非表示になることを確認
 			await waitFor(() => {
@@ -158,7 +213,9 @@ describe("ServiceWorkerRegistration", () => {
 		it("サービスワーカーが正常に登録される", async () => {
 			mockServiceWorker.register.mockResolvedValue(mockRegistration);
 
-			render(<ServiceWorkerRegistration />);
+			await act(async () => {
+				render(<ServiceWorkerRegistration />);
+			});
 
 			await waitFor(() => {
 				expect(mockServiceWorker.register).toHaveBeenCalledWith("/sw.js", {
@@ -172,7 +229,9 @@ describe("ServiceWorkerRegistration", () => {
 			const error = new Error("登録に失敗");
 			mockServiceWorker.register.mockRejectedValue(error);
 
-			render(<ServiceWorkerRegistration />);
+			await act(async () => {
+				render(<ServiceWorkerRegistration />);
+			});
 
 			// エラーが発生してもコンポーネントがクラッシュしないことを確認
 			expect(screen.queryByText(/オフライン状態です/)).not.toBeInTheDocument();
@@ -181,10 +240,11 @@ describe("ServiceWorkerRegistration", () => {
 
 	describe("アップデート通知", () => {
 		it("アップデートが利用可能な場合に通知が表示される", async () => {
-			// このテストは複雑なstate管理を含むため、基本的な登録が動作することを確認
 			mockServiceWorker.register.mockResolvedValue(mockRegistration);
 
-			render(<ServiceWorkerRegistration />);
+			await act(async () => {
+				render(<ServiceWorkerRegistration />);
+			});
 
 			// サービスワーカーが登録されることを確認
 			await waitFor(() => {
@@ -211,14 +271,18 @@ describe("ServiceWorkerRegistration", () => {
 			mockRegistration.waiting = { postMessage: vi.fn() } as any;
 			mockServiceWorker.register.mockResolvedValue(mockRegistration);
 
-			render(<TestComponent />);
+			await act(async () => {
+				render(<TestComponent />);
+			});
 
 			await waitFor(() => {
 				expect(hookResult.isRegistered).toBe(true);
 			});
 
 			// applyUpdate関数をテスト
-			await hookResult.applyUpdate();
+			await act(async () => {
+				await hookResult.applyUpdate();
+			});
 
 			expect(mockReload).toHaveBeenCalled();
 		});
@@ -233,8 +297,19 @@ describe("ServiceWorkerRegistration", () => {
 				return <div>Test</div>;
 			}
 
-			render(<TestComponent />);
+			// サービスワーカーの登録を非同期で遅延させる
+			mockServiceWorker.register.mockImplementation(
+				() =>
+					new Promise((resolve) =>
+						setTimeout(() => resolve(mockRegistration), 10),
+					),
+			);
 
+			act(() => {
+				render(<TestComponent />);
+			});
+
+			// 非同期登録が完了する前の初期状態をテスト
 			expect(hookResult.isRegistered).toBe(false);
 			expect(hookResult.isUpdateAvailable).toBe(false);
 			expect(hookResult.isOffline).toBe(false);
@@ -254,14 +329,18 @@ describe("ServiceWorkerRegistration", () => {
 				return <div>Test</div>;
 			}
 
-			render(<TestComponent />);
+			await act(async () => {
+				render(<TestComponent />);
+			});
 
 			await waitFor(() => {
 				expect(hookResult.isRegistered).toBe(true);
 			});
 
 			// キャッシュクリアを実行
-			await hookResult.clearCache();
+			await act(async () => {
+				await hookResult.clearCache();
+			});
 
 			expect(mockPostMessage).toHaveBeenCalledWith(
 				{ type: "CACHE_CLEAR" },
@@ -281,7 +360,9 @@ describe("ServiceWorkerRegistration", () => {
 				return <div>Test</div>;
 			}
 
-			render(<TestComponent />);
+			await act(async () => {
+				render(<TestComponent />);
+			});
 
 			await waitFor(() => {
 				expect(hookResult.isRegistered).toBe(true);
@@ -308,7 +389,9 @@ describe("ServiceWorkerRegistration", () => {
 				"./ServiceWorkerRegistration"
 			);
 
-			const result = await requestNotificationPermission();
+			const result = await act(async () => {
+				return await requestNotificationPermission();
+			});
 
 			expect(result).toBe(true);
 			expect(mockNotification.requestPermission).toHaveBeenCalled();
@@ -321,7 +404,9 @@ describe("ServiceWorkerRegistration", () => {
 				"./ServiceWorkerRegistration"
 			);
 
-			const result = await requestNotificationPermission();
+			const result = await act(async () => {
+				return await requestNotificationPermission();
+			});
 
 			expect(result).toBe(false);
 		});
@@ -341,7 +426,11 @@ describe("ServiceWorkerRegistration", () => {
 				writable: true,
 			});
 
-			render(<ServiceWorkerRegistration />);
+			mockServiceWorker.register.mockResolvedValue(mockRegistration);
+
+			await act(async () => {
+				render(<ServiceWorkerRegistration />);
+			});
 
 			await waitFor(() => {
 				const offlineNotification = screen.getByText(/オフライン状態です/);
@@ -356,34 +445,46 @@ describe("ServiceWorkerRegistration", () => {
 			// アップデート通知を表示状態にする
 			const user = userEvent.setup();
 
+			mockServiceWorker.register.mockResolvedValue(mockRegistration);
+
 			// アップデート通知を含むコンポーネントをレンダリング
-			render(
-				<div>
-					<ServiceWorkerRegistration />
-					<div className="fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm">
-						<button type="button">更新</button>
-						<button type="button">後で</button>
-					</div>
-				</div>,
-			);
+			await act(async () => {
+				render(
+					<div>
+						<ServiceWorkerRegistration />
+						<div className="fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm">
+							<button type="button">更新</button>
+							<button type="button">後で</button>
+						</div>
+					</div>,
+				);
+			});
 
 			const updateButton = screen.getByText(/更新/);
 			const laterButton = screen.getByText(/後で/);
 
 			// タブキーでボタン間を移動
-			await user.tab();
+			await act(async () => {
+				await user.tab();
+			});
 			expect(updateButton).toHaveFocus();
 
-			await user.tab();
+			await act(async () => {
+				await user.tab();
+			});
 			expect(laterButton).toHaveFocus();
 		});
 	});
 
 	describe("パフォーマンス", () => {
-		it("コンポーネントが迅速にレンダリングされる", () => {
+		it("コンポーネントが迅速にレンダリングされる", async () => {
+			mockServiceWorker.register.mockResolvedValue(mockRegistration);
+
 			const startTime = performance.now();
 
-			render(<ServiceWorkerRegistration />);
+			await act(async () => {
+				render(<ServiceWorkerRegistration />);
+			});
 
 			const endTime = performance.now();
 			const renderTime = endTime - startTime;
@@ -392,11 +493,17 @@ describe("ServiceWorkerRegistration", () => {
 			expect(renderTime).toBeLessThan(100);
 		});
 
-		it("メモリリークが発生しない", () => {
-			const { unmount } = render(<ServiceWorkerRegistration />);
+		it("メモリリークが発生しない", async () => {
+			mockServiceWorker.register.mockResolvedValue(mockRegistration);
+
+			const { unmount } = await act(async () => {
+				return render(<ServiceWorkerRegistration />);
+			});
 
 			// コンポーネントをアンマウント
-			unmount();
+			act(() => {
+				unmount();
+			});
 
 			// イベントリスナーが適切に削除されることを確認
 			// 実際のテストでは、イベントリスナーの数を監視する必要がある

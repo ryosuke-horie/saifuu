@@ -44,23 +44,27 @@ if (typeof global !== "undefined" && !global.TextEncoder) {
 // ブラウザモードでビジュアルテストを実行する場合のみ有効
 // CI環境でも ENABLE_VISUAL_TESTS=true の場合は有効化
 const shouldEnableVisualTests =
-	(!process.env.CI || process.env.ENABLE_VISUAL_TESTS === "true") &&
+	process.env.ENABLE_VISUAL_TESTS === "true" &&
 	typeof window !== "undefined" &&
 	window.location;
 
 if (shouldEnableVisualTests) {
 	try {
 		// 動的インポートでブラウザモード専用モジュールを読み込み
-		import("@storybook/react").then(({ setProjectAnnotations }) => {
-			import("storybook-addon-vis/vitest-setup").then(
-				({ vis, visAnnotations }) => {
-					setProjectAnnotations([visAnnotations]);
-					vis.setup({
-						auto: true, // 自動スナップショット設定
-					});
-				},
-			);
-		});
+		import("@storybook/react")
+			.then(({ setProjectAnnotations }) => {
+				import("storybook-addon-vis/vitest-setup").then(
+					({ vis, visAnnotations }) => {
+						setProjectAnnotations([visAnnotations]);
+						vis.setup({
+							auto: true, // 自動スナップショット設定
+						});
+					},
+				);
+			})
+			.catch((error) => {
+				console.warn("Visual regression test setup failed:", error);
+			});
 	} catch (error) {
 		console.warn("Visual regression test setup skipped:", error);
 	}

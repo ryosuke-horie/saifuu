@@ -8,16 +8,6 @@ export default defineConfig({
 		// ビジュアルテスト用プラグイン
 		{
 			name: "storybook-addon-vis",
-			config: () => ({
-				test: {
-					browser: {
-						enabled: true,
-						provider: "playwright",
-						name: "chromium",
-						headless: true,
-					},
-				},
-			}),
 		},
 	],
 	resolve: {
@@ -27,7 +17,7 @@ export default defineConfig({
 	},
 	// Node.jsグローバルをブラウザ環境で利用可能にする
 	define: {
-		"process.env": "process.env",
+		"process.env": "import.meta.env",
 		global: "globalThis",
 	},
 	test: {
@@ -39,13 +29,19 @@ export default defineConfig({
 		browser: {
 			enabled: process.env.ENABLE_VISUAL_TESTS === "true",
 			provider: "playwright",
-			name: "chromium",
-			headless: true,
+			instances: [
+				{
+					browser: "chromium",
+				},
+			],
 		},
 		// ビジュアルテスト時は長め、通常テスト時は短めのタイムアウト
 		testTimeout: process.env.ENABLE_VISUAL_TESTS === "true" ? 30000 : 10000,
 		hookTimeout: process.env.ENABLE_VISUAL_TESTS === "true" ? 10000 : 5000,
-		include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+		include: [
+			"src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+			"src/**/*.visual.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+		],
 		exclude: ["tests/**", "node_modules/**", ".next/**"],
 		coverage: {
 			provider: "v8",
