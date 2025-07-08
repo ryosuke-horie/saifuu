@@ -8,7 +8,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
 	// テストディレクトリの設定
-	testDir: "./tests/e2e",
+	testDir: ".",
 
 	// 並列実行設定
 	fullyParallel: true,
@@ -57,7 +57,7 @@ export default defineConfig({
 	// ローカル環境専用: 既存サーバーを再利用して効率化
 	webServer: [
 		{
-			command: "NEXT_PUBLIC_API_URL=http://localhost:3003/api npm run dev:e2e",
+			command: "cd ../frontend && NEXT_PUBLIC_API_URL=http://localhost:3003/api npm run dev:e2e",
 			url: "http://localhost:3002",
 			reuseExistingServer: true,
 			timeout: 120 * 1000,
