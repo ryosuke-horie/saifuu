@@ -376,10 +376,9 @@ describe('Categories API - Integration Tests', () => {
 			expect(data.updatedAt).toBe(beforeCreate)
 
 			// 更新時のタイムスタンプ検証
-			const updateTime = new Date().toISOString()
+			const beforeUpdate = new Date()
 			const updateData = {
 				name: 'Updated Name',
-				updatedAt: updateTime,
 			}
 
 			response = await createTestRequest(
@@ -389,11 +388,16 @@ describe('Categories API - Integration Tests', () => {
 				updateData
 			)
 			expect(response.status).toBe(200)
+			const afterUpdate = new Date()
 
 			data = await getResponseJson(response)
 			expect(data.name).toBe(updateData.name)
 			expect(data.createdAt).toBe(beforeCreate) // 作成日は変わらない
-			expect(data.updatedAt).toBe(updateTime) // 更新日は変わる
+			
+			// 更新日時が更新前後の時間範囲内にあることを確認（CI環境での時刻ズレ対応）
+			const updatedAtTime = new Date(data.updatedAt)
+			expect(updatedAtTime.getTime()).toBeGreaterThanOrEqual(beforeUpdate.getTime())
+			expect(updatedAtTime.getTime()).toBeLessThanOrEqual(afterUpdate.getTime())
 		})
 	})
 
