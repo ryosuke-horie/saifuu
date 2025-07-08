@@ -1,373 +1,294 @@
 /**
+ * フロントエンドロガー 型定義
+ *
+ * ブラウザ環境に特化したロガーシステムの型定義
+ * APIロガーとの一貫性を保ちつつ、フロントエンド固有の要件に対応
+ */
+
+/**
  * ログレベルの定義
  * debug: 詳細なデバッグ情報（開発環境のみ）
  * info: 正常な操作の記録
  * warn: 回復可能なエラー・警告
  * error: システムエラー・失敗
  */
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+export type LogLevel = "debug" | "info" | "warn" | "error";
 
 /**
- * フロントエンド環境の定義
+ * 実行環境の定義
  * development: 開発環境
  * production: 本番環境
  * storybook: Storybook環境
  */
-export type FrontendEnvironment = 'development' | 'production' | 'storybook'
+export type Environment = "development" | "production" | "storybook";
 
 /**
- * ブラウザ固有のイベントタイプ
- * フロントエンドで発生する主要なイベントを定義
- */
-export type BrowserEventType = 
-  | 'pageview'           // ページビュー
-  | 'click'              // クリック操作
-  | 'form_submit'        // フォーム送信
-  | 'navigation'         // ナビゲーション
-  | 'error'              // エラー発生
-  | 'performance'        // パフォーマンス関連
-  | 'visibility_change'  // ページ表示状態変更
-  | 'beforeunload'       // ページ離脱前
-  | 'network_change'     // ネットワーク状態変更
-  | 'storage_change'     // ストレージ変更
-  | 'component_mount'    // コンポーネントマウント
-  | 'component_unmount'  // コンポーネントアンマウント
-  | 'api_call'           // API呼び出し
-  | 'user_interaction'   // ユーザーインタラクション
-
-/**
- * フロントエンド用ログメタデータの型定義
- * ブラウザ環境特有の情報を含む追加メタデータ
+ * フロントエンド固有のログメタデータ
+ * ブラウザ環境とユーザー操作に特化した追加情報を格納
  */
 export interface FrontendLogMeta {
-  // API logger との互換性を保つ基本フィールド
-  requestId?: string
-  userId?: string
-  operationType?: 'read' | 'write' | 'delete'
-  duration?: number
-  path?: string
-  method?: string
-  statusCode?: number
-  data?: Record<string, unknown>
-  error?: string
-  stack?: string
+	// 基本識別情報
+	requestId?: string;
+	userId?: string;
+	sessionId?: string;
 
-  // フロントエンド固有のメタデータ
-  component?: string              // コンポーネント名
-  action?: string                 // 実行されたアクション
-  pageUrl?: string                // 現在のページURL
-  referrer?: string               // リファラー
-  userAgent?: string              // ユーザーエージェント
-  sessionId?: string              // セッションID
-  eventType?: BrowserEventType    // イベントタイプ
-  
-  // パフォーマンス関連
-  loadTime?: number               // ページロード時間
-  renderTime?: number             // レンダリング時間
-  memoryUsage?: number            // メモリ使用量
-  
-  // ユーザー操作関連
-  elementId?: string              // 操作対象要素ID
-  elementText?: string            // 操作対象要素テキスト
-  clickPosition?: { x: number; y: number }  // クリック位置
-  
-  // ネットワーク関連
-  networkType?: string            // ネットワークタイプ
-  isOnline?: boolean              // オンライン状態
-  
-  // ページ状態関連
-  isVisible?: boolean             // ページ表示状態
-  scrollPosition?: number         // スクロール位置
-  viewportSize?: { width: number; height: number }  // ビューポートサイズ
-  
-  // Storybook固有
-  storyId?: string                // ストーリーID
-  storyName?: string              // ストーリー名
-  
-  // 拡張可能な追加フィールド
-  [key: string]: unknown
+	// フロントエンド固有情報
+	component?: string;
+	action?: string;
+	url?: string;
+	userAgent?: string;
+
+	// パフォーマンス関連
+	duration?: number;
+	loadTime?: number;
+	renderTime?: number;
+	memoryUsage?: number;
+
+	// ユーザー操作情報
+	elementId?: string;
+	clickPosition?: { x: number; y: number };
+	scrollPosition?: { x: number; y: number };
+	keyboardInput?: string;
+
+	// 画面・ネットワーク状態
+	viewport?: { width: number; height: number };
+	networkType?: string;
+	isOnline?: boolean;
+	isVisible?: boolean;
+
+	// エラー情報
+	error?: string;
+	stack?: string;
+	errorBoundary?: string;
+
+	// Storybook固有情報
+	storyId?: string;
+	storyName?: string;
+
+	// 拡張可能な追加データ
+	data?: Record<string, unknown>;
+	[key: string]: unknown;
 }
 
 /**
- * フロントエンド用ログエントリの構造定義
- * 全てのフロントエンドログが従う統一フォーマット
+ * フロントエンドログエントリの構造定義
+ * 全てのログが従う統一フォーマット
  */
 export interface FrontendLogEntry {
-  timestamp: string
-  level: LogLevel
-  message: string
-  requestId: string
-  environment: FrontendEnvironment
-  service: 'saifuu-frontend'
-  version: string
-  meta: FrontendLogMeta
-  
-  // フロントエンド固有の追加フィールド
-  url: string                     // 現在のページURL
-  sessionId: string               // セッションID
-  userId?: string                 // ユーザーID（ログイン時のみ）
-  deviceInfo?: {
-    platform: string
-    screenSize: { width: number; height: number }
-    colorDepth: number
-    pixelRatio: number
-  }
+	timestamp: string;
+	level: LogLevel;
+	message: string;
+	requestId: string;
+	sessionId: string;
+	environment: Environment;
+	service: "saifuu-frontend";
+	version: string;
+	url: string;
+	deviceInfo: {
+		userAgent: string;
+		viewport: { width: number; height: number };
+		language: string;
+		timezone: string;
+	};
+	meta: FrontendLogMeta;
 }
 
 /**
- * ブラウザ固有のロガー設定
- * 基本のLoggerConfigを拡張してブラウザ環境に対応
+ * ブラウザロガー設定の型定義
  */
 export interface BrowserLoggerConfig {
-  environment: FrontendEnvironment
-  level: LogLevel
-  bufferSize: number
-  flushInterval: number
-  version: string
-  
-  // ブラウザ固有の設定
-  maxRetries: number              // リトライ回数
-  retryDelay: number              // リトライ間隔
-  enablePerformanceTracking: boolean  // パフォーマンス追跡有効化
-  enableUserTracking: boolean     // ユーザー追跡有効化
-  enableNetworkTracking: boolean  // ネットワーク追跡有効化
-  enableErrorBoundary: boolean    // エラーバウンダリ有効化
-  enableNavigationTracking: boolean // ナビゲーション追跡有効化
-  enableVisibilityTracking: boolean // ページ表示状態追跡有効化
-  enableStorageTracking: boolean  // ストレージ変更追跡有効化
-  
-  // ローカルストレージ設定
-  enableLocalStorage: boolean     // ローカルストレージ使用可否
-  localStorageKey: string         // ローカルストレージキー
-  maxLocalStorageSize: number     // ローカルストレージ最大サイズ
-  
-  // 送信設定
-  endpoint?: string               // ログ送信先エンドポイント
-  headers?: Record<string, string>  // 送信時のヘッダー
-  enableBeaconAPI: boolean        // Beacon API使用可否
-  
-  // デバッグ設定
-  enableConsoleOutput: boolean    // コンソール出力有効化
-  enableDebugMode: boolean        // デバッグモード有効化
-  
-  // パフォーマンス設定
-  throttleInterval: number        // スロットリング間隔
-  maxLogSize: number              // 最大ログサイズ
-  
-  // セッション設定
-  sessionTimeout: number          // セッションタイムアウト
-  enableSessionPersistence: boolean // セッション永続化有効化
+	// 基本設定
+	environment: Environment;
+	level: LogLevel;
+	version: string;
+
+	// バッファリング設定
+	bufferSize: number;
+	flushInterval: number;
+	maxRetries: number;
+
+	// 出力設定
+	enableConsole: boolean;
+	enableLocalStorage: boolean;
+	enableBeacon: boolean;
+
+	// API設定
+	apiEndpoint?: string;
+	apiTimeout: number;
+
+	// トラッキング設定
+	enablePerformanceTracking: boolean;
+	enableUserTracking: boolean;
+	enableNetworkTracking: boolean;
+	enableErrorTracking: boolean;
+
+	// セッション設定
+	sessionTimeout: number;
+	persistSession: boolean;
+
+	// フィルタリング設定
+	excludePatterns?: string[];
+	includeOnlyPatterns?: string[];
+
+	// プライバシー設定
+	sensitiveFields?: string[];
+	maskSensitiveData: boolean;
 }
 
 /**
- * フロントエンド用ロガーインターフェース
+ * フロントエンドロガーインターフェース
  * 全てのフロントエンドロガー実装が従う共通インターフェース
  */
 export interface FrontendLogger {
-  // 基本ログメソッド
-  debug(message: string, meta?: FrontendLogMeta): void
-  info(message: string, meta?: FrontendLogMeta): void
-  warn(message: string, meta?: FrontendLogMeta): void
-  error(message: string, meta?: FrontendLogMeta): void
-  
-  // フロントエンド固有メソッド
-  track(eventType: BrowserEventType, message: string, meta?: FrontendLogMeta): void
-  pageview(url: string, meta?: FrontendLogMeta): void
-  userInteraction(element: string, action: string, meta?: FrontendLogMeta): void
-  apiCall(url: string, method: string, duration: number, statusCode: number, meta?: FrontendLogMeta): void
-  performance(metric: string, value: number, meta?: FrontendLogMeta): void
-  
-  // セッション管理
-  startSession(userId?: string): void
-  endSession(): void
-  setUserId(userId: string): void
-  clearUserId(): void
-  
-  // バッファ管理
-  flush(): Promise<void>
-  clear(): void
-  
-  // 設定管理
-  setLevel(level: LogLevel): void
-  getLevel(): LogLevel
-  isEnabled(level: LogLevel): boolean
-  
-  // ユーティリティ
-  getSessionId(): string
-  getDeviceInfo(): FrontendLogEntry['deviceInfo']
-  
-  // リスナー管理
-  addEventListeners(): void
-  removeEventListeners(): void
-  
-  // 破棄
-  destroy(): void
+	// 基本ログメソッド
+	debug(message: string, meta?: FrontendLogMeta): void;
+	info(message: string, meta?: FrontendLogMeta): void;
+	warn(message: string, meta?: FrontendLogMeta): void;
+	error(message: string, meta?: FrontendLogMeta): void;
+
+	// フロントエンド固有メソッド
+	track(event: string, properties?: FrontendLogMeta): void;
+	pageView(path: string, meta?: FrontendLogMeta): void;
+	userInteraction(
+		action: string,
+		element?: string,
+		meta?: FrontendLogMeta,
+	): void;
+	apiCall(endpoint: string, method: string, meta?: FrontendLogMeta): void;
+	performance(metric: string, value: number, meta?: FrontendLogMeta): void;
+
+	// セッション管理
+	startSession(): string;
+	endSession(): void;
+	setUserId(userId: string): void;
+	setComponent(componentName: string): void;
+
+	// バッファ管理
+	flush(): Promise<void>;
+	clear(): void;
+	getBufferSize(): number;
+
+	// 設定管理
+	setLevel(level: LogLevel): void;
+	getConfig(): BrowserLoggerConfig;
+	updateConfig(config: Partial<BrowserLoggerConfig>): void;
+
+	// イベントリスナー管理
+	addEventListeners(): void;
+	removeEventListeners(): void;
+
+	// クリーンアップ
+	destroy(): void;
 }
 
 /**
- * ログバッファエントリ
- * メモリ内でログを一時保存するためのエントリ
+ * ログバッファのエントリ型
  */
-export interface LogBufferEntry {
-  entry: FrontendLogEntry
-  timestamp: number
-  retryCount: number
+export interface BufferedLogEntry {
+	entry: FrontendLogEntry;
+	attempts: number;
+	lastAttempt: number;
 }
 
 /**
- * エラーバウンダリ用エラー情報
+ * セッション情報の型定義
  */
-export interface ErrorBoundaryError {
-  error: Error
-  errorInfo: {
-    componentStack: string
-  }
-  meta?: FrontendLogMeta
+export interface SessionInfo {
+	id: string;
+	startTime: number;
+	lastActivity: number;
+	userId?: string;
+	pageViews: number;
+	events: number;
+	errors: number;
 }
 
 /**
- * パフォーマンス測定結果
+ * パフォーマンスメトリクスの型定義
  */
-export interface PerformanceMetric {
-  name: string
-  value: number
-  unit: 'ms' | 'bytes' | 'count'
-  timestamp: number
-  meta?: FrontendLogMeta
+export interface PerformanceMetrics {
+	navigationTiming?: PerformanceNavigationTiming;
+	resourceTiming?: PerformanceResourceTiming[];
+	paintTiming?: PerformancePaintTiming[];
+	memoryInfo?: {
+		usedJSHeapSize: number;
+		totalJSHeapSize: number;
+		jsHeapSizeLimit: number;
+	};
 }
 
 /**
- * ネットワーク状態情報
+ * エラー情報の型定義
  */
-export interface NetworkStatus {
-  isOnline: boolean
-  effectiveType?: string
-  downlink?: number
-  rtt?: number
-  saveData?: boolean
+export interface ErrorInfo {
+	name: string;
+	message: string;
+	stack?: string;
+	fileName?: string;
+	lineNumber?: number;
+	columnNumber?: number;
+	componentStack?: string;
 }
 
 /**
- * ページ表示状態
+ * ネットワーク情報の型定義
  */
-export interface VisibilityState {
-  isVisible: boolean
-  hiddenTime?: number
-  visibleTime?: number
+export interface NetworkInfo {
+	type?: string;
+	effectiveType?: string;
+	downlink?: number;
+	rtt?: number;
+	isOnline: boolean;
 }
 
 /**
- * ストレージ変更情報
+ * デバイス情報の型定義
  */
-export interface StorageChange {
-  key: string
-  oldValue: string | null
-  newValue: string | null
-  storageArea: 'localStorage' | 'sessionStorage'
+export interface DeviceInfo {
+	userAgent: string;
+	platform: string;
+	language: string;
+	languages: readonly string[];
+	timezone: string;
+	viewport: { width: number; height: number };
+	screen: { width: number; height: number };
+	pixelRatio: number;
+	touchSupport: boolean;
+	cookieEnabled: boolean;
 }
 
 /**
- * ユーザーインタラクション情報
+ * ログ送信結果の型定義
  */
-export interface UserInteraction {
-  type: 'click' | 'scroll' | 'keyboard' | 'touch'
-  target: string
-  timestamp: number
-  details?: Record<string, unknown>
+export interface LogSendResult {
+	success: boolean;
+	statusCode?: number;
+	error?: string;
+	sentCount: number;
+	failedCount: number;
+	retryAfter?: number;
 }
 
 /**
- * 環境別設定の型定義
+ * 環境固有設定のオーバーライド型
  */
 export interface EnvironmentConfig {
-  development: Partial<BrowserLoggerConfig>
-  production: Partial<BrowserLoggerConfig>
-  storybook: Partial<BrowserLoggerConfig>
+	development?: Partial<BrowserLoggerConfig>;
+	production?: Partial<BrowserLoggerConfig>;
+	storybook?: Partial<BrowserLoggerConfig>;
 }
 
 /**
- * デフォルト設定
+ * ログフィルターの関数型
  */
-export const DEFAULT_CONFIG: BrowserLoggerConfig = {
-  environment: 'development',
-  level: 'debug',
-  bufferSize: 10,
-  flushInterval: 1000,
-  version: '1.0.0',
-  maxRetries: 3,
-  retryDelay: 1000,
-  enablePerformanceTracking: true,
-  enableUserTracking: true,
-  enableNetworkTracking: true,
-  enableErrorBoundary: true,
-  enableNavigationTracking: true,
-  enableVisibilityTracking: true,
-  enableStorageTracking: false,
-  enableLocalStorage: true,
-  localStorageKey: 'saifuu-logs',
-  maxLocalStorageSize: 1024 * 1024, // 1MB
-  enableBeaconAPI: true,
-  enableConsoleOutput: true,
-  enableDebugMode: false,
-  throttleInterval: 100,
-  maxLogSize: 10 * 1024, // 10KB
-  sessionTimeout: 30 * 60 * 1000, // 30分
-  enableSessionPersistence: true,
-}
+export type LogFilter = (entry: FrontendLogEntry) => boolean;
 
 /**
- * 環境別のデフォルト設定
+ * ログ変換器の関数型
  */
-export const ENVIRONMENT_CONFIGS: EnvironmentConfig = {
-  development: {
-    level: 'debug',
-    bufferSize: 10,
-    flushInterval: 1000,
-    enableConsoleOutput: true,
-    enableDebugMode: true,
-    enablePerformanceTracking: true,
-    enableUserTracking: false,
-    enableNetworkTracking: true,
-    enableErrorBoundary: true,
-    enableNavigationTracking: true,
-    enableVisibilityTracking: true,
-    enableStorageTracking: false,
-    enableLocalStorage: true,
-    maxRetries: 1,
-    retryDelay: 500,
-  },
-  production: {
-    level: 'info',
-    bufferSize: 50,
-    flushInterval: 5000,
-    enableConsoleOutput: false,
-    enableDebugMode: false,
-    enablePerformanceTracking: true,
-    enableUserTracking: true,
-    enableNetworkTracking: true,
-    enableErrorBoundary: true,
-    enableNavigationTracking: true,
-    enableVisibilityTracking: true,
-    enableStorageTracking: true,
-    enableLocalStorage: true,
-    maxRetries: 3,
-    retryDelay: 1000,
-  },
-  storybook: {
-    level: 'debug',
-    bufferSize: 5,
-    flushInterval: 500,
-    enableConsoleOutput: true,
-    enableDebugMode: true,
-    enablePerformanceTracking: false,
-    enableUserTracking: false,
-    enableNetworkTracking: false,
-    enableErrorBoundary: false,
-    enableNavigationTracking: false,
-    enableVisibilityTracking: false,
-    enableStorageTracking: false,
-    enableLocalStorage: false,
-    maxRetries: 0,
-    retryDelay: 0,
-  },
-}
+export type LogTransformer = (entry: FrontendLogEntry) => FrontendLogEntry;
+
+/**
+ * ログ送信器の関数型
+ */
+export type LogSender = (entries: FrontendLogEntry[]) => Promise<LogSendResult>;
