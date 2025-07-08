@@ -452,7 +452,7 @@ export class BrowserLogger implements FrontendLogger {
 	}
 
 	private collectDeviceInfo(): DeviceInfo {
-		if (typeof window === "undefined") {
+		if (typeof window === "undefined" || typeof navigator === "undefined") {
 			return {
 				userAgent: "",
 				platform: "",

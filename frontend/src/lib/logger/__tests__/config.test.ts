@@ -86,6 +86,24 @@ describe("Config System", () => {
 		});
 
 		it("should fallback to production for unknown environments", () => {
+			// @ts-ignore
+			global.window = {
+				location: {
+					hostname: "example.com",
+					href: "https://example.com",
+					pathname: "/",
+					protocol: "https:",
+					port: "",
+					hash: "",
+					search: "",
+					host: "example.com",
+					origin: "https://example.com",
+					ancestorOrigins: {} as DOMStringList,
+					assign: vi.fn(),
+					reload: vi.fn(),
+					replace: vi.fn(),
+				} as Location,
+			};
 			expect(detectEnvironment({})).toBe("production");
 		});
 	});
@@ -413,9 +431,10 @@ describe("Config System", () => {
 		});
 
 		it("should correctly identify production environment", () => {
-			vi.spyOn({ detectEnvironment }, "detectEnvironment").mockReturnValue(
-				"production",
-			);
+			// @ts-ignore
+			global.window = undefined;
+			// @ts-ignore
+			global.process = { env: { NODE_ENV: "production" } };
 
 			expect(isDevelopment()).toBe(false);
 			expect(isProduction()).toBe(true);
@@ -423,9 +442,10 @@ describe("Config System", () => {
 		});
 
 		it("should correctly identify storybook environment", () => {
-			vi.spyOn({ detectEnvironment }, "detectEnvironment").mockReturnValue(
-				"storybook",
-			);
+			// @ts-ignore
+			global.window = { __STORYBOOK_ADDONS: {} };
+			// @ts-ignore
+			global.process = undefined;
 
 			expect(isDevelopment()).toBe(false);
 			expect(isProduction()).toBe(false);
@@ -476,6 +496,24 @@ describe("Config System", () => {
 
 	describe("Edge Cases", () => {
 		it("should handle empty environment variables", () => {
+			// @ts-ignore
+			global.window = {
+				location: {
+					hostname: "example.com",
+					href: "https://example.com",
+					pathname: "/",
+					protocol: "https:",
+					port: "",
+					hash: "",
+					search: "",
+					host: "example.com",
+					origin: "https://example.com",
+					ancestorOrigins: {} as DOMStringList,
+					assign: vi.fn(),
+					reload: vi.fn(),
+					replace: vi.fn(),
+				} as Location,
+			};
 			const config = createLoggerConfig({});
 			expect(config).toBeDefined();
 			expect(config.environment).toBe("production"); // フォールバック

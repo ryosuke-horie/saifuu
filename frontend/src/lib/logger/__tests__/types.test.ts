@@ -337,7 +337,7 @@ describe("Interface Compliance", () => {
 				"destroy",
 			];
 
-			expect(methodNames).toHaveLength(23);
+			expect(methodNames).toHaveLength(22);
 			expect(methodNames).toContain("debug");
 			expect(methodNames).toContain("track");
 			expect(methodNames).toContain("flush");

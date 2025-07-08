@@ -102,12 +102,12 @@ const defaultConfigs: Record<Environment, BrowserLoggerConfig> = {
  * @param env 環境変数オブジェクト
  * @returns 判定された環境
  */
-export const detectEnvironment = (
-	env: EnvironmentVariables = {},
-): Environment => {
+export const detectEnvironment = (env?: EnvironmentVariables): Environment => {
+	const envVars = env || {};
+
 	// Storybook環境の検出
 	if (
-		env.STORYBOOK === "true" ||
+		envVars.STORYBOOK === "true" ||
 		(typeof window !== "undefined" && (window as any).__STORYBOOK_ADDONS)
 	) {
 		return "storybook";
@@ -115,8 +115,10 @@ export const detectEnvironment = (
 
 	// Next.js環境の検出
 	const nodeEnv =
-		env.NODE_ENV ||
-		(typeof process !== "undefined" ? process.env?.NODE_ENV : undefined);
+		envVars.NODE_ENV ||
+		(env === undefined && typeof process !== "undefined"
+			? process.env?.NODE_ENV
+			: undefined);
 
 	if (nodeEnv === "development") {
 		return "development";
@@ -148,47 +150,49 @@ export const detectEnvironment = (
  * @returns ロガー設定
  */
 export const createLoggerConfig = (
-	env: EnvironmentVariables = {},
+	env?: EnvironmentVariables,
 ): BrowserLoggerConfig => {
+	const envVars = env || {};
 	const environment = detectEnvironment(env);
 	const baseConfig = { ...defaultConfigs[environment] };
 
 	// 環境変数でのオーバーライド（NEXT_PUBLIC_プレフィックス付きのみ）
-	if (env.NEXT_PUBLIC_LOG_LEVEL) {
-		baseConfig.level = env.NEXT_PUBLIC_LOG_LEVEL as LogLevel;
+	if (envVars.NEXT_PUBLIC_LOG_LEVEL) {
+		baseConfig.level = envVars.NEXT_PUBLIC_LOG_LEVEL as LogLevel;
 	}
 
-	if (env.NEXT_PUBLIC_LOG_BUFFER_SIZE) {
-		const bufferSize = Number(env.NEXT_PUBLIC_LOG_BUFFER_SIZE);
+	if (envVars.NEXT_PUBLIC_LOG_BUFFER_SIZE) {
+		const bufferSize = Number(envVars.NEXT_PUBLIC_LOG_BUFFER_SIZE);
 		if (!Number.isNaN(bufferSize) && bufferSize > 0) {
 			baseConfig.bufferSize = bufferSize;
 		}
 	}
 
-	if (env.NEXT_PUBLIC_LOG_FLUSH_INTERVAL) {
-		const flushInterval = Number(env.NEXT_PUBLIC_LOG_FLUSH_INTERVAL);
+	if (envVars.NEXT_PUBLIC_LOG_FLUSH_INTERVAL) {
+		const flushInterval = Number(envVars.NEXT_PUBLIC_LOG_FLUSH_INTERVAL);
 		if (!Number.isNaN(flushInterval) && flushInterval > 0) {
 			baseConfig.flushInterval = flushInterval;
 		}
 	}
 
-	if (env.NEXT_PUBLIC_LOG_API_ENDPOINT) {
-		baseConfig.apiEndpoint = env.NEXT_PUBLIC_LOG_API_ENDPOINT;
+	if (envVars.NEXT_PUBLIC_LOG_API_ENDPOINT) {
+		baseConfig.apiEndpoint = envVars.NEXT_PUBLIC_LOG_API_ENDPOINT;
 	}
 
-	if (env.NEXT_PUBLIC_LOG_API_TIMEOUT) {
-		const apiTimeout = Number(env.NEXT_PUBLIC_LOG_API_TIMEOUT);
+	if (envVars.NEXT_PUBLIC_LOG_API_TIMEOUT) {
+		const apiTimeout = Number(envVars.NEXT_PUBLIC_LOG_API_TIMEOUT);
 		if (!Number.isNaN(apiTimeout) && apiTimeout > 0) {
 			baseConfig.apiTimeout = apiTimeout;
 		}
 	}
 
-	if (env.NEXT_PUBLIC_LOG_ENABLE_CONSOLE) {
-		baseConfig.enableConsole = env.NEXT_PUBLIC_LOG_ENABLE_CONSOLE === "true";
+	if (envVars.NEXT_PUBLIC_LOG_ENABLE_CONSOLE) {
+		baseConfig.enableConsole =
+			envVars.NEXT_PUBLIC_LOG_ENABLE_CONSOLE === "true";
 	}
 
-	if (env.NEXT_PUBLIC_VERSION) {
-		baseConfig.version = env.NEXT_PUBLIC_VERSION;
+	if (envVars.NEXT_PUBLIC_VERSION) {
+		baseConfig.version = envVars.NEXT_PUBLIC_VERSION;
 	}
 
 	return baseConfig;
