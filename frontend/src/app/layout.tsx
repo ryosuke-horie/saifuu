@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout";
-import { ServiceWorkerRegistration } from "@/components/pwa";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -50,11 +49,6 @@ export const metadata: Metadata = {
 		userScalable: false,
 	},
 
-	// PWA設定
-	themeColor: [
-		{ media: "(prefers-color-scheme: light)", color: "#ffffff" },
-		{ media: "(prefers-color-scheme: dark)", color: "#000000" },
-	],
 	colorScheme: "light dark",
 
 	// アイコン設定
@@ -63,26 +57,8 @@ export const metadata: Metadata = {
 			{ url: "/favicon.ico", sizes: "any" },
 			{ url: "/favicon.svg", type: "image/svg+xml" },
 		],
-		apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
 		shortcut: ["/favicon.ico"],
 	},
-
-	// Apple PWA設定
-	appleWebApp: {
-		capable: true,
-		title: "Saifuu",
-		statusBarStyle: "default",
-		startupImage: [
-			{
-				url: "/apple-startup-image.png",
-				media:
-					"(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)",
-			},
-		],
-	},
-
-	// マニフェスト
-	manifest: "/manifest.json",
 
 	// Open Graph設定（プライバシー重視）
 	openGraph: {
@@ -114,10 +90,6 @@ export const metadata: Metadata = {
 	// その他のメタタグ
 	other: {
 		"msapplication-TileColor": "#2563eb",
-		"msapplication-config": "/browserconfig.xml",
-		"mobile-web-app-capable": "yes",
-		"apple-mobile-web-app-capable": "yes",
-		"apple-mobile-web-app-status-bar-style": "default",
 		"format-detection": "telephone=no",
 		referrer: "strict-origin-when-cross-origin",
 		"color-scheme": "light dark",
@@ -136,7 +108,6 @@ export default function RootLayout({
 			>
 				<Header />
 				{children}
-				<ServiceWorkerRegistration />
 			</body>
 		</html>
 	);

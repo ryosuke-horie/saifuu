@@ -46,13 +46,6 @@ convert "$ICON_SOURCE" -resize 48x48 icon-48x48.png
 convert "$ICON_SOURCE" -resize 192x192 icon-192x192.png
 convert "$ICON_SOURCE" -resize 512x512 icon-512x512.png
 
-# Generate Apple Touch Icon
-echo "🍎 Generating Apple Touch Icon..."
-convert "$ICON_SOURCE" -resize 180x180 apple-touch-icon.png
-
-# Generate Apple Startup Image (basic version)
-echo "🍎 Generating Apple Startup Image..."
-convert "$ICON_SOURCE" -resize 320x568 -gravity center -background white -extent 320x568 apple-startup-image.png
 
 # Generate Microsoft Tiles
 echo "🪟 Generating Microsoft Tiles..."
@@ -61,11 +54,6 @@ convert "$ICON_SOURCE" -resize 150x150 mstile-150x150.png
 convert "$ICON_SOURCE" -resize 310x150 -gravity center -background "$PRIMARY_COLOR" -extent 310x150 mstile-310x150.png
 convert "$ICON_SOURCE" -resize 310x310 mstile-310x310.png
 
-# Generate basic maskable icons (these need manual adjustment for safe zone)
-echo "🎭 Generating basic maskable icons..."
-echo "⚠️  Note: Maskable icons need manual adjustment for 20% safe zone"
-convert "$ICON_SOURCE" -resize 192x192 -gravity center -background "$PRIMARY_COLOR" -extent 192x192 icon-maskable-192x192.png
-convert "$ICON_SOURCE" -resize 512x512 -gravity center -background "$PRIMARY_COLOR" -extent 512x512 icon-maskable-512x512.png
 
 # Generate Open Graph image
 echo "📱 Generating Open Graph image..."

@@ -20,17 +20,11 @@ declare -a REQUIRED_FILES=(
     "icon-48x48.png"
     "icon-192x192.png"
     "icon-512x512.png"
-    "apple-touch-icon.png"
-    "apple-startup-image.png"
     "mstile-70x70.png"
     "mstile-150x150.png"
     "mstile-310x150.png"
     "mstile-310x310.png"
-    "icon-maskable-192x192.png"
-    "icon-maskable-512x512.png"
     "og-image.png"
-    "manifest.json"
-    "browserconfig.xml"
     "robots.txt"
     "sitemap.xml"
 )
@@ -72,7 +66,7 @@ else
     echo ""
     echo "🔍 Next steps:"
     echo "  1. Test favicons at https://realfavicongenerator.net/favicon_checker"
-    echo "  2. Test PWA functionality on mobile devices"
+    echo "  2. Test favicon display on mobile devices"
     echo "  3. Verify icons display correctly in browsers"
 fi
 
