@@ -1,0 +1,179 @@
+name: Documentation Maintenance
+
+on:
+  push:
+    branches:
+      - main
+  # 手動実行も可能にする
+  workflow_dispatch:
+
+# 同時実行を防ぐ
+concurrency:
+  group: docs-maintenance
+  cancel-in-progress: false
+
+jobs:
+  docs-maintenance:
+    name: Docs Directory Maintenance
+    runs-on: self-hosted
+    timeout-minutes: 30
+    
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          
+      - name: Install dependencies
+        run: |
+          npm ci
+          
+      - name: Setup Git config
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+      - name: Run Claude Code Documentation Maintenance
+        id: claude-docs
+        uses: anthropics/claude-code-action@beta
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          
+          # Sonnet4を使用
+          model: "claude-sonnet-4-20250514"
+          
+          # ドキュメントメンテナンス用の指示
+          direct_prompt: |
+            【ULTRA-CONCISE MODE】
+            - Keep outputs concise to maximize context budget utilization
+            - Avoid unnecessary explanations and verbose expressions
+            - Output only essential information required
+            - Show only necessary parts of file contents
+            - Focus on implementation over detailed explanations for efficient development
+            
+            docsディレクトリのメンテナンスを日本語で実行してください。以下の手順で進めてください：
+            
+            ## 1. 現在のdocsディレクトリ調査
+            - docs/以下の全ファイルとディレクトリ構造を調査
+            - 既存ドキュメントの内容と目的を把握
+            - カテゴリ別の整理状況を確認
+            
+            ## 2. ディレクトリ構成の最適化
+            - 既存ファイルを適切なカテゴリに分類
+            - 必要に応じて新しいディレクトリを日本語名で作成
+            - 論理的で分かりやすい構造に整理
+            
+            推奨ディレクトリ構成：
+            ```
+            docs/
+            ├── README.md (ディレクトリ全体の案内)
+            ├── 開発環境/
+            │   ├── セットアップガイド.md
+            │   ├── 環境変数設定ガイド.md
+            │   └── トラブルシューティング.md
+            ├── 技術仕様/
+            │   ├── アーキテクチャ概要.md
+            │   ├── 技術スタック.md
+            │   └── データベース設計.md
+            ├── API開発/
+            │   └── (既存ファイル整理)
+            ├── フロントエンド/
+            │   ├── コンポーネント設計.md
+            │   ├── Storybook使用ガイド.md
+            │   └── UI実装ガイド.md
+            ├── テスト/
+            │   ├── テストガイド.md
+            │   ├── ユニットテスト.md
+            │   ├── 統合テスト.md
+            │   └── ビジュアルリグレッションテスト/
+            ├── デプロイ/
+            │   ├── Cloudflare Workers設定.md
+            │   ├── CI-CD設定.md
+            │   └── 本番環境デプロイ.md
+            ├── 機能仕様/
+            │   ├── 支出管理機能.md
+            │   ├── 収入管理機能.md
+            │   └── サブスクリプション管理.md
+            └── 運用/
+                ├── ログ管理.md
+                ├── モニタリング.md
+                └── バックアップ.md
+            ```
+            
+            ## 3. docsディレクトリのREADME作成・更新
+            - docs/README.mdを作成または更新
+            - 全体の構成とナビゲーションを明示
+            - 各ドキュメントの目的と対象読者を説明
+            - 目次として機能するリンク付きインデックス
+            
+            ## 4. 不足ドキュメントの特定と作成
+            - プロジェクトに必要だが存在しないドキュメントを特定
+            - 以下の観点で不足項目をチェック：
+              - 新規開発者のオンボーディング
+              - 技術仕様の理解
+              - 開発・テスト・デプロイプロセス
+              - トラブルシューティング
+              - ベストプラクティス
+            
+            ## 5. 既存ドキュメントの改善
+            - 古い情報や不正確な情報を修正
+            - 最新の技術スタックに合わせて更新
+            - 読みやすさとアクセシビリティを向上
+            - 相互リンクを追加してナビゲーションを改善
+            
+            ## 6. プルリクエスト作成
+            - 新しいブランチ `docs/maintenance-$(date +%Y%m%d-%H%M%S)` を作成
+            - 変更内容をコミット（日本語コミットメッセージ）
+            - 以下の内容でプルリクエストを作成：
+              - タイトル: "docs: ドキュメント構成の整理とメンテナンス"
+              - 本文に変更概要、追加・更新・移動したファイルの説明
+              - ディレクトリ構成の変更点を明示
+            
+            ## 必須ルール
+            - すべてのファイル名・ディレクトリ名は日本語で作成
+            - すべてのドキュメントはMarkdown形式(.md)
+            - 内容は日本語で記述
+            - 既存ファイルを削除する場合は慎重に判断
+            - リンク切れが発生しないよう注意
+            
+            ## プロジェクト情報
+            技術スタック：
+            - Next.js v15 + React 19 + TypeScript
+            - Tailwind CSS v4 + Cloudflare Workers + D1
+            - Vitest + Playwright + Storybook + MSW
+            - Biome (リント・フォーマット)
+            
+            アプリケーション機能：
+            - 支出・収入管理
+            - サブスクリプション管理
+            - データ分析・レポート
+            
+            それでは、docsディレクトリのメンテナンスを開始してください。
+          
+          # 許可するツールを指定
+          allowed_tools: "Bash(npm *),Bash(git *),Bash(find *),Bash(ls *),Bash(cat *),Bash(grep *),Bash(rg *),Bash(mkdir *),Bash(mv *),Bash(cp *)"
+          
+          # カスタムインストラクション
+          custom_instructions: |
+            このプロジェクトのドキュメント作成ルールに従ってください。
+            すべてのファイル名・ディレクトリ名は日本語で作成してください。
+            すべてのドキュメントはMarkdown形式で日本語で記述してください。
+            ドキュメントは論理的で階層的な構造で整理してください。
+            新規開発者が理解しやすい構成を心がけてください。
+            既存ファイルの移動・名前変更時はリンク切れに注意してください。
+            
+            コミットメッセージ規約：
+            - docs: プレフィックスを使用
+            - 日本語で変更内容を明記
+            - 何を変更したか、なぜ変更したかを含める

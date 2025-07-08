@@ -1,0 +1,138 @@
+name: Claude Implementation
+
+on:
+  issues:
+    types: [assigned]
+
+jobs:
+  claude-implementation:
+    # Claude Codeが指定されたユーザーにアサインされた場合のみ実行
+    if: contains(github.event.issue.assignees.*.login, 'claude-code') || contains(github.event.issue.assignees.*.login, 'claude')
+    
+    runs-on: self-hosted
+    timeout-minutes: 60
+    
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: write
+      actions: read
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          
+      - name: Install dependencies
+        run: |
+          npm ci
+          
+      - name: Run Claude Code Implementation
+        id: claude-implementation
+        uses: anthropics/claude-code-action@beta
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          
+          # Sonnet4を使用
+          model: "claude-sonnet-4-20250514"
+          
+          # 実装開発用の指示
+          direct_prompt: |
+            【ULTRA-CONCISE MODE】
+            - Keep outputs concise to maximize context budget utilization
+            - Avoid unnecessary explanations and verbose expressions
+            - Output only essential information required
+            - Show only necessary parts of file contents
+            - Focus on implementation over detailed explanations for efficient development
+            
+            このIssueの実装タスクを日本語で処理してください。以下の手順で進めてください：
+            
+            ## 1. 要件理解
+            - Issue内容とコメントから要件を詳細に理解してください
+            - 実装すべき機能と制約を明確にしてください
+            - 疑問点があれば質問してください
+            
+            ## 2. コードベース調査
+            - 関連するファイルとディレクトリを調査してください
+            - 既存のパターンとアーキテクチャを理解してください
+            - 依存関係と技術スタックを確認してください
+            
+            ## 3. 実装プラン提起
+            - 実装アプローチを詳細に説明してください
+            - 必要なファイルの変更・追加を一覧化してください
+            - テスト戦略を提案してください
+            - 実装の優先順位を設定してください
+            
+            ## 4. 開発着手
+            - 実装プランに基づいてコードを開発してください
+            - 小さな単位で進めて、都度確認してください
+            - 型安全性を確保してください
+            - コメントは日本語で記載してください
+            
+            ## 5. 品質確認
+            - 以下のコマンドを順次実行して品質を確認してください：
+              - npm run check:fix (型チェック・リント・フォーマット)
+              - npm run test:unit (ユニットテスト)
+              - npm run build (ビルド確認)
+            - エラーが発生した場合は修正してください
+            
+            ## 6. プルリクエスト作成
+            - 実装が完了したら、以下の内容でプルリクエストを作成してください：
+              - タイトル: "feat: Issue #${{ github.event.issue.number }} [実装内容の概要]"
+              - 本文にCloses #${{ github.event.issue.number }}を記載
+              - 実装内容の説明
+              - テスト結果の報告
+              - 必要に応じてスクリーンショットを含める
+            
+            ## 開発ガイドライン
+            - プロジェクトのコーディングスタンダードに従ってください
+            - 新しいコードには必ずテストを含めてください
+            - TypeScriptを使用してください
+            - コメントは日本語で記載し、設計意図を明確に説明してください
+            - コミットメッセージは日本語で記載し、feat, fix, chore, docsのプレフィックスを使用してください
+            - 小さな単位で頻繁にコミットしてください
+            
+            ## 注意事項
+            - 実装が複雑な場合は、段階的に進めてください
+            - 不明な点があれば、Issueでコメントして質問してください
+            - セキュリティやパフォーマンスに配慮してください
+            - 既存のテストが失敗しないように注意してください
+            
+            それでは、Issue #${{ github.event.issue.number }} の実装を開始してください。
+          
+          # 許可するツールを指定
+          allowed_tools: "Bash(npm install),Bash(npm run *),Bash(git *),Bash(find *),Bash(ls *),Bash(cat *),Bash(grep *),Bash(rg *)"
+          
+          # カスタムインストラクション
+          custom_instructions: |
+            このプロジェクトのコーディングスタンダードに従ってください。
+            新しいコードには必ずテストを含めてください。
+            新しいファイルにはTypeScriptを使用してください。
+            コメントは日本語で記載し、設計意図を明確に説明してください。
+            コミットメッセージは日本語で記載し、feat, fix, chore, docsのプレフィックスを使用してください。
+            レスポンスとコードレビューは日本語で提供してください。
+            
+            プロジェクト構造:
+            - app/: アプリケーションコード
+            - tests/: テストコード
+            - .storybook/: Storybook設定
+            - docs/: ドキュメント（日本語ファイル名のMarkdownファイル）
+            
+            テスト要件:
+            - ユニットテストを網羅的に実装する
+            - 統合テストを最低限で実装する
+            - E2Eテストは正常系の最小限のテストを実装する
+            - 新機能には必ずテストを追加する
+            
+            技術スタック:
+            - Next.js v15 + React 19 + TypeScript
+            - Tailwind CSS v4
+            - Cloudflare Workers + D1
+            - Vitest + Playwright + Storybook
+            - Biome (リント・フォーマット)
