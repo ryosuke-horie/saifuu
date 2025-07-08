@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
 import type { AnyDatabase, Env } from '../../db'
-import { createTestDatabase } from './test-db'
 
 /**
  * テスト用Honoアプリヘルパー
@@ -39,8 +38,8 @@ export async function createTestRequest(
 	const request = new Request(url, requestInit)
 
 	// Create a dummy environment - the actual database will be injected differently
-	const env = {
-		DB: {} as any, // This won't be used since we'll override database creation
+	const env: Env = {
+		DB: {} as never, // This won't be used since we'll override database creation
 	}
 
 	const executionContext = {
@@ -119,18 +118,4 @@ export function expectErrorResponse(data: unknown, expectedMessage: string) {
 	if (errorData.error !== expectedMessage) {
 		throw new Error(`Expected error message "${expectedMessage}", but got "${errorData.error}"`)
 	}
-}
-
-/**
- * APIレスポンスのアサーション用ヘルパー
- * @deprecated Use individual functions instead
- */
-export class ApiTestHelper {
-	/**
-	 * ステータスコードをチェック
-	 */
-	static expectStatus = expectStatus
-	static expectHeader = expectHeader
-	static expectJsonStructure = expectJsonStructure
-	static expectErrorResponse = expectErrorResponse
 }

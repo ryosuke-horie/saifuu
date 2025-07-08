@@ -93,7 +93,11 @@ describe('Categories API - Integration Tests', () => {
 			expect(updatedCategory.color).toBe(updateData.color)
 
 			// 6. カテゴリを削除
-			response = await createTestRequest(testProductionApp, 'DELETE', `/api/categories/${createdId}`)
+			response = await createTestRequest(
+				testProductionApp,
+				'DELETE',
+				`/api/categories/${createdId}`
+			)
 			expect(response.status).toBe(200)
 
 			data = await getResponseJson(response)
@@ -136,7 +140,12 @@ describe('Categories API - Integration Tests', () => {
 				updatedAt: new Date().toISOString(),
 			}
 
-			response = await createTestRequest(testProductionApp, 'POST', '/api/categories', incomeCategory)
+			response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/categories',
+				incomeCategory
+			)
 			expect(response.status).toBe(201)
 			const incomeData = await getResponseJson(response)
 
@@ -225,7 +234,12 @@ describe('Categories API - Integration Tests', () => {
 				updatedAt: new Date().toISOString(),
 			}
 
-			let response = await createTestRequest(testProductionApp, 'POST', '/api/categories', newCategory)
+			let response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/categories',
+				newCategory
+			)
 			expect(response.status).toBe(201)
 
 			const data = await getResponseJson(response)
@@ -304,7 +318,12 @@ describe('Categories API - Integration Tests', () => {
 				updatedAt: new Date().toISOString(),
 			}
 
-			response = await createTestRequest(testProductionApp, 'POST', '/api/categories', invalidCategory)
+			response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/categories',
+				invalidCategory
+			)
 			// SQLite制約により失敗するはず
 			expect([400, 500]).toContain(response.status)
 		})
@@ -344,7 +363,12 @@ describe('Categories API - Integration Tests', () => {
 				updatedAt: beforeCreate,
 			}
 
-			let response = await createTestRequest(testProductionApp, 'POST', '/api/categories', newCategory)
+			let response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/categories',
+				newCategory
+			)
 			expect(response.status).toBe(201)
 
 			let data = await getResponseJson(response)

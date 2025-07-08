@@ -43,7 +43,12 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 				categoryId,
 			}
 
-			response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', subscription)
+			response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/subscriptions',
+				subscription
+			)
 			expect(response.status).toBe(201)
 
 			const subscriptionData = await getResponseJson(response)
@@ -118,14 +123,23 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 				categoryId,
 			}
 
-			response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', subscription)
+			response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/subscriptions',
+				subscription
+			)
 			expect(response.status).toBe(201)
 
 			const subscriptionData = await getResponseJson(response)
 			const subscriptionId = subscriptionData.id
 
 			// カテゴリを削除
-			response = await createTestRequest(testProductionApp, 'DELETE', `/api/categories/${categoryId}`)
+			response = await createTestRequest(
+				testProductionApp,
+				'DELETE',
+				`/api/categories/${categoryId}`
+			)
 
 			// 外部キー制約により削除が制限される可能性がある
 			if (response.status === 200) {
@@ -175,7 +189,12 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 				categoryId,
 			}
 
-			response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', subscription)
+			response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/subscriptions',
+				subscription
+			)
 			expect(response.status).toBe(201)
 
 			const subscriptionData = await getResponseJson(response)
@@ -292,7 +311,12 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 			]
 
 			for (const sub of subscriptions) {
-				const response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', sub)
+				const response = await createTestRequest(
+					testProductionApp,
+					'POST',
+					'/api/subscriptions',
+					sub
+				)
 				expect(response.status).toBe(201)
 
 				const data = await getResponseJson(response)
@@ -336,7 +360,12 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 				categoryId,
 			}
 
-			response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', subscription)
+			response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/subscriptions',
+				subscription
+			)
 			expect(response.status).toBe(201)
 
 			const subscriptionData = await getResponseJson(response)
@@ -403,7 +432,12 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 				categoryId,
 			}
 
-			response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', subscription)
+			response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/subscriptions',
+				subscription
+			)
 			expect(response.status).toBe(201)
 
 			const subscriptionData = await getResponseJson(response)

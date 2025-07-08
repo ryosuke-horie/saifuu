@@ -7,7 +7,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { NewCategory } from '../../db/schema'
+import type { Category, NewCategory } from '../../db/schema'
 import { createTestRequest, getResponseJson } from '../helpers/test-app'
 import { cleanupTestDatabase, setupTestDatabase } from '../helpers/test-db'
 import testProductionApp from '../helpers/test-production-app'
@@ -37,7 +37,7 @@ describe('Categories API - Unit Tests', () => {
 			expect(data.length).toBeGreaterThan(0)
 
 			// カテゴリの構造を検証
-			data.forEach((category: any) => {
+			data.forEach((category: Category) => {
 				expect(category).toHaveProperty('id')
 				expect(category).toHaveProperty('name')
 				expect(category).toHaveProperty('type')
@@ -240,7 +240,7 @@ describe('Categories API - Unit Tests', () => {
 			// 削除されたことを確認
 			const getResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 			const categories = await getResponseJson(getResponse)
-			expect(categories.find((c: any) => c.id === createdCategory.id)).toBeUndefined()
+			expect(categories.find((c: Category) => c.id === createdCategory.id)).toBeUndefined()
 		})
 
 		it('should return 404 for non-existent category deletion', async () => {
