@@ -44,12 +44,12 @@ jobs:
           
           # 実装開発用の指示
           direct_prompt: |
-            【ウルトラシンク設定】
-            - コンテキスト予算を最大限活用するため、出力は簡潔にしてください
-            - 不要な説明や冗長な表現は避けてください
-            - 必要最小限の情報のみを出力してください
-            - ファイル内容は必要な部分のみを表示してください
-            - 実装に集中し、詳細な説明よりも効率的な開発を優先してください
+            【ULTRA-CONCISE MODE】
+            - Keep outputs concise to maximize context budget utilization
+            - Avoid unnecessary explanations and verbose expressions
+            - Output only essential information required
+            - Show only necessary parts of file contents
+            - Focus on implementation over detailed explanations for efficient development
             
             このIssueの実装タスクを日本語で処理してください。以下の手順で進めてください：
             
