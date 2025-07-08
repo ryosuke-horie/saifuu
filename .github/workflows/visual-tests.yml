@@ -1,0 +1,252 @@
+name: Visual Regression Tests (Self-hosted)
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/visual-tests.yml'
+      - '.storybook/**'
+      - '**/*.stories.*'
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/visual-tests.yml'
+      - '.storybook/**'
+      - '**/*.stories.*'
+
+# GitHub Actions無料枠節約のため、同一PRで複数実行時は前の実行をキャンセル
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual-tests:
+    name: Visual Regression Tests
+    runs-on: self-hosted
+    timeout-minutes: 30
+    
+    # PRコメント投稿とアーティファクト保存権限を追加
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: write
+    
+    defaults:
+      run:
+        working-directory: frontend
+    
+    # 環境変数でテスト実行モードを制御
+    env:
+      NODE_ENV: test
+      CI: true
+      # ビジュアルテスト用の設定
+      ENABLE_VISUAL_TESTS: true
+      VITEST_SEGFAULT_RETRY: 3
+      # セルフホストランナー向けの最適化設定
+      FORCE_COLOR: 1
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          # セルフホストランナーの制約によりキャッシュは無効
+          # cache: 'npm'
+          # cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build Storybook
+        run: |
+          echo "Building Storybook for visual testing..."
+          npm run build-storybook
+      
+      # ビジュアルテスト実行前のベースライン確認
+      - name: Check existing visual baselines
+        run: |
+          if [ -d "__vis__" ]; then
+            echo "Visual baselines found:"
+            find __vis__ -name "*.png" | head -10
+            echo "Total baseline images: $(find __vis__ -name "*.png" | wc -l)"
+          else
+            echo "No visual baselines found. This may be the first run."
+          fi
+      
+      # ビジュアルテスト実行
+      - name: Run visual regression tests
+        run: |
+          echo "Running visual regression tests..."
+          npm run test:visual -- --run --reporter=verbose
+        continue-on-error: true
+        id: visual-test
+      
+      # テスト結果の確認とアーティファクト準備
+      - name: Collect visual test results
+        run: |
+          echo "Collecting visual test results..."
+          
+          # 差分画像の確認
+          if [ -d "__vis__" ]; then
+            echo "Visual test artifacts found:"
+            find __vis__ -type f -name "*.png" | head -20
+            
+            # 差分画像の特定
+            DIFF_COUNT=$(find __vis__ -name "*diff*.png" 2>/dev/null | wc -l)
+            echo "DIFF_COUNT=${DIFF_COUNT}" >> $GITHUB_ENV
+            
+            # 新しいベースライン画像の確認
+            NEW_BASELINE_COUNT=$(find __vis__ -name "*actual*.png" 2>/dev/null | wc -l)
+            echo "NEW_BASELINE_COUNT=${NEW_BASELINE_COUNT}" >> $GITHUB_ENV
+            
+            # 結果サマリー準備
+            echo "Visual test summary:" > visual-test-summary.txt
+            echo "- Diff images: ${DIFF_COUNT}" >> visual-test-summary.txt
+            echo "- New baseline images: ${NEW_BASELINE_COUNT}" >> visual-test-summary.txt
+            echo "- Total test artifacts: $(find __vis__ -name "*.png" | wc -l)" >> visual-test-summary.txt
+          else
+            echo "No visual test artifacts found"
+            echo "DIFF_COUNT=0" >> $GITHUB_ENV
+            echo "NEW_BASELINE_COUNT=0" >> $GITHUB_ENV
+          fi
+        
+      # 差分画像がある場合のアーティファクト保存
+      - name: Upload visual test artifacts
+        if: always() && (env.DIFF_COUNT > 0 || env.NEW_BASELINE_COUNT > 0)
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: visual-test-results-${{ github.run_number }}
+          path: |
+            frontend/__vis__/**/*.png
+            frontend/visual-test-summary.txt
+          retention-days: 30
+          if-no-files-found: warn
+      
+      # 完全なテスト結果ログのアーティファクト保存
+      - name: Upload detailed test logs
+        if: always()
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: visual-test-logs-${{ github.run_number }}
+          path: |
+            frontend/test-results/**/*
+            frontend/storybook-static/**/*
+          retention-days: 7
+          if-no-files-found: ignore
+      
+      # PRコメント投稿（テスト結果の要約）
+      - name: Comment PR with visual test results
+        if: github.event_name == 'pull_request' && always()
+        run: |
+          # テスト結果の判定
+          if [ "${{ steps.visual-test.outcome }}" = "success" ]; then
+            STATUS="✅ PASSED"
+            STATUS_COLOR="28a745"
+          else
+            STATUS="❌ FAILED"
+            STATUS_COLOR="d73a49"
+          fi
+          
+          # コメント本文の作成
+          cat > visual_test_comment.md << 'EOF'
+          ## 🎨 Visual Regression Test Results
+          
+          **Status**: $STATUS
+          
+          ### 📊 Test Summary
+          
+          | Metric | Count |
+          |--------|-------|
+          | **Diff Images** | ${{ env.DIFF_COUNT }} |
+          | **New Baselines** | ${{ env.NEW_BASELINE_COUNT }} |
+          | **Workflow Run** | [${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
+          
+          ### 🔍 Review Guidelines
+          
+          EOF
+          
+          # 差分がある場合の追加情報
+          if [ "${{ env.DIFF_COUNT }}" -gt 0 ]; then
+            cat >> visual_test_comment.md << 'EOF'
+          
+          ⚠️ **Visual differences detected!**
+          
+          1. Download the `visual-test-results-${{ github.run_number }}` artifact from the workflow run
+          2. Review the diff images in the `__vis__` folder
+          3. If changes are intentional, update baselines by running:
+             ```bash
+             cd frontend
+             npm run test:visual -- --update-snapshots
+             ```
+          4. Commit the updated baseline images
+          
+          EOF
+          elif [ "${{ env.NEW_BASELINE_COUNT }}" -gt 0 ]; then
+            cat >> visual_test_comment.md << 'EOF'
+          
+          🆕 **New visual baselines created!**
+          
+          New components or stories detected. Please review the generated baseline images:
+          
+          1. Download the `visual-test-results-${{ github.run_number }}` artifact
+          2. Review the new baseline images
+          3. If they look correct, commit them to establish the baselines
+          
+          EOF
+          else
+            cat >> visual_test_comment.md << 'EOF'
+          
+          🎉 **No visual differences detected!**
+          
+          All visual regression tests passed. Your UI changes maintain visual consistency.
+          
+          EOF
+          fi
+          
+          cat >> visual_test_comment.md << 'EOF'
+          
+          ### 🛠️ Troubleshooting
+          
+          If you encounter issues:
+          - Check the [Visual Testing Guide](../docs/ビジュアルリグレッションテスト実装ガイド.md)
+          - Review the detailed logs in `visual-test-logs-${{ github.run_number }}` artifact
+          - Ensure your stories are properly configured with vis tags
+          
+          ---
+          
+          _Generated by GitHub Actions • Visual Testing Workflow_
+          EOF
+          
+          # PRコメント投稿
+          gh pr comment ${{ github.event.number }} --body-file visual_test_comment.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      # テスト失敗時の詳細情報出力
+      - name: Display test failure details
+        if: steps.visual-test.outcome == 'failure'
+        run: |
+          echo "::error title=Visual Regression Test Failed::Visual regression tests detected UI changes"
+          echo "::notice title=Next Steps::Review the visual differences and update baselines if changes are intentional"
+          echo ""
+          echo "Detailed failure information:"
+          echo "- Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "- Diff images: ${{ env.DIFF_COUNT }}"
+          echo "- New baselines: ${{ env.NEW_BASELINE_COUNT }}"
+          echo ""
+          echo "To fix failing tests:"
+          echo "1. Download and review the visual-test-results artifact"
+          echo "2. If changes are intentional, update baselines locally"
+          echo "3. Commit the updated baseline images"
+      
+      # 最終的なテスト結果の判定
+      - name: Final test result
+        if: steps.visual-test.outcome == 'failure'
+        run: |
+          echo "Visual regression tests failed. Please review the differences."
+          exit 1

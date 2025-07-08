@@ -3,7 +3,23 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-	plugins: [react()],
+	plugins: [
+		react(),
+		// ビジュアルテスト用プラグイン
+		{
+			name: "storybook-addon-vis",
+			config: () => ({
+				test: {
+					browser: {
+						enabled: true,
+						provider: "playwright",
+						name: "chromium",
+						headless: true,
+					},
+				},
+			}),
+		},
+	],
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "./src"),
@@ -18,12 +34,17 @@ export default defineConfig({
 		environment: "jsdom",
 		setupFiles: ["./vitest.setup.ts"],
 		globals: true,
-		// ブラウザテストを完全に無効化（jsdom環境でユニットテストを実行）
+		// ビジュアルテスト実行時のみブラウザモードを有効化
+		// 通常のユニットテストはjsdom環境で高速実行
 		browser: {
-			enabled: false,
+			enabled: process.env.ENABLE_VISUAL_TESTS === "true",
+			provider: "playwright",
+			name: "chromium",
+			headless: true,
 		},
-		testTimeout: 10000, // 10秒に短縮
-		hookTimeout: 5000, // 5秒に短縮
+		// ビジュアルテスト時は長め、通常テスト時は短めのタイムアウト
+		testTimeout: process.env.ENABLE_VISUAL_TESTS === "true" ? 30000 : 10000,
+		hookTimeout: process.env.ENABLE_VISUAL_TESTS === "true" ? 10000 : 5000,
 		include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 		exclude: ["tests/**", "node_modules/**", ".next/**"],
 		coverage: {

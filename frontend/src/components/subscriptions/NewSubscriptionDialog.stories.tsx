@@ -67,6 +67,11 @@ export const Default: Story = {
 		chromatic: {
 			delay: 300, // ダイアログアニメーション完了を待つ
 		},
+		vis: {
+			delay: 300,
+			description: "Dialog modal overlay with clean form layout",
+			viewports: ["mobile", "tablet", "desktop"],
+		},
 	},
 };
 
@@ -86,6 +91,11 @@ export const Submitting: Story = {
 		},
 		chromatic: {
 			delay: 300,
+		},
+		vis: {
+			delay: 300,
+			description: "Dialog with loading state and disabled form elements",
+			viewports: ["desktop"],
 		},
 	},
 };
@@ -220,11 +230,18 @@ export const ValidationError: Story = {
 		isOpen: true,
 		isSubmitting: false,
 	},
+	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story: "フォームバリデーションエラーの表示をテストします。",
 			},
+		},
+		vis: {
+			delay: 500,
+			description: "Dialog showing multiple validation errors",
+			viewports: ["mobile", "desktop"],
+			captureAfterInteraction: true,
 		},
 	},
 	play: async ({ canvasElement }) => {
@@ -263,6 +280,11 @@ export const MobileView: Story = {
 		chromatic: {
 			delay: 300,
 		},
+		vis: {
+			delay: 300,
+			description: "Mobile responsive dialog with optimized form layout",
+			viewports: ["mobile"],
+		},
 	},
 };
 
@@ -285,5 +307,129 @@ export const TabletView: Story = {
 		chromatic: {
 			delay: 300,
 		},
+		vis: {
+			delay: 300,
+			description: "Tablet responsive dialog with intermediate layout",
+			viewports: ["tablet"],
+		},
+	},
+};
+
+// Visual Testing: 全ビューポートでのベースライン比較
+export const VisualTestAllViewports: Story = {
+	args: {
+		isOpen: true,
+		isSubmitting: false,
+	},
+	tags: ["visual-test"],
+	parameters: {
+		docs: {
+			description: {
+				story: "すべてのビューポートでのベースライン比較テスト",
+			},
+		},
+		vis: {
+			delay: 300,
+			description: "Comprehensive visual regression test across all viewports",
+			viewports: ["mobile", "tablet", "desktop"],
+			// 比較しきい値を厳密に設定
+			threshold: 0.05,
+			diffThreshold: 0.1,
+		},
+	},
+};
+
+// Visual Testing: 複雑なフォーム状態
+export const VisualTestComplexForm: Story = {
+	args: {
+		isOpen: true,
+		isSubmitting: false,
+	},
+	tags: ["visual-test"],
+	parameters: {
+		docs: {
+			description: {
+				story: "複雑なフォーム状態での視覚テスト",
+			},
+		},
+		vis: {
+			delay: 500,
+			description: "Dialog with complex form state including partial data",
+			viewports: ["desktop"],
+			captureAfterInteraction: true,
+		},
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// 部分的にフォームを入力
+		const nameInput = canvas.getByLabelText(/サービス名/);
+		const amountInput = canvas.getByLabelText(/料金/);
+		const descriptionInput = canvas.getByLabelText(/説明/);
+
+		await userEvent.type(nameInput, "Spotify Premium");
+		await userEvent.type(amountInput, "980");
+		await userEvent.selectOptions(
+			canvas.getByLabelText(/請求サイクル/),
+			"monthly",
+		);
+		await userEvent.type(descriptionInput, "音楽配信サービス");
+
+		// カテゴリを選択
+		await userEvent.selectOptions(
+			canvas.getByLabelText(/カテゴリ/),
+			"entertainment",
+		);
+	},
+};
+
+// Visual Testing: エラー状態の詳細確認
+export const VisualTestErrorStates: Story = {
+	args: {
+		isOpen: true,
+		isSubmitting: false,
+	},
+	tags: ["visual-test"],
+	parameters: {
+		docs: {
+			description: {
+				story: "様々なエラー状態での視覚テスト",
+			},
+		},
+		vis: {
+			delay: 600,
+			description: "Dialog with comprehensive error state display",
+			viewports: ["mobile", "tablet", "desktop"],
+			captureAfterInteraction: true,
+		},
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// 無効なデータを入力
+		const nameInput = canvas.getByLabelText(/サービス名/);
+		const amountInput = canvas.getByLabelText(/料金/);
+		const dateInput = canvas.getByLabelText(/次回請求日/);
+
+		// 空のサービス名でフォーカス離脱
+		await userEvent.click(nameInput);
+		await userEvent.tab();
+
+		// 無効な料金を入力
+		await userEvent.type(amountInput, "0");
+		await userEvent.tab();
+
+		// 過去の日付を入力
+		await userEvent.type(dateInput, "2020-01-01");
+		await userEvent.tab();
+
+		// エラーが表示されることを確認
+		await expect(canvas.getByText("サービス名は必須です")).toBeInTheDocument();
+		await expect(
+			canvas.getByText("料金は1円以上で入力してください"),
+		).toBeInTheDocument();
+		await expect(
+			canvas.getByText("次回請求日は今日以降の日付を入力してください"),
+		).toBeInTheDocument();
 	},
 };

@@ -50,6 +50,55 @@ const preview: Preview = {
 				},
 			},
 		},
+		// storybook-addon-vis の設定
+		vis: {
+			// 基本設定
+			enable: true,
+			// デフォルトの遅延時間（アニメーション完了を待つ）
+			delay: 200,
+			// 基本的なビューポート設定
+			viewports: [
+				{
+					name: "Mobile",
+					width: 375,
+					height: 667,
+				},
+				{
+					name: "Tablet",
+					width: 768,
+					height: 1024,
+				},
+				{
+					name: "Desktop",
+					width: 1280,
+					height: 800,
+				},
+			],
+			// 比較しきい値の設定
+			threshold: 0.1,
+			// 差異の許容範囲
+			diffThreshold: 0.15,
+			// Chromatic設定と連携
+			chromatic: {
+				// アニメーション完了を待つ時間
+				delay: 300,
+				// 異なるビューポートでのテスト
+				modes: {
+					mobile: {
+						viewport: "mobile",
+						chromatic: { viewports: [375] },
+					},
+					tablet: {
+						viewport: "tablet",
+						chromatic: { viewports: [768] },
+					},
+					desktop: {
+						viewport: "desktop",
+						chromatic: { viewports: [1200] },
+					},
+				},
+			},
+		},
 	},
 	loaders: [mswLoader],
 	tags: ["autodocs"],
