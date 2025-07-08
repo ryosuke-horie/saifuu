@@ -38,13 +38,7 @@ export default defineConfig({
 		testTimeout: 30000,
 		hookTimeout: 10000,
 		// ビジュアルテストファイルのみを対象とする
-		include: [
-			"src/**/*.visual.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
-		],
-		exclude: [
-			"tests/**", 
-			"node_modules/**", 
-			".next/**"
-		],
+		include: ["src/**/*.visual.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+		exclude: ["tests/**", "node_modules/**", ".next/**"],
 	},
 });
