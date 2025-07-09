@@ -151,7 +151,9 @@ describe("ExpenseForm", () => {
 			await user.click(submitButton);
 
 			await waitFor(() => {
-				expect(screen.getByText("金額は必須です")).toBeInTheDocument();
+				expect(
+					screen.getByText("金額は1円以上で入力してください"),
+				).toBeInTheDocument();
 			});
 		});
 
@@ -168,7 +170,7 @@ describe("ExpenseForm", () => {
 
 			await waitFor(() => {
 				expect(
-					screen.getByText("金額は正の数値で入力してください"),
+					screen.getByText("金額は1円以上で入力してください"),
 				).toBeInTheDocument();
 			});
 		});

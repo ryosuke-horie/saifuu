@@ -22,7 +22,7 @@ export interface ExpenseFormData {
 	/**
 	 * 取引種別（収入または支出）
 	 */
-	type: TransactionType | "";
+	type: TransactionType | null;
 
 	/**
 	 * 説明・メモ（オプション）

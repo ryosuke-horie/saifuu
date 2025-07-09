@@ -242,7 +242,9 @@ export const WithValidationErrors: Story = {
 		await userEvent.tab();
 
 		// エラーメッセージの確認
-		await expect(canvas.getByText("金額は必須です")).toBeInTheDocument();
+		await expect(
+			canvas.getByText("金額は1円以上で入力してください"),
+		).toBeInTheDocument();
 		await expect(canvas.getByText("種別は必須です")).toBeInTheDocument();
 		await expect(canvas.getByText("日付は必須です")).toBeInTheDocument();
 		await expect(
@@ -375,14 +377,18 @@ export const RealTimeValidation: Story = {
 		await userEvent.tab(); // ブラーを発生
 
 		// エラーメッセージが表示されることを確認
-		await expect(canvas.getByText("金額は必須です")).toBeInTheDocument();
+		await expect(
+			canvas.getByText("金額は1円以上で入力してください"),
+		).toBeInTheDocument();
 
 		// 有効な値を入力してエラーが消えることを確認
 		await userEvent.type(amountInput, "1000");
 		await userEvent.tab();
 
 		// エラーメッセージが消えることを確認
-		await expect(canvas.queryByText("金額は必須です")).not.toBeInTheDocument();
+		await expect(
+			canvas.queryByText("金額は1円以上で入力してください"),
+		).not.toBeInTheDocument();
 	},
 };
 
@@ -414,13 +420,17 @@ export const AmountBoundaryTest: Story = {
 		await userEvent.clear(amountInput);
 		await userEvent.type(amountInput, "0");
 		await userEvent.tab();
-		await expect(canvas.getByText("金額は必須です")).toBeInTheDocument();
+		await expect(
+			canvas.getByText("金額は1円以上で入力してください"),
+		).toBeInTheDocument();
 
 		// 1円で正常
 		await userEvent.clear(amountInput);
 		await userEvent.type(amountInput, "1");
 		await userEvent.tab();
-		await expect(canvas.queryByText("金額は必須です")).not.toBeInTheDocument();
+		await expect(
+			canvas.queryByText("金額は1円以上で入力してください"),
+		).not.toBeInTheDocument();
 
 		// 100万円で正常
 		await userEvent.clear(amountInput);

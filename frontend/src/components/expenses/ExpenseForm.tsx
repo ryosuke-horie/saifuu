@@ -1,6 +1,6 @@
 "use client";
 
-import { type FC, useCallback, useEffect, useState } from "react";
+import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import {
 	validateAmount,
 	validateDate,
@@ -40,7 +40,7 @@ interface FormErrors {
 // デフォルトフォームデータ
 const defaultFormData: ExpenseFormData = {
 	amount: 0,
-	type: "",
+	type: null,
 	date: "",
 	description: "",
 	categoryId: "",
@@ -90,7 +90,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 					return validateAmount(value as number);
 
 				case "type":
-					return validateRequiredString(value as string, "種別");
+					return validateRequiredString(value as string | null, "種別");
 
 				case "date":
 					return validateDate(value as string);
@@ -176,12 +176,12 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 
 	// 全フィールドをタッチ済みに設定
 	const setAllFieldsTouched = useCallback(() => {
-		setTouched({
-			amount: true,
-			type: true,
-			description: true,
-			date: true,
-			categoryId: true,
+		setTouched((prev) => {
+			const newTouched = {} as typeof prev;
+			(Object.keys(prev) as Array<keyof typeof prev>).forEach((key) => {
+				newTouched[key] = true;
+			});
+			return newTouched;
 		});
 	}, []);
 
@@ -205,6 +205,12 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 		[formData, validateForm, onSubmit, setAllFieldsTouched],
 	);
 
+	// カテゴリフィルタリングの最適化
+	const filteredCategories = useMemo(
+		() => categories.filter((cat) => cat.type === formData.type),
+		[categories, formData.type],
+	);
+
 	return (
 		<form
 			onSubmit={handleSubmit}
@@ -222,7 +228,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 				<input
 					type="number"
 					id="expense-amount"
-					value={formData.amount === 0 ? "" : formData.amount}
+					value={formData.amount || ""}
 					onChange={(e) => handleFieldChange("amount", Number(e.target.value))}
 					onBlur={() => handleFieldBlur("amount")}
 					disabled={isSubmitting}
@@ -264,10 +270,8 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 				</label>
 				<select
 					id="expense-type"
-					value={formData.type}
-					onChange={(e) =>
-						handleFieldChange("type", e.target.value as TransactionType | "")
-					}
+					value={formData.type || ""}
+					onChange={(e) => handleFieldChange("type", e.target.value || null)}
 					onBlur={() => handleFieldBlur("type")}
 					disabled={isSubmitting}
 					aria-required="true"
@@ -417,13 +421,11 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 					) : (
 						<>
 							<option value="">カテゴリを選択してください</option>
-							{categories
-								.filter((cat) => cat.type === formData.type)
-								.map((category) => (
-									<option key={category.id} value={category.id}>
-										{category.name}
-									</option>
-								))}
+							{filteredCategories.map((category) => (
+								<option key={category.id} value={category.id}>
+									{category.name}
+								</option>
+							))}
 						</>
 					)}
 				</select>

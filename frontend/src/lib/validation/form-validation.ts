@@ -13,11 +13,11 @@
  * 金額フィールドのバリデーション
  */
 export function validateAmount(value: number): string | undefined {
-	if (typeof value !== "number" || value === 0) {
+	if (typeof value !== "number" || Number.isNaN(value)) {
 		return "金額は必須です";
 	}
-	if (value < 0) {
-		return "金額は正の数値で入力してください";
+	if (value <= 0) {
+		return "金額は1円以上で入力してください";
 	}
 	if (value > 1000000) {
 		return "金額は100万円以下で入力してください";
@@ -29,7 +29,7 @@ export function validateAmount(value: number): string | undefined {
  * 必須文字列フィールドのバリデーション
  */
 export function validateRequiredString(
-	value: string | undefined,
+	value: string | null | undefined,
 	fieldName: string,
 ): string | undefined {
 	if (!value || value.trim().length === 0) {
