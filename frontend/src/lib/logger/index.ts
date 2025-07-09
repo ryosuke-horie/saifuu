@@ -33,6 +33,31 @@ export {
 	shouldLog,
 	validateConfig,
 } from "./config";
+// React統合コンポーネント (Phase 2)
+export {
+	DefaultLoggerProvider,
+	LoggerProvider,
+	LoggerScope,
+	useLoggerContext,
+	useOptionalLoggerContext,
+	withLoggerProvider,
+} from "./context";
+export {
+	DefaultErrorFallback,
+	ErrorBoundaryPresets,
+	type ErrorFallbackProps,
+	LoggedErrorBoundary,
+	useErrorHandler,
+	withErrorBoundary,
+} from "./error-boundary";
+export {
+	useComponentLogger,
+	useLoggedCallback,
+	useLogger,
+	useOptionalLogger,
+	usePerformanceLogger,
+} from "./hooks";
+
 // 型定義
 export type {
 	BrowserLoggerConfig,
