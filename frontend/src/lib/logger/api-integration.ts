@@ -6,26 +6,9 @@
  */
 
 import { useCallback } from "react";
+import { generateRequestId } from "../utils/request-id";
 import { useLogger } from "./hooks";
 import type { FrontendLogMeta } from "./types";
-
-/**
- * requestID生成（APIロガーと共通）
- * crypto.randomUUIDを使用してUUID v4を生成
- */
-export function generateRequestId(): string {
-	// ブラウザ環境でcrypto.randomUUIDが利用可能な場合
-	if (typeof crypto !== "undefined" && crypto.randomUUID) {
-		return crypto.randomUUID();
-	}
-
-	// フォールバック: 簡易UUID生成
-	return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-		const r = (Math.random() * 16) | 0;
-		const v = c === "x" ? r : (r & 0x3) | 0x8;
-		return v.toString(16);
-	});
-}
 
 /**
  * パフォーマンス計測用ヘルパー

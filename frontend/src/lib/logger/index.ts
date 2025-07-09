@@ -103,12 +103,13 @@ export const logger = {
 // 統合機能のエクスポート（フェーズ3）
 // =============================================================================
 
+// 共通ユーティリティ
+export { generateRequestId } from "../utils/request-id";
 // API統合
 export {
 	createApiClientWithLogging,
 	createPerformanceMarker,
 	enhanceRequestWithLogging,
-	generateRequestId,
 	getErrorPerformance,
 	getResponsePerformance,
 	useApiLogger,

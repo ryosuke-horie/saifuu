@@ -8,7 +8,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
-import { generateRequestId } from "./api-integration";
+import { generateRequestId } from "../utils/request-id";
 import { LoggerProvider } from "./context";
 import type { BrowserLoggerConfig } from "./types";
 
