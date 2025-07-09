@@ -301,7 +301,7 @@ describe("useSubscriptions", () => {
 
 			// 作成実行（エラーが発生することを期待）
 			await expect(
-				result.current.createSubscriptionMutation(mockFormData)
+				result.current.createSubscriptionMutation(mockFormData),
 			).rejects.toThrow(errorMessage);
 
 			// エラー状態の更新を待機
@@ -375,7 +375,7 @@ describe("useSubscriptions", () => {
 			await expect(
 				result.current.updateSubscriptionMutation("sub1", {
 					name: "Updated",
-				})
+				}),
 			).rejects.toThrow(errorMessage);
 
 			// エラー状態の更新を待機
@@ -434,7 +434,7 @@ describe("useSubscriptions", () => {
 
 			// 削除実行（エラーが発生することを期待）
 			await expect(
-				result.current.deleteSubscriptionMutation("sub1")
+				result.current.deleteSubscriptionMutation("sub1"),
 			).rejects.toThrow(errorMessage);
 
 			// エラー状態の更新を待機
@@ -531,7 +531,7 @@ describe("useSubscriptions", () => {
 
 			// 個別取得実行（エラーが発生することを期待）
 			await expect(
-				result.current.getSubscriptionById("nonexistent")
+				result.current.getSubscriptionById("nonexistent"),
 			).rejects.toThrow(errorMessage);
 
 			// エラー状態の更新を待機
