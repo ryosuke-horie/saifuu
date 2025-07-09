@@ -34,6 +34,17 @@ function initializeTestDatabase() {
 				updated_at TEXT NOT NULL
 			);
 			
+			CREATE TABLE IF NOT EXISTS transactions (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				amount REAL NOT NULL,
+				type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+				category_id INTEGER REFERENCES categories(id),
+				description TEXT,
+				date TEXT NOT NULL,
+				created_at TEXT NOT NULL,
+				updated_at TEXT NOT NULL
+			);
+			
 			CREATE TABLE IF NOT EXISTS subscriptions (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				name TEXT NOT NULL,
@@ -106,9 +117,10 @@ export function createTestEnv(): { DB: D1Database } {
 export async function setupTestDatabase() {
 	initializeTestDatabase()
 
-	// テストデータベースをクリーンアップ（subscriptionsテーブルのみ）
+	// テストデータベースをクリーンアップ（subscriptionsとtransactionsテーブル）
 	if (globalSqliteInstance) {
 		globalSqliteInstance.prepare('DELETE FROM subscriptions').run()
+		globalSqliteInstance.prepare('DELETE FROM transactions').run()
 	}
 
 	const db = createTestDatabase()
@@ -120,9 +132,10 @@ export async function setupTestDatabase() {
  * 各テストケース後に実行される後処理
  */
 export async function cleanupTestDatabase() {
-	// subscriptionsテーブルをクリーンアップ
+	// subscriptionsとtransactionsテーブルをクリーンアップ
 	if (globalSqliteInstance) {
 		globalSqliteInstance.prepare('DELETE FROM subscriptions').run()
+		globalSqliteInstance.prepare('DELETE FROM transactions').run()
 	}
 
 	const db = createTestDatabase()
