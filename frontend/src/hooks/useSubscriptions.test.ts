@@ -260,7 +260,8 @@ describe("useSubscriptions", () => {
 			expect(result.current.operationLoading).toBe(false);
 
 			// 作成実行を同期的に開始
-			const createPromiseResult = result.current.createSubscriptionMutation(mockFormData);
+			const createPromiseResult =
+				result.current.createSubscriptionMutation(mockFormData);
 
 			// 非同期処理開始直後にローディング状態になることを確認
 			await waitFor(() => {
@@ -270,7 +271,7 @@ describe("useSubscriptions", () => {
 
 			// 作成完了
 			resolveCreate!(newSubscription);
-			
+
 			// 作成完了を待機
 			await act(async () => {
 				await createPromiseResult;
