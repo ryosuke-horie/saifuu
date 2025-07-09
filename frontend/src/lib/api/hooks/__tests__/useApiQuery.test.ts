@@ -408,6 +408,86 @@ describe("useApiQuery", () => {
 		});
 	});
 
+	describe("deps依存関係", () => {
+		it("deps配列の値が変更されると再フェッチが実行される", async () => {
+			let queryParam = "initial";
+			const mockQueryFn = vi
+				.fn()
+				.mockImplementation(() => Promise.resolve(`result-${queryParam}`));
+
+			const { result, rerender } = renderHook(
+				({ param }) => {
+					queryParam = param;
+					return useApiQuery({
+						queryFn: mockQueryFn,
+						initialData: "default",
+						errorContext: "テスト",
+						deps: [param],
+					});
+				},
+				{
+					initialProps: { param: "initial" },
+				},
+			);
+
+			// 初回フェッチ
+			await waitFor(() => {
+				expect(result.current.isLoading).toBe(false);
+			});
+
+			expect(result.current.data).toBe("result-initial");
+			expect(mockQueryFn).toHaveBeenCalledTimes(1);
+
+			// paramを変更
+			rerender({ param: "updated" });
+
+			await waitFor(() => {
+				expect(result.current.data).toBe("result-updated");
+			});
+
+			expect(mockQueryFn).toHaveBeenCalledTimes(2);
+		});
+
+		it("deps配列が空の場合、外部パラメータが変更されても再フェッチしない", async () => {
+			let queryParam = "initial";
+			const mockQueryFn = vi
+				.fn()
+				.mockImplementation(() => Promise.resolve(`result-${queryParam}`));
+
+			const { result, rerender } = renderHook(
+				({ param }) => {
+					queryParam = param;
+					return useApiQuery({
+						queryFn: mockQueryFn,
+						initialData: "default",
+						errorContext: "テスト",
+						deps: [], // 空の依存関係配列
+					});
+				},
+				{
+					initialProps: { param: "initial" },
+				},
+			);
+
+			// 初回フェッチ
+			await waitFor(() => {
+				expect(result.current.isLoading).toBe(false);
+			});
+
+			expect(result.current.data).toBe("result-initial");
+			expect(mockQueryFn).toHaveBeenCalledTimes(1);
+
+			// paramを変更（しかし依存関係にないので再フェッチしない）
+			rerender({ param: "updated" });
+
+			// 少し待機して再フェッチされないことを確認
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			expect(result.current.data).toBe("result-initial"); // 変更されない
+			expect(mockQueryFn).toHaveBeenCalledTimes(1); // 再フェッチされない
+		});
+	});
+
 	describe("エッジケース", () => {
 		it("複数のrefetchを連続実行した場合", async () => {
 			const mockQueryFn = vi.fn().mockResolvedValue(mockData);

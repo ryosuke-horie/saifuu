@@ -49,6 +49,7 @@ export function useSubscriptions(query?: GetSubscriptionsQuery) {
 		queryFn: () => subscriptionService.getSubscriptions(query),
 		initialData: [] as Subscription[],
 		errorContext: "サブスクリプション一覧取得",
+		deps: [query],
 	});
 
 	return {
