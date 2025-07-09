@@ -230,7 +230,7 @@ describe("useSubscriptions", () => {
 			);
 		});
 
-		it.skip("作成中のローディング状態が管理される", async () => {
+		it("作成中のローディング状態が管理される", async () => {
 			const newSubscription: Subscription = {
 				id: "sub3",
 				name: mockFormData.name,
@@ -252,29 +252,38 @@ describe("useSubscriptions", () => {
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.loading).toBe(false);
 			});
 
-			// 作成実行（非同期）
-			const createPromiseResult = act(async () => {
-				return result.current.createSubscriptionMutation(mockFormData);
-			});
+			// 初期状態では operationLoading は false
+			expect(result.current.operationLoading).toBe(false);
 
-			// ローディング状態の確認
+			// 作成実行を同期的に開始
+			const createPromiseResult = result.current.createSubscriptionMutation(mockFormData);
+
+			// 非同期処理開始直後にローディング状態になることを確認
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.operationLoading).toBe(true);
 			});
 
 			// 作成完了
 			resolveCreate!(newSubscription);
-			await createPromiseResult;
+			
+			// 作成完了を待機
+			await act(async () => {
+				await createPromiseResult;
+			});
 
+			// 最終的にローディング状態が解除される
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.operationLoading).toBe(false);
 			});
 		});
 
-		it.skip("作成失敗時にエラーが設定される", async () => {
+		it("作成失敗時にエラーが設定される", async () => {
 			const errorMessage = "作成権限がありません";
 			mockCreateSubscription.mockRejectedValue(new Error(errorMessage));
 
@@ -282,22 +291,26 @@ describe("useSubscriptions", () => {
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.loading).toBe(false);
 			});
 
+			// 初期状態では operationLoading は false
+			expect(result.current.operationLoading).toBe(false);
+			expect(result.current.error).toBeNull();
+
 			// 作成実行（エラーが発生することを期待）
 			await expect(
-				act(async () => {
-					return result.current.createSubscriptionMutation(mockFormData);
-				}),
+				result.current.createSubscriptionMutation(mockFormData)
 			).rejects.toThrow(errorMessage);
 
-			// エラー状態の更新を待機（throw後でも非同期状態更新が完了するまで待機）
+			// エラー状態の更新を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.error).toBe(errorMessage);
+				expect(result.current.operationLoading).toBe(false);
 			});
 
-			expect(result.current.operationLoading).toBe(false);
 			expect(result.current.subscriptions).toHaveLength(
 				mockSubscriptions.length,
 			);
@@ -309,7 +322,7 @@ describe("useSubscriptions", () => {
 			mockFetchSubscriptions.mockResolvedValue(mockSubscriptions);
 		});
 
-		it.skip("サブスクリプションが正常に更新される", async () => {
+		it("サブスクリプションが正常に更新される", async () => {
 			const updateData = { name: "Netflix Premium", amount: 2490 };
 			const updatedSubscription: Subscription = {
 				...mockSubscriptions[0],
@@ -322,16 +335,15 @@ describe("useSubscriptions", () => {
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.loading).toBe(false);
 			});
 
 			// 更新実行
-			const updated = await act(async () => {
-				return await result.current.updateSubscriptionMutation(
-					"sub1",
-					updateData,
-				);
-			});
+			const updated = await result.current.updateSubscriptionMutation(
+				"sub1",
+				updateData,
+			);
 
 			expect(updated).toEqual(updatedSubscription);
 
@@ -347,7 +359,7 @@ describe("useSubscriptions", () => {
 			);
 		});
 
-		it.skip("更新失敗時にエラーが設定される", async () => {
+		it("更新失敗時にエラーが設定される", async () => {
 			const errorMessage = "更新権限がありません";
 			mockUpdateSubscription.mockRejectedValue(new Error(errorMessage));
 
@@ -355,24 +367,23 @@ describe("useSubscriptions", () => {
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.loading).toBe(false);
 			});
 
 			// 更新実行（エラーが発生することを期待）
 			await expect(
-				act(async () => {
-					return result.current.updateSubscriptionMutation("sub1", {
-						name: "Updated",
-					});
-				}),
+				result.current.updateSubscriptionMutation("sub1", {
+					name: "Updated",
+				})
 			).rejects.toThrow(errorMessage);
 
 			// エラー状態の更新を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.error).toBe(errorMessage);
+				expect(result.current.operationLoading).toBe(false);
 			});
-
-			expect(result.current.operationLoading).toBe(false);
 		});
 	});
 
@@ -381,7 +392,7 @@ describe("useSubscriptions", () => {
 			mockFetchSubscriptions.mockResolvedValue(mockSubscriptions);
 		});
 
-		it.skip("サブスクリプションが正常に削除される", async () => {
+		it("サブスクリプションが正常に削除される", async () => {
 			mockDeleteSubscription.mockResolvedValue();
 
 			const { result } = renderHook(() => useSubscriptions(mockCategories));
@@ -409,7 +420,7 @@ describe("useSubscriptions", () => {
 			expect(mockDeleteSubscription).toHaveBeenCalledWith("sub1");
 		});
 
-		it.skip("削除失敗時にエラーが設定される", async () => {
+		it("削除失敗時にエラーが設定される", async () => {
 			const errorMessage = "削除権限がありません";
 			mockDeleteSubscription.mockRejectedValue(new Error(errorMessage));
 
@@ -417,18 +428,18 @@ describe("useSubscriptions", () => {
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.loading).toBe(false);
 			});
 
 			// 削除実行（エラーが発生することを期待）
 			await expect(
-				act(async () => {
-					return result.current.deleteSubscriptionMutation("sub1");
-				}),
+				result.current.deleteSubscriptionMutation("sub1")
 			).rejects.toThrow(errorMessage);
 
 			// エラー状態の更新を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.error).toBe(errorMessage);
 			});
 
@@ -443,7 +454,7 @@ describe("useSubscriptions", () => {
 			mockFetchSubscriptions.mockResolvedValue(mockSubscriptions);
 		});
 
-		it.skip("ステータスが正常に更新される", async () => {
+		it("ステータスが正常に更新される", async () => {
 			const updatedSubscription: Subscription = {
 				...mockSubscriptions[0],
 				isActive: false,
@@ -483,7 +494,7 @@ describe("useSubscriptions", () => {
 			mockFetchSubscriptions.mockResolvedValue(mockSubscriptions);
 		});
 
-		it.skip("IDでサブスクリプションを取得できる", async () => {
+		it("IDでサブスクリプションを取得できる", async () => {
 			const targetSubscription = mockSubscriptions[0];
 			mockFetchSubscriptionById.mockResolvedValue(targetSubscription);
 
@@ -506,7 +517,7 @@ describe("useSubscriptions", () => {
 			);
 		});
 
-		it.skip("個別取得失敗時にエラーが設定される", async () => {
+		it("個別取得失敗時にエラーが設定される", async () => {
 			const errorMessage = "サブスクリプションが見つかりません";
 			mockFetchSubscriptionById.mockRejectedValue(new Error(errorMessage));
 
@@ -514,25 +525,25 @@ describe("useSubscriptions", () => {
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.loading).toBe(false);
 			});
 
 			// 個別取得実行（エラーが発生することを期待）
 			await expect(
-				act(async () => {
-					return result.current.getSubscriptionById("nonexistent");
-				}),
+				result.current.getSubscriptionById("nonexistent")
 			).rejects.toThrow(errorMessage);
 
 			// エラー状態の更新を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.error).toBe(errorMessage);
 			});
 		});
 	});
 
 	describe("refetch機能", () => {
-		it.skip("refetchが正常に動作する", async () => {
+		it("refetchが正常に動作する", async () => {
 			// 初回取得
 			mockFetchSubscriptions.mockResolvedValueOnce(mockSubscriptions);
 
@@ -562,7 +573,7 @@ describe("useSubscriptions", () => {
 	});
 
 	describe("カテゴリ依存の動作", () => {
-		it.skip("カテゴリが更新されると自動で再取得される", async () => {
+		it("カテゴリが更新されると自動で再取得される", async () => {
 			mockFetchSubscriptions.mockResolvedValue(mockSubscriptions);
 
 			const { result, rerender } = renderHook(
@@ -603,7 +614,7 @@ describe("useSubscriptions", () => {
 	});
 
 	describe("エッジケース", () => {
-		it.skip("複数の操作を並行して実行した場合", async () => {
+		it("複数の操作を並行して実行した場合", async () => {
 			mockFetchSubscriptions.mockResolvedValue(mockSubscriptions);
 
 			const { result } = renderHook(() => useSubscriptions(mockCategories));
