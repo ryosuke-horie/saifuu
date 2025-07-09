@@ -5,6 +5,7 @@
  * フェッチAPIをベースとしたモダンなクライアント実装
  */
 
+import { withApiLogging } from "../logger/api-integration";
 import { apiConfig, buildUrl } from "./config";
 import {
 	ApiError,
@@ -364,8 +365,10 @@ class ApiClient {
 
 /**
  * APIクライアントのシングルトンインスタンス
+ * ロガー機能を統合したAPIクライアント
  */
-export const apiClient = new ApiClient();
+const baseApiClient = new ApiClient();
+export const apiClient = withApiLogging(baseApiClient);
 
 /**
  * デフォルトエクスポート（compat用）

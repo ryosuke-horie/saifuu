@@ -34,8 +34,7 @@ describe("API統合とrequestId相関", () => {
 	});
 
 	describe("requestId自動生成・ヘッダー追加", () => {
-		it.skip("APIリクエスト時にrequestIdが自動生成されてヘッダーに追加される", async () => {
-			// このテストは現在実装されていないため失敗します
+		it("APIリクエスト時にrequestIdが自動生成されてヘッダーに追加される", async () => {
 			const mockFetch = vi.spyOn(global, "fetch").mockResolvedValue({
 				ok: true,
 				json: vi.fn().mockResolvedValue({ data: "test" }),
@@ -63,8 +62,7 @@ describe("API統合とrequestId相関", () => {
 			}
 		});
 
-		it.skip("同じリクエストでrequestIdが一貫している", async () => {
-			// このテストは現在実装されていないため失敗します
+		it("同じリクエストでrequestIdが一貫している", async () => {
 			const mockFetch = vi.spyOn(global, "fetch").mockResolvedValue({
 				ok: true,
 				json: vi.fn().mockResolvedValue({ data: "test" }),
@@ -94,8 +92,7 @@ describe("API統合とrequestId相関", () => {
 	});
 
 	describe("API応答時間計測", () => {
-		it.skip("APIコール開始・終了時刻が記録される", async () => {
-			// このテストは現在実装されていないため失敗します
+		it("APIコール開始・終了時刻が記録される", async () => {
 			const mockFetch = vi.spyOn(global, "fetch").mockImplementation(
 				() =>
 					new Promise((resolve) =>
@@ -169,21 +166,30 @@ describe("API統合とrequestId相関", () => {
 	});
 
 	describe("フロントエンド・バックエンド相関", () => {
-		it.skip("requestIdがフロントエンドとバックエンドで一致する", async () => {
-			// このテストは現在実装されていないため失敗します
-			const mockFetch = vi.spyOn(global, "fetch").mockResolvedValue({
-				ok: true,
-				json: vi.fn().mockResolvedValue({ data: "test" }),
-				text: vi.fn().mockResolvedValue("test response"),
-				headers: {
-					get: vi.fn().mockImplementation((key: string) => {
-						if (key === "X-Request-ID") return "test-correlation-id";
-						if (key === "Content-Type") return "application/json";
-						return null;
-					}),
-				},
-				status: 200,
-			} as unknown as Response);
+		it("requestIdがフロントエンドとバックエンドで一致する", async () => {
+			let capturedRequestId: string | undefined;
+
+			const mockFetch = vi
+				.spyOn(global, "fetch")
+				.mockImplementation(async (_url, options) => {
+					// リクエストヘッダーからrequestIdを取得
+					const headers = options?.headers as Record<string, string>;
+					capturedRequestId = headers["X-Request-ID"];
+
+					return {
+						ok: true,
+						json: vi.fn().mockResolvedValue({ data: "test" }),
+						text: vi.fn().mockResolvedValue("test response"),
+						headers: {
+							get: vi.fn().mockImplementation((key: string) => {
+								if (key === "X-Request-ID") return capturedRequestId;
+								if (key === "Content-Type") return "application/json";
+								return null;
+							}),
+						},
+						status: 200,
+					} as unknown as Response;
+				});
 
 			try {
 				await apiClient.get("/test");
@@ -195,7 +201,9 @@ describe("API統合とrequestId相関", () => {
 				>;
 				const sentRequestId = requestHeaders["X-Request-ID"];
 
-				expect(sentRequestId).toBe("test-correlation-id");
+				expect(sentRequestId).toBeDefined();
+				expect(sentRequestId).toBe(capturedRequestId);
+				expect(sentRequestId).toMatch(/^[0-9a-f-]{36}$/); // UUID形式の確認
 			} finally {
 				mockFetch.mockRestore();
 			}
