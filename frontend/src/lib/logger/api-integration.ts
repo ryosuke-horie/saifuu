@@ -196,18 +196,46 @@ export function getErrorPerformance(error: Error): {
  * 既存のAPIクライアントと統合するためのラッパー
  * フェッチベースのAPIクライアントに対してロガー機能を追加
  */
-export function withApiLogging<
-	T extends { get: Function; post: Function; put: Function; delete: Function },
->(client: T): T {
-	// APIクライアントのメソッドをラップ
-	const originalGet = client.get.bind(client);
-	const originalPost = client.post.bind(client);
-	const originalPut = client.put.bind(client);
-	const originalDelete = client.delete.bind(client);
+export function withApiLogging<T extends Record<string, any>>(client: T): T {
+	// HTTPメソッドの存在確認
+	const hasGet = typeof client.get === "function";
+	const hasPost = typeof client.post === "function";
+	const hasPut = typeof client.put === "function";
+	const hasDelete = typeof client.delete === "function";
 
-	return {
-		...client,
-		get: async (endpoint: string, options?: any) => {
+	// 元のメソッドを保存（存在する場合のみ）
+	const originalGet = hasGet ? client.get.bind(client) : undefined;
+	const originalPost = hasPost ? client.post.bind(client) : undefined;
+	const originalPut = hasPut ? client.put.bind(client) : undefined;
+	const originalDelete = hasDelete ? client.delete.bind(client) : undefined;
+
+	// ラップされたクライアントを作成（プロトタイプチェーンも保持）
+	const wrappedClient = Object.create(Object.getPrototypeOf(client)) as T;
+
+	// 既存のプロパティとメソッドをすべてコピー
+	Object.keys(client).forEach((key) => {
+		const descriptor = Object.getOwnPropertyDescriptor(client, key);
+		if (descriptor) {
+			Object.defineProperty(wrappedClient, key, descriptor);
+		}
+	});
+
+	// 元のオブジェクトのプロトタイプメソッドもコピー
+	const proto = Object.getPrototypeOf(client);
+	if (proto && proto !== Object.prototype) {
+		Object.getOwnPropertyNames(proto).forEach((name) => {
+			if (
+				name !== "constructor" &&
+				typeof (client as any)[name] === "function"
+			) {
+				(wrappedClient as any)[name] = (client as any)[name].bind(client);
+			}
+		});
+	}
+
+	// GETメソッドのラップ（存在する場合のみ）
+	if (hasGet && originalGet) {
+		(wrappedClient as any).get = async (endpoint: string, options?: any) => {
 			const marker = createPerformanceMarker();
 			const requestId = generateRequestId();
 
@@ -242,8 +270,16 @@ export function withApiLogging<
 				});
 				throw error;
 			}
-		},
-		post: async (endpoint: string, body?: any, options?: any) => {
+		};
+	}
+
+	// POSTメソッドのラップ（存在する場合のみ）
+	if (hasPost && originalPost) {
+		(wrappedClient as any).post = async (
+			endpoint: string,
+			body?: any,
+			options?: any,
+		) => {
 			const marker = createPerformanceMarker();
 			const requestId = generateRequestId();
 
@@ -276,8 +312,16 @@ export function withApiLogging<
 				});
 				throw error;
 			}
-		},
-		put: async (endpoint: string, body?: any, options?: any) => {
+		};
+	}
+
+	// PUTメソッドのラップ（存在する場合のみ）
+	if (hasPut && originalPut) {
+		(wrappedClient as any).put = async (
+			endpoint: string,
+			body?: any,
+			options?: any,
+		) => {
 			const marker = createPerformanceMarker();
 			const requestId = generateRequestId();
 
@@ -310,8 +354,12 @@ export function withApiLogging<
 				});
 				throw error;
 			}
-		},
-		delete: async (endpoint: string, options?: any) => {
+		};
+	}
+
+	// DELETEメソッドのラップ（存在する場合のみ）
+	if (hasDelete && originalDelete) {
+		(wrappedClient as any).delete = async (endpoint: string, options?: any) => {
 			const marker = createPerformanceMarker();
 			const requestId = generateRequestId();
 
@@ -344,6 +392,8 @@ export function withApiLogging<
 				});
 				throw error;
 			}
-		},
-	};
+		};
+	}
+
+	return wrappedClient;
 }
