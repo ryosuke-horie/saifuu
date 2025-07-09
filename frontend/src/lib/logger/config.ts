@@ -129,7 +129,7 @@ export const detectEnvironment = (env?: EnvironmentVariables): Environment => {
 	}
 
 	// フォールバック（ブラウザ環境での判定）
-	if (typeof window !== "undefined") {
+	if (typeof window !== "undefined" && window.location?.hostname) {
 		// 開発環境の特徴を検出
 		if (
 			window.location.hostname === "localhost" ||
