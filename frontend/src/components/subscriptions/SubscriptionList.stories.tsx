@@ -80,7 +80,6 @@ type Story = StoryObj<typeof meta>;
  * 通常のサブスクリプション一覧表示
  */
 export const Default: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		chromatic: { viewports: [1200] },
 	},
@@ -96,7 +95,6 @@ export const Loading: Story = {
 		subscriptions: [],
 		isLoading: true,
 	},
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
@@ -119,7 +117,6 @@ export const ErrorState: Story = {
 		isLoading: false,
 		error: "サブスクリプションデータの取得に失敗しました",
 	},
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
@@ -142,7 +139,6 @@ export const Empty: Story = {
 		isLoading: false,
 		error: null,
 	},
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
@@ -207,7 +203,6 @@ export const ManyItems: Story = {
 			},
 		],
 	},
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
@@ -244,7 +239,6 @@ export const WithCustomClass: Story = {
  * モバイルデバイスでの表示確認
  */
 export const Mobile: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "mobile1",
@@ -265,7 +259,6 @@ export const Mobile: Story = {
  * タブレットデバイスでの表示確認
  */
 export const Tablet: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "tablet",
@@ -286,7 +279,6 @@ export const Tablet: Story = {
  * デスクトップでの表示確認
  */
 export const Desktop: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "desktop",

@@ -62,15 +62,9 @@ export const Default: Story = {
 		isOpen: true,
 		isSubmitting: false,
 	},
-	tags: ["visual-test"],
 	parameters: {
 		chromatic: {
 			delay: 300, // ダイアログアニメーション完了を待つ
-		},
-		vis: {
-			delay: 300,
-			description: "Dialog modal overlay with clean form layout",
-			viewports: ["mobile", "tablet", "desktop"],
 		},
 	},
 };
@@ -81,7 +75,6 @@ export const Submitting: Story = {
 		isOpen: true,
 		isSubmitting: true,
 	},
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
@@ -91,11 +84,6 @@ export const Submitting: Story = {
 		},
 		chromatic: {
 			delay: 300,
-		},
-		vis: {
-			delay: 300,
-			description: "Dialog with loading state and disabled form elements",
-			viewports: ["desktop"],
 		},
 	},
 };
@@ -230,18 +218,11 @@ export const ValidationError: Story = {
 		isOpen: true,
 		isSubmitting: false,
 	},
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story: "フォームバリデーションエラーの表示をテストします。",
 			},
-		},
-		vis: {
-			delay: 500,
-			description: "Dialog showing multiple validation errors",
-			viewports: ["mobile", "desktop"],
-			captureAfterInteraction: true,
 		},
 	},
 	play: async ({ canvasElement }) => {
@@ -266,7 +247,6 @@ export const MobileView: Story = {
 		isOpen: true,
 		isSubmitting: false,
 	},
-	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "mobile1",
@@ -280,11 +260,6 @@ export const MobileView: Story = {
 		chromatic: {
 			delay: 300,
 		},
-		vis: {
-			delay: 300,
-			description: "Mobile responsive dialog with optimized form layout",
-			viewports: ["mobile"],
-		},
 	},
 };
 
@@ -294,7 +269,6 @@ export const TabletView: Story = {
 		isOpen: true,
 		isSubmitting: false,
 	},
-	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "tablet",
@@ -307,11 +281,6 @@ export const TabletView: Story = {
 		chromatic: {
 			delay: 300,
 		},
-		vis: {
-			delay: 300,
-			description: "Tablet responsive dialog with intermediate layout",
-			viewports: ["tablet"],
-		},
 	},
 };
 
@@ -321,20 +290,11 @@ export const VisualTestAllViewports: Story = {
 		isOpen: true,
 		isSubmitting: false,
 	},
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story: "すべてのビューポートでのベースライン比較テスト",
 			},
-		},
-		vis: {
-			delay: 300,
-			description: "Comprehensive visual regression test across all viewports",
-			viewports: ["mobile", "tablet", "desktop"],
-			// 比較しきい値を厳密に設定
-			threshold: 0.05,
-			diffThreshold: 0.1,
 		},
 	},
 };
@@ -345,18 +305,11 @@ export const VisualTestComplexForm: Story = {
 		isOpen: true,
 		isSubmitting: false,
 	},
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story: "複雑なフォーム状態での視覚テスト",
 			},
-		},
-		vis: {
-			delay: 500,
-			description: "Dialog with complex form state including partial data",
-			viewports: ["desktop"],
-			captureAfterInteraction: true,
 		},
 	},
 	play: async ({ canvasElement }) => {
@@ -389,18 +342,11 @@ export const VisualTestErrorStates: Story = {
 		isOpen: true,
 		isSubmitting: false,
 	},
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story: "様々なエラー状態での視覚テスト",
 			},
-		},
-		vis: {
-			delay: 600,
-			description: "Dialog with comprehensive error state display",
-			viewports: ["mobile", "tablet", "desktop"],
-			captureAfterInteraction: true,
 		},
 	},
 	play: async ({ canvasElement }) => {

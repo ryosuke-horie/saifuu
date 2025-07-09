@@ -482,12 +482,8 @@ export const Desktop: Story = {
 					"デスクトップでの表示です。広い画面を活用した最適なレイアウトで表示されます。",
 			},
 		},
-		visualTest: {
-			description: "Desktop responsive form layout",
-			viewports: ["desktop"],
-		},
 	},
-	tags: ["autodocs", "visual-test"],
+	tags: ["autodocs"],
 };
 
 /**

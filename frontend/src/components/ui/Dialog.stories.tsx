@@ -156,7 +156,6 @@ export const Default: Story = {
 			</div>
 		),
 	},
-	tags: ["visual-test"],
 	parameters: {
 		chromatic: { delay: 300 }, // アニメーション完了を待つ
 	},
@@ -180,7 +179,6 @@ export const WithTitle: Story = {
 			</div>
 		),
 	},
-	tags: ["visual-test"],
 	parameters: {
 		chromatic: { delay: 300 }, // アニメーション完了を待つ
 	},
@@ -313,7 +311,6 @@ export const LongContent: Story = {
 			</div>
 		),
 	},
-	tags: ["visual-test"],
 	parameters: {
 		chromatic: {
 			delay: 300, // アニメーション完了を待つ
@@ -421,7 +418,6 @@ export const AlertDialog: Story = {
 			</div>
 		),
 	},
-	tags: ["visual-test"],
 	parameters: {
 		chromatic: { delay: 300 }, // アニメーション完了を待つ
 	},
@@ -535,7 +531,6 @@ export const Mobile: Story = {
 			</div>
 		),
 	},
-	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "mobile1",
@@ -564,7 +559,6 @@ export const Tablet: Story = {
 			</div>
 		),
 	},
-	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "ipad",
