@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout";
+import { LoggedErrorBoundary, NextjsLoggerProvider } from "@/lib/logger";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -101,13 +102,26 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+	// 環境に応じたロガー設定
+	const isProduction = process.env.NODE_ENV === "production";
+	const loggerConfig = {
+		level: isProduction ? ("warn" as const) : ("debug" as const),
+		enableConsole: !isProduction,
+		bufferSize: isProduction ? 100 : 10,
+		flushInterval: isProduction ? 10000 : 1000,
+	};
+
 	return (
 		<html lang="ja">
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
-				<Header />
-				{children}
+				<NextjsLoggerProvider config={loggerConfig}>
+					<LoggedErrorBoundary>
+						<Header />
+						{children}
+					</LoggedErrorBoundary>
+				</NextjsLoggerProvider>
 			</body>
 		</html>
 	);

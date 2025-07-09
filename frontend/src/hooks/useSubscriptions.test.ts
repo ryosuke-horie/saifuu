@@ -10,7 +10,7 @@
  * - エラーハンドリング
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	createSubscription,
@@ -209,8 +209,9 @@ describe("useSubscriptions", () => {
 			});
 
 			// 作成実行
-			const created =
-				await result.current.createSubscriptionMutation(mockFormData);
+			const created = await act(async () => {
+				return await result.current.createSubscriptionMutation(mockFormData);
+			});
 
 			expect(created).toEqual(newSubscription);
 
@@ -251,23 +252,34 @@ describe("useSubscriptions", () => {
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.loading).toBe(false);
 			});
 
-			// 作成実行（非同期）
+			// 初期状態では operationLoading は false
+			expect(result.current.operationLoading).toBe(false);
+
+			// 作成実行を同期的に開始
 			const createPromiseResult =
 				result.current.createSubscriptionMutation(mockFormData);
 
-			// ローディング状態の確認
+			// 非同期処理開始直後にローディング状態になることを確認
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.operationLoading).toBe(true);
 			});
 
 			// 作成完了
 			resolveCreate!(newSubscription);
-			await createPromiseResult;
 
+			// 作成完了を待機
+			await act(async () => {
+				await createPromiseResult;
+			});
+
+			// 最終的にローディング状態が解除される
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.operationLoading).toBe(false);
 			});
 		});
@@ -280,20 +292,26 @@ describe("useSubscriptions", () => {
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.loading).toBe(false);
 			});
+
+			// 初期状態では operationLoading は false
+			expect(result.current.operationLoading).toBe(false);
+			expect(result.current.error).toBeNull();
 
 			// 作成実行（エラーが発生することを期待）
 			await expect(
 				result.current.createSubscriptionMutation(mockFormData),
 			).rejects.toThrow(errorMessage);
 
-			// エラー状態の更新を待機（throw後でも非同期状態更新が完了するまで待機）
+			// エラー状態の更新を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.error).toBe(errorMessage);
+				expect(result.current.operationLoading).toBe(false);
 			});
 
-			expect(result.current.operationLoading).toBe(false);
 			expect(result.current.subscriptions).toHaveLength(
 				mockSubscriptions.length,
 			);
@@ -318,6 +336,7 @@ describe("useSubscriptions", () => {
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.loading).toBe(false);
 			});
 
@@ -349,6 +368,7 @@ describe("useSubscriptions", () => {
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.loading).toBe(false);
 			});
 
@@ -361,10 +381,10 @@ describe("useSubscriptions", () => {
 
 			// エラー状態の更新を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.error).toBe(errorMessage);
+				expect(result.current.operationLoading).toBe(false);
 			});
-
-			expect(result.current.operationLoading).toBe(false);
 		});
 	});
 
@@ -384,7 +404,9 @@ describe("useSubscriptions", () => {
 			});
 
 			// 削除実行
-			await result.current.deleteSubscriptionMutation("sub1");
+			await act(async () => {
+				await result.current.deleteSubscriptionMutation("sub1");
+			});
 
 			// 状態更新の完了を待機
 			await waitFor(() => {
@@ -407,6 +429,7 @@ describe("useSubscriptions", () => {
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.loading).toBe(false);
 			});
 
@@ -417,6 +440,7 @@ describe("useSubscriptions", () => {
 
 			// エラー状態の更新を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.error).toBe(errorMessage);
 			});
 
@@ -447,7 +471,9 @@ describe("useSubscriptions", () => {
 			});
 
 			// ステータス更新実行
-			const updated = await result.current.updateStatusMutation("sub1", false);
+			const updated = await act(async () => {
+				return await result.current.updateStatusMutation("sub1", false);
+			});
 
 			expect(updated).toEqual(updatedSubscription);
 
@@ -481,7 +507,9 @@ describe("useSubscriptions", () => {
 			});
 
 			// 個別取得実行
-			const fetched = await result.current.getSubscriptionById("sub1");
+			const fetched = await act(async () => {
+				return await result.current.getSubscriptionById("sub1");
+			});
 
 			expect(fetched).toEqual(targetSubscription);
 			expect(mockFetchSubscriptionById).toHaveBeenCalledWith(
@@ -498,6 +526,7 @@ describe("useSubscriptions", () => {
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.loading).toBe(false);
 			});
 
@@ -508,6 +537,7 @@ describe("useSubscriptions", () => {
 
 			// エラー状態の更新を待機
 			await waitFor(() => {
+				expect(result.current).not.toBeNull();
 				expect(result.current.error).toBe(errorMessage);
 			});
 		});
@@ -531,7 +561,9 @@ describe("useSubscriptions", () => {
 			mockFetchSubscriptions.mockResolvedValueOnce(updatedSubscriptions);
 
 			// refetch実行
-			await result.current.refetch();
+			await act(async () => {
+				await result.current.refetch();
+			});
 
 			await waitFor(() => {
 				expect(result.current.subscriptions).toEqual(updatedSubscriptions);
@@ -603,7 +635,9 @@ describe("useSubscriptions", () => {
 			mockDeleteSubscription.mockResolvedValue();
 
 			// 作成を先に実行
-			await result.current.createSubscriptionMutation(mockFormData);
+			await act(async () => {
+				await result.current.createSubscriptionMutation(mockFormData);
+			});
 
 			// 状態更新を待機
 			await waitFor(() => {
@@ -614,7 +648,9 @@ describe("useSubscriptions", () => {
 			});
 
 			// 次に削除を実行
-			await result.current.deleteSubscriptionMutation("sub2");
+			await act(async () => {
+				await result.current.deleteSubscriptionMutation("sub2");
+			});
 
 			// 最終状態の確認
 			await waitFor(() => {

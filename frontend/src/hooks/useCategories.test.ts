@@ -9,7 +9,7 @@
  * - エラーハンドリング
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchCategories } from "../lib/api/categories";
 import type { Category } from "../types/category";
@@ -168,7 +168,9 @@ describe("useCategories", () => {
 			mockFetchCategories.mockResolvedValueOnce(updatedCategories);
 
 			// refetch実行
-			await result.current.refetch();
+			await act(async () => {
+				await result.current.refetch();
+			});
 
 			await waitFor(() => {
 				expect(result.current.categories).toEqual(updatedCategories);
@@ -195,7 +197,9 @@ describe("useCategories", () => {
 			mockFetchCategories.mockReturnValueOnce(refetchPromise);
 
 			// refetchを実行（非同期）
-			result.current.refetch();
+			act(() => {
+				result.current.refetch();
+			});
 
 			// ローディング状態の確認
 			await waitFor(() => {
@@ -226,7 +230,9 @@ describe("useCategories", () => {
 			const errorMessage = "refetch時のエラー";
 			mockFetchCategories.mockRejectedValueOnce(new Error(errorMessage));
 
-			await result.current.refetch();
+			await act(async () => {
+				await result.current.refetch();
+			});
 
 			await waitFor(() => {
 				expect(result.current.error).toBe(errorMessage);
@@ -292,7 +298,9 @@ describe("useCategories", () => {
 
 			// refetch1を先に完了させる
 			resolveRefetch1!([mockCategories[0]]);
-			await promise1;
+			await act(async () => {
+				await promise1;
+			});
 
 			// 状態更新を確認
 			await waitFor(() => {
@@ -301,7 +309,9 @@ describe("useCategories", () => {
 
 			// refetch2を後で完了させる
 			resolveRefetch2!([mockCategories[1]]);
-			await promise2;
+			await act(async () => {
+				await promise2;
+			});
 
 			// 最後に完了したrefetchの結果が反映されること
 			await waitFor(() => {
@@ -313,8 +323,15 @@ describe("useCategories", () => {
 	});
 
 	describe("メモ化の確認", () => {
-		it("refetch関数は毎回新しいインスタンスが作成される", () => {
+		it("refetch関数は毎回新しいインスタンスが作成される", async () => {
+			mockFetchCategories.mockResolvedValue(mockCategories);
+
 			const { result, rerender } = renderHook(() => useCategories());
+
+			// 初期ローディング完了を待機
+			await waitFor(() => {
+				expect(result.current.loading).toBe(false);
+			});
 
 			const firstRefetch = result.current.refetch;
 
