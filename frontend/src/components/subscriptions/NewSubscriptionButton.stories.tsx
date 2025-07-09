@@ -71,15 +71,7 @@ type Story = StoryObj<typeof meta>;
  *
  * 通常の新規登録ボタン
  */
-export const Default: Story = {
-	tags: ["visual-test"],
-	parameters: {
-		vis: {
-			description: "Default button appearance with icon and text",
-			viewports: ["mobile", "tablet", "desktop"],
-		},
-	},
-};
+export const Default: Story = {};
 
 /**
  * 無効状態
@@ -90,17 +82,12 @@ export const Disabled: Story = {
 	args: {
 		disabled: true,
 	},
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story:
 					"ボタンが無効化されている状態です。透明度が下がり、クリックできなくなります。",
 			},
-		},
-		vis: {
-			description: "Disabled button state with reduced opacity",
-			viewports: ["mobile", "desktop"],
 		},
 	},
 };
@@ -135,7 +122,6 @@ export const WithCustomClass: Story = {
 	args: {
 		className: "w-full text-lg py-3",
 	},
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
@@ -145,10 +131,6 @@ export const WithCustomClass: Story = {
 		},
 		chromatic: {
 			delay: 100,
-		},
-		vis: {
-			description: "Button with custom styling - full width and larger text",
-			viewports: ["mobile", "tablet", "desktop"],
 		},
 	},
 };
@@ -175,18 +157,11 @@ export const Interactive: Story = {
 
 // Visual Testing: フォーカス状態
 export const FocusState: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story: "ボタンにフォーカスが当たった状態の視覚テスト",
 			},
-		},
-		vis: {
-			delay: 300,
-			description: "Button with keyboard focus ring",
-			viewports: ["desktop"],
-			captureAfterInteraction: true,
 		},
 	},
 	play: async ({ canvasElement }) => {
@@ -203,16 +178,11 @@ export const FocusState: Story = {
 
 // Visual Testing: ホバー状態のシミュレーション
 export const HoverState: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story: "ボタンのホバー状態をCSSで再現した視覚テスト",
 			},
-		},
-		vis: {
-			description: "Button hover state appearance",
-			viewports: ["desktop"],
 		},
 	},
 	args: {
@@ -222,16 +192,11 @@ export const HoverState: Story = {
 
 // Visual Testing: 異なるサイズバリエーション
 export const SizeVariations: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story: "ボタンの異なるサイズバリエーションの比較",
 			},
-		},
-		vis: {
-			description: "Multiple button size variations",
-			viewports: ["desktop"],
 		},
 		layout: "padded",
 	},
@@ -247,16 +212,11 @@ export const SizeVariations: Story = {
 
 // Visual Testing: 複数ボタンレイアウト
 export const MultipleButtons: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story: "複数ボタンが配置された際のレイアウト確認",
 			},
-		},
-		vis: {
-			description: "Multiple buttons layout and spacing",
-			viewports: ["mobile", "tablet", "desktop"],
 		},
 		layout: "padded",
 	},
@@ -271,7 +231,6 @@ export const MultipleButtons: Story = {
 
 // Visual Testing: モバイル特化テスト
 export const MobileOptimized: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "mobile1",
@@ -281,10 +240,6 @@ export const MobileOptimized: Story = {
 				story: "モバイル画面に最適化されたボタンの表示テスト",
 			},
 		},
-		vis: {
-			description: "Mobile-optimized button with touch-friendly size",
-			viewports: ["mobile"],
-		},
 	},
 	args: {
 		className: "w-full py-4 text-lg", // モバイルに最適化されたサイズ
@@ -293,16 +248,11 @@ export const MobileOptimized: Story = {
 
 // Visual Testing: アクセシビリティ確認
 export const AccessibilityDemo: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
 				story: "アクセシビリティ要素の視覚的確認",
 			},
-		},
-		vis: {
-			description: "Button with accessibility features highlighted",
-			viewports: ["desktop"],
 		},
 	},
 	render: () => (

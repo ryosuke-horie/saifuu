@@ -114,7 +114,6 @@ type Story = StoryObj<typeof meta>;
  * デフォルトのタイトル「Saifuu」が表示されます。
  */
 export const Default: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		chromatic: {
 			delay: 100, // ナビゲーションレンダリング完了を待つ
@@ -132,7 +131,6 @@ export const CustomTitle: Story = {
 	args: {
 		title: "家計管理アプリ",
 	},
-	tags: ["visual-test"],
 	parameters: {
 		docs: {
 			description: {
@@ -214,7 +212,6 @@ export const WithCustomClass: Story = {
  * レスポンシブデザインの動作を確認できます。
  */
 export const Mobile: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "mobile",
@@ -237,7 +234,6 @@ export const Mobile: Story = {
  * タブレット画面サイズでの表示確認用ストーリーです。
  */
 export const Tablet: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "tablet",
@@ -260,7 +256,6 @@ export const Tablet: Story = {
  * デスクトップ画面サイズでの表示確認用ストーリーです。
  */
 export const Desktop: Story = {
-	tags: ["visual-test"],
 	parameters: {
 		viewport: {
 			defaultViewport: "desktop",
