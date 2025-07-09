@@ -10,7 +10,7 @@
  * - エラーハンドリング
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	createSubscription,
@@ -209,8 +209,9 @@ describe("useSubscriptions", () => {
 			});
 
 			// 作成実行
-			const created =
-				await result.current.createSubscriptionMutation(mockFormData);
+			const created = await act(async () => {
+				return await result.current.createSubscriptionMutation(mockFormData);
+			});
 
 			expect(created).toEqual(newSubscription);
 
@@ -255,8 +256,9 @@ describe("useSubscriptions", () => {
 			});
 
 			// 作成実行（非同期）
-			const createPromiseResult =
-				result.current.createSubscriptionMutation(mockFormData);
+			const createPromiseResult = act(async () => {
+				return result.current.createSubscriptionMutation(mockFormData);
+			});
 
 			// ローディング状態の確認
 			await waitFor(() => {
@@ -285,7 +287,9 @@ describe("useSubscriptions", () => {
 
 			// 作成実行（エラーが発生することを期待）
 			await expect(
-				result.current.createSubscriptionMutation(mockFormData),
+				act(async () => {
+					return result.current.createSubscriptionMutation(mockFormData);
+				}),
 			).rejects.toThrow(errorMessage);
 
 			// エラー状態の更新を待機（throw後でも非同期状態更新が完了するまで待機）
@@ -322,10 +326,12 @@ describe("useSubscriptions", () => {
 			});
 
 			// 更新実行
-			const updated = await result.current.updateSubscriptionMutation(
-				"sub1",
-				updateData,
-			);
+			const updated = await act(async () => {
+				return await result.current.updateSubscriptionMutation(
+					"sub1",
+					updateData,
+				);
+			});
 
 			expect(updated).toEqual(updatedSubscription);
 
@@ -354,8 +360,10 @@ describe("useSubscriptions", () => {
 
 			// 更新実行（エラーが発生することを期待）
 			await expect(
-				result.current.updateSubscriptionMutation("sub1", {
-					name: "Updated",
+				act(async () => {
+					return result.current.updateSubscriptionMutation("sub1", {
+						name: "Updated",
+					});
 				}),
 			).rejects.toThrow(errorMessage);
 
@@ -384,7 +392,9 @@ describe("useSubscriptions", () => {
 			});
 
 			// 削除実行
-			await result.current.deleteSubscriptionMutation("sub1");
+			await act(async () => {
+				await result.current.deleteSubscriptionMutation("sub1");
+			});
 
 			// 状態更新の完了を待機
 			await waitFor(() => {
@@ -412,7 +422,9 @@ describe("useSubscriptions", () => {
 
 			// 削除実行（エラーが発生することを期待）
 			await expect(
-				result.current.deleteSubscriptionMutation("sub1"),
+				act(async () => {
+					return result.current.deleteSubscriptionMutation("sub1");
+				}),
 			).rejects.toThrow(errorMessage);
 
 			// エラー状態の更新を待機
@@ -447,7 +459,9 @@ describe("useSubscriptions", () => {
 			});
 
 			// ステータス更新実行
-			const updated = await result.current.updateStatusMutation("sub1", false);
+			const updated = await act(async () => {
+				return await result.current.updateStatusMutation("sub1", false);
+			});
 
 			expect(updated).toEqual(updatedSubscription);
 
@@ -481,7 +495,9 @@ describe("useSubscriptions", () => {
 			});
 
 			// 個別取得実行
-			const fetched = await result.current.getSubscriptionById("sub1");
+			const fetched = await act(async () => {
+				return await result.current.getSubscriptionById("sub1");
+			});
 
 			expect(fetched).toEqual(targetSubscription);
 			expect(mockFetchSubscriptionById).toHaveBeenCalledWith(
@@ -503,7 +519,9 @@ describe("useSubscriptions", () => {
 
 			// 個別取得実行（エラーが発生することを期待）
 			await expect(
-				result.current.getSubscriptionById("nonexistent"),
+				act(async () => {
+					return result.current.getSubscriptionById("nonexistent");
+				}),
 			).rejects.toThrow(errorMessage);
 
 			// エラー状態の更新を待機
@@ -531,7 +549,9 @@ describe("useSubscriptions", () => {
 			mockFetchSubscriptions.mockResolvedValueOnce(updatedSubscriptions);
 
 			// refetch実行
-			await result.current.refetch();
+			await act(async () => {
+				await result.current.refetch();
+			});
 
 			await waitFor(() => {
 				expect(result.current.subscriptions).toEqual(updatedSubscriptions);
@@ -603,7 +623,9 @@ describe("useSubscriptions", () => {
 			mockDeleteSubscription.mockResolvedValue();
 
 			// 作成を先に実行
-			await result.current.createSubscriptionMutation(mockFormData);
+			await act(async () => {
+				await result.current.createSubscriptionMutation(mockFormData);
+			});
 
 			// 状態更新を待機
 			await waitFor(() => {
@@ -614,7 +636,9 @@ describe("useSubscriptions", () => {
 			});
 
 			// 次に削除を実行
-			await result.current.deleteSubscriptionMutation("sub2");
+			await act(async () => {
+				await result.current.deleteSubscriptionMutation("sub2");
+			});
 
 			// 最終状態の確認
 			await waitFor(() => {

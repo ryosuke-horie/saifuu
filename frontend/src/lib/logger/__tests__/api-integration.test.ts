@@ -38,8 +38,12 @@ describe("API統合とrequestId相関", () => {
 			// このテストは現在実装されていないため失敗します
 			const mockFetch = vi.spyOn(global, "fetch").mockResolvedValue({
 				ok: true,
-				json: () => Promise.resolve({ data: "test" }),
-				headers: new Headers(),
+				json: vi.fn().mockResolvedValue({ data: "test" }),
+				text: vi.fn().mockResolvedValue("test response"),
+				headers: {
+					get: vi.fn().mockReturnValue("application/json"),
+				},
+				status: 200,
 			} as Response);
 
 			try {
@@ -63,8 +67,12 @@ describe("API統合とrequestId相関", () => {
 			// このテストは現在実装されていないため失敗します
 			const mockFetch = vi.spyOn(global, "fetch").mockResolvedValue({
 				ok: true,
-				json: () => Promise.resolve({ data: "test" }),
-				headers: new Headers(),
+				json: vi.fn().mockResolvedValue({ data: "test" }),
+				text: vi.fn().mockResolvedValue("test response"),
+				headers: {
+					get: vi.fn().mockReturnValue("application/json"),
+				},
+				status: 200,
 			} as Response);
 
 			try {
@@ -95,8 +103,12 @@ describe("API統合とrequestId相関", () => {
 							() =>
 								resolve({
 									ok: true,
-									json: () => Promise.resolve({ data: "test" }),
-									headers: new Headers(),
+									json: vi.fn().mockResolvedValue({ data: "test" }),
+									text: vi.fn().mockResolvedValue("test response"),
+									headers: {
+										get: vi.fn().mockReturnValue("application/json"),
+									},
+									status: 200,
 								} as Response),
 							100,
 						),
@@ -161,8 +173,16 @@ describe("API統合とrequestId相関", () => {
 			// このテストは現在実装されていないため失敗します
 			const mockFetch = vi.spyOn(global, "fetch").mockResolvedValue({
 				ok: true,
-				json: () => Promise.resolve({ data: "test" }),
-				headers: new Headers({ "X-Request-ID": "test-correlation-id" }),
+				json: vi.fn().mockResolvedValue({ data: "test" }),
+				text: vi.fn().mockResolvedValue("test response"),
+				headers: {
+					get: vi.fn().mockImplementation((key: string) => {
+						if (key === "X-Request-ID") return "test-correlation-id";
+						if (key === "Content-Type") return "application/json";
+						return null;
+					}),
+				},
+				status: 200,
 			} as Response);
 
 			try {
