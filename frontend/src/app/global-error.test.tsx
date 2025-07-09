@@ -4,7 +4,6 @@
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@/test-utils";
-import GlobalError from "./global-error";
 
 // テスト用のラッパーコンポーネント
 // html/bodyタグを除いた内部コンテンツのみをレンダリング
@@ -48,9 +47,7 @@ const TestableGlobalError = ({
 
 			{process.env.NODE_ENV === "development" && error.message && (
 				<div className="mt-6 p-4 bg-red-50 rounded-md text-left">
-					<p className="text-sm text-red-700 font-mono">
-						{error.message}
-					</p>
+					<p className="text-sm text-red-700 font-mono">{error.message}</p>
 					{error.digest && (
 						<p className="text-xs text-red-600 mt-2">
 							Error ID: {error.digest}
