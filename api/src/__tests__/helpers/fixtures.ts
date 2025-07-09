@@ -147,6 +147,42 @@ export const invalidSubscriptionData = {
 }
 
 /**
+ * 無効な取引データパターン（バリデーションテスト用）
+ */
+export const invalidTransactionData = {
+	missingAmount: {
+		type: 'expense' as const,
+		categoryId: 1,
+		description: '金額が不足',
+		date: new Date('2024-01-01').toISOString(),
+	},
+
+	negativeAmount: {
+		amount: -1000,
+		type: 'expense' as const,
+		categoryId: 1,
+		description: '負の金額',
+		date: new Date('2024-01-01').toISOString(),
+	},
+
+	invalidType: {
+		amount: 1000,
+		type: 'invalid' as unknown as 'expense',
+		categoryId: 1,
+		description: '無効な種別',
+		date: new Date('2024-01-01').toISOString(),
+	},
+
+	invalidDate: {
+		amount: 1000,
+		type: 'expense' as const,
+		categoryId: 1,
+		description: '無効な日付',
+		date: 'invalid-date',
+	},
+}
+
+/**
  * テスト用のHTTPリクエストペイロード
  */
 export const testRequestPayloads = {
@@ -158,4 +194,8 @@ export const testRequestPayloads = {
 	},
 	createCategory: testCategories.entertainment,
 	createTransaction: testTransactions.groceries,
+	updateTransaction: {
+		amount: 4000,
+		description: 'スーパーマーケット',
+	},
 }

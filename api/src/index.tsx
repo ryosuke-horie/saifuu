@@ -6,6 +6,7 @@ import { type LoggingVariables, loggingMiddleware, logWithContext } from './midd
 import { renderer } from './renderer'
 import categoriesRouter from './routes/categories'
 import subscriptionsRouter from './routes/subscriptions'
+import transactionsRouter from './routes/transactions'
 
 const app = new Hono<{
 	Bindings: Env
@@ -139,5 +140,6 @@ app.get('/api/health', async (c) => {
 // APIルートの設定
 app.route('/api/categories', categoriesRouter)
 app.route('/api/subscriptions', subscriptionsRouter)
+app.route('/api/transactions', transactionsRouter)
 
 export default app
