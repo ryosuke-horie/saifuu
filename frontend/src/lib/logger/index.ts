@@ -100,6 +100,49 @@ export const logger = {
 } as const;
 
 // =============================================================================
+// 統合機能のエクスポート（フェーズ3）
+// =============================================================================
+
+// API統合
+export {
+	createApiClientWithLogging,
+	createPerformanceMarker,
+	enhanceRequestWithLogging,
+	generateRequestId,
+	getErrorPerformance,
+	getResponsePerformance,
+	useApiLogger,
+	withApiLogging,
+} from "./api-integration";
+
+// Next.js統合
+export {
+	addRequestIdToResponse,
+	createMiddlewareRequestId,
+	getServerSideRequestId,
+	isNextjsEnvironment,
+	NextjsErrorBoundary,
+	NextjsLoggerProvider,
+	nextjsLoggerConfig,
+	useNextjsLogger,
+	withPageLogging,
+} from "./nextjs-integration";
+
+// Storybook統合
+export {
+	createStorybookConfig,
+	createStorybookLogger,
+	createStorybookPerformanceMonitor,
+	handleStorybookError,
+	isStorybookEnvironment,
+	logStorybookAction,
+	type StorybookLoggerConfig,
+	StorybookLoggerDecorator,
+	StorybookLoggerManager,
+	validateStorybookConfig,
+} from "./storybook-integration";
+
+// =============================================================================
 // デフォルトエクスポート
 // =============================================================================
 

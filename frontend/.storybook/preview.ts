@@ -1,11 +1,32 @@
 import type { Preview } from "@storybook/nextjs";
-import { initialize, mswLoader } from "msw-storybook-addon";
+import { mswLoader } from "msw-storybook-addon";
 import "../src/app/globals.css";
-
-// MSWを初期化
-initialize();
+import { createElement } from "react";
+import { LoggerProvider } from "../src/lib/logger";
 
 const preview: Preview = {
+	decorators: [
+		(_Story, context) => {
+			// Storybook環境変数を設定
+			process.env.STORYBOOK = "true";
+
+			// ストーリー固有の設定
+			const loggerConfig = {
+				level: "debug" as const,
+				enableConsole: true,
+				bufferSize: 10,
+				flushInterval: 1000,
+				component: context.title?.split("/").pop(),
+				storyName: `${context.title}/${context.name}`,
+			};
+
+			return createElement(
+				LoggerProvider,
+				{ config: loggerConfig },
+				createElement(_Story),
+			);
+		},
+	],
 	parameters: {
 		controls: {
 			matchers: {
