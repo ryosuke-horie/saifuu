@@ -4,6 +4,10 @@
  * React コンポーネントで使用するAPIフックを統一的にエクスポート
  */
 
+export type { UseApiQueryOptions, UseApiQueryResult } from "./useApiQuery";
+// 汎用APIクエリフック
+export { useApiQuery } from "./useApiQuery";
+
 // サブスクリプション関連フック
 export {
 	subscriptionHooks,
