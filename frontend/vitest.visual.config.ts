@@ -4,7 +4,9 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
 	plugins: [
-		react(),
+		react({
+			jsxRuntime: "automatic",
+		}),
 		// ビジュアルテスト用プラグイン
 		{
 			name: "storybook-addon-vis",
@@ -19,6 +21,7 @@ export default defineConfig({
 	define: {
 		"process.env": "import.meta.env",
 		global: "globalThis",
+		"process.env.ENABLE_VISUAL_TESTS": '"true"',
 	},
 	test: {
 		environment: "jsdom",
@@ -38,7 +41,9 @@ export default defineConfig({
 		testTimeout: 30000,
 		hookTimeout: 10000,
 		// ビジュアルテストファイルのみを対象とする
-		include: ["src/**/*.visual.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+		include: [
+			"src/**/*.visual.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+		],
 		exclude: ["tests/**", "node_modules/**", ".next/**"],
 	},
 });
