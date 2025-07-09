@@ -147,6 +147,91 @@ export const invalidSubscriptionData = {
 }
 
 /**
+ * 無効な取引データパターン（バリデーションテスト用）
+ */
+export const invalidTransactionData = {
+	missingAmount: {
+		type: 'expense' as const,
+		categoryId: 1,
+		description: 'Test transaction',
+		date: new Date('2024-01-01').toISOString(),
+	},
+
+	negativeAmount: {
+		amount: -1000,
+		type: 'expense' as const,
+		categoryId: 1,
+		description: 'Test transaction',
+		date: new Date('2024-01-01').toISOString(),
+	},
+
+	invalidType: {
+		amount: 1000,
+		type: 'invalid' as unknown as 'expense',
+		categoryId: 1,
+		description: 'Test transaction',
+		date: new Date('2024-01-01').toISOString(),
+	},
+
+	invalidDate: {
+		amount: 1000,
+		type: 'expense' as const,
+		categoryId: 1,
+		description: 'Test transaction',
+		date: 'invalid-date',
+	},
+
+	missingType: {
+		amount: 1000,
+		categoryId: 1,
+		description: 'Test transaction',
+		date: new Date('2024-01-01').toISOString(),
+	},
+
+	missingDate: {
+		amount: 1000,
+		type: 'expense' as const,
+		categoryId: 1,
+		description: 'Test transaction',
+	},
+}
+
+/**
+ * 追加のテスト用取引データ
+ */
+export const testTransactionData = {
+	expense: {
+		amount: 1500,
+		type: 'expense' as const,
+		categoryId: 1,
+		description: 'ランチ代',
+		date: new Date('2024-01-15').toISOString(),
+		createdAt: new Date('2024-01-15').toISOString(),
+		updatedAt: new Date('2024-01-15').toISOString(),
+	} satisfies NewTransaction,
+
+	income: {
+		amount: 50000,
+		type: 'income' as const,
+		categoryId: 3,
+		description: 'アルバイト代',
+		date: new Date('2024-01-20').toISOString(),
+		createdAt: new Date('2024-01-20').toISOString(),
+		updatedAt: new Date('2024-01-20').toISOString(),
+	} satisfies NewTransaction,
+
+	largeExpense: {
+		amount: 25000,
+		type: 'expense' as const,
+		categoryId: 2,
+		description: 'ソフトウェア購入',
+		date: new Date('2024-01-10').toISOString(),
+		createdAt: new Date('2024-01-10').toISOString(),
+		updatedAt: new Date('2024-01-10').toISOString(),
+	} satisfies NewTransaction,
+}
+
+/**
  * テスト用のHTTPリクエストペイロード
  */
 export const testRequestPayloads = {
@@ -158,4 +243,10 @@ export const testRequestPayloads = {
 	},
 	createCategory: testCategories.entertainment,
 	createTransaction: testTransactions.groceries,
+	updateTransaction: {
+		amount: 4000,
+		type: 'expense' as const,
+		description: 'ディナー代',
+		date: new Date('2024-01-16').toISOString(),
+	},
 }
