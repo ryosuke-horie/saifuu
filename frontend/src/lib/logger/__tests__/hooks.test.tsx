@@ -422,10 +422,10 @@ describe("パフォーマンス最適化", () => {
 
 		const { result, rerender } = renderHook(
 			({ deps }) => useLoggedCallback(callback, deps),
-			{ 
+			{
 				wrapper: createWrapper(),
-				initialProps: { deps: [1, 2, 3] }
-			}
+				initialProps: { deps: [1, 2, 3] },
+			},
 		);
 
 		const firstCallback = result.current;
@@ -433,8 +433,8 @@ describe("パフォーマンス最適化", () => {
 		// 依存配列が変わった場合は新しい関数インスタンス
 		rerender({ deps: [4, 5, 6] });
 		expect(result.current).not.toBe(firstCallback);
-		
+
 		// 基本的な機能は動作することを確認
-		expect(typeof result.current).toBe('function');
+		expect(typeof result.current).toBe("function");
 	});
 });
