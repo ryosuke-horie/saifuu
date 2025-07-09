@@ -129,12 +129,13 @@ export const detectEnvironment = (env?: EnvironmentVariables): Environment => {
 	}
 
 	// フォールバック（ブラウザ環境での判定）
-	if (typeof window !== "undefined" && window.location?.hostname) {
+	if (typeof window !== "undefined" && window.location?.hostname && typeof window.location.hostname === "string") {
+		const hostname = window.location.hostname;
 		// 開発環境の特徴を検出
 		if (
-			window.location.hostname === "localhost" ||
-			window.location.hostname === "127.0.0.1" ||
-			window.location.hostname.includes("dev")
+			hostname === "localhost" ||
+			hostname === "127.0.0.1" ||
+			hostname.includes("dev")
 		) {
 			return "development";
 		}
