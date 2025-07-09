@@ -14,6 +14,7 @@ import type {
 	SubscriptionStatsResponse,
 	UpdateSubscriptionRequest,
 } from "../types";
+import { useApiQuery } from "./useApiQuery";
 
 /**
  * ローディング状態とエラー状態を管理する基本型
@@ -21,13 +22,6 @@ import type {
 interface BaseState {
 	isLoading: boolean;
 	error: string | null;
-}
-
-/**
- * サブスクリプション一覧用の状態型
- */
-interface SubscriptionsState extends BaseState {
-	subscriptions: Subscription[];
 }
 
 /**
@@ -46,41 +40,23 @@ interface SubscriptionStatsState extends BaseState {
 
 /**
  * サブスクリプション一覧を管理するフック
+ *
+ * useApiQueryを使用してコードの重複を解消し、
+ * 統一されたAPIクエリパターンを適用
  */
 export function useSubscriptions(query?: GetSubscriptionsQuery) {
-	const [state, setState] = useState<SubscriptionsState>({
-		subscriptions: [],
-		isLoading: true,
-		error: null,
+	const { data, isLoading, error, refetch } = useApiQuery({
+		queryFn: () => subscriptionService.getSubscriptions(query),
+		initialData: [] as Subscription[],
+		errorContext: "サブスクリプション一覧取得",
+		deps: [query],
 	});
 
-	const fetchSubscriptions = useCallback(async () => {
-		setState((prev) => ({ ...prev, isLoading: true, error: null }));
-
-		try {
-			const subscriptions = await subscriptionService.getSubscriptions(query);
-			setState({
-				subscriptions,
-				isLoading: false,
-				error: null,
-			});
-		} catch (error) {
-			const apiError = handleApiError(error, "サブスクリプション一覧取得");
-			setState((prev) => ({
-				...prev,
-				isLoading: false,
-				error: apiError.message,
-			}));
-		}
-	}, [query]);
-
-	useEffect(() => {
-		fetchSubscriptions();
-	}, [fetchSubscriptions]);
-
 	return {
-		...state,
-		refetch: fetchSubscriptions,
+		subscriptions: data,
+		isLoading,
+		error,
+		refetch,
 	};
 }
 

@@ -9,6 +9,7 @@
  * - 統一された戻り値形式
  */
 
+import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { handleApiError } from "../index";
 
@@ -27,6 +28,8 @@ export interface UseApiQueryOptions<TData> {
 	errorContext: string;
 	/** フェッチを実行するかどうか（デフォルト: true） - falseの場合、自動フェッチをスキップ */
 	shouldFetch?: boolean;
+	/** 依存関係配列 - queryFnの依存関係を明示的に指定 */
+	deps?: React.DependencyList;
 }
 
 /**
@@ -63,10 +66,10 @@ export interface UseApiQueryResult<TData> {
  * 【使用例】
  * ```typescript
  * const { data, isLoading, error, refetch } = useApiQuery({
- *   queryFn: () => subscriptionService.getSubscriptions(),
+ *   queryFn: () => subscriptionService.getSubscriptions(query),
  *   initialData: [],
  *   errorContext: "サブスクリプション一覧取得",
- *   shouldFetch: true
+ *   deps: [query] // queryパラメータの変更を追跡
  * });
  * ```
  *
@@ -79,6 +82,7 @@ export function useApiQuery<TData>({
 	initialData,
 	errorContext,
 	shouldFetch = true,
+	deps = [],
 }: UseApiQueryOptions<TData>): UseApiQueryResult<TData> {
 	// 共通のstate管理
 	// 既存フックと同じ状態管理パターンを踏襲
@@ -87,8 +91,8 @@ export function useApiQuery<TData>({
 	const [error, setError] = useState<string | null>(null);
 
 	// 共通のfetch処理
-	// queryFnとerrorContextが変更されたときのみ再作成される
-	// パフォーマンス最適化のため、依存関係を最小限に抑制
+	// queryFn、errorContext、およびカスタム依存関係が変更されたときのみ再作成される
+	// queryパラメータなどの外部依存関係も適切に追跡する
 	const fetchData = useCallback(async () => {
 		// ローディング開始とエラーリセット
 		setIsLoading(true);
@@ -108,7 +112,7 @@ export function useApiQuery<TData>({
 			// 成功・失敗に関わらずローディング状態を解除
 			setIsLoading(false);
 		}
-	}, [queryFn, errorContext]);
+	}, [queryFn, errorContext, ...deps]);
 
 	// refetch関数
 	// 手動でデータ再取得を行う際に使用
