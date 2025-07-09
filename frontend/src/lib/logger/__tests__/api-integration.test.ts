@@ -44,7 +44,7 @@ describe("API統合とrequestId相関", () => {
 					get: vi.fn().mockReturnValue("application/json"),
 				},
 				status: 200,
-			} as Response);
+			} as unknown as Response);
 
 			try {
 				await apiClient.get("/test");
@@ -73,7 +73,7 @@ describe("API統合とrequestId相関", () => {
 					get: vi.fn().mockReturnValue("application/json"),
 				},
 				status: 200,
-			} as Response);
+			} as unknown as Response);
 
 			try {
 				await apiClient.get("/test");
@@ -109,7 +109,7 @@ describe("API統合とrequestId相関", () => {
 										get: vi.fn().mockReturnValue("application/json"),
 									},
 									status: 200,
-								} as Response),
+								} as unknown as Response),
 							100,
 						),
 					),
@@ -183,7 +183,7 @@ describe("API統合とrequestId相関", () => {
 					}),
 				},
 				status: 200,
-			} as Response);
+			} as unknown as Response);
 
 			try {
 				await apiClient.get("/test");
