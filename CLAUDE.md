@@ -138,6 +138,28 @@ docs/
 - **更新**: ドキュメントは実装と同時に更新し、常に最新状態を保つ
 - **禁止事項**: `frontend/docs/`、`api/docs/`、`.storybook/`等の分散配置は行わない
 
+### 8. バックグラウンドプロセス管理（Ghost）
+
+**重要**: 開発サーバの起動などセッションを占有するプロセスは、`ghost` ツールを使用してバックグラウンドで実行すること
+
+- **使用場面**: 開発サーバーの起動やその他の長時間実行されるプロセスを実行する場合
+- **禁止事項**: `npm run dev &` のような形式でのバックグラウンド実行は使用しない
+- **基本的な使い方**:
+  ```bash
+  # 開発サーバーをバックグラウンドで起動
+  ghost run npm run dev
+  
+  # プロセスの一覧確認
+  ghost list
+  
+  # ログの確認
+  ghost log <task-id>
+  
+  # プロセスの停止
+  ghost stop <task-id>
+  ```
+- **詳細な使い方**: [Ghostツール使用ガイド](./docs/tools/ghost使用ガイド.md)を参照
+
 ## 開発環境セットアップ
 
 ### 1. 前提条件
@@ -162,8 +184,10 @@ node --version
 ## スクリプト
 
 ```bash
-# 開発サーバー起動(あなた(=Claude)は開発サーバーの起動を行うと他の作業ができなくなるため、ユーザー(=開発者)に別セッションでの起動を依頼すること。)
-npm run  dev
+# 開発サーバー起動
+# 重要: バックグラウンドで実行する場合は必ずghostを使用すること
+ghost run npm run dev
+# または、ユーザーに別セッションでの起動を依頼
 
 # 型チェックとリント修正
 npm run check:fix
@@ -171,8 +195,8 @@ npm run check:fix
 # ビルド
 npm run build
 
-# Storybook起動
-npm run storybook
+# Storybook起動（バックグラウンド実行の場合）
+ghost run npm run storybook
 
 # Storybookビルド
 npm run build-storybook
@@ -192,6 +216,12 @@ npm run test:unit
 # デプロイ（Cloudflare Workers）
 # 注意: Workers Build自動化との競合を避けるため、手動デプロイスクリプトは deploy:manual に変更されています
 npm run deploy:manual
+
+# Ghostプロセス管理
+ghost list                     # 実行中のプロセス一覧
+ghost log <task-id>           # ログ確認
+ghost stop <task-id>          # プロセス停止
+ghost cleanup --days 7        # 古いタスクのクリーンアップ
 ```
 
 ## プロジェクト構造
