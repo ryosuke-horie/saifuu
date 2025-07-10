@@ -81,6 +81,8 @@ git commit -m "fix: 収入一覧の表示バグを修正"
 git commit -m "chore: ESLintからBiomeに移行"
 ```
 
+**重要**: コミットメッセージは必ず1行（ワンライン）で記述する。詳細な説明が必要な場合はPRの説明欄に記載する。
+
 ### 4. 署名設定
 - コミット時の署名は必ず `ryosuke-horie` のみとする
 - Co-Authoredは設定しない

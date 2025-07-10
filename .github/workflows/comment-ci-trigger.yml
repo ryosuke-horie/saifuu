@@ -1,0 +1,114 @@
+name: Comment CI Trigger
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  check-and-trigger:
+    # PRコメントのみ処理
+    if: github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          
+      - name: Install dependencies and build
+        run: |
+          cd .github/scripts
+          npm ci
+          npm run build
+          
+      - name: Parse comment
+        id: parse
+        run: |
+          cd .github/scripts
+          PARSE_RESULT=$(node -e "
+            import('./dist/parse-ci-comment.js').then(({ parseCIComment }) => {
+              const result = parseCIComment('${{ github.event.comment.body }}');
+              console.log(JSON.stringify(result));
+            });
+          ")
+          echo "result=$PARSE_RESULT" >> $GITHUB_OUTPUT
+          
+      - name: Check if CI should be triggered
+        id: check
+        run: |
+          RESULT='${{ steps.parse.outputs.result }}'
+          IS_VALID=$(echo $RESULT | jq -r '.isValid')
+          if [ "$IS_VALID" = "true" ]; then
+            echo "should_trigger=true" >> $GITHUB_OUTPUT
+            TARGETS=$(echo $RESULT | jq -r '.targets | join(",")')
+            echo "targets=$TARGETS" >> $GITHUB_OUTPUT
+          else
+            echo "should_trigger=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Trigger CI workflows
+        if: steps.check.outputs.should_trigger == 'true'
+        uses: actions/github-script@v7
+        env:
+          TARGETS: ${{ steps.check.outputs.targets }}
+        with:
+          script: |
+            const targets = process.env.TARGETS.split(',');
+            const prNumber = context.issue.number;
+            
+            // PR情報を取得
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            
+            // 各ターゲットに対してワークフローをトリガー
+            const results = [];
+            for (const target of targets) {
+              try {
+                await github.rest.actions.createWorkflowDispatch({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  workflow_id: `${target}-ci.yml`,
+                  ref: pr.head.ref,
+                  inputs: {
+                    pr_number: prNumber.toString()
+                  }
+                });
+                results.push({ target, success: true });
+                console.log(`✅ ${target} CI triggered successfully`);
+              } catch (error) {
+                results.push({ target, success: false, error: error.message });
+                console.error(`❌ Failed to trigger ${target} CI: ${error.message}`);
+              }
+            }
+            
+            // フィードバックコメントを投稿
+            const successTargets = results
+              .filter(r => r.success)
+              .map(r => r.target);
+            
+            const failedTargets = results
+              .filter(r => !r.success)
+              .map(r => r.target);
+            
+            let commentBody = '';
+            if (successTargets.length > 0) {
+              commentBody += `### 🚀 CI実行を開始しました\n\n- ${successTargets.join('\n- ')}\n\n`;
+            }
+            if (failedTargets.length > 0) {
+              commentBody += `### ⚠️ CI実行に失敗しました\n\n- ${failedTargets.join('\n- ')}\n\n`;
+            }
+            commentBody += `実行者: @${{ github.event.comment.user.login }}`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: commentBody
+            });

@@ -1,10 +1,14 @@
 name: Frontend CI (Self-hosted)
 
 on:
-  pull_request:
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-ci.yml'
+  # PRコメントからの手動トリガー
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull Request number'
+        required: false
+        type: string
+  # mainブランチへのpushは引き続き自動実行
   push:
     branches:
       - main
