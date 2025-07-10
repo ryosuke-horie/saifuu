@@ -268,9 +268,7 @@ describe("useApiQuery", () => {
 
 			// refetch完了
 			resolveRefetch!([mockSingleData]);
-			await act(async () => {
-				await refetchCall;
-			});
+			await refetchCall;
 
 			// ローディング状態が解除されることを確認
 			await waitFor(() => {
@@ -509,9 +507,7 @@ describe("useApiQuery", () => {
 			const refetch1 = result.current.refetch();
 			const refetch2 = result.current.refetch();
 
-			await act(async () => {
-				await Promise.all([refetch1, refetch2]);
-			});
+			await Promise.all([refetch1, refetch2]);
 
 			await waitFor(() => {
 				expect(result.current.isLoading).toBe(false);

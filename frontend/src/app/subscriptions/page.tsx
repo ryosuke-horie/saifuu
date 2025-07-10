@@ -7,7 +7,6 @@ import {
 	NewSubscriptionDialog,
 	SubscriptionList,
 } from "../../components/subscriptions";
-import { useCategories } from "../../hooks/useCategories";
 import { useSubscriptions } from "../../hooks/useSubscriptions";
 import type { SubscriptionFormData } from "../../types/subscription";
 
@@ -31,15 +30,7 @@ import type { SubscriptionFormData } from "../../types/subscription";
  */
 
 const SubscriptionsPage: FC = () => {
-	// カテゴリデータの取得
-	const {
-		categories,
-		loading: categoriesLoading,
-		error: categoriesError,
-		refetch: refetchCategories,
-	} = useCategories();
-
-	// サブスクリプションデータの取得（カテゴリが必要）
+	// サブスクリプションデータの取得
 	const {
 		subscriptions,
 		loading: subscriptionsLoading,
@@ -47,7 +38,7 @@ const SubscriptionsPage: FC = () => {
 		operationLoading,
 		refetch: refetchSubscriptions,
 		createSubscriptionMutation,
-	} = useSubscriptions(categories);
+	} = useSubscriptions();
 
 	// ダイアログの状態管理
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -190,7 +181,7 @@ const SubscriptionsPage: FC = () => {
 				</div>
 
 				{/* エラーメッセージ表示 */}
-				{(categoriesError || subscriptionsError) && (
+				{subscriptionsError && (
 					<div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
 						<div className="flex">
 							<div className="flex-shrink-0">
@@ -201,15 +192,14 @@ const SubscriptionsPage: FC = () => {
 									データの読み込みに失敗しました
 								</h3>
 								<div className="mt-2 text-sm text-red-700">
-									<p>{categoriesError || subscriptionsError}</p>
+									<p>{subscriptionsError}</p>
 								</div>
 								<div className="mt-4">
 									<div className="flex space-x-3">
 										<button
 											type="button"
 											onClick={() => {
-												if (categoriesError) refetchCategories();
-												if (subscriptionsError) refetchSubscriptions();
+												refetchSubscriptions();
 											}}
 											className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200 transition-colors"
 										>
@@ -225,8 +215,8 @@ const SubscriptionsPage: FC = () => {
 				{/* サブスクリプション一覧 */}
 				<SubscriptionList
 					subscriptions={subscriptions}
-					isLoading={subscriptionsLoading || categoriesLoading}
-					error={subscriptionsError || categoriesError}
+					isLoading={subscriptionsLoading}
+					error={subscriptionsError}
 					onRefresh={refetchSubscriptions}
 				/>
 			</main>
@@ -237,7 +227,6 @@ const SubscriptionsPage: FC = () => {
 				onClose={handleCloseDialog}
 				onSubmit={handleSubmitNewSubscription}
 				isSubmitting={operationLoading}
-				categories={categories}
 			/>
 		</div>
 	);

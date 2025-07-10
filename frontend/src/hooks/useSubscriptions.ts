@@ -3,7 +3,8 @@
  * サブスクリプションのCRUD操作とローディング状態を管理
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { getCategoriesByType } from "../../../shared/config/categories";
 import {
 	createSubscription,
 	deleteSubscription,
@@ -41,12 +42,10 @@ interface UseSubscriptionsReturn extends UseSubscriptionsState {
 
 /**
  * サブスクリプションデータを管理するカスタムフック
- * @param categories - カテゴリ一覧（必須）
+ * グローバル設定のカテゴリを自動的に使用します
  * @returns サブスクリプション一覧とCRUD操作関数、ローディング状態、エラー状態
  */
-export function useSubscriptions(
-	categories: Category[],
-): UseSubscriptionsReturn {
+export function useSubscriptions(): UseSubscriptionsReturn {
 	const [state, setState] = useState<UseSubscriptionsState>({
 		subscriptions: [],
 		loading: true,
@@ -54,12 +53,22 @@ export function useSubscriptions(
 		operationLoading: false,
 	});
 
-	const loadSubscriptions = useCallback(async () => {
-		if (categories.length === 0) {
-			// カテゴリが読み込まれていない場合は待機
-			return;
-		}
+	// グローバル設定のカテゴリを取得してCategory型に変換
+	const categories = useMemo((): Category[] => {
+		const globalExpenseCategories = getCategoriesByType("expense");
+		// 固定の日付を使用して参照の一貫性を保つ
+		const fixedDate = "2024-01-01T00:00:00.000Z";
+		return globalExpenseCategories.map((config) => ({
+			id: config.id,
+			name: config.name,
+			type: config.type,
+			color: config.color,
+			createdAt: fixedDate,
+			updatedAt: fixedDate,
+		}));
+	}, []);
 
+	const loadSubscriptions = useCallback(async () => {
 		try {
 			setState((prev) => ({ ...prev, loading: true, error: null }));
 			const subscriptions = await fetchSubscriptions(categories);

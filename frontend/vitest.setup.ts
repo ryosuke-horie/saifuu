@@ -1,5 +1,9 @@
 import "@testing-library/jest-dom";
 
+// React Testing Library の act をVitest環境で利用可能にする
+// 参考: https://github.com/testing-library/react-testing-library/issues/1061
+(global as any).IS_REACT_ACT_ENVIRONMENT = true;
+
 // アラート関数をモック化（vitest globalsを使用）
 Object.defineProperty(window, "alert", {
 	writable: true,

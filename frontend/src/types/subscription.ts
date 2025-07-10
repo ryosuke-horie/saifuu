@@ -209,6 +209,7 @@ export interface NewSubscriptionDialogProps {
 
 	/**
 	 * カテゴリ一覧（フォームで選択肢として表示）
+	 * 省略時はグローバル設定のカテゴリを使用
 	 */
-	categories: Category[];
+	categories?: Category[];
 }

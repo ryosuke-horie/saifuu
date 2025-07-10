@@ -18,10 +18,6 @@ import SubscriptionsPage from "./page";
  */
 
 // モックの設定
-vi.mock("../../hooks/useCategories", () => ({
-	useCategories: vi.fn(),
-}));
-
 vi.mock("../../hooks/useSubscriptions", () => ({
 	useSubscriptions: vi.fn(),
 }));
@@ -58,13 +54,6 @@ vi.mock("../../components/subscriptions", () => ({
 
 describe("SubscriptionsPage", () => {
 	// デフォルトのモック値
-	const defaultCategoriesHook = {
-		categories: mockCategories,
-		loading: false,
-		error: null,
-		refetch: vi.fn(),
-	};
-
 	const defaultSubscriptionsHook = {
 		subscriptions: mockSubscriptions,
 		loading: false,
@@ -83,10 +72,8 @@ describe("SubscriptionsPage", () => {
 		vi.clearAllMocks();
 
 		// デフォルトのモック実装を設定
-		const { useCategories } = await import("../../hooks/useCategories");
 		const { useSubscriptions } = await import("../../hooks/useSubscriptions");
 
-		vi.mocked(useCategories).mockReturnValue(defaultCategoriesHook);
 		vi.mocked(useSubscriptions).mockReturnValue(defaultSubscriptionsHook);
 	});
 
@@ -324,21 +311,16 @@ describe("SubscriptionsPage", () => {
 			consoleSpy.mockRestore();
 		});
 
-		it("カテゴリデータがサブスクリプションフックに正しく渡されること", async () => {
+		it("サブスクリプションフックがパラメータなしで呼び出されること（グローバルカテゴリ使用）", async () => {
 			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
 
 			render(<SubscriptionsPage />);
 
-			expect(useSubscriptions).toHaveBeenCalledWith(mockCategories);
+			expect(useSubscriptions).toHaveBeenCalledWith();
 		});
 
-		it("ローディング状態が両方のフックから正しく伝播されること", async () => {
-			const { useCategories } = await import("../../hooks/useCategories");
+		it("サブスクリプションフックのローディング状態が正しく伝播されること", async () => {
 			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
-			vi.mocked(useCategories).mockReturnValue({
-				...defaultCategoriesHook,
-				loading: true,
-			});
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
 				loading: true,
@@ -446,24 +428,6 @@ describe("SubscriptionsPage", () => {
 	});
 
 	describe("エラーハンドリング", () => {
-		it("カテゴリ取得エラーが表示されること", async () => {
-			const { useCategories } = await import("../../hooks/useCategories");
-			vi.mocked(useCategories).mockReturnValue({
-				...defaultCategoriesHook,
-				error: "カテゴリの取得に失敗しました",
-			});
-
-			render(<SubscriptionsPage />);
-
-			expect(
-				screen.getByText("データの読み込みに失敗しました"),
-			).toBeInTheDocument();
-			expect(
-				screen.getByText("カテゴリの取得に失敗しました"),
-			).toBeInTheDocument();
-			expect(screen.getByText("⚠️")).toBeInTheDocument();
-		});
-
 		it("サブスクリプション取得エラーが表示されること", async () => {
 			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
 			vi.mocked(useSubscriptions).mockReturnValue({
@@ -481,13 +445,8 @@ describe("SubscriptionsPage", () => {
 			).toBeInTheDocument();
 		});
 
-		it("両方のエラーが同時に発生した場合の表示", async () => {
-			const { useCategories } = await import("../../hooks/useCategories");
+		it("サブスクリプションエラーが発生した場合の表示", async () => {
 			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
-			vi.mocked(useCategories).mockReturnValue({
-				...defaultCategoriesHook,
-				error: "カテゴリエラー",
-			});
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
 				error: "サブスクリプションエラー",
@@ -495,7 +454,7 @@ describe("SubscriptionsPage", () => {
 
 			render(<SubscriptionsPage />);
 
-			// どちらかのエラーが表示される（実装上は最初のエラーが優先）
+			// エラーメッセージと再試行ボタンが表示される
 			expect(
 				screen.getByText("データの読み込みに失敗しました"),
 			).toBeInTheDocument();
@@ -503,15 +462,8 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("エラー時の再試行ボタンが正しく動作すること", async () => {
-			const mockRefetchCategories = vi.fn();
 			const mockRefetchSubscriptions = vi.fn();
-			const { useCategories } = await import("../../hooks/useCategories");
 			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
-			vi.mocked(useCategories).mockReturnValue({
-				...defaultCategoriesHook,
-				error: "カテゴリエラー",
-				refetch: mockRefetchCategories,
-			});
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
 				error: "サブスクリプションエラー",
@@ -523,7 +475,6 @@ describe("SubscriptionsPage", () => {
 			const retryButton = screen.getByText("再試行");
 			fireEvent.click(retryButton);
 
-			expect(mockRefetchCategories).toHaveBeenCalledTimes(1);
 			expect(mockRefetchSubscriptions).toHaveBeenCalledTimes(1);
 		});
 
@@ -575,9 +526,9 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("エラー時の再試行ボタンがクリック可能であること", async () => {
-			const { useCategories } = await import("../../hooks/useCategories");
-			vi.mocked(useCategories).mockReturnValue({
-				...defaultCategoriesHook,
+			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			vi.mocked(useSubscriptions).mockReturnValue({
+				...defaultSubscriptionsHook,
 				error: "エラー",
 			});
 
@@ -687,9 +638,9 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("エラー時の見出し構造が適切であること", async () => {
-			const { useCategories } = await import("../../hooks/useCategories");
-			vi.mocked(useCategories).mockReturnValue({
-				...defaultCategoriesHook,
+			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			vi.mocked(useSubscriptions).mockReturnValue({
+				...defaultSubscriptionsHook,
 				error: "エラー",
 			});
 
@@ -700,9 +651,9 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("ボタンに適切なラベルが設定されていること", async () => {
-			const { useCategories } = await import("../../hooks/useCategories");
-			vi.mocked(useCategories).mockReturnValue({
-				...defaultCategoriesHook,
+			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			vi.mocked(useSubscriptions).mockReturnValue({
+				...defaultSubscriptionsHook,
 				error: "エラー",
 			});
 

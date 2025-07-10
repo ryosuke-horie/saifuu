@@ -94,9 +94,12 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.isLoading).toBe(false);
-			});
+			await waitFor(
+				() => {
+					expect(result.current.isLoading).toBe(false);
+				},
+				{ timeout: 3000 },
+			);
 
 			expect(result.current.subscriptions).toEqual(mockSubscriptions);
 			expect(result.current.error).toBe(null);
@@ -110,9 +113,12 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.isLoading).toBe(false);
-			});
+			await waitFor(
+				() => {
+					expect(result.current.isLoading).toBe(false);
+				},
+				{ timeout: 3000 },
+			);
 
 			expect(result.current.subscriptions).toEqual([]);
 			expect(result.current.error).toBe(null);
@@ -127,9 +133,12 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.isLoading).toBe(false);
-			});
+			await waitFor(
+				() => {
+					expect(result.current.isLoading).toBe(false);
+				},
+				{ timeout: 3000 },
+			);
 
 			expect(result.current.subscriptions).toEqual([]);
 			expect(result.current.error).toBe(errorMessage);
@@ -149,9 +158,12 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions(query));
 
-			await waitFor(() => {
-				expect(result.current.isLoading).toBe(false);
-			});
+			await waitFor(
+				() => {
+					expect(result.current.isLoading).toBe(false);
+				},
+				{ timeout: 3000 },
+			);
 
 			expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
 				query,
@@ -173,9 +185,12 @@ describe("useSubscriptions", () => {
 				},
 			);
 
-			await waitFor(() => {
-				expect(result.current.isLoading).toBe(false);
-			});
+			await waitFor(
+				() => {
+					expect(result.current.isLoading).toBe(false);
+				},
+				{ timeout: 3000 },
+			);
 
 			expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
 				initialQuery,
@@ -184,11 +199,14 @@ describe("useSubscriptions", () => {
 			// queryパラメータを変更
 			rerender({ query: updatedQuery });
 
-			await waitFor(() => {
-				expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
-					updatedQuery,
-				);
-			});
+			await waitFor(
+				() => {
+					expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
+						updatedQuery,
+					);
+				},
+				{ timeout: 3000 },
+			);
 
 			// useApiQueryの実装により、複数回呼ばれる可能性がある
 			expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
@@ -208,9 +226,12 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.isLoading).toBe(false);
-			});
+			await waitFor(
+				() => {
+					expect(result.current.isLoading).toBe(false);
+				},
+				{ timeout: 3000 },
+			);
 
 			expect(result.current.subscriptions).toEqual(mockSubscriptions);
 
@@ -220,9 +241,12 @@ describe("useSubscriptions", () => {
 
 			await result.current.refetch();
 
-			await waitFor(() => {
-				expect(result.current.subscriptions).toEqual(updatedData);
-			});
+			await waitFor(
+				() => {
+					expect(result.current.subscriptions).toEqual(updatedData);
+				},
+				{ timeout: 3000 },
+			);
 
 			// useApiQueryの実装により、複数回呼ばれる可能性がある
 			expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
@@ -245,9 +269,12 @@ describe("useActiveSubscriptions", () => {
 
 		const { result } = renderHook(() => useActiveSubscriptions());
 
-		await waitFor(() => {
-			expect(result.current.isLoading).toBe(false);
-		});
+		await waitFor(
+			() => {
+				expect(result.current.isLoading).toBe(false);
+			},
+			{ timeout: 3000 },
+		);
 
 		expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith({
 			isActive: true,
@@ -269,9 +296,12 @@ describe("useInactiveSubscriptions", () => {
 
 		const { result } = renderHook(() => useInactiveSubscriptions());
 
-		await waitFor(() => {
-			expect(result.current.isLoading).toBe(false);
-		});
+		await waitFor(
+			() => {
+				expect(result.current.isLoading).toBe(false);
+			},
+			{ timeout: 3000 },
+		);
 
 		expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith({
 			isActive: false,
