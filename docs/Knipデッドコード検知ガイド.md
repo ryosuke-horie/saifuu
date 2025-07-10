@@ -51,6 +51,16 @@ npm run check:knip
 
 ## 設定詳細
 
+### 設定ファイル形式
+
+設定ファイルは `knip.jsonc` (JSON with Comments) 形式を使用しています：
+
+- **コメント対応**: 日本語コメントで設定の意図を明確に記載
+- **設定の理解性**: 各設定項目の役割と理由を説明
+- **メンテナンス性**: 将来の設定変更時の参考情報として活用
+
+> **注意**: 通常の `knip.json` はコメントを含めることができないため、`knip.jsonc` 形式を採用しています。
+
 ### エントリーポイント設定
 
 以下のファイルをエントリーポイントとして認識します：
@@ -145,7 +155,7 @@ lodash (package.json)
 
 ### 設定ファイルの場所
 
-- **設定ファイル**: `frontend/knip.json`
+- **設定ファイル**: `frontend/knip.jsonc`
 - **依存関係**: `frontend/package.json`
 - **このドキュメント**: `docs/Knipデッドコード検知ガイド.md`
 
@@ -155,7 +165,7 @@ lodash (package.json)
 
 #### 1. 必要なファイルが未使用として検出される
 
-**解決方法**: `knip.json`の`ignore`配列に追加
+**解決方法**: `knip.jsonc`の`ignore`配列に追加
 
 ```json
 {
@@ -167,7 +177,7 @@ lodash (package.json)
 
 #### 2. 必要な依存関係が未使用として検出される
 
-**解決方法**: `knip.json`の`ignoreDependencies`配列に追加
+**解決方法**: `knip.jsonc`の`ignoreDependencies`配列に追加
 
 ```json
 {
@@ -179,7 +189,7 @@ lodash (package.json)
 
 #### 3. 新しいNext.jsのファイル規則が認識されない
 
-**解決方法**: `knip.json`の`entry`配列にパターンを追加
+**解決方法**: `knip.jsonc`の`entry`配列にパターンを追加
 
 ```json
 {
