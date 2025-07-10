@@ -124,7 +124,7 @@ describe("useCategories", () => {
 			});
 
 			expect(result.current.categories).toEqual([]);
-			expect(result.current.error).toBe("カテゴリの取得に失敗しました");
+			expect(result.current.error).toBe("予期しないエラーが発生しました");
 		});
 
 		it("nullエラーの場合、デフォルトメッセージが設定される", async () => {
@@ -136,7 +136,7 @@ describe("useCategories", () => {
 				expect(result.current.loading).toBe(false);
 			});
 
-			expect(result.current.error).toBe("カテゴリの取得に失敗しました");
+			expect(result.current.error).toBe("予期しないエラーが発生しました");
 		});
 	});
 
@@ -235,7 +235,7 @@ describe("useCategories", () => {
 			});
 
 			await waitFor(() => {
-				expect(result.current.error).toBe(errorMessage);
+				expect(result.current.error).toBe("サーバーに接続できませんでした");
 				expect(result.current.loading).toBe(false);
 			});
 
@@ -323,7 +323,7 @@ describe("useCategories", () => {
 	});
 
 	describe("メモ化の確認", () => {
-		it("refetch関数は毎回新しいインスタンスが作成される", async () => {
+		it("refetch関数は同一インスタンスが維持される", async () => {
 			mockFetchCategories.mockResolvedValue(mockCategories);
 
 			const { result, rerender } = renderHook(() => useCategories());
@@ -340,9 +340,8 @@ describe("useCategories", () => {
 
 			const secondRefetch = result.current.refetch;
 
-			// refetch関数は実装上、毎回新しい関数インスタンスが作成される
-			// （loadCategoriesはuseCallbackでメモ化されているが、refetchはされていない）
-			expect(firstRefetch).not.toBe(secondRefetch);
+			// useApiQueryのrefetch関数はuseCallbackでメモ化されており、同一インスタンスが維持される
+			expect(firstRefetch).toBe(secondRefetch);
 			expect(typeof firstRefetch).toBe("function");
 			expect(typeof secondRefetch).toBe("function");
 		});

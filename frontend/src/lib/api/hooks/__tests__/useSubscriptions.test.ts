@@ -13,10 +13,16 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../errors";
 import { handleApiError, subscriptionService } from "../../index";
-import type { GetSubscriptionsQuery, Subscription } from "../../types";
+import type {
+	GetSubscriptionsQuery,
+	Subscription,
+	SubscriptionStatsResponse,
+} from "../../types";
 import {
 	useActiveSubscriptions,
 	useInactiveSubscriptions,
+	useSubscription,
+	useSubscriptionStats,
 	useSubscriptions,
 } from "../useSubscriptions";
 
@@ -24,6 +30,8 @@ import {
 vi.mock("../../index", () => ({
 	subscriptionService: {
 		getSubscriptions: vi.fn(),
+		getSubscription: vi.fn(),
+		getSubscriptionStats: vi.fn(),
 	},
 	handleApiError: vi.fn(),
 }));
@@ -269,5 +277,108 @@ describe("useInactiveSubscriptions", () => {
 			isActive: false,
 		});
 		expect(result.current.subscriptions).toEqual(inactiveSubscriptions);
+	});
+});
+
+// useApiQueryを使用したuseSubscriptionとuseSubscriptionStatsのテスト
+describe("useSubscription (useApiQuery対応)", () => {
+	const mockSubscription: Subscription = {
+		id: "1",
+		name: "Netflix",
+		amount: 1200,
+		billingCycle: "monthly",
+		nextBillingDate: "2024-02-01",
+		description: "ストリーミングサービス",
+		isActive: true,
+		category: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z",
+	};
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("useApiQueryベースの実装でサブスクリプション詳細を取得する", async () => {
+		mockSubscriptionService.getSubscription.mockResolvedValue(mockSubscription);
+
+		const { result } = renderHook(() => useSubscription("1"));
+
+		// 初期状態の検証
+		expect(result.current.subscription).toBeNull();
+		expect(result.current.isLoading).toBe(true);
+		expect(result.current.error).toBeNull();
+
+		// データ取得完了を待機
+		await waitFor(() => {
+			expect(result.current.isLoading).toBe(false);
+		});
+
+		// 結果の検証
+		expect(result.current.subscription).toEqual(mockSubscription);
+		expect(result.current.error).toBeNull();
+		expect(mockSubscriptionService.getSubscription).toHaveBeenCalledWith("1");
+	});
+
+	it("idがnullの場合、フェッチを実行しない", () => {
+		const { result } = renderHook(() => useSubscription(null));
+
+		// 初期状態の検証
+		expect(result.current.subscription).toBeNull();
+		expect(result.current.isLoading).toBe(false);
+		expect(result.current.error).toBeNull();
+		expect(mockSubscriptionService.getSubscription).not.toHaveBeenCalled();
+	});
+});
+
+describe("useSubscriptionStats (useApiQuery対応)", () => {
+	const mockStats: SubscriptionStatsResponse = {
+		stats: {
+			totalActive: 3,
+			totalInactive: 1,
+			monthlyTotal: 5000,
+			yearlyTotal: 60000,
+			avgMonthlyAmount: 1666.67,
+			categoryBreakdown: [
+				{
+					categoryId: "1",
+					categoryName: "エンタメ",
+					count: 2,
+					totalAmount: 3000,
+				},
+				{
+					categoryId: "2",
+					categoryName: "ツール",
+					count: 1,
+					totalAmount: 2000,
+				},
+			],
+		},
+		upcomingBillings: [],
+	};
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("useApiQueryベースの実装で統計データを取得する", async () => {
+		mockSubscriptionService.getSubscriptionStats.mockResolvedValue(mockStats);
+
+		const { result } = renderHook(() => useSubscriptionStats());
+
+		// 初期状態の検証
+		expect(result.current.stats).toBeNull();
+		expect(result.current.isLoading).toBe(true);
+		expect(result.current.error).toBeNull();
+
+		// データ取得完了を待機
+		await waitFor(() => {
+			expect(result.current.isLoading).toBe(false);
+		});
+
+		// 結果の検証
+		expect(result.current.stats).toEqual(mockStats);
+		expect(result.current.error).toBeNull();
+		expect(mockSubscriptionService.getSubscriptionStats).toHaveBeenCalled();
 	});
 });
