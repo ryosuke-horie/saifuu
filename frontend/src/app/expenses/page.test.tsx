@@ -288,8 +288,9 @@ describe("ExpensesPage", () => {
 			const deleteButton = screen.getAllByText("削除")[0];
 			fireEvent.click(deleteButton);
 
-			// 確認ダイアログで削除を実行
-			const confirmButton = screen.getByText("削除", { selector: "button" });
+			// 確認ダイアログで削除を実行（削除ボタンが複数あるため、最後のものを選択）
+			const deleteButtons = screen.getAllByText("削除");
+			const confirmButton = deleteButtons[deleteButtons.length - 1];
 			fireEvent.click(confirmButton);
 
 			await waitFor(() => {
@@ -323,7 +324,11 @@ describe("ExpensesPage", () => {
 			});
 			render(<ExpensesPage />);
 
-			expect(screen.getByText("¥0")).toBeInTheDocument();
+			// 支出合計と収入合計の2つの¥0が表示される
+			const zeroValues = screen.getAllByText("¥0");
+			expect(zeroValues).toHaveLength(2);
+			// 収支バランスは+¥0と表示される
+			expect(screen.getByText("+¥0")).toBeInTheDocument();
 		});
 
 		it("収支がマイナスの場合は赤色で表示される", () => {
@@ -338,7 +343,7 @@ describe("ExpensesPage", () => {
 			});
 			render(<ExpensesPage />);
 
-			const balance = screen.getByText("-¥10,000");
+			const balance = screen.getByText("¥-10,000");
 			expect(balance.className).toContain("text-red-600");
 		});
 	});

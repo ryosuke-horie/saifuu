@@ -1,6 +1,6 @@
 "use client";
 
-import { type FC, useCallback, useMemo, useState } from "react";
+import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { getCategoriesByType } from "../../../../shared/config/categories";
 import type { Category } from "../../lib/api/types";
 import type {
@@ -35,6 +35,13 @@ export const NewExpenseDialog: FC<NewExpenseDialogProps> = ({
 }) => {
 	// フォームエラーの状態管理
 	const [formError, setFormError] = useState<string | null>(null);
+
+	// ダイアログが開かれた時にエラーをクリア
+	useEffect(() => {
+		if (isOpen) {
+			setFormError(null);
+		}
+	}, [isOpen]);
 
 	// グローバル設定またはpropsからカテゴリを取得
 	const effectiveCategories = useMemo((): Category[] => {
