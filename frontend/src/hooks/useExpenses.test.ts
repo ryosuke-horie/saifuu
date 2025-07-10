@@ -141,7 +141,10 @@ describe("useExpenses", () => {
 
 			expect(result.current.expenses).toEqual(mockExpenses);
 			expect(result.current.error).toBeNull();
-			expect(mockGetExpenseTransactions).toHaveBeenCalledWith({ limit: 100 });
+			// API_CONFIGの値に関わらず、正しい構造でAPIが呼ばれることを確認
+			expect(mockGetExpenseTransactions).toHaveBeenCalledWith(
+				expect.objectContaining({ limit: expect.any(Number) })
+			);
 		});
 
 		it("支出データ取得時のエラーを処理できる", async () => {

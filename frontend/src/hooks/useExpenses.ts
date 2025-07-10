@@ -16,6 +16,7 @@ import {
 import type { Transaction } from "../lib/api/types";
 import type { Category } from "../types/category";
 import { convertGlobalCategoriesToCategory } from "../utils/categories";
+import { API_CONFIG } from "../config/constants";
 
 interface UseExpensesState {
 	expenses: Transaction[];
@@ -68,7 +69,9 @@ export function useExpenses(): UseExpensesReturn {
 			setState((prev) => ({ ...prev, loading: true, error: null }));
 			// ページネーションなしで全件取得（当面の実装として）
 			// TODO: 将来的にページネーション対応を検討
-			const expenses = await getExpenseTransactions({ limit: 100 });
+			const expenses = await getExpenseTransactions({ 
+				limit: API_CONFIG.DEFAULT_TRANSACTION_LIMIT 
+			});
 			setState((prev) => ({ ...prev, expenses, loading: false }));
 		} catch (error) {
 			const errorMessage =
