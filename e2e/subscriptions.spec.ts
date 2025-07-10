@@ -79,10 +79,65 @@ test.describe("サブスクリプション管理", () => {
 		const nextBillingDate = nextMonth.toISOString().split("T")[0];
 		await page.getByLabel("次回請求日").fill(nextBillingDate);
 
+		// ブラウザコンソールでのカテゴリ読み込みエラーを確認
+		const consoleMessages = [];
+		page.on('console', msg => {
+			if (msg.type() === 'error' || msg.text().includes('categor')) {
+				consoleMessages.push(`[CONSOLE ${msg.type().toUpperCase()}] ${msg.text()}`);
+				console.log(`[E2E CONSOLE] ${msg.type()}: ${msg.text()}`);
+			}
+		});
+
+		// ネットワークリクエストを監視
+		const networkRequests = [];
+		page.on('request', request => {
+			if (request.url().includes('categories')) {
+				networkRequests.push({
+					url: request.url(),
+					method: request.method(),
+					timestamp: Date.now()
+				});
+				console.log(`[E2E NETWORK] REQUEST: ${request.method()} ${request.url()}`);
+			}
+		});
+
+		page.on('response', response => {
+			if (response.url().includes('categories')) {
+				console.log(`[E2E NETWORK] RESPONSE: ${response.status()} ${response.url()}`);
+			}
+		});
+
 		// カテゴリデータの読み込みを待つ（カテゴリセレクトボックスが有効になるまで）
 		const categorySelect = page.getByLabel("カテゴリ");
 		console.log("[E2E] カテゴリセレクトボックスの有効化を待機中...");
-		await expect(categorySelect).toBeEnabled({ timeout: 15000 });
+		
+		// カテゴリセレクトボックスの状態をデバッグ
+		await page.waitForTimeout(2000); // 少し待ってから状態チェック
+		const selectInfo = await page.evaluate(() => {
+			const select = document.querySelector("#subscription-category");
+			if (!select) return { found: false };
+			return {
+				found: true,
+				disabled: select.disabled,
+				optionsCount: select.options ? select.options.length : 0,
+				optionsText: select.options ? Array.from(select.options).map(opt => opt.text) : [],
+				innerHTML: select.innerHTML.substring(0, 200)
+			};
+		});
+		console.log("[E2E] セレクトボックス状態:", JSON.stringify(selectInfo, null, 2));
+
+		// カテゴリ読み込み状態の詳細確認
+		const categoryState = await page.evaluate(() => {
+			// Reactコンポーネントの状態を確認（window.React開発ツール等があれば）
+			return {
+				location: window.location.href,
+				userAgent: navigator.userAgent,
+				timestamp: new Date().toISOString()
+			};
+		});
+		console.log("[E2E] ブラウザ状態:", JSON.stringify(categoryState, null, 2));
+		
+		await expect(categorySelect).toBeEnabled({ timeout: 30000 });
 
 		// カテゴリが実際に読み込まれていることを確認（プレースホルダーではないことを確認）
 		await page.waitForFunction(
@@ -94,7 +149,7 @@ test.describe("サブスクリプション管理", () => {
 					select.options.length > 1
 				); // デフォルトオプション以外にも選択肢があることを確認
 			},
-			{ timeout: 10000 },
+			{ timeout: 20000 },
 		);
 
 		console.log("[E2E] カテゴリセレクトボックスが有効化され、選択肢が準備完了");

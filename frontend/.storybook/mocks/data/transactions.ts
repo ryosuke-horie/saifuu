@@ -1,6 +1,6 @@
 /**
  * 取引データのモック
- * 
+ *
  * API Transaction型に準拠したモックデータ
  * ExpenseListコンポーネントのStorybookとテストで使用
  */
@@ -16,7 +16,7 @@ export const mockTransactions: Transaction[] = [
 		type: "expense",
 		description: "昼食代（コンビニ弁当）",
 		date: "2025-07-09",
-		category: mockCategories.find(cat => cat.name === "その他") || null,
+		category: mockCategories.find((cat) => cat.name === "その他") || null,
 		createdAt: "2025-07-09T12:30:00Z",
 		updatedAt: "2025-07-09T12:30:00Z",
 	},
@@ -26,7 +26,7 @@ export const mockTransactions: Transaction[] = [
 		type: "income",
 		description: "月次給与",
 		date: "2025-07-01",
-		category: mockCategories.find(cat => cat.name === "給与") || null,
+		category: mockCategories.find((cat) => cat.name === "給与") || null,
 		createdAt: "2025-07-01T09:00:00Z",
 		updatedAt: "2025-07-01T09:00:00Z",
 	},
@@ -36,7 +36,7 @@ export const mockTransactions: Transaction[] = [
 		type: "expense",
 		description: "電車代（通勤）",
 		date: "2025-07-08",
-		category: mockCategories.find(cat => cat.name === "その他") || null,
+		category: mockCategories.find((cat) => cat.name === "その他") || null,
 		createdAt: "2025-07-08T08:15:00Z",
 		updatedAt: "2025-07-08T08:15:00Z",
 	},
@@ -46,7 +46,8 @@ export const mockTransactions: Transaction[] = [
 		type: "expense",
 		description: "映画チケット",
 		date: "2025-07-07",
-		category: mockCategories.find(cat => cat.name === "エンターテイメント") || null,
+		category:
+			mockCategories.find((cat) => cat.name === "エンターテイメント") || null,
 		createdAt: "2025-07-07T19:30:00Z",
 		updatedAt: "2025-07-07T19:30:00Z",
 	},
@@ -56,7 +57,8 @@ export const mockTransactions: Transaction[] = [
 		type: "expense",
 		description: "書籍購入（技術書）",
 		date: "2025-07-05",
-		category: mockCategories.find(cat => cat.name === "仕事・ビジネス") || null,
+		category:
+			mockCategories.find((cat) => cat.name === "仕事・ビジネス") || null,
 		createdAt: "2025-07-05T14:20:00Z",
 		updatedAt: "2025-07-05T14:20:00Z",
 	},

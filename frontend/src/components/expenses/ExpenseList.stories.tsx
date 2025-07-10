@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
-import type { Transaction } from "../../lib/api/types";
 import { mockTransactions } from "../../../.storybook/mocks/data/transactions";
+import type { Transaction } from "../../lib/api/types";
 import { ExpenseList } from "./ExpenseList";
 
 /**
@@ -193,12 +193,13 @@ export const SingleItem: Story = {
  */
 export const IncomeOnly: Story = {
 	args: {
-		transactions: mockTransactions.filter(txn => txn.type === "income"),
+		transactions: mockTransactions.filter((txn) => txn.type === "income"),
 	},
 	parameters: {
 		docs: {
 			description: {
-				story: "収入取引のみが表示されている状態です。金額が緑色で+表示されます。",
+				story:
+					"収入取引のみが表示されている状態です。金額が緑色で+表示されます。",
 			},
 		},
 	},
@@ -211,12 +212,13 @@ export const IncomeOnly: Story = {
  */
 export const ExpenseOnly: Story = {
 	args: {
-		transactions: mockTransactions.filter(txn => txn.type === "expense"),
+		transactions: mockTransactions.filter((txn) => txn.type === "expense"),
 	},
 	parameters: {
 		docs: {
 			description: {
-				story: "支出取引のみが表示されている状態です。金額が赤色で-表示されます。",
+				story:
+					"支出取引のみが表示されている状態です。金額が赤色で-表示されます。",
 			},
 		},
 	},
@@ -295,17 +297,17 @@ export const WithInteractions: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		
+
 		// 更新ボタンのクリックテスト
 		const refreshButton = canvas.getByText("更新");
 		await userEvent.click(refreshButton);
-		
+
 		// 編集ボタンのクリックテスト
 		const editButtons = canvas.getAllByText("編集");
 		if (editButtons.length > 0) {
 			await userEvent.click(editButtons[0]);
 		}
-		
+
 		// 削除ボタンのクリックテスト
 		const deleteButtons = canvas.getAllByText("削除");
 		if (deleteButtons.length > 0) {
@@ -409,15 +411,15 @@ export const AccessibilityTest: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		
+
 		// テーブル要素の確認
 		const table = canvas.getByRole("table");
 		expect(table).toBeInTheDocument();
-		
+
 		// ヘッダー要素の確認
 		const columnHeaders = canvas.getAllByRole("columnheader");
 		expect(columnHeaders).toHaveLength(5);
-		
+
 		// ボタン要素の確認
 		const buttons = canvas.getAllByRole("button");
 		expect(buttons.length).toBeGreaterThan(0);

@@ -5,7 +5,7 @@
  * 簡単に使用できるカスタムフックを提供
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { handleApiError, subscriptionService } from "../index";
 import type {
 	CreateSubscriptionRequest,
@@ -18,24 +18,12 @@ import { useApiQuery } from "./useApiQuery";
 
 /**
  * ローディング状態とエラー状態を管理する基本型
+ *
+ * 作成・更新・削除操作などのミューテーション系フックで使用される
  */
 interface BaseState {
 	isLoading: boolean;
 	error: string | null;
-}
-
-/**
- * サブスクリプション詳細用の状態型
- */
-interface SubscriptionState extends BaseState {
-	subscription: Subscription | null;
-}
-
-/**
- * サブスクリプション統計用の状態型
- */
-interface SubscriptionStatsState extends BaseState {
-	stats: SubscriptionStatsResponse | null;
 }
 
 /**
@@ -62,50 +50,24 @@ export function useSubscriptions(query?: GetSubscriptionsQuery) {
 
 /**
  * サブスクリプション詳細を管理するフック
+ *
+ * useApiQueryを使用してコードの重複を解消し、
+ * 統一されたAPIクエリパターンを適用
  */
 export function useSubscription(id: string | null) {
-	const [state, setState] = useState<SubscriptionState>({
-		subscription: null,
-		isLoading: !!id,
-		error: null,
+	const { data, isLoading, error, refetch } = useApiQuery({
+		queryFn: () => subscriptionService.getSubscription(id!),
+		initialData: null as Subscription | null,
+		errorContext: "サブスクリプション詳細取得",
+		shouldFetch: !!id,
+		deps: [id],
 	});
 
-	const fetchSubscription = useCallback(async (subscriptionId: string) => {
-		setState((prev) => ({ ...prev, isLoading: true, error: null }));
-
-		try {
-			const subscription =
-				await subscriptionService.getSubscription(subscriptionId);
-			setState({
-				subscription,
-				isLoading: false,
-				error: null,
-			});
-		} catch (error) {
-			const apiError = handleApiError(error, "サブスクリプション詳細取得");
-			setState((prev) => ({
-				...prev,
-				isLoading: false,
-				error: apiError.message,
-			}));
-		}
-	}, []);
-
-	useEffect(() => {
-		if (id) {
-			fetchSubscription(id);
-		} else {
-			setState({
-				subscription: null,
-				isLoading: false,
-				error: null,
-			});
-		}
-	}, [id, fetchSubscription]);
-
 	return {
-		...state,
-		refetch: id ? () => fetchSubscription(id) : undefined,
+		subscription: data,
+		isLoading,
+		error,
+		refetch: id ? refetch : undefined,
 	};
 }
 
@@ -213,41 +175,23 @@ export function useDeleteSubscription() {
 
 /**
  * サブスクリプション統計を管理するフック
+ *
+ * useApiQueryを使用してコードの重複を解消し、
+ * 統一されたAPIクエリパターンを適用
  */
 export function useSubscriptionStats() {
-	const [state, setState] = useState<SubscriptionStatsState>({
-		stats: null,
-		isLoading: true,
-		error: null,
+	const { data, isLoading, error, refetch } = useApiQuery({
+		queryFn: () => subscriptionService.getSubscriptionStats(),
+		initialData: null as SubscriptionStatsResponse | null,
+		errorContext: "サブスクリプション統計取得",
+		deps: [],
 	});
 
-	const fetchStats = useCallback(async () => {
-		setState((prev) => ({ ...prev, isLoading: true, error: null }));
-
-		try {
-			const stats = await subscriptionService.getSubscriptionStats();
-			setState({
-				stats,
-				isLoading: false,
-				error: null,
-			});
-		} catch (error) {
-			const apiError = handleApiError(error, "サブスクリプション統計取得");
-			setState((prev) => ({
-				...prev,
-				isLoading: false,
-				error: apiError.message,
-			}));
-		}
-	}, []);
-
-	useEffect(() => {
-		fetchStats();
-	}, [fetchStats]);
-
 	return {
-		...state,
-		refetch: fetchStats,
+		stats: data,
+		isLoading,
+		error,
+		refetch,
 	};
 }
 

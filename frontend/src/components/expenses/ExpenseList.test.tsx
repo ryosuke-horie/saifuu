@@ -1,9 +1,9 @@
 /**
  * ExpenseListコンポーネントのテスト
- * 
+ *
  * TDD（Test-Driven Development）アプローチに従った実装
  * Red-Green-Refactorサイクルで品質を担保
- * 
+ *
  * テスト観点:
  * - 基本的なレンダリング
  * - ローディング状態の表示
@@ -15,9 +15,8 @@
  * - アクセシビリティ
  */
 
-import { render, screen, fireEvent } from "@testing-library/react";
-import { expect, describe, it, vi } from "vitest";
-import type { Transaction } from "../../lib/api/types";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { mockTransactions } from "../../../.storybook/mocks/data/transactions";
 import { ExpenseList } from "./ExpenseList";
 
@@ -25,13 +24,13 @@ describe("ExpenseList", () => {
 	describe("基本レンダリング", () => {
 		it("コンポーネントが正常にレンダリングされる", () => {
 			render(
-				<ExpenseList 
+				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
 					error={null}
-				/>
+				/>,
 			);
-			
+
 			// ヘッダー部分の表示確認
 			expect(screen.getByText("取引一覧")).toBeInTheDocument();
 			expect(screen.getByText("支出・収入の履歴")).toBeInTheDocument();
@@ -39,11 +38,11 @@ describe("ExpenseList", () => {
 
 		it("テーブルヘッダーが正しく表示される", () => {
 			render(
-				<ExpenseList 
+				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
 					error={null}
-				/>
+				/>,
 			);
 
 			// テーブルヘッダーの確認
@@ -57,13 +56,7 @@ describe("ExpenseList", () => {
 
 	describe("ローディング状態", () => {
 		it("ローディング中の表示が正しく動作する", () => {
-			render(
-				<ExpenseList 
-					transactions={[]}
-					isLoading={true}
-					error={null}
-				/>
-			);
+			render(<ExpenseList transactions={[]} isLoading={true} error={null} />);
 
 			expect(screen.getByText("読み込み中...")).toBeInTheDocument();
 			expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
@@ -74,11 +67,11 @@ describe("ExpenseList", () => {
 		it("エラーメッセージが正しく表示される", () => {
 			const errorMessage = "データの取得に失敗しました";
 			render(
-				<ExpenseList 
+				<ExpenseList
 					transactions={[]}
 					isLoading={false}
 					error={errorMessage}
-				/>
+				/>,
 			);
 
 			expect(screen.getByText(`エラー: ${errorMessage}`)).toBeInTheDocument();
@@ -87,45 +80,43 @@ describe("ExpenseList", () => {
 
 	describe("空状態", () => {
 		it("取引データが空の場合の表示が正しい", () => {
-			render(
-				<ExpenseList 
-					transactions={[]}
-					isLoading={false}
-					error={null}
-				/>
-			);
+			render(<ExpenseList transactions={[]} isLoading={false} error={null} />);
 
-			expect(screen.getByText("登録されている取引がありません")).toBeInTheDocument();
-			expect(screen.getByText("新規登録ボタンから追加してください")).toBeInTheDocument();
+			expect(
+				screen.getByText("登録されている取引がありません"),
+			).toBeInTheDocument();
+			expect(
+				screen.getByText("新規登録ボタンから追加してください"),
+			).toBeInTheDocument();
 		});
 	});
 
 	describe("データ表示", () => {
 		it("取引データが正しく表示される", () => {
 			render(
-				<ExpenseList 
+				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
 					error={null}
-				/>
+				/>,
 			);
 
 			// 支出データの確認（負の金額表示）
-			expect(screen.getByText("-¥1,000")).toBeInTheDocument();
+			expect(screen.getByText("-￥1,000")).toBeInTheDocument();
 			expect(screen.getByText("昼食代（コンビニ弁当）")).toBeInTheDocument();
 
 			// 収入データの確認（正の金額表示）
-			expect(screen.getByText("+¥50,000")).toBeInTheDocument();
+			expect(screen.getByText("+￥50,000")).toBeInTheDocument();
 			expect(screen.getByText("月次給与")).toBeInTheDocument();
 		});
 
 		it("日付が正しくフォーマットされて表示される", () => {
 			render(
-				<ExpenseList 
+				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
 					error={null}
-				/>
+				/>,
 			);
 
 			// 日付フォーマットの確認（YYYY/MM/DD形式）
@@ -135,11 +126,11 @@ describe("ExpenseList", () => {
 
 		it("カテゴリが正しく表示される", () => {
 			render(
-				<ExpenseList 
+				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
 					error={null}
-				/>
+				/>,
 			);
 
 			expect(screen.getByText("給与")).toBeInTheDocument();
@@ -151,12 +142,12 @@ describe("ExpenseList", () => {
 		it("編集ボタンが機能する", () => {
 			const mockOnEdit = vi.fn();
 			render(
-				<ExpenseList 
+				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
 					error={null}
 					onEdit={mockOnEdit}
-				/>
+				/>,
 			);
 
 			const editButtons = screen.getAllByText("編集");
@@ -168,12 +159,12 @@ describe("ExpenseList", () => {
 		it("削除ボタンが機能する", () => {
 			const mockOnDelete = vi.fn();
 			render(
-				<ExpenseList 
+				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
 					error={null}
 					onDelete={mockOnDelete}
-				/>
+				/>,
 			);
 
 			const deleteButtons = screen.getAllByText("削除");
@@ -185,12 +176,12 @@ describe("ExpenseList", () => {
 		it("更新ボタンが機能する", () => {
 			const mockOnRefresh = vi.fn();
 			render(
-				<ExpenseList 
+				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
 					error={null}
 					onRefresh={mockOnRefresh}
-				/>
+				/>,
 			);
 
 			const refreshButton = screen.getByText("更新");
@@ -202,12 +193,17 @@ describe("ExpenseList", () => {
 
 	describe("アクセシビリティ", () => {
 		it("適切なARIA属性が設定されている", () => {
+			const mockOnEdit = vi.fn();
+			const mockOnDelete = vi.fn();
+
 			render(
-				<ExpenseList 
+				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
 					error={null}
-				/>
+					onEdit={mockOnEdit}
+					onDelete={mockOnDelete}
+				/>,
 			);
 
 			// テーブルのアクセシビリティ
@@ -228,12 +224,12 @@ describe("ExpenseList", () => {
 		it("カスタムクラス名が適用される", () => {
 			const customClassName = "custom-expense-list";
 			const { container } = render(
-				<ExpenseList 
+				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
 					error={null}
 					className={customClassName}
-				/>
+				/>,
 			);
 
 			expect(container.firstChild).toHaveClass(customClassName);

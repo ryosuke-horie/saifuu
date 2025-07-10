@@ -20,8 +20,8 @@ import type { ExpenseListProps } from "../../types/expense";
 /**
  * 単一の取引行コンポーネント
  */
-const TransactionRow: FC<{ 
-	transaction: Transaction; 
+const TransactionRow: FC<{
+	transaction: Transaction;
 	onEdit?: (transaction: Transaction) => void;
 	onDelete?: (transactionId: string) => void;
 }> = ({ transaction, onEdit, onDelete }) => {
@@ -63,7 +63,9 @@ const TransactionRow: FC<{
 			<td className="px-4 py-3 text-sm text-gray-900">
 				{formatDate(transaction.date)}
 			</td>
-			<td className={`px-4 py-3 text-sm font-medium ${getAmountColor(transaction.type)}`}>
+			<td
+				className={`px-4 py-3 text-sm font-medium ${getAmountColor(transaction.type)}`}
+			>
 				{formatAmount(transaction.amount, transaction.type)}
 			</td>
 			<td className="px-4 py-3 text-sm text-gray-700 hidden md:table-cell">
@@ -105,8 +107,8 @@ const LoadingState: FC = () => (
 	<tr>
 		<td colSpan={5} className="px-4 py-8 text-center text-gray-500">
 			<div className="flex items-center justify-center space-x-2">
-				<div 
-					className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" 
+				<div
+					className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"
 					data-testid="loading-spinner"
 				/>
 				<span>読み込み中...</span>
@@ -169,12 +171,8 @@ export const ExpenseList: FC<ExpenseListProps> = ({
 			<div className="px-4 py-4 border-b border-gray-200">
 				<div className="flex items-center justify-between">
 					<div>
-						<h2 className="text-lg font-semibold text-gray-900">
-							取引一覧
-						</h2>
-						<p className="text-sm text-gray-600 mt-1">
-							支出・収入の履歴
-						</p>
+						<h2 className="text-lg font-semibold text-gray-900">取引一覧</h2>
+						<p className="text-sm text-gray-600 mt-1">支出・収入の履歴</p>
 					</div>
 					{onRefresh && (
 						<button
@@ -196,7 +194,7 @@ export const ExpenseList: FC<ExpenseListProps> = ({
 
 			{/* テーブル本体 */}
 			<div className="overflow-x-auto">
-				<table className="min-w-full divide-y divide-gray-200" role="table">
+				<table className="min-w-full divide-y divide-gray-200">
 					<thead className="bg-gray-50">
 						<tr>
 							<th
