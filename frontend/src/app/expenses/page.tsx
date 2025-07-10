@@ -9,8 +9,8 @@ import {
 } from "../../components/expenses";
 import { useExpenses } from "../../hooks";
 import type { Category } from "../../lib/api/types";
-import { convertGlobalCategoriesToCategory } from "../../utils/categories";
 import type { ExpenseFormData } from "../../types/expense";
+import { convertGlobalCategoriesToCategory } from "../../utils/categories";
 
 /**
  * 支出管理メインページ

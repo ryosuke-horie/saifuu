@@ -1,11 +1,11 @@
 /**
  * NewExpenseButtonコンポーネントのStorybook
- * 
+ *
  * 関連Issue: #93 支出管理メインページ実装
  */
 
-import type { Meta, StoryObj } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
+import type { Meta, StoryObj } from "@storybook/react";
 import { NewExpenseButton } from "./NewExpenseButton";
 
 const meta: Meta<typeof NewExpenseButton> = {
@@ -82,7 +82,8 @@ export const Disabled: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "ボタンが無効化された状態。opacity-50とcursor-not-allowedが適用されます。",
+				story:
+					"ボタンが無効化された状態。opacity-50とcursor-not-allowedが適用されます。",
 			},
 		},
 	},
@@ -136,7 +137,8 @@ export const Focus: Story = {
 		pseudo: { focus: true },
 		docs: {
 			description: {
-				story: "フォーカス時の状態。focus:ring-2とfocus:ring-blue-500が適用されます。",
+				story:
+					"フォーカス時の状態。focus:ring-2とfocus:ring-blue-500が適用されます。",
 			},
 		},
 	},
@@ -155,7 +157,10 @@ export const InContext: Story = {
 			</div>
 			<div className="flex gap-2 p-4 bg-gray-50 rounded-lg">
 				<NewExpenseButton onClick={action("onClick")} />
-				<button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+				<button
+					type="button"
+					className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+				>
 					エクスポート
 				</button>
 			</div>
@@ -164,7 +169,8 @@ export const InContext: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "実際のUIでの使用例。ヘッダーやツールバーでの配置パターンを示しています。",
+				story:
+					"実際のUIでの使用例。ヘッダーやツールバーでの配置パターンを示しています。",
 			},
 		},
 	},
@@ -206,14 +212,14 @@ export const InteractionTest: Story = {
 	},
 	play: async ({ canvasElement, args }) => {
 		const { userEvent, within, expect } = await import("@storybook/test");
-		
+
 		const canvas = within(canvasElement);
 		const button = canvas.getByRole("button", { name: "新しい支出を登録" });
-		
+
 		// ボタンが表示されていることを確認
 		await expect(button).toBeInTheDocument();
 		await expect(button).toHaveTextContent("新規登録");
-		
+
 		// クリックイベントのテスト
 		await userEvent.click(button);
 		await expect(args.onClick).toHaveBeenCalledTimes(1);

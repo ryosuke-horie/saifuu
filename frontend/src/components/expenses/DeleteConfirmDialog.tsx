@@ -1,13 +1,13 @@
 /**
  * 削除確認ダイアログコンポーネント
- * 
+ *
  * 支出・収入データの削除時に確認を求めるモーダルダイアログ
  * window.confirmの代替として、統一されたUIとアクセシビリティを提供
- * 
+ *
  * 関連Issue: #93 支出管理メインページ実装
  */
 
-import { type FC } from "react";
+import type { FC } from "react";
 import { Dialog } from "../ui";
 
 interface DeleteConfirmDialogProps {
@@ -50,11 +50,7 @@ export const DeleteConfirmDialog: FC<DeleteConfirmDialogProps> = ({
 	};
 
 	return (
-		<Dialog
-			isOpen={isOpen}
-			onClose={onClose}
-			title="削除の確認"
-		>
+		<Dialog isOpen={isOpen} onClose={onClose} title="削除の確認">
 			<div className="space-y-4">
 				<p className="text-gray-700">
 					{itemDescription}を削除してもよろしいですか？

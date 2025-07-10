@@ -1,11 +1,11 @@
 /**
  * 支出管理ページのテスト
- * 
+ *
  * 関連Issue: #93 支出管理メインページ実装
  */
 
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import { vi, describe, it, expect, beforeEach } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import ExpensesPage from "./page";
 
 // フックのモック
@@ -37,18 +37,22 @@ vi.mock("../../utils/categories", () => ({
 
 // コンポーネントのモック
 vi.mock("../../components/expenses", () => ({
-	DeleteConfirmDialog: vi.fn(({ isOpen, onClose, onConfirm, itemDescription, isDeleting }) => {
-		if (!isOpen) return null;
-		return (
-			<div data-testid="delete-confirm-dialog">
-				<p>{itemDescription}を削除してもよろしいですか？</p>
-				<button onClick={onClose}>キャンセル</button>
-				<button onClick={onConfirm} disabled={isDeleting}>
-					{isDeleting ? "削除中..." : "削除"}
-				</button>
-			</div>
-		);
-	}),
+	DeleteConfirmDialog: vi.fn(
+		({ isOpen, onClose, onConfirm, itemDescription, isDeleting }) => {
+			if (!isOpen) return null;
+			return (
+				<div data-testid="delete-confirm-dialog">
+					<p>{itemDescription}を削除してもよろしいですか？</p>
+					<button type="button" onClick={onClose}>
+						キャンセル
+					</button>
+					<button type="button" onClick={onConfirm} disabled={isDeleting}>
+						{isDeleting ? "削除中..." : "削除"}
+					</button>
+				</div>
+			);
+		},
+	),
 	ExpenseList: vi.fn(({ transactions, isLoading, onRefresh, onDelete }) => (
 		<div data-testid="expense-list">
 			{isLoading ? (
@@ -59,16 +63,20 @@ vi.mock("../../components/expenses", () => ({
 						<div key={t.id} data-testid={`transaction-${t.id}`}>
 							<span>{t.description}</span>
 							<span>{t.amount}</span>
-							<button onClick={() => onDelete(t.id)}>削除</button>
+							<button type="button" onClick={() => onDelete(t.id)}>
+								削除
+							</button>
 						</div>
 					))}
-					<button onClick={onRefresh}>更新</button>
+					<button type="button" onClick={onRefresh}>
+						更新
+					</button>
 				</div>
 			)}
 		</div>
 	)),
 	NewExpenseButton: vi.fn(({ onClick }) => (
-		<button onClick={onClick} data-testid="new-expense-button">
+		<button type="button" onClick={onClick} data-testid="new-expense-button">
 			新規登録
 		</button>
 	)),
@@ -76,9 +84,18 @@ vi.mock("../../components/expenses", () => ({
 		if (!isOpen) return null;
 		return (
 			<div data-testid="new-expense-dialog">
-				<button onClick={onClose}>閉じる</button>
+				<button type="button" onClick={onClose}>
+					閉じる
+				</button>
 				<button
-					onClick={() => onSubmit({ amount: 1000, description: "テスト", date: "2024-01-01" })}
+					type="button"
+					onClick={() =>
+						onSubmit({
+							amount: 1000,
+							description: "テスト",
+							date: "2024-01-01",
+						})
+					}
 					disabled={isSubmitting}
 				>
 					{isSubmitting ? "送信中..." : "送信"}
@@ -174,7 +191,7 @@ describe("ExpensesPage", () => {
 				loading: true,
 			});
 			render(<ExpensesPage />);
-			
+
 			const loadingMessages = screen.getAllByText("読み込み中...");
 			expect(loadingMessages).toHaveLength(4); // 支出、収入、収支、リスト
 		});
@@ -188,7 +205,7 @@ describe("ExpensesPage", () => {
 				error: errorMessage,
 			});
 			render(<ExpensesPage />);
-			
+
 			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
 			expect(screen.getByText(errorMessage)).toBeInTheDocument();
 		});
@@ -199,10 +216,10 @@ describe("ExpensesPage", () => {
 				error: "エラー",
 			});
 			render(<ExpensesPage />);
-			
+
 			const retryButton = screen.getByText("再読み込み");
 			fireEvent.click(retryButton);
-			
+
 			expect(mockRefetch).toHaveBeenCalledTimes(1);
 		});
 	});
@@ -210,23 +227,23 @@ describe("ExpensesPage", () => {
 	describe("新規登録", () => {
 		it("新規登録ボタンをクリックするとダイアログが開く", () => {
 			render(<ExpensesPage />);
-			
+
 			const newButton = screen.getByTestId("new-expense-button");
 			fireEvent.click(newButton);
-			
+
 			expect(screen.getByTestId("new-expense-dialog")).toBeInTheDocument();
 		});
 
 		it("ダイアログで送信するとcreateExpenseMutationが呼ばれる", async () => {
 			render(<ExpensesPage />);
-			
+
 			// ダイアログを開く
 			fireEvent.click(screen.getByTestId("new-expense-button"));
-			
+
 			// 送信ボタンをクリック
 			const submitButton = screen.getByText("送信");
 			fireEvent.click(submitButton);
-			
+
 			await waitFor(() => {
 				expect(mockCreateExpenseMutation).toHaveBeenCalledWith({
 					amount: 1000,
@@ -242,10 +259,10 @@ describe("ExpensesPage", () => {
 				operationLoading: true,
 			});
 			render(<ExpensesPage />);
-			
+
 			// ダイアログを開く
 			fireEvent.click(screen.getByTestId("new-expense-button"));
-			
+
 			const submitButton = screen.getByText("送信中...");
 			expect(submitButton).toBeDisabled();
 		});
@@ -254,25 +271,27 @@ describe("ExpensesPage", () => {
 	describe("削除", () => {
 		it("削除ボタンをクリックすると確認ダイアログが表示される", () => {
 			render(<ExpensesPage />);
-			
+
 			const deleteButton = screen.getAllByText("削除")[0];
 			fireEvent.click(deleteButton);
-			
+
 			expect(screen.getByTestId("delete-confirm-dialog")).toBeInTheDocument();
-			expect(screen.getByText("この取引を削除してもよろしいですか？")).toBeInTheDocument();
+			expect(
+				screen.getByText("この取引を削除してもよろしいですか？"),
+			).toBeInTheDocument();
 		});
 
 		it("確認ダイアログで削除を実行するとdeleteExpenseMutationが呼ばれる", async () => {
 			render(<ExpensesPage />);
-			
+
 			// 削除ボタンをクリック
 			const deleteButton = screen.getAllByText("削除")[0];
 			fireEvent.click(deleteButton);
-			
+
 			// 確認ダイアログで削除を実行
 			const confirmButton = screen.getByText("削除", { selector: "button" });
 			fireEvent.click(confirmButton);
-			
+
 			await waitFor(() => {
 				expect(mockDeleteExpenseMutation).toHaveBeenCalledWith("1");
 			});
@@ -280,17 +299,19 @@ describe("ExpensesPage", () => {
 
 		it("確認ダイアログでキャンセルすると何も起こらない", () => {
 			render(<ExpensesPage />);
-			
+
 			// 削除ボタンをクリック
 			const deleteButton = screen.getAllByText("削除")[0];
 			fireEvent.click(deleteButton);
-			
+
 			// キャンセルボタンをクリック
 			const cancelButton = screen.getByText("キャンセル");
 			fireEvent.click(cancelButton);
-			
+
 			expect(mockDeleteExpenseMutation).not.toHaveBeenCalled();
-			expect(screen.queryByTestId("delete-confirm-dialog")).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId("delete-confirm-dialog"),
+			).not.toBeInTheDocument();
 		});
 	});
 
@@ -301,7 +322,7 @@ describe("ExpensesPage", () => {
 				expenses: [],
 			});
 			render(<ExpensesPage />);
-			
+
 			expect(screen.getByText("¥0")).toBeInTheDocument();
 		});
 
@@ -316,7 +337,7 @@ describe("ExpensesPage", () => {
 				],
 			});
 			render(<ExpensesPage />);
-			
+
 			const balance = screen.getByText("-¥10,000");
 			expect(balance.className).toContain("text-red-600");
 		});

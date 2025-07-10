@@ -1,15 +1,15 @@
 /**
  * NewExpenseDialogコンポーネントのStorybook
- * 
+ *
  * 関連Issue: #93 支出管理メインページ実装
  */
 
-import type { Meta, StoryObj } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
+import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
-import { NewExpenseDialog } from "./NewExpenseDialog";
 import type { Category } from "../../lib/api/types";
 import type { ExpenseFormData } from "../../types/expense";
+import { NewExpenseDialog } from "./NewExpenseDialog";
 
 const mockCategories: Category[] = [
 	{
@@ -139,7 +139,8 @@ export const Submitting: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "送信処理中はボタンが無効化され、オーバーレイクリックやESCキーでの閉じるが無効になります。",
+				story:
+					"送信処理中はボタンが無効化され、オーバーレイクリックやESCキーでの閉じるが無効になります。",
 			},
 		},
 	},
@@ -150,9 +151,9 @@ export const Submitting: Story = {
  * 送信エラーが発生した状態
  */
 export const WithError: Story = {
-	render: (args) => {
+	render: (_args) => {
 		const [showError, setShowError] = useState(true);
-		
+
 		return (
 			<div>
 				{/* エラーを表示するためのモック実装 */}
@@ -177,11 +178,10 @@ export const WithError: Story = {
 									</div>
 								</div>
 							)}
-							<div className="text-gray-600">
-								フォームコンテンツ（省略）
-							</div>
+							<div className="text-gray-600">フォームコンテンツ（省略）</div>
 							<div className="mt-4 flex justify-end gap-2">
 								<button
+									type="button"
 									onClick={() => setShowError(false)}
 									className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
 								>
@@ -216,7 +216,8 @@ export const WithoutCategories: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "categoriesプロパティが未指定の場合、グローバル設定からカテゴリを取得します。",
+				story:
+					"categoriesプロパティが未指定の場合、グローバル設定からカテゴリを取得します。",
 			},
 		},
 	},
@@ -231,23 +232,24 @@ export const Interactive: Story = {
 		const [isOpen, setIsOpen] = useState(false);
 		const [isSubmitting, setIsSubmitting] = useState(false);
 		const [submitCount, setSubmitCount] = useState(0);
-		
+
 		const handleSubmit = async (data: ExpenseFormData) => {
 			setIsSubmitting(true);
 			action("onSubmit")(data);
-			
+
 			// 送信処理のシミュレーション
-			await new Promise(resolve => setTimeout(resolve, 1500));
-			
+			await new Promise((resolve) => setTimeout(resolve, 1500));
+
 			setIsSubmitting(false);
-			setSubmitCount(prev => prev + 1);
+			setSubmitCount((prev) => prev + 1);
 			setIsOpen(false);
 		};
-		
+
 		return (
 			<div className="space-y-4">
 				<div className="text-center">
 					<button
+						type="button"
 						onClick={() => setIsOpen(true)}
 						className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
 					>
@@ -259,7 +261,7 @@ export const Interactive: Story = {
 						</p>
 					)}
 				</div>
-				
+
 				<NewExpenseDialog
 					isOpen={isOpen}
 					onClose={() => setIsOpen(false)}
@@ -326,7 +328,8 @@ export const ManyCategories: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: "カテゴリが多数ある場合の表示例。スクロール可能なドロップダウンで表示されます。",
+				story:
+					"カテゴリが多数ある場合の表示例。スクロール可能なドロップダウンで表示されます。",
 			},
 		},
 	},
@@ -347,7 +350,8 @@ export const Mobile: Story = {
 		},
 		docs: {
 			description: {
-				story: "モバイル画面での表示例。ダイアログは画面幅に合わせて調整されます。",
+				story:
+					"モバイル画面での表示例。ダイアログは画面幅に合わせて調整されます。",
 			},
 		},
 	},

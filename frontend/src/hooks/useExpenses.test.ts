@@ -5,10 +5,10 @@
  * 関連Issue: #93 支出管理メインページ実装
  */
 
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { useExpenses } from "./useExpenses";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Transaction } from "../lib/api/types";
+import { useExpenses } from "./useExpenses";
 
 // モックデータ
 const mockExpenses: Transaction[] = [
@@ -99,11 +99,11 @@ vi.mock("../utils/categories", () => ({
 
 // モックされたAPIサービスをインポート
 import {
-	getExpenseTransactions,
 	createTransaction,
-	updateTransaction,
 	deleteTransaction,
+	getExpenseTransactions,
 	getTransaction,
+	updateTransaction,
 } from "../lib/api/services/transactions";
 
 // モック化された関数を取得
@@ -143,7 +143,7 @@ describe("useExpenses", () => {
 			expect(result.current.error).toBeNull();
 			// API_CONFIGの値に関わらず、正しい構造でAPIが呼ばれることを確認
 			expect(mockGetExpenseTransactions).toHaveBeenCalledWith(
-				expect.objectContaining({ limit: expect.any(Number) })
+				expect.objectContaining({ limit: expect.any(Number) }),
 			);
 		});
 
@@ -214,7 +214,7 @@ describe("useExpenses", () => {
 			await expect(
 				act(async () => {
 					await result.current.createExpenseMutation(formData);
-				})
+				}),
 			).rejects.toThrow(errorMessage);
 
 			// エラー後もexpensesの状態は変わらない
@@ -262,7 +262,7 @@ describe("useExpenses", () => {
 			await expect(
 				act(async () => {
 					await result.current.updateExpenseMutation("1", { amount: 2000 });
-				})
+				}),
 			).rejects.toThrow(errorMessage);
 
 			// エラー後も元のexpensesの状態が保持される
@@ -288,7 +288,7 @@ describe("useExpenses", () => {
 			});
 
 			expect(result.current.expenses).toHaveLength(1);
-			expect(result.current.expenses.find(e => e.id === "1")).toBeUndefined();
+			expect(result.current.expenses.find((e) => e.id === "1")).toBeUndefined();
 			expect(result.current.operationLoading).toBe(false);
 			expect(mockDeleteTransaction).toHaveBeenCalledWith("1");
 		});
@@ -307,12 +307,12 @@ describe("useExpenses", () => {
 			await expect(
 				act(async () => {
 					await result.current.deleteExpenseMutation("1");
-				})
+				}),
 			).rejects.toThrow(errorMessage);
 
 			// エラー後もexpensesは削除されていない
 			expect(result.current.expenses).toHaveLength(2);
-			expect(result.current.expenses.find(e => e.id === "1")).toBeDefined();
+			expect(result.current.expenses.find((e) => e.id === "1")).toBeDefined();
 		});
 	});
 
@@ -349,7 +349,7 @@ describe("useExpenses", () => {
 			await expect(
 				act(async () => {
 					await result.current.getExpenseById("999");
-				})
+				}),
 			).rejects.toThrow(errorMessage);
 
 			// 個別データ取得エラーは状態に影響しない
