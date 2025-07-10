@@ -428,7 +428,6 @@ describe("SubscriptionsPage", () => {
 	});
 
 	describe("エラーハンドリング", () => {
-
 		it("サブスクリプション取得エラーが表示されること", async () => {
 			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
 			vi.mocked(useSubscriptions).mockReturnValue({
