@@ -86,8 +86,10 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.isLoading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.isLoading).toBe(false);
+				});
 			});
 
 			expect(result.current.subscriptions).toEqual(mockSubscriptions);
@@ -102,8 +104,10 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.isLoading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.isLoading).toBe(false);
+				});
 			});
 
 			expect(result.current.subscriptions).toEqual([]);
@@ -119,8 +123,10 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.isLoading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.isLoading).toBe(false);
+				});
 			});
 
 			expect(result.current.subscriptions).toEqual([]);
@@ -141,8 +147,10 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions(query));
 
-			await waitFor(() => {
-				expect(result.current.isLoading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.isLoading).toBe(false);
+				});
 			});
 
 			expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
@@ -165,8 +173,10 @@ describe("useSubscriptions", () => {
 				},
 			);
 
-			await waitFor(() => {
-				expect(result.current.isLoading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.isLoading).toBe(false);
+				});
 			});
 
 			expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
@@ -176,10 +186,12 @@ describe("useSubscriptions", () => {
 			// queryパラメータを変更
 			rerender({ query: updatedQuery });
 
-			await waitFor(() => {
-				expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
-					updatedQuery,
-				);
+			await act(async () => {
+				await waitFor(() => {
+					expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
+						updatedQuery,
+					);
+				});
 			});
 
 			// useApiQueryの実装により、複数回呼ばれる可能性がある
@@ -200,8 +212,10 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.isLoading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.isLoading).toBe(false);
+				});
 			});
 
 			expect(result.current.subscriptions).toEqual(mockSubscriptions);
@@ -210,10 +224,14 @@ describe("useSubscriptions", () => {
 			const updatedData = [mockSubscriptions[0]];
 			mockSubscriptionService.getSubscriptions.mockResolvedValue(updatedData);
 
-			await result.current.refetch();
+			await act(async () => {
+				await result.current.refetch();
+			});
 
-			await waitFor(() => {
-				expect(result.current.subscriptions).toEqual(updatedData);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.subscriptions).toEqual(updatedData);
+				});
 			});
 
 			// useApiQueryの実装により、複数回呼ばれる可能性がある
@@ -237,8 +255,10 @@ describe("useActiveSubscriptions", () => {
 
 		const { result } = renderHook(() => useActiveSubscriptions());
 
-		await waitFor(() => {
-			expect(result.current.isLoading).toBe(false);
+		await act(async () => {
+			await waitFor(() => {
+				expect(result.current.isLoading).toBe(false);
+			});
 		});
 
 		expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith({
@@ -261,8 +281,10 @@ describe("useInactiveSubscriptions", () => {
 
 		const { result } = renderHook(() => useInactiveSubscriptions());
 
-		await waitFor(() => {
-			expect(result.current.isLoading).toBe(false);
+		await act(async () => {
+			await waitFor(() => {
+				expect(result.current.isLoading).toBe(false);
+			});
 		});
 
 		expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith({

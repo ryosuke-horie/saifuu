@@ -11,7 +11,7 @@
  * - 型安全性の確保
  */
 
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../errors";
 import { handleApiError } from "../../index";
@@ -224,9 +224,7 @@ describe("useApiQuery", () => {
 			mockQueryFn.mockResolvedValueOnce(updatedData);
 
 			// refetch実行
-			await act(async () => {
-				await result.current.refetch();
-			});
+			await result.current.refetch();
 
 			await waitFor(() => {
 				expect(result.current.data).toEqual(updatedData);
@@ -268,9 +266,7 @@ describe("useApiQuery", () => {
 
 			// refetch完了
 			resolveRefetch!([mockSingleData]);
-			await act(async () => {
-				await refetchCall;
-			});
+			await refetchCall;
 
 			// ローディング状態が解除されることを確認
 			await waitFor(() => {
@@ -303,9 +299,7 @@ describe("useApiQuery", () => {
 				new ApiError("unknown", "再取得エラー"),
 			);
 
-			await act(async () => {
-				await result.current.refetch();
-			});
+			await result.current.refetch();
 
 			await waitFor(() => {
 				expect(result.current.isLoading).toBe(false);
@@ -509,9 +503,7 @@ describe("useApiQuery", () => {
 			const refetch1 = result.current.refetch();
 			const refetch2 = result.current.refetch();
 
-			await act(async () => {
-				await Promise.all([refetch1, refetch2]);
-			});
+			await Promise.all([refetch1, refetch2]);
 
 			await waitFor(() => {
 				expect(result.current.isLoading).toBe(false);

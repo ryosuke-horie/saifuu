@@ -10,7 +10,7 @@
  * - エラーハンドリング
  */
 
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	createSubscription,
@@ -138,8 +138,10 @@ describe("useSubscriptions", () => {
 			const { result } = renderHook(() => useSubscriptions());
 
 			// グローバルカテゴリを使ってAPIが呼ばれることを確認
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			expect(mockFetchSubscriptions).toHaveBeenCalledTimes(1);
@@ -153,8 +155,10 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			expect(result.current.subscriptions).toEqual(mockSubscriptions);
@@ -167,8 +171,10 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			expect(result.current.subscriptions).toEqual([]);
@@ -181,8 +187,10 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			expect(result.current.subscriptions).toEqual([]);
@@ -194,8 +202,10 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			expect(result.current.error).toBe(
@@ -226,8 +236,10 @@ describe("useSubscriptions", () => {
 			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			// 作成実行
@@ -238,8 +250,10 @@ describe("useSubscriptions", () => {
 			expect(created).toEqual(newSubscription);
 
 			// 状態更新を待機
-			await waitFor(() => {
-				expect(result.current.subscriptions).toContain(newSubscription);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.subscriptions).toContain(newSubscription);
+				});
 			});
 
 			expect(result.current.subscriptions).toHaveLength(
@@ -273,9 +287,11 @@ describe("useSubscriptions", () => {
 			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
-			await waitFor(() => {
-				expect(result.current).not.toBeNull();
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current).not.toBeNull();
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			// 初期状態では operationLoading は false
@@ -286,9 +302,11 @@ describe("useSubscriptions", () => {
 				result.current.createSubscriptionMutation(mockFormData);
 
 			// 非同期処理開始直後にローディング状態になることを確認
-			await waitFor(() => {
-				expect(result.current).not.toBeNull();
-				expect(result.current.operationLoading).toBe(true);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current).not.toBeNull();
+					expect(result.current.operationLoading).toBe(true);
+				});
 			});
 
 			// 作成完了
@@ -300,9 +318,11 @@ describe("useSubscriptions", () => {
 			});
 
 			// 最終的にローディング状態が解除される
-			await waitFor(() => {
-				expect(result.current).not.toBeNull();
-				expect(result.current.operationLoading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current).not.toBeNull();
+					expect(result.current.operationLoading).toBe(false);
+				});
 			});
 		});
 
@@ -313,9 +333,11 @@ describe("useSubscriptions", () => {
 			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
-			await waitFor(() => {
-				expect(result.current).not.toBeNull();
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current).not.toBeNull();
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			// 初期状態では operationLoading は false
@@ -328,10 +350,12 @@ describe("useSubscriptions", () => {
 			).rejects.toThrow(errorMessage);
 
 			// エラー状態の更新を待機
-			await waitFor(() => {
-				expect(result.current).not.toBeNull();
-				expect(result.current.error).toBe(errorMessage);
-				expect(result.current.operationLoading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current).not.toBeNull();
+					expect(result.current.error).toBe(errorMessage);
+					expect(result.current.operationLoading).toBe(false);
+				});
 			});
 
 			expect(result.current.subscriptions).toHaveLength(
@@ -357,9 +381,11 @@ describe("useSubscriptions", () => {
 			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
-			await waitFor(() => {
-				expect(result.current).not.toBeNull();
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current).not.toBeNull();
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			// 更新実行
@@ -371,8 +397,10 @@ describe("useSubscriptions", () => {
 			expect(updated).toEqual(updatedSubscription);
 
 			// 状態更新の完了を待機
-			await waitFor(() => {
-				expect(result.current.subscriptions[0]).toEqual(updatedSubscription);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.subscriptions[0]).toEqual(updatedSubscription);
+				});
 			});
 
 			expect(mockUpdateSubscription).toHaveBeenCalledWith(
@@ -389,9 +417,11 @@ describe("useSubscriptions", () => {
 			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
-			await waitFor(() => {
-				expect(result.current).not.toBeNull();
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current).not.toBeNull();
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			// 更新実行（エラーが発生することを期待）
@@ -402,10 +432,12 @@ describe("useSubscriptions", () => {
 			).rejects.toThrow(errorMessage);
 
 			// エラー状態の更新を待機
-			await waitFor(() => {
-				expect(result.current).not.toBeNull();
-				expect(result.current.error).toBe(errorMessage);
-				expect(result.current.operationLoading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current).not.toBeNull();
+					expect(result.current.error).toBe(errorMessage);
+					expect(result.current.operationLoading).toBe(false);
+				});
 			});
 		});
 	});
@@ -421,8 +453,10 @@ describe("useSubscriptions", () => {
 			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			// 削除実行
@@ -450,9 +484,11 @@ describe("useSubscriptions", () => {
 			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
-			await waitFor(() => {
-				expect(result.current).not.toBeNull();
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current).not.toBeNull();
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			// 削除実行（エラーが発生することを期待）
@@ -488,8 +524,10 @@ describe("useSubscriptions", () => {
 			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			// ステータス更新実行
@@ -524,8 +562,10 @@ describe("useSubscriptions", () => {
 			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			// 個別取得実行
@@ -547,9 +587,11 @@ describe("useSubscriptions", () => {
 			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
-			await waitFor(() => {
-				expect(result.current).not.toBeNull();
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current).not.toBeNull();
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			// 個別取得実行（エラーが発生することを期待）
@@ -572,8 +614,10 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			expect(result.current.subscriptions).toEqual(mockSubscriptions);
@@ -601,8 +645,10 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			// グローバル設定のカテゴリでAPIが呼ばれることを確認
@@ -633,8 +679,10 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+			await act(async () => {
+				await waitFor(() => {
+					expect(result.current.loading).toBe(false);
+				});
 			});
 
 			// 新しいサブスクリプション作成とID削除を順次実行（並行ではなく）
