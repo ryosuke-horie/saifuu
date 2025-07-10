@@ -6,7 +6,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getCategoriesByType } from "../../../shared/config/categories";
 import {
 	createTransaction,
 	deleteTransaction,
@@ -16,6 +15,7 @@ import {
 } from "../lib/api/services/transactions";
 import type { Transaction } from "../lib/api/types";
 import type { Category } from "../types/category";
+import { convertGlobalCategoriesToCategory } from "../utils/categories";
 
 interface UseExpensesState {
 	expenses: Transaction[];
@@ -60,17 +60,7 @@ export function useExpenses(): UseExpensesReturn {
 
 	// グローバル設定のカテゴリを取得してCategory型に変換
 	const _categories = useMemo((): Category[] => {
-		const globalExpenseCategories = getCategoriesByType("expense");
-		// 固定の日付を使用して参照の一貫性を保つ
-		const fixedDate = "2024-01-01T00:00:00.000Z";
-		return globalExpenseCategories.map((config) => ({
-			id: config.id,
-			name: config.name,
-			type: config.type,
-			color: config.color,
-			createdAt: fixedDate,
-			updatedAt: fixedDate,
-		}));
+		return convertGlobalCategoriesToCategory("expense");
 	}, []);
 
 	const loadExpenses = useCallback(async () => {

@@ -1,14 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { getCategoriesByType } from "../../../../shared/config/categories";
 import {
+	DeleteConfirmDialog,
 	ExpenseList,
 	NewExpenseButton,
 	NewExpenseDialog,
 } from "../../components/expenses";
 import { useExpenses } from "../../hooks";
 import type { Category } from "../../lib/api/types";
+import { convertGlobalCategoriesToCategory } from "../../utils/categories";
 import type { ExpenseFormData } from "../../types/expense";
 
 /**
@@ -42,18 +43,12 @@ export default function ExpensesPage() {
 	// 新規登録ダイアログの状態管理
 	const [isNewDialogOpen, setIsNewDialogOpen] = useState(false);
 
+	// 削除確認ダイアログの状態管理
+	const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
 	// グローバル設定から支出カテゴリを取得
 	const categories = useMemo((): Category[] => {
-		const globalExpenseCategories = getCategoriesByType("expense");
-		const fixedDate = "2024-01-01T00:00:00.000Z";
-		return globalExpenseCategories.map((config) => ({
-			id: config.id,
-			name: config.name,
-			type: config.type,
-			color: config.color,
-			createdAt: fixedDate,
-			updatedAt: fixedDate,
-		}));
+		return convertGlobalCategoriesToCategory("expense");
 	}, []);
 
 	// 新規登録ボタンクリックハンドラー
@@ -72,10 +67,21 @@ export default function ExpensesPage() {
 	};
 
 	// 削除ハンドラー
-	const handleDelete = async (transactionId: string) => {
-		if (window.confirm("この取引を削除してもよろしいですか？")) {
-			await deleteExpenseMutation(transactionId);
+	const handleDelete = (transactionId: string) => {
+		setDeleteTarget(transactionId);
+	};
+
+	// 削除確認ハンドラー
+	const handleDeleteConfirm = async () => {
+		if (deleteTarget) {
+			await deleteExpenseMutation(deleteTarget);
+			setDeleteTarget(null);
 		}
+	};
+
+	// 削除キャンセルハンドラー
+	const handleDeleteCancel = () => {
+		setDeleteTarget(null);
 	};
 
 	// 統計情報の計算
@@ -85,7 +91,7 @@ export default function ExpensesPage() {
 				totalExpenses: 0,
 				totalIncome: 0,
 				balance: 0,
-				transactionCount: expenses?.length || 0,
+				transactionCount: expenses?.length ?? 0,
 			};
 		}
 
@@ -251,6 +257,15 @@ export default function ExpensesPage() {
 					onSubmit={handleNewSubmit}
 					isSubmitting={operationLoading}
 					categories={categories}
+				/>
+
+				{/* 削除確認ダイアログ */}
+				<DeleteConfirmDialog
+					isOpen={deleteTarget !== null}
+					onClose={handleDeleteCancel}
+					onConfirm={handleDeleteConfirm}
+					itemDescription="この取引"
+					isDeleting={operationLoading}
 				/>
 			</main>
 		</div>

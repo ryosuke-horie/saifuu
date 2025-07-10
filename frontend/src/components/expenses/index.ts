@@ -9,6 +9,7 @@ export type {
 	NewExpenseButtonProps,
 	NewExpenseDialogProps,
 } from "../../types/expense";
+export { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 export { ExpenseForm } from "./ExpenseForm";
 export { ExpenseList } from "./ExpenseList";
 export { NewExpenseButton } from "./NewExpenseButton";
