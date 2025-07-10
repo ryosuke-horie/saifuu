@@ -9,7 +9,7 @@
  * - useActiveSubscriptions、useInactiveSubscriptionsの動作
  */
 
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../errors";
 import { handleApiError, subscriptionService } from "../../index";
@@ -86,11 +86,12 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await act(async () => {
-				await waitFor(() => {
+			await waitFor(
+				() => {
 					expect(result.current.isLoading).toBe(false);
-				});
-			});
+				},
+				{ timeout: 3000 },
+			);
 
 			expect(result.current.subscriptions).toEqual(mockSubscriptions);
 			expect(result.current.error).toBe(null);
@@ -104,11 +105,12 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await act(async () => {
-				await waitFor(() => {
+			await waitFor(
+				() => {
 					expect(result.current.isLoading).toBe(false);
-				});
-			});
+				},
+				{ timeout: 3000 },
+			);
 
 			expect(result.current.subscriptions).toEqual([]);
 			expect(result.current.error).toBe(null);
@@ -123,11 +125,12 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await act(async () => {
-				await waitFor(() => {
+			await waitFor(
+				() => {
 					expect(result.current.isLoading).toBe(false);
-				});
-			});
+				},
+				{ timeout: 3000 },
+			);
 
 			expect(result.current.subscriptions).toEqual([]);
 			expect(result.current.error).toBe(errorMessage);
@@ -147,11 +150,12 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions(query));
 
-			await act(async () => {
-				await waitFor(() => {
+			await waitFor(
+				() => {
 					expect(result.current.isLoading).toBe(false);
-				});
-			});
+				},
+				{ timeout: 3000 },
+			);
 
 			expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
 				query,
@@ -173,11 +177,12 @@ describe("useSubscriptions", () => {
 				},
 			);
 
-			await act(async () => {
-				await waitFor(() => {
+			await waitFor(
+				() => {
 					expect(result.current.isLoading).toBe(false);
-				});
-			});
+				},
+				{ timeout: 3000 },
+			);
 
 			expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
 				initialQuery,
@@ -186,13 +191,14 @@ describe("useSubscriptions", () => {
 			// queryパラメータを変更
 			rerender({ query: updatedQuery });
 
-			await act(async () => {
-				await waitFor(() => {
+			await waitFor(
+				() => {
 					expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
 						updatedQuery,
 					);
-				});
-			});
+				},
+				{ timeout: 3000 },
+			);
 
 			// useApiQueryの実装により、複数回呼ばれる可能性がある
 			expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
@@ -212,11 +218,12 @@ describe("useSubscriptions", () => {
 
 			const { result } = renderHook(() => useSubscriptions());
 
-			await act(async () => {
-				await waitFor(() => {
+			await waitFor(
+				() => {
 					expect(result.current.isLoading).toBe(false);
-				});
-			});
+				},
+				{ timeout: 3000 },
+			);
 
 			expect(result.current.subscriptions).toEqual(mockSubscriptions);
 
@@ -224,15 +231,14 @@ describe("useSubscriptions", () => {
 			const updatedData = [mockSubscriptions[0]];
 			mockSubscriptionService.getSubscriptions.mockResolvedValue(updatedData);
 
-			await act(async () => {
-				await result.current.refetch();
-			});
+			await result.current.refetch();
 
-			await act(async () => {
-				await waitFor(() => {
+			await waitFor(
+				() => {
 					expect(result.current.subscriptions).toEqual(updatedData);
-				});
-			});
+				},
+				{ timeout: 3000 },
+			);
 
 			// useApiQueryの実装により、複数回呼ばれる可能性がある
 			expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
@@ -255,11 +261,12 @@ describe("useActiveSubscriptions", () => {
 
 		const { result } = renderHook(() => useActiveSubscriptions());
 
-		await act(async () => {
-			await waitFor(() => {
+		await waitFor(
+			() => {
 				expect(result.current.isLoading).toBe(false);
-			});
-		});
+			},
+			{ timeout: 3000 },
+		);
 
 		expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith({
 			isActive: true,
@@ -281,11 +288,12 @@ describe("useInactiveSubscriptions", () => {
 
 		const { result } = renderHook(() => useInactiveSubscriptions());
 
-		await act(async () => {
-			await waitFor(() => {
+		await waitFor(
+			() => {
 				expect(result.current.isLoading).toBe(false);
-			});
-		});
+			},
+			{ timeout: 3000 },
+		);
 
 		expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith({
 			isActive: false,

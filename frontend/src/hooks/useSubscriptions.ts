@@ -56,14 +56,15 @@ export function useSubscriptions(): UseSubscriptionsReturn {
 	// グローバル設定のカテゴリを取得してCategory型に変換
 	const categories = useMemo((): Category[] => {
 		const globalExpenseCategories = getCategoriesByType("expense");
-		const now = new Date().toISOString();
+		// 固定の日付を使用して参照の一貫性を保つ
+		const fixedDate = "2024-01-01T00:00:00.000Z";
 		return globalExpenseCategories.map((config) => ({
 			id: config.id,
 			name: config.name,
 			type: config.type,
 			color: config.color,
-			createdAt: now,
-			updatedAt: now,
+			createdAt: fixedDate,
+			updatedAt: fixedDate,
 		}));
 	}, []);
 
