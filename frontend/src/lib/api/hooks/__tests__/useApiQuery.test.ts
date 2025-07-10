@@ -11,7 +11,7 @@
  * - 型安全性の確保
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../errors";
 import { handleApiError } from "../../index";
@@ -224,7 +224,9 @@ describe("useApiQuery", () => {
 			mockQueryFn.mockResolvedValueOnce(updatedData);
 
 			// refetch実行
-			await result.current.refetch();
+			await act(async () => {
+				await result.current.refetch();
+			});
 
 			await waitFor(() => {
 				expect(result.current.data).toEqual(updatedData);
@@ -299,7 +301,9 @@ describe("useApiQuery", () => {
 				new ApiError("unknown", "再取得エラー"),
 			);
 
-			await result.current.refetch();
+			await act(async () => {
+				await result.current.refetch();
+			});
 
 			await waitFor(() => {
 				expect(result.current.isLoading).toBe(false);
