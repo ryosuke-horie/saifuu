@@ -156,4 +156,65 @@ test.describe("サブスクリプション管理", () => {
 		// 料金が正しく表示されていることを確認
 		await expect(netflixRow).toContainText("1,980");
 	});
+
+	test("グローバルカテゴリがサブスクリプション登録フォームで利用されることを確認", async ({ page }) => {
+		// サブスクリプション管理画面にアクセス
+		await page.goto("/subscriptions");
+
+		// 新規登録ボタンをクリックしてダイアログを開く
+		const addButton = page.getByText("新規登録");
+		await addButton.click();
+
+		// ダイアログが表示されることを確認
+		await expect(
+			page.getByRole("dialog", { name: "新規サブスクリプション登録" }),
+		).toBeVisible();
+
+		// カテゴリセレクトボックスが有効になるまで待機
+		const categorySelect = page.getByLabel("カテゴリ");
+		await expect(categorySelect).toBeEnabled({ timeout: 15000 });
+
+		// カテゴリが読み込まれるまで待機
+		await page.waitForFunction(
+			() => {
+				const select = document.querySelector("#subscription-category");
+				return (
+					select &&
+					select instanceof HTMLSelectElement &&
+					select.options.length > 1
+				);
+			},
+			{ timeout: 10000 },
+		);
+
+		// グローバル設定のカテゴリが表示されることを確認
+		// shared/config/categories.ts からの支出カテゴリが表示されるかチェック
+		const expectedCategories = [
+			"食費",
+			"住居費", 
+			"交通費",
+			"エンターテイメント",
+			"健康・フィットネス",
+			"学習・教育",
+			"仕事・ビジネス",
+			"買い物",
+			"その他"
+		];
+
+		// 各カテゴリがセレクトボックスに存在することを確認
+		for (const categoryName of expectedCategories) {
+			await expect(categorySelect.getByRole("option", { name: categoryName })).toBeVisible();
+		}
+
+		// カテゴリ選択が API 経由ではなくグローバル設定から読み込まれていることを確認
+		// この部分は実装変更後にパスするようになる
+		await expect(categorySelect.getByRole("option", { name: "エンターテイメント" })).toBeVisible();
+		
+		// ダイアログを閉じる
+		const dialog = page.getByRole("dialog", { name: "新規サブスクリプション登録" });
+		await dialog.getByRole("button", { name: "キャンセル" }).click();
+		
+		// ダイアログが閉じることを確認
+		await expect(dialog).not.toBeVisible();
+	});
 });

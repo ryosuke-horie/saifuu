@@ -34,6 +34,24 @@ vi.mock("../lib/api/subscriptions", () => ({
 	fetchSubscriptionById: vi.fn(),
 }));
 
+// グローバルカテゴリ設定をモック
+vi.mock("../../../shared/config/categories", () => ({
+	getCategoriesByType: vi.fn(() => [
+		{
+			id: "entertainment",
+			name: "エンターテイメント",
+			type: "expense",
+			color: "#ff6b6b",
+		},
+		{
+			id: "business",
+			name: "仕事・ビジネス",
+			type: "expense",
+			color: "#8E44AD",
+		},
+	]),
+}));
+
 const mockFetchSubscriptions = vi.mocked(fetchSubscriptions);
 const mockCreateSubscription = vi.mocked(createSubscription);
 const mockUpdateSubscription = vi.mocked(updateSubscription);
@@ -104,7 +122,7 @@ describe("useSubscriptions", () => {
 				() => new Promise(() => {}), // 永続的なPending状態
 			);
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			expect(result.current.subscriptions).toEqual([]);
 			expect(result.current.loading).toBe(true);
@@ -114,14 +132,18 @@ describe("useSubscriptions", () => {
 			expect(typeof result.current.createSubscriptionMutation).toBe("function");
 		});
 
-		it("カテゴリが空の場合は取得処理をスキップする", async () => {
-			const { result } = renderHook(() => useSubscriptions([]));
+		it("グローバルカテゴリが自動的に使用されて取得処理が実行される", async () => {
+			mockFetchSubscriptions.mockResolvedValue([]);
 
-			// 少し待機してAPIが呼ばれないことを確認
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			const { result } = renderHook(() => useSubscriptions());
 
-			expect(mockFetchSubscriptions).not.toHaveBeenCalled();
-			expect(result.current.loading).toBe(true);
+			// グローバルカテゴリを使ってAPIが呼ばれることを確認
+			await waitFor(() => {
+				expect(result.current.loading).toBe(false);
+			});
+
+			expect(mockFetchSubscriptions).toHaveBeenCalledTimes(1);
+			expect(result.current.subscriptions).toEqual([]);
 		});
 	});
 
@@ -129,7 +151,7 @@ describe("useSubscriptions", () => {
 		it("サブスクリプションが正常に取得される", async () => {
 			mockFetchSubscriptions.mockResolvedValue(mockSubscriptions);
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			await waitFor(() => {
 				expect(result.current.loading).toBe(false);
@@ -143,7 +165,7 @@ describe("useSubscriptions", () => {
 		it("空配列が返された場合も正常に処理される", async () => {
 			mockFetchSubscriptions.mockResolvedValue([]);
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			await waitFor(() => {
 				expect(result.current.loading).toBe(false);
@@ -157,7 +179,7 @@ describe("useSubscriptions", () => {
 			const errorMessage = "サーバーエラーが発生しました";
 			mockFetchSubscriptions.mockRejectedValue(new Error(errorMessage));
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			await waitFor(() => {
 				expect(result.current.loading).toBe(false);
@@ -170,7 +192,7 @@ describe("useSubscriptions", () => {
 		it("未知のエラーの場合、デフォルトメッセージが設定される", async () => {
 			mockFetchSubscriptions.mockRejectedValue("unknown error");
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			await waitFor(() => {
 				expect(result.current.loading).toBe(false);
@@ -201,7 +223,7 @@ describe("useSubscriptions", () => {
 
 			mockCreateSubscription.mockResolvedValue(newSubscription);
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
@@ -248,7 +270,7 @@ describe("useSubscriptions", () => {
 			});
 			mockCreateSubscription.mockReturnValue(createPromise);
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
@@ -288,7 +310,7 @@ describe("useSubscriptions", () => {
 			const errorMessage = "作成権限がありません";
 			mockCreateSubscription.mockRejectedValue(new Error(errorMessage));
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
@@ -332,7 +354,7 @@ describe("useSubscriptions", () => {
 
 			mockUpdateSubscription.mockResolvedValue(updatedSubscription);
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
@@ -364,7 +386,7 @@ describe("useSubscriptions", () => {
 			const errorMessage = "更新権限がありません";
 			mockUpdateSubscription.mockRejectedValue(new Error(errorMessage));
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
@@ -396,7 +418,7 @@ describe("useSubscriptions", () => {
 		it("サブスクリプションが正常に削除される", async () => {
 			mockDeleteSubscription.mockResolvedValue();
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
@@ -425,7 +447,7 @@ describe("useSubscriptions", () => {
 			const errorMessage = "削除権限がありません";
 			mockDeleteSubscription.mockRejectedValue(new Error(errorMessage));
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
@@ -463,7 +485,7 @@ describe("useSubscriptions", () => {
 
 			mockUpdateSubscriptionStatus.mockResolvedValue(updatedSubscription);
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
@@ -499,7 +521,7 @@ describe("useSubscriptions", () => {
 			const targetSubscription = mockSubscriptions[0];
 			mockFetchSubscriptionById.mockResolvedValue(targetSubscription);
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
@@ -522,7 +544,7 @@ describe("useSubscriptions", () => {
 			const errorMessage = "サブスクリプションが見つかりません";
 			mockFetchSubscriptionById.mockRejectedValue(new Error(errorMessage));
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			// 初期データの読み込み完了を待機
 			await waitFor(() => {
@@ -548,7 +570,7 @@ describe("useSubscriptions", () => {
 			// 初回取得
 			mockFetchSubscriptions.mockResolvedValueOnce(mockSubscriptions);
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			await waitFor(() => {
 				expect(result.current.loading).toBe(false);
@@ -573,44 +595,35 @@ describe("useSubscriptions", () => {
 		});
 	});
 
-	describe("カテゴリ依存の動作", () => {
-		it("カテゴリが更新されると自動で再取得される", async () => {
+	describe("グローバルカテゴリ使用の動作", () => {
+		it("グローバル設定のカテゴリが自動的に使用される", async () => {
 			mockFetchSubscriptions.mockResolvedValue(mockSubscriptions);
 
-			const { result, rerender } = renderHook(
-				({ categories }) => useSubscriptions(categories),
-				{
-					initialProps: { categories: mockCategories },
-				},
-			);
+			const { result } = renderHook(() => useSubscriptions());
 
 			await waitFor(() => {
 				expect(result.current.loading).toBe(false);
 			});
 
+			// グローバル設定のカテゴリでAPIが呼ばれることを確認
 			expect(mockFetchSubscriptions).toHaveBeenCalledTimes(1);
 
-			// カテゴリを更新
-			const newCategories = [
-				...mockCategories,
-				{
-					id: "3",
-					name: "新カテゴリ",
-					type: "expense" as const,
-					color: "#000000",
-					createdAt: "2024-07-01T00:00:00Z",
-					updatedAt: "2024-07-01T00:00:00Z",
-				},
-			];
-			mockFetchSubscriptions.mockResolvedValue([]);
-
-			rerender({ categories: newCategories });
-
-			await waitFor(() => {
-				expect(mockFetchSubscriptions).toHaveBeenCalledTimes(2);
-			});
-
-			expect(mockFetchSubscriptions).toHaveBeenLastCalledWith(newCategories);
+			// 呼び出し時のカテゴリ引数を確認
+			const callArgs = mockFetchSubscriptions.mock.calls[0][0];
+			expect(callArgs).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({
+						id: "entertainment",
+						name: "エンターテイメント",
+						type: "expense",
+					}),
+					expect.objectContaining({
+						id: "business",
+						name: "仕事・ビジネス",
+						type: "expense",
+					}),
+				]),
+			);
 		});
 	});
 
@@ -618,7 +631,7 @@ describe("useSubscriptions", () => {
 		it("複数の操作を並行して実行した場合", async () => {
 			mockFetchSubscriptions.mockResolvedValue(mockSubscriptions);
 
-			const { result } = renderHook(() => useSubscriptions(mockCategories));
+			const { result } = renderHook(() => useSubscriptions());
 
 			await waitFor(() => {
 				expect(result.current.loading).toBe(false);

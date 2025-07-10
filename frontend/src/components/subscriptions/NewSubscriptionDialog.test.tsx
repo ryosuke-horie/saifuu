@@ -14,6 +14,66 @@ vi.mock("react-dom", async () => {
 	};
 });
 
+// グローバルカテゴリ設定をモック
+vi.mock("../../../../shared/config/categories", () => ({
+	getCategoriesByType: vi.fn(() => [
+		{
+			id: "food",
+			name: "食費",
+			type: "expense",
+			color: "#FF6B6B",
+		},
+		{
+			id: "housing",
+			name: "住居費",
+			type: "expense",
+			color: "#4ECDC4",
+		},
+		{
+			id: "transportation",
+			name: "交通費",
+			type: "expense",
+			color: "#3498DB",
+		},
+		{
+			id: "entertainment",
+			name: "エンターテイメント",
+			type: "expense",
+			color: "#E67E22",
+		},
+		{
+			id: "health",
+			name: "健康・フィットネス",
+			type: "expense",
+			color: "#96CEB4",
+		},
+		{
+			id: "education",
+			name: "学習・教育",
+			type: "expense",
+			color: "#45B7D1",
+		},
+		{
+			id: "business",
+			name: "仕事・ビジネス",
+			type: "expense",
+			color: "#8E44AD",
+		},
+		{
+			id: "shopping",
+			name: "買い物",
+			type: "expense",
+			color: "#F39C12",
+		},
+		{
+			id: "other_expense",
+			name: "その他",
+			type: "expense",
+			color: "#FFEAA7",
+		},
+	]),
+}));
+
 describe("NewSubscriptionDialog", () => {
 	const defaultProps: NewSubscriptionDialogProps = {
 		isOpen: true,
@@ -278,6 +338,96 @@ describe("NewSubscriptionDialog", () => {
 			expect(nameInput).toHaveAttribute("id");
 			expect(amountInput).toHaveAttribute("id");
 			expect(nextBillingDateInput).toHaveAttribute("id");
+		});
+	});
+
+	describe("グローバルカテゴリ利用の検証", () => {
+		it("グローバル設定のカテゴリが表示されることを確認", () => {
+			// Issue #176: グローバルカテゴリを利用するテスト
+			// このテストは現在の実装では失敗し、実装変更後にパスするようになる
+
+			// categoriesプロパティを渡さない場合でもカテゴリが表示されることを確認
+			const propsWithoutCategories = {
+				isOpen: true,
+				onClose: vi.fn(),
+				onSubmit: vi.fn(),
+				isSubmitting: false,
+				// categories プロパティを意図的に省略
+			};
+
+			render(<NewSubscriptionDialog {...propsWithoutCategories} />);
+
+			// カテゴリセレクトボックスが存在することを確認
+			const categorySelect = screen.getByLabelText(/カテゴリ/);
+			expect(categorySelect).toBeInTheDocument();
+
+			// グローバル設定からの支出カテゴリが表示されることを確認
+			// shared/config/categories.ts の EXPENSE_CATEGORIES が利用されるはず
+			const expectedExpenseCategories = [
+				"食費",
+				"住居費",
+				"交通費",
+				"エンターテイメント",
+				"健康・フィットネス",
+				"学習・教育",
+				"仕事・ビジネス",
+				"買い物",
+				"その他",
+			];
+
+			// 各カテゴリオプションが存在することを確認
+			expectedExpenseCategories.forEach((categoryName) => {
+				expect(screen.getByText(categoryName)).toBeInTheDocument();
+			});
+
+			// 収入カテゴリ（給与、副業・フリーランス等）は表示されないことを確認
+			expect(screen.queryByText("給与")).not.toBeInTheDocument();
+			expect(screen.queryByText("副業・フリーランス")).not.toBeInTheDocument();
+		});
+
+		it("categoriesプロパティに依存せずグローバルカテゴリを使用する", async () => {
+			// Issue #176: グローバルカテゴリへの移行テスト
+			const user = userEvent.setup();
+
+			// 空のcategoriesを渡しても正常に動作することを確認
+			const propsWithEmptyCategories = {
+				isOpen: true,
+				onClose: vi.fn(),
+				onSubmit: vi.fn(),
+				isSubmitting: false,
+				categories: [], // 空配列を渡す
+			};
+
+			render(<NewSubscriptionDialog {...propsWithEmptyCategories} />);
+
+			// フォームの基本情報を入力
+			await user.type(screen.getByLabelText(/サービス名/), "Spotify");
+			await user.type(screen.getByLabelText(/料金/), "980");
+
+			// 次回請求日を設定
+			const nextMonth = new Date();
+			nextMonth.setMonth(nextMonth.getMonth() + 1);
+			const nextMonthString = nextMonth.toISOString().split("T")[0];
+			await user.type(screen.getByLabelText(/次回請求日/), nextMonthString);
+
+			// グローバルカテゴリから「エンターテイメント」を選択
+			const categorySelect = screen.getByLabelText(/カテゴリ/);
+			await user.selectOptions(categorySelect, "entertainment"); // グローバル設定のIDを使用
+
+			// フォーム送信
+			const submitButton = screen.getByRole("button", { name: "登録" });
+			await user.click(submitButton);
+
+			// グローバルカテゴリのIDで送信されることを確認
+			expect(propsWithEmptyCategories.onSubmit).toHaveBeenCalledWith({
+				name: "Spotify",
+				amount: 980,
+				billingCycle: "monthly",
+				nextBillingDate: nextMonthString,
+				categoryId: "entertainment", // グローバル設定のカテゴリID
+				isActive: true,
+				description: "",
+			});
 		});
 	});
 });

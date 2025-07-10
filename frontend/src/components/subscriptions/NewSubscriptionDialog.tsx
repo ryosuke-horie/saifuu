@@ -1,6 +1,8 @@
 "use client";
 
-import { type FC, useCallback, useState } from "react";
+import { type FC, useCallback, useMemo, useState } from "react";
+import { getCategoriesByType } from "../../../../shared/config/categories";
+import type { Category } from "../../lib/api/types";
 import type {
 	NewSubscriptionDialogProps,
 	SubscriptionFormData,
@@ -35,6 +37,25 @@ export const NewSubscriptionDialog: FC<NewSubscriptionDialogProps> = ({
 }) => {
 	// フォームエラーの状態管理
 	const [formError, setFormError] = useState<string | null>(null);
+
+	// グローバル設定またはpropsからカテゴリを取得
+	const effectiveCategories = useMemo((): Category[] => {
+		// propsでカテゴリが提供されている場合はそれを使用
+		if (categories && categories.length > 0) {
+			return categories;
+		}
+
+		// グローバル設定から支出カテゴリを取得してCategory型に変換
+		const globalExpenseCategories = getCategoriesByType("expense");
+		return globalExpenseCategories.map((config) => ({
+			id: config.id,
+			name: config.name,
+			type: config.type,
+			color: config.color,
+			createdAt: new Date().toISOString(), // ダミー値
+			updatedAt: new Date().toISOString(), // ダミー値
+		}));
+	}, [categories]);
 	// フォーム送信ハンドラー
 	const handleFormSubmit = useCallback(
 		async (data: SubscriptionFormData) => {
@@ -105,7 +126,7 @@ export const NewSubscriptionDialog: FC<NewSubscriptionDialogProps> = ({
 				onSubmit={handleFormSubmit}
 				onCancel={handleFormCancel}
 				isSubmitting={isSubmitting}
-				categories={categories}
+				categories={effectiveCategories}
 			/>
 		</Dialog>
 	);
