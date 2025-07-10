@@ -102,8 +102,9 @@ export interface NewExpenseDialogProps {
 
 	/**
 	 * カテゴリ一覧（フォームで選択肢として表示）
+	 * 未指定の場合はグローバル設定から取得
 	 */
-	categories: Category[];
+	categories?: Category[];
 }
 
 /**
