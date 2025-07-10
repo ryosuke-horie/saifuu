@@ -1,0 +1,123 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    // Next.js entry points
+    "src/app/**/{page,layout,loading,error,not-found,global-error}.{js,jsx,ts,tsx}",
+    "src/app/**/route.{js,ts}",
+    "src/middleware.{js,ts}",
+    "next.config.{js,ts}",
+    
+    // Storybook entry points
+    ".storybook/main.{js,ts}",
+    ".storybook/preview.{js,ts}",
+    
+    // Test entry points
+    "vitest.config.{js,ts}",
+    "vitest.setup.{js,ts}",
+    
+    // Configuration files
+    "postcss.config.{js,mjs}",
+    "tailwind.config.{js,ts}",
+    "open-next.config.{js,ts}",
+    "wrangler.jsonc",
+    "cloudflare-env.d.ts"
+  ],
+  "project": [
+    // Source files
+    "src/**/*.{js,jsx,ts,tsx}",
+    "!src/**/*.{test,spec}.{js,jsx,ts,tsx}",
+    "!src/**/*.stories.{js,jsx,ts,tsx}",
+    
+    // Configuration files
+    "*.{js,jsx,ts,tsx}",
+    ".storybook/**/*.{js,ts}",
+    
+    // Test utilities (included as project files to avoid false positives)
+    "src/test-utils/**/*.{js,jsx,ts,tsx}"
+  ],
+  "ignore": [
+    // Test files
+    "src/**/*.{test,spec}.{js,jsx,ts,tsx}",
+    "src/**/__tests__/**",
+    
+    // Storybook files
+    "src/**/*.stories.{js,jsx,ts,tsx}",
+    
+    // MSW and test utilities
+    "src/test-utils/**",
+    "public/mockServiceWorker.js",
+    
+    // Build artifacts
+    ".next/**",
+    "dist/**",
+    "build/**",
+    "storybook-static/**",
+    
+    // Configuration files that might have false positives
+    "scripts/**",
+    "e2e-configs/**",
+    
+    // TypeScript declaration files
+    "**/*.d.ts",
+    
+    // Node modules
+    "node_modules/**"
+  ],
+  "ignoreDependencies": [
+    // Next.js dependencies that are used internally
+    "next",
+    "@opennextjs/cloudflare",
+    
+    // Testing dependencies
+    "@testing-library/jest-dom",
+    "@testing-library/react",
+    "@testing-library/user-event",
+    "vitest",
+    "@vitest/browser",
+    "@vitest/coverage-v8",
+    "jsdom",
+    
+    // Storybook dependencies
+    "@storybook/addon-a11y",
+    "@storybook/addon-actions", 
+    "@storybook/addon-essentials",
+    "@storybook/addon-viewport",
+    "@storybook/nextjs",
+    "@storybook/react",
+    "@storybook/test",
+    "storybook",
+    
+    // MSW dependencies
+    "msw",
+    "msw-storybook-addon",
+    
+    // Build and development tools
+    "@biomejs/biome",
+    "@playwright/test",
+    "wrangler",
+    "@tailwindcss/postcss",
+    "tailwindcss",
+    "postcss",
+    "@vitejs/plugin-react",
+    
+    // TypeScript and types
+    "typescript",
+    "@types/node",
+    "@types/react",
+    "@types/react-dom",
+    
+    // Faker for testing
+    "@faker-js/faker"
+  ],
+  "rules": {
+    // コンサバティブな設定で偽陽性を避ける
+    "files": "warn",
+    "dependencies": "warn",
+    "unlisted": "warn",
+    "unresolved": "warn"
+  },
+  "compilers": {
+    "tsx": ["tsx"],
+    "jsx": ["jsx"]
+  }
+}
