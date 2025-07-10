@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
+import type { Transaction } from "../../lib/api/types";
 import { mockTransactions } from "../../../.storybook/mocks/data/transactions";
 import { ExpenseList } from "./ExpenseList";
 
@@ -281,8 +282,8 @@ export const ManyItems: Story = {
 export const WithInteractions: Story = {
 	args: {
 		onRefresh: () => console.log("更新ボタンがクリックされました"),
-		onEdit: (transaction) => console.log("編集:", transaction),
-		onDelete: (transactionId) => console.log("削除:", transactionId),
+		onEdit: (transaction: Transaction) => console.log("編集:", transaction),
+		onDelete: (transactionId: string) => console.log("削除:", transactionId),
 	},
 	parameters: {
 		docs: {
