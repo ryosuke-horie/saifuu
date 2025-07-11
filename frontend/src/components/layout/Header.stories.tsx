@@ -2,8 +2,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Header } from "./Header";
 
-// Next.js usePathnameをモック（将来のストーリーで使用予定）
-const _mockUsePathname = (pathname: string) => {
+// Next.js usePathnameをモック
+const mockUsePathname = (pathname: string) => {
 	const { usePathname } = require("next/navigation");
 	usePathname.mockReturnValue(pathname);
 };
@@ -322,6 +322,75 @@ export const PerformanceTest: Story = {
 				story:
 					"複数のHeaderコンポーネントを同時にレンダリングした場合のパフォーマンステスト。メモリ使用量やレンダリング速度を確認できます。",
 			},
+		},
+	},
+};
+
+/**
+ * ホームページアクティブ状態
+ *
+ * ホームページがアクティブな状態のナビゲーション表示例です。
+ * ホームリンクがハイライトされます。
+ */
+export const HomeActive: Story = {
+	play: () => {
+		mockUsePathname("/");
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					"ホームページがアクティブな状態。ホームのナビゲーション項目が青色でハイライトされます。",
+			},
+		},
+		chromatic: {
+			delay: 100,
+		},
+	},
+};
+
+/**
+ * 支出管理ページアクティブ状態
+ *
+ * 支出管理ページがアクティブな状態のナビゲーション表示例です。
+ * 支出管理リンクがハイライトされます。
+ */
+export const ExpensesActive: Story = {
+	play: () => {
+		mockUsePathname("/expenses");
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					"支出管理ページがアクティブな状態。支出管理のナビゲーション項目が青色でハイライトされます。",
+			},
+		},
+		chromatic: {
+			delay: 100,
+		},
+	},
+};
+
+/**
+ * サブスク管理ページアクティブ状態
+ *
+ * サブスク管理ページがアクティブな状態のナビゲーション表示例です。
+ * サブスク管理リンクがハイライトされます。
+ */
+export const SubscriptionsActive: Story = {
+	play: () => {
+		mockUsePathname("/subscriptions");
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					"サブスク管理ページがアクティブな状態。サブスク管理のナビゲーション項目が青色でハイライトされます。",
+			},
+		},
+		chromatic: {
+			delay: 100,
 		},
 	},
 };
