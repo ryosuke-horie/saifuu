@@ -12,5 +12,6 @@ export type {
 export { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 export { ExpenseForm } from "./ExpenseForm";
 export { ExpenseList } from "./ExpenseList";
+export { ExpenseStats } from "./ExpenseStats";
 export { NewExpenseButton } from "./NewExpenseButton";
 export { NewExpenseDialog } from "./NewExpenseDialog";
