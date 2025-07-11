@@ -27,11 +27,13 @@ jobs:
           
       - name: Parse comment
         id: parse
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           cd .github/scripts
           PARSE_RESULT=$(node -e "
             import('./dist/parse-ci-comment.js').then(({ parseCIComment }) => {
-              const result = parseCIComment('${{ github.event.comment.body }}');
+              const result = parseCIComment(process.env.COMMENT_BODY);
               console.log(JSON.stringify(result));
             });
           ")

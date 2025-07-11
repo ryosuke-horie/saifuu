@@ -7,6 +7,14 @@ export function parseCIComment(comment: string): ParseResult {
   const validTargets = ['api', 'frontend'];
   const targets = new Set<string>();
   
+  // null, undefined, または非文字列の場合は空の結果を返す
+  if (!comment || typeof comment !== 'string') {
+    return {
+      isValid: false,
+      targets: []
+    };
+  }
+  
   // コメントを行ごとに分割して処理
   const lines = comment.split('\n');
   
