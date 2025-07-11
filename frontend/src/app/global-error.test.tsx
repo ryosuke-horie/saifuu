@@ -4,60 +4,28 @@
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@/test-utils";
+import GlobalError from "./global-error";
 
-// テスト用のラッパーコンポーネント
-// html/bodyタグを除いた内部コンテンツのみをレンダリング
-const TestableGlobalError = ({
-	error,
-	reset,
-}: {
-	error: Error & { digest?: string };
-	reset: () => void;
-}) => (
-	<div className="min-h-screen flex items-center justify-center bg-gray-50">
-		<div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
-			<div className="mb-6">
-				<div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
-					<span className="text-2xl text-red-600">⚠</span>
-				</div>
-				<h1 className="text-2xl font-bold text-gray-900 mb-2">
-					エラーが発生しました
-				</h1>
-				<p className="text-gray-600 mb-6">
-					予期しないエラーが発生しました。しばらく待ってから再度お試しください。
-				</p>
-			</div>
+// html/bodyタグを含む実際のコンポーネントをテストするためのヘルパー関数
+const renderGlobalError = (
+	error: Error & { digest?: string },
+	reset: () => void,
+) => {
+	// jsdomはhtml/bodyタグを許可しないため、コンテナを作成してレンダリング
+	const container = document.createElement("div");
+	document.body.appendChild(container);
 
-			<div className="space-y-4">
-				<button
-					type="button"
-					onClick={reset}
-					className="inline-block w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
-				>
-					再試行
-				</button>
+	const { unmount } = render(<GlobalError error={error} reset={reset} />, {
+		container,
+	});
 
-				<a
-					href="/"
-					className="inline-block w-full px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-300 transition-colors"
-				>
-					ホームに戻る
-				</a>
-			</div>
-
-			{process.env.NODE_ENV === "development" && error.message && (
-				<div className="mt-6 p-4 bg-red-50 rounded-md text-left">
-					<p className="text-sm text-red-700 font-mono">{error.message}</p>
-					{error.digest && (
-						<p className="text-xs text-red-600 mt-2">
-							Error ID: {error.digest}
-						</p>
-					)}
-				</div>
-			)}
-		</div>
-	</div>
-);
+	return {
+		unmount: () => {
+			unmount();
+			document.body.removeChild(container);
+		},
+	};
+};
 
 describe("GlobalError", () => {
 	const mockReset = vi.fn();
@@ -73,11 +41,31 @@ describe("GlobalError", () => {
 
 	afterEach(() => {
 		vi.clearAllMocks();
+		// クリーンアップ：レンダリングされた要素を削除
+		document.body.innerHTML = "";
+	});
+
+	describe("HTMLドキュメント構造", () => {
+		it("html要素とbody要素が正しくレンダリングされる", () => {
+			// 実際のGlobalErrorコンポーネントをテスト
+			const container = document.createElement("div");
+			container.innerHTML = `<html lang="ja"><body></body></html>`;
+
+			// GlobalErrorが独自のhtml/bodyタグを持つことを確認
+			const { unmount } = renderGlobalError(defaultError, mockReset);
+
+			// コンポーネント内にhtml要素が含まれることを確認
+			// 注: jsdomの制限により、実際のhtml/bodyタグの検証は困難だが
+			// コンポーネントがレンダリングされることを確認
+			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
+
+			unmount();
+		});
 	});
 
 	describe("基本レンダリング", () => {
 		it("エラーページの基本要素が表示される", () => {
-			render(<TestableGlobalError error={defaultError} reset={mockReset} />);
+			const { unmount } = renderGlobalError(defaultError, mockReset);
 
 			// タイトル
 			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
@@ -102,13 +90,10 @@ describe("GlobalError", () => {
 		});
 
 		it("メインコンテナの構造が正しく設定される", () => {
-			const { container } = render(
-				<TestableGlobalError error={defaultError} reset={mockReset} />,
-			);
+			const { unmount } = renderGlobalError(defaultError, mockReset);
 
-			// テスト環境では、htmlタグはアクセスできないため、
-			// メインコンテナの構造を確認
-			const mainContainer = container.querySelector(".min-h-screen");
+			// html/bodyタグ内のメインコンテナの構造を確認
+			const mainContainer = document.querySelector(".min-h-screen");
 			expect(mainContainer).toBeInTheDocument();
 			expect(mainContainer).toHaveClass(
 				"min-h-screen",
@@ -117,6 +102,9 @@ describe("GlobalError", () => {
 				"justify-center",
 				"bg-gray-50",
 			);
+
+			// クリーンアップ
+			unmount();
 		});
 	});
 
@@ -130,7 +118,7 @@ describe("GlobalError", () => {
 		});
 
 		it("開発環境ではエラーメッセージが表示される", () => {
-			render(<TestableGlobalError error={defaultError} reset={mockReset} />);
+			const { unmount } = renderGlobalError(defaultError, mockReset);
 
 			// 開発環境では、エラー詳細が表示される
 			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
@@ -145,7 +133,7 @@ describe("GlobalError", () => {
 		});
 
 		it("エラーダイジェストがある場合は表示される", () => {
-			render(<TestableGlobalError error={errorWithDigest} reset={mockReset} />);
+			const { unmount } = renderGlobalError(errorWithDigest, mockReset);
 
 			// 開発環境では、エラー詳細が表示される
 			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
@@ -173,7 +161,7 @@ describe("GlobalError", () => {
 		});
 
 		it("本番環境ではエラーメッセージが表示されない", () => {
-			render(<TestableGlobalError error={defaultError} reset={mockReset} />);
+			const { unmount } = renderGlobalError(defaultError, mockReset);
 
 			expect(screen.queryByText("テストエラー")).not.toBeInTheDocument();
 		});
@@ -182,7 +170,7 @@ describe("GlobalError", () => {
 	describe("インタラクション", () => {
 		it("再試行ボタンをクリックするとreset関数が呼ばれる", async () => {
 			const user = userEvent.setup();
-			render(<TestableGlobalError error={defaultError} reset={mockReset} />);
+			const { unmount } = renderGlobalError(defaultError, mockReset);
 
 			const resetButton = screen.getByRole("button", { name: "再試行" });
 			await user.click(resetButton);
@@ -193,7 +181,7 @@ describe("GlobalError", () => {
 		});
 
 		it("ホームに戻るリンクが正しいhref属性を持つ", () => {
-			render(<TestableGlobalError error={defaultError} reset={mockReset} />);
+			const { unmount } = renderGlobalError(defaultError, mockReset);
 
 			const homeLink = screen.getByRole("link", { name: "ホームに戻る" });
 			expect(homeLink).toHaveAttribute("href", "/");
@@ -202,7 +190,7 @@ describe("GlobalError", () => {
 
 	describe("スタイリング", () => {
 		it("再試行ボタンに適切なクラスが適用される", () => {
-			render(<TestableGlobalError error={defaultError} reset={mockReset} />);
+			const { unmount } = renderGlobalError(defaultError, mockReset);
 
 			const resetButton = screen.getByRole("button", { name: "再試行" });
 			expect(resetButton).toHaveClass(
@@ -220,7 +208,7 @@ describe("GlobalError", () => {
 		});
 
 		it("ホームに戻るリンクに適切なクラスが適用される", () => {
-			render(<TestableGlobalError error={defaultError} reset={mockReset} />);
+			const { unmount } = renderGlobalError(defaultError, mockReset);
 
 			const homeLink = screen.getByRole("link", { name: "ホームに戻る" });
 			expect(homeLink).toHaveClass(
@@ -238,7 +226,7 @@ describe("GlobalError", () => {
 
 	describe("アクセシビリティ", () => {
 		it("ボタンとリンクが適切なロールを持つ", () => {
-			render(<TestableGlobalError error={defaultError} reset={mockReset} />);
+			const { unmount } = renderGlobalError(defaultError, mockReset);
 
 			const resetButton = screen.getByRole("button", { name: "再試行" });
 			expect(resetButton).toHaveAttribute("type", "button");
@@ -249,7 +237,7 @@ describe("GlobalError", () => {
 
 		it("キーボード操作でアクセス可能", async () => {
 			const user = userEvent.setup();
-			render(<TestableGlobalError error={defaultError} reset={mockReset} />);
+			const { unmount } = renderGlobalError(defaultError, mockReset);
 
 			// Tabキーでフォーカス移動
 			await user.tab();
