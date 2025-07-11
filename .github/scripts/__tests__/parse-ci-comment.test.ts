@@ -81,4 +81,113 @@ describe('parseCIComment', () => {
       });
     });
   });
+
+  describe('特殊文字・HTMLタグを含むコメントの処理', () => {
+    it('HTMLタグを含むコメントでもCIコマンドを正しく認識する', () => {
+      const commentWithHtml = `<!-- HTMLコメント -->
+<img src="test.gif" />
+/ci api
+<div>HTMLタグ</div>`;
+      const result = parseCIComment(commentWithHtml);
+      expect(result).toEqual({
+        isValid: true,
+        targets: ['api']
+      });
+    });
+
+    it('Claude Code自動生成GIFタグを含むコメントでも正常に動作する', () => {
+      const commentWithGif = `修正しました。
+
+![demo](https://example.com/demo.gif)
+
+/ci frontend
+
+テストお願いします。`;
+      const result = parseCIComment(commentWithGif);
+      expect(result).toEqual({
+        isValid: true,
+        targets: ['frontend']
+      });
+    });
+
+    it('シングルクォート、ダブルクォートを含むコメントでも正常に動作する', () => {
+      const commentWithQuotes = `コメント'内容"です
+/ci frontend
+さらに'追加"情報`;
+      const result = parseCIComment(commentWithQuotes);
+      expect(result).toEqual({
+        isValid: true,
+        targets: ['frontend']
+      });
+    });
+
+    it('バックスラッシュを含むコメントでも正常に動作する', () => {
+      const commentWithBackslash = `パス\\を\\含む\\コメント
+/ci api
+\\n改行文字`;
+      const result = parseCIComment(commentWithBackslash);
+      expect(result).toEqual({
+        isValid: true,
+        targets: ['api']
+      });
+    });
+
+    it('複数行HTMLとCIコマンドの組み合わせ', () => {
+      const complexComment = `<details>
+<summary>変更内容</summary>
+
+- 機能追加
+- バグ修正
+
+</details>
+
+/ci api
+/ci frontend
+
+<code>npm test</code>で確認済み`;
+      const result = parseCIComment(complexComment);
+      expect(result).toEqual({
+        isValid: true,
+        targets: ['api', 'frontend']
+      });
+    });
+
+    it('JavaScriptで問題となる特殊文字の組み合わせ', () => {
+      const problematicComment = `const test = "value";
+var x = 'string';
+/ci api
+\${variable}template literal`;
+      const result = parseCIComment(problematicComment);
+      expect(result).toEqual({
+        isValid: true,
+        targets: ['api']
+      });
+    });
+  });
+
+  describe('エッジケース', () => {
+    it('空文字列の場合', () => {
+      const result = parseCIComment('');
+      expect(result).toEqual({
+        isValid: false,
+        targets: []
+      });
+    });
+
+    it('undefined が渡された場合', () => {
+      const result = parseCIComment(undefined as any);
+      expect(result).toEqual({
+        isValid: false,
+        targets: []
+      });
+    });
+
+    it('null が渡された場合', () => {
+      const result = parseCIComment(null as any);
+      expect(result).toEqual({
+        isValid: false,
+        targets: []
+      });
+    });
+  });
 });
