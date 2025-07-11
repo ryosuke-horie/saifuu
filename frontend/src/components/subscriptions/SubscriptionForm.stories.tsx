@@ -2,7 +2,7 @@ import { action } from "@storybook/addon-actions";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
 import { mockCategories } from "../../../.storybook/mocks/data/categories";
-import type { SubscriptionFormData } from "../../types/subscription";
+import type { SubscriptionFormData } from "../../lib/api/types";
 import { SubscriptionForm } from "./SubscriptionForm";
 
 /**

@@ -1,4 +1,4 @@
-import type { Subscription } from "../../../src/types/subscription";
+import type { Subscription } from "../../../src/lib/api/types";
 import { mockCategories } from "./categories";
 
 // サブスクリプションデータのモック
@@ -12,6 +12,8 @@ export const mockSubscriptions: Subscription[] = [
 		category: mockCategories[0], // エンターテイメント
 		isActive: true,
 		description: "動画ストリーミングサービス",
+		createdAt: "2025-01-01T00:00:00Z",
+		updatedAt: "2025-01-01T00:00:00Z",
 	},
 	{
 		id: "2",
@@ -22,6 +24,8 @@ export const mockSubscriptions: Subscription[] = [
 		category: mockCategories[0], // エンターテイメント
 		isActive: true,
 		description: "音楽ストリーミングサービス",
+		createdAt: "2025-01-02T00:00:00Z",
+		updatedAt: "2025-01-02T00:00:00Z",
 	},
 	{
 		id: "3",
@@ -32,5 +36,7 @@ export const mockSubscriptions: Subscription[] = [
 		category: mockCategories[1], // 仕事・ビジネス
 		isActive: true,
 		description: "デザイン・動画編集ソフトウェア",
+		createdAt: "2025-01-03T00:00:00Z",
+		updatedAt: "2025-01-03T00:00:00Z",
 	},
 ];

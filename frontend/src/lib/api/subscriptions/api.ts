@@ -3,12 +3,8 @@
  * バックエンドのサブスクリプションAPIとの通信を担当
  */
 
-import type { Category } from "../../../types/category";
-import type {
-	Subscription,
-	SubscriptionFormData,
-} from "../../../types/subscription";
 import { apiClient } from "../client";
+import type { Category, Subscription, SubscriptionFormData } from "../types";
 import {
 	transformApiSubscriptionToFrontend,
 	transformFormDataToCreateRequest,

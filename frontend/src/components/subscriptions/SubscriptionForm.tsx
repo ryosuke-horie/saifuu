@@ -5,7 +5,7 @@ import type {
 	BillingCycle,
 	SubscriptionFormData,
 	SubscriptionFormProps,
-} from "../../types/subscription";
+} from "../../lib/api/types";
 
 /**
  * サブスクリプションフォームコンポーネント

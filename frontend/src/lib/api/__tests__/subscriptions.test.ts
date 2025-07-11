@@ -7,8 +7,6 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Category } from "../../../types/category";
-import type { SubscriptionFormData } from "../../../types/subscription";
 import { apiClient } from "../client";
 import {
 	createSubscription,
@@ -19,6 +17,7 @@ import {
 	updateSubscriptionStatus,
 } from "../subscriptions/api";
 import type { ApiSubscriptionResponse } from "../subscriptions/types";
+import type { Category, SubscriptionFormData } from "../types";
 
 // apiClientをモック化
 vi.mock("../client", () => ({

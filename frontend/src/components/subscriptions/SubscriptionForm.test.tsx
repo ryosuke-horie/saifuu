@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import { mockCategories } from "../../../.storybook/mocks/data/categories";
-import type { SubscriptionFormData } from "../../types/subscription";
+import type { SubscriptionFormData } from "../../lib/api/types";
 import { SubscriptionForm } from "./SubscriptionForm";
 
 /**

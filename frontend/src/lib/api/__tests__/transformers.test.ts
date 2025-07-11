@@ -7,8 +7,6 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { Category } from "../../../types/category";
-import type { SubscriptionFormData } from "../../../types/subscription";
 import {
 	transformApiCategoriesToFrontend,
 	transformApiCategoryToFrontend,
@@ -20,6 +18,7 @@ import {
 	transformFormDataToUpdateRequest,
 } from "../subscriptions/transformers";
 import type { ApiSubscriptionResponse } from "../subscriptions/types";
+import type { Category, SubscriptionFormData } from "../types";
 
 describe("Categories Transformers", () => {
 	describe("transformApiCategoryToFrontend", () => {

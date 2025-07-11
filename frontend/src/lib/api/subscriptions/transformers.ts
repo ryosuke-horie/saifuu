@@ -3,11 +3,7 @@
  * フロントエンド型とバックエンドAPI型の間での変換を行う
  */
 
-import type { Category } from "../../../types/category";
-import type {
-	Subscription,
-	SubscriptionFormData,
-} from "../../../types/subscription";
+import type { Category, Subscription, SubscriptionFormData } from "../types";
 import type {
 	ApiCreateSubscriptionRequest,
 	ApiSubscriptionResponse,
@@ -41,7 +37,9 @@ export function transformApiSubscriptionToFrontend(
 		billingCycle: apiSubscription.billingCycle,
 		nextBillingDate: formatDateToYYYYMMDD(apiSubscription.nextBillingDate), // ISO -> YYYY-MM-DD変換
 		isActive: apiSubscription.isActive,
-		description: apiSubscription.description || undefined,
+		description: apiSubscription.description ?? null,
+		createdAt: apiSubscription.createdAt,
+		updatedAt: apiSubscription.updatedAt,
 	};
 }
 
