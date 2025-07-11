@@ -1,8 +1,8 @@
 /**
  * 支出統計コンポーネント
- * 
+ *
  * 月間収支、主要カテゴリ、期間比較などの統計情報を表示する
- * 
+ *
  * 設計方針:
  * - 統計カードレイアウトで情報を整理
  * - 数値は日本円形式でフォーマット
@@ -61,7 +61,7 @@ const formatPercentage = (percentage: number): string => {
  * ローディング状態コンポーネント
  */
 const LoadingState: FC = () => (
-	<div 
+	<div
 		className="flex items-center justify-center py-16"
 		data-testid="stats-loading"
 		role="status"
@@ -77,8 +77,11 @@ const LoadingState: FC = () => (
 /**
  * エラー状態コンポーネント
  */
-const ErrorState: FC<{ message: string; onRetry?: () => void }> = ({ message, onRetry }) => (
-	<div 
+const ErrorState: FC<{ message: string; onRetry?: () => void }> = ({
+	message,
+	onRetry,
+}) => (
+	<div
 		className="flex flex-col items-center justify-center py-16 text-center"
 		data-testid="stats-error"
 		role="alert"
@@ -106,12 +109,14 @@ const ErrorState: FC<{ message: string; onRetry?: () => void }> = ({ message, on
  * 空データ状態コンポーネント
  */
 const EmptyState: FC = () => (
-	<div 
+	<div
 		className="flex flex-col items-center justify-center py-16 text-center"
 		data-testid="stats-empty"
 	>
 		<div className="text-6xl mb-4">📊</div>
-		<h3 className="text-lg font-semibold text-gray-900 mb-2">データがありません</h3>
+		<h3 className="text-lg font-semibold text-gray-900 mb-2">
+			データがありません
+		</h3>
 		<p className="text-gray-600">取引を登録してください</p>
 	</div>
 );
@@ -125,14 +130,13 @@ const StatsCard: FC<{
 	testId: string;
 	className?: string;
 }> = ({ title, children, testId, className = "" }) => (
-	<div 
+	<div
 		className={`bg-white rounded-lg shadow-sm border border-gray-200 p-6 ${className}`}
 		data-testid={testId}
 		role="region"
 		aria-labelledby={`${testId}-title`}
-		tabIndex={0}
 	>
-		<h3 
+		<h3
 			id={`${testId}-title`}
 			className="text-lg font-semibold text-gray-900 mb-4"
 		>
@@ -145,35 +149,37 @@ const StatsCard: FC<{
 /**
  * 月間収支カードコンポーネント
  */
-const MonthlyBalanceCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({ stats }) => (
+const MonthlyBalanceCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({
+	stats,
+}) => (
 	<StatsCard title="月間収支" testId="monthly-balance-card">
 		<div className="space-y-4">
 			{/* 収入 */}
 			<div className="flex justify-between items-center">
 				<span className="text-gray-600">収入</span>
-				<span 
+				<span
 					className="text-lg font-semibold text-green-600"
 					data-testid="total-income"
 				>
 					{formatCurrency(stats.totalIncome)}
 				</span>
 			</div>
-			
+
 			{/* 支出 */}
 			<div className="flex justify-between items-center">
 				<span className="text-gray-600">支出</span>
-				<span 
+				<span
 					className="text-lg font-semibold text-red-600"
 					data-testid="total-expense"
 				>
 					{formatCurrency(stats.totalExpense)}
 				</span>
 			</div>
-			
+
 			{/* 差額（収支） */}
 			<div className="flex justify-between items-center pt-4 border-t border-gray-200">
 				<span className="font-semibold text-gray-900">差額</span>
-				<span 
+				<span
 					className={`text-xl font-bold ${
 						stats.balance >= 0 ? "text-green-600" : "text-red-600"
 					}`}
@@ -183,7 +189,7 @@ const MonthlyBalanceCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({ 
 					{formatCurrency(Math.abs(stats.balance))}
 				</span>
 			</div>
-			
+
 			{/* 取引件数 */}
 			<div className="flex justify-between items-center text-sm text-gray-500">
 				<span>取引件数</span>
@@ -196,17 +202,19 @@ const MonthlyBalanceCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({ 
 /**
  * 主要カテゴリカードコンポーネント（将来機能）
  */
-const TopCategoriesCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({ stats }) => {
+const TopCategoriesCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({
+	stats,
+}) => {
 	// 型ガードで拡張データをチェック
 	const extendedStats = stats as ExtendedStatsData;
-	
+
 	return (
 		<StatsCard title="主要カテゴリ" testId="top-categories-card">
 			<div className="space-y-4">
 				{/* 最大支出カテゴリ */}
 				<div className="space-y-2">
 					<span className="text-sm text-gray-600">最大支出</span>
-					<div 
+					<div
 						className="flex justify-between items-center"
 						data-testid="top-expense-category"
 					>
@@ -224,11 +232,11 @@ const TopCategoriesCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({ s
 						)}
 					</div>
 				</div>
-				
+
 				{/* 最大収入カテゴリ */}
 				<div className="space-y-2">
 					<span className="text-sm text-gray-600">最大収入</span>
-					<div 
+					<div
 						className="flex justify-between items-center"
 						data-testid="top-income-category"
 					>
@@ -254,18 +262,22 @@ const TopCategoriesCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({ s
 /**
  * 期間比較カードコンポーネント（将来機能）
  */
-const PeriodComparisonCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({ stats }) => {
+const PeriodComparisonCard: FC<{
+	stats: BaseStatsData | ExtendedStatsData;
+}> = ({ stats }) => {
 	// 型ガードで拡張データをチェック
 	const extendedStats = stats as ExtendedStatsData;
-	
+
 	return (
 		<StatsCard title="前月比" testId="period-comparison-card">
 			<div className="text-center">
 				{extendedStats.monthlyComparison !== undefined ? (
 					<>
-						<div 
+						<div
 							className={`text-3xl font-bold ${
-								extendedStats.monthlyComparison >= 0 ? "text-green-600" : "text-red-600"
+								extendedStats.monthlyComparison >= 0
+									? "text-green-600"
+									: "text-red-600"
 							}`}
 							data-testid="monthly-comparison"
 						>
@@ -277,15 +289,13 @@ const PeriodComparisonCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = (
 					</>
 				) : (
 					<>
-						<div 
+						<div
 							className="text-3xl font-bold text-gray-400"
 							data-testid="monthly-comparison"
 						>
 							--%
 						</div>
-						<p className="text-sm text-gray-600 mt-2">
-							データなし
-						</p>
+						<p className="text-sm text-gray-600 mt-2">データなし</p>
 					</>
 				)}
 			</div>
@@ -320,23 +330,29 @@ export const ExpenseStats: FC<ExpenseStatsProps> = ({
 	}
 
 	// 空データの判定（全ての金額が0の場合）
-	const isEmpty = stats.totalIncome === 0 && 
-	                stats.totalExpense === 0 && 
-	                stats.transactionCount === 0;
+	const isEmpty =
+		stats.totalIncome === 0 &&
+		stats.totalExpense === 0 &&
+		stats.transactionCount === 0;
 
 	return (
-		<div 
+		<section
 			className={`space-y-6 ${className}`}
 			data-testid="expense-stats"
-			aria-label="支出統計情報"
+			aria-labelledby="expense-stats-title"
 		>
 			{/* ヘッダー */}
 			<div className="flex items-center justify-between">
 				<div>
-					<h2 className="text-2xl font-bold text-gray-900">統計情報</h2>
+					<h2
+						id="expense-stats-title"
+						className="text-2xl font-bold text-gray-900"
+					>
+						統計情報
+					</h2>
 					<p className="text-gray-600 mt-1">月間の収支データ</p>
 				</div>
-				
+
 				{/* リフレッシュボタン（オプション） */}
 				{onRefresh && (
 					<button
@@ -360,14 +376,14 @@ export const ExpenseStats: FC<ExpenseStatsProps> = ({
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 					{/* 月間収支カード */}
 					<MonthlyBalanceCard stats={stats} />
-					
+
 					{/* 主要カテゴリカード */}
 					<TopCategoriesCard stats={stats} />
-					
+
 					{/* 期間比較カード */}
 					<PeriodComparisonCard stats={stats} />
 				</div>
 			)}
-		</div>
+		</section>
 	);
 };

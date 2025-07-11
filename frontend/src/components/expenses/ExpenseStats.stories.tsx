@@ -1,6 +1,6 @@
 /**
  * ExpenseStats コンポーネントのStorybook ストーリー
- * 
+ *
  * 統計表示コンポーネントの各状態とバリエーションを定義
  * - Default: 通常の統計データ表示
  * - Loading: ローディング状態
@@ -10,7 +10,7 @@
  */
 
 import type { Meta, StoryObj } from "@storybook/react";
-import { within, expect, userEvent } from "@storybook/test";
+import { expect, userEvent, within } from "@storybook/test";
 import { ExpenseStats } from "./ExpenseStats";
 
 const meta: Meta<typeof ExpenseStats> = {
@@ -78,7 +78,7 @@ const defaultStatsData = {
 	transactionCount: 28,
 	monthlyComparison: 15.3,
 	topExpenseCategory: { name: "食費", amount: 65000 },
-	topIncomeCategory: { name: "給与", amount: 280000 }
+	topIncomeCategory: { name: "給与", amount: 280000 },
 };
 
 // 空の統計データ
@@ -89,7 +89,7 @@ const emptyStatsData = {
 	transactionCount: 0,
 	monthlyComparison: 0,
 	topExpenseCategory: null,
-	topIncomeCategory: null
+	topIncomeCategory: null,
 };
 
 // 負の収支統計データ
@@ -100,7 +100,7 @@ const negativeBalanceStatsData = {
 	transactionCount: 35,
 	monthlyComparison: -23.5,
 	topExpenseCategory: { name: "家賃", amount: 80000 },
-	topIncomeCategory: { name: "給与", amount: 180000 }
+	topIncomeCategory: { name: "給与", amount: 180000 },
 };
 
 // 大きな金額の統計データ
@@ -111,7 +111,7 @@ const largeAmountStatsData = {
 	transactionCount: 156,
 	monthlyComparison: 45.8,
 	topExpenseCategory: { name: "住宅ローン", amount: 3500000 },
-	topIncomeCategory: { name: "賞与", amount: 5000000 }
+	topIncomeCategory: { name: "賞与", amount: 5000000 },
 };
 
 /**
@@ -142,19 +142,20 @@ export const Loading: Story = {
  * エラー状態
  * データ取得失敗時の表示状態
  */
-export const Error: Story = {
+export const ErrorState: Story = {
 	args: {
 		stats: null,
 		isLoading: false,
-		error: "統計データの取得に失敗しました。ネットワーク接続を確認してください。",
+		error:
+			"統計データの取得に失敗しました。ネットワーク接続を確認してください。",
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		
+
 		// エラー表示の確認
 		await expect(canvas.getByTestId("stats-error")).toBeInTheDocument();
 		await expect(canvas.getByText("エラー")).toBeInTheDocument();
-		
+
 		// リトライボタンの存在確認
 		const retryButton = canvas.getByTestId("stats-retry-button");
 		await expect(retryButton).toBeInTheDocument();
@@ -174,11 +175,11 @@ export const Empty: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		
+
 		// 空状態メッセージの確認
 		await expect(canvas.getByTestId("stats-empty")).toBeInTheDocument();
 		await expect(canvas.getByText("データがありません")).toBeInTheDocument();
-		
+
 		// ゼロ金額の表示確認
 		await expect(canvas.getByTestId("total-income")).toHaveTextContent("¥0");
 		await expect(canvas.getByTestId("total-expense")).toHaveTextContent("¥0");
@@ -198,11 +199,11 @@ export const NegativeBalance: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		
+
 		// 負の収支の表示確認
 		const balanceElement = canvas.getByTestId("balance-amount");
 		await expect(balanceElement).toHaveTextContent("-¥70,000");
-		
+
 		// 前月比マイナス表示の確認
 		const comparisonElement = canvas.getByTestId("monthly-comparison");
 		await expect(comparisonElement).toHaveTextContent("-23.5%");
@@ -221,11 +222,17 @@ export const LargeAmounts: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		
+
 		// 大きな金額のフォーマット確認
-		await expect(canvas.getByTestId("total-income")).toHaveTextContent("¥12,345,678");
-		await expect(canvas.getByTestId("total-expense")).toHaveTextContent("¥9,876,543");
-		await expect(canvas.getByTestId("balance-amount")).toHaveTextContent("¥2,469,135");
+		await expect(canvas.getByTestId("total-income")).toHaveTextContent(
+			"¥12,345,678",
+		);
+		await expect(canvas.getByTestId("total-expense")).toHaveTextContent(
+			"¥9,876,543",
+		);
+		await expect(canvas.getByTestId("balance-amount")).toHaveTextContent(
+			"¥2,469,135",
+		);
 	},
 };
 
@@ -243,11 +250,11 @@ export const WithRefresh: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const user = userEvent.setup();
-		
+
 		// リフレッシュボタンの存在確認
 		const refreshButton = canvas.getByTestId("stats-refresh-button");
 		await expect(refreshButton).toBeInTheDocument();
-		
+
 		// ボタンクリックのテスト
 		await user.click(refreshButton);
 	},
@@ -283,10 +290,12 @@ export const Mobile: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		
+
 		// モバイルでも主要な統計が表示されることを確認
 		await expect(canvas.getByTestId("expense-stats")).toBeInTheDocument();
-		await expect(canvas.getByTestId("monthly-balance-card")).toBeInTheDocument();
+		await expect(
+			canvas.getByTestId("monthly-balance-card"),
+		).toBeInTheDocument();
 		await expect(canvas.getByTestId("top-categories-card")).toBeInTheDocument();
 	},
 };
@@ -339,14 +348,14 @@ export const InteractionTest: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const user = userEvent.setup();
-		
+
 		// エラー状態の確認
 		await expect(canvas.getByTestId("stats-error")).toBeInTheDocument();
-		
+
 		// リトライボタンのクリックテスト
 		const retryButton = canvas.getByTestId("stats-retry-button");
 		await user.click(retryButton);
-		
+
 		// フォーカス状態の確認
 		await expect(retryButton).toHaveFocus();
 	},
@@ -364,23 +373,16 @@ export const AccessibilityTest: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const user = userEvent.setup();
-		
+
 		// ARIA属性の確認
 		const statsContainer = canvas.getByTestId("expense-stats");
-		await expect(statsContainer).toHaveAttribute("aria-label", "支出統計情報");
-		
-		// キーボードナビゲーションの確認
+		await expect(statsContainer).toHaveAttribute(
+			"aria-labelledby",
+			"expense-stats-title",
+		);
+
+		// セマンティックマークアップの確認
 		const cards = canvas.getAllByRole("region");
-		
-		// 最初のカードにフォーカス
-		if (cards.length > 0) {
-			cards[0].focus();
-			await expect(cards[0]).toHaveFocus();
-			
-			// Tabキーでの移動
-			await user.tab();
-			await expect(cards[1]).toHaveFocus();
-		}
+		await expect(cards).toHaveLength(3); // 3つのregionカードが存在する
 	},
 };
