@@ -216,3 +216,83 @@ export interface ExpenseFilterState {
 	dateFrom?: string;
 	dateTo?: string;
 }
+
+/**
+ * 拡張されたフィルタリングオプション
+ * ExpenseFiltersコンポーネント用の型定義
+ */
+export type PeriodType =
+	| "current_month"
+	| "last_month"
+	| "current_year"
+	| "custom";
+
+/**
+ * ExpenseFiltersコンポーネントのフィルター状態
+ */
+export interface ExpenseFiltersState {
+	/**
+	 * 期間タイプ
+	 */
+	period?: PeriodType;
+
+	/**
+	 * カスタム期間の開始日（YYYY-MM-DD形式）
+	 */
+	dateFrom?: string;
+
+	/**
+	 * カスタム期間の終了日（YYYY-MM-DD形式）
+	 */
+	dateTo?: string;
+
+	/**
+	 * カテゴリIDの配列（複数選択可能）
+	 */
+	categoryIds?: string[];
+
+	/**
+	 * 取引種別（収入または支出）
+	 */
+	type?: TransactionType;
+
+	/**
+	 * 最小金額
+	 */
+	minAmount?: number;
+
+	/**
+	 * 最大金額
+	 */
+	maxAmount?: number;
+}
+
+/**
+ * ExpenseFiltersコンポーネントのプロパティ
+ */
+export interface ExpenseFiltersProps {
+	/**
+	 * フィルター変更時のコールバック
+	 */
+	onFiltersChange: (filters: ExpenseFiltersState) => void;
+
+	/**
+	 * カテゴリ一覧
+	 */
+	categories: Category[];
+
+	/**
+	 * 初期フィルター状態（オプション）
+	 */
+	initialFilters?: ExpenseFiltersState;
+
+	/**
+	 * 追加のCSSクラス名
+	 */
+	className?: string;
+
+	/**
+	 * URLパラメータとの同期を無効化（オプション）
+	 */
+	disableUrlSync?: boolean;
+}
