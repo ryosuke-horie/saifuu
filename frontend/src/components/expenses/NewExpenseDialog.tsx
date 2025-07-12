@@ -54,7 +54,7 @@ export const NewExpenseDialog: FC<NewExpenseDialogProps> = ({
 		// 注意: 暫定的にカテゴリ名ベースで数値IDを生成
 		const globalExpenseCategories = getCategoriesByType("expense");
 		return globalExpenseCategories.map((config, index) => ({
-			id: index + 1, // 暫定的に連番のIDを使用
+			id: String(index + 1), // 暫定的に連番のIDを使用（string型に変換）
 			name: config.name,
 			type: config.type as "income" | "expense",
 			color: config.color || null,

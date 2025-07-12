@@ -7,8 +7,7 @@ import {
 	NewExpenseButton,
 	NewExpenseDialog,
 } from "../../components/expenses";
-import { useExpenses, useCategories } from "../../hooks";
-import type { Category } from "../../lib/api/types";
+import { useCategories, useExpenses } from "../../hooks";
 import type { ExpenseFormData } from "../../types/expense";
 
 /**
