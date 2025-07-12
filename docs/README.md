@@ -1,18 +1,22 @@
 # Saifuu プロジェクトドキュメント
+<!-- tags: saifuu, documentation, index, readme, architecture, development, testing, api, frontend, devops -->
 
 このディレクトリには、Saifuuプロジェクトのすべての技術ドキュメントが含まれています。
 
 ## 📚 開発環境
+<!-- tags: setup, environment, troubleshooting, database, seed -->
 
 - [開発環境エラー修正プラン](./開発環境エラー修正プラン.md) - 開発環境のトラブルシューティング
 - [環境変数設定ガイド](./環境変数設定ガイド.md) - 環境変数の設定方法
 - [シード処理ガイド](./シード処理ガイド.md) - データベースシード処理の実装方法
 
 ## 🛠 ツール
+<!-- tags: tools, ghost, background-process, development-tools -->
 
 - [ghost使用ガイド](./tools/ghost使用ガイド.md) - バックグラウンドプロセス管理ツールの使用方法
 
 ## 🔌 API開発
+<!-- tags: api, backend, hono, cloudflare, d1, database, logger, migration -->
 
 - [API開発README](./API開発/README.md) - API開発の概要
 - [APIセットアップ](./API開発/setup.md) - APIの初期設定
@@ -29,6 +33,7 @@
 - [APIロガー実装完了レポート](./APIロガー実装完了レポート.md) - 実装完了報告
 
 ## 🎨 フロントエンド開発
+<!-- tags: frontend, react, nextjs, storybook, logger, components, ui -->
 
 ### Storybook
 
@@ -41,6 +46,7 @@
 - [フロントエンドロガー実装計画](./フロントエンドロガー実装計画.md) - 実装計画
 
 ## 🧪 テスト
+<!-- tags: testing, unit-test, integration-test, e2e, vitest, playwright, coverage -->
 
 ### 全般
 
@@ -53,24 +59,30 @@
 - [フロントエンドロガー_テスト実装クイックリファレンス](./フロントエンドロガー_テスト実装クイックリファレンス.md) - テスト実装のクイックリファレンス
 
 ## 🏗 アーキテクチャ決定記録 (ADR)
+<!-- tags: architecture, decision-record, adr, design, technical-decisions -->
 
+- [ADR作成ガイド](./adr/ADR作成ガイド.md) - ADR作成時のガイドラインとチェックリスト
 - [ADR-001: VRTシステムの削除](./adr/001-remove-vrt-system.md) - Visual Regression Testingシステムの削除決定
 - [ADR-002: Reactロガー統合](./adr/002-react-logger-integration.md) - Reactロガーの統合方針
 
 ## 🚀 CI/CD
+<!-- tags: ci, cd, github-actions, automation, deployment, workflow -->
 
 - [PRコメント駆動CI実装ガイド](./ci/PRコメント駆動CI実装ガイド.md) - PRコメントを使用したCI/CDの実装
 
 ## 📋 仕様書・要件定義
+<!-- tags: specification, requirements, documentation, feature-spec -->
 
 - [支出管理画面要件定義書](./支出管理画面要件定義書.md) - 支出管理機能の要件定義
 - [react-logger-integration-spec](./react-logger-integration-spec.md) - Reactロガー統合の仕様
 
 ## 🐛 デバッグ・運用
+<!-- tags: debugging, production, monitoring, troubleshooting, operations -->
 
 - [本番環境デバッグメモ](./本番環境デバッグメモ.md) - 本番環境でのデバッグ記録
 
 ## 📝 アーカイブ
+<!-- tags: archive, completed, historical, legacy -->
 
 ### 完了済みタスク
 
@@ -86,3 +98,9 @@
 - 機能や目的に応じてサブディレクトリに分類
 - 実装と同時にドキュメントを更新し、常に最新状態を保つ
 - 重要な技術的選定を行った場合はADRとして記録
+
+### ドキュメント検索性の向上
+
+- 各セクションにHTMLコメント形式でタグを付与（例: `<!-- tags: api, backend, testing -->`）
+- 将来的な検索機能の実装を見据えた構造化
+- タグによる横断的なドキュメント検索の実現（実装予定）
