@@ -19,10 +19,17 @@
 			}
 		],
 		"paths": {
-			"@/*": ["./src/*"]
+			"@/*": ["./src/*"],
+			"@shared/*": ["../shared/*"]
 		},
 		"types": ["./cloudflare-env.d.ts", "node", "vitest/globals"]
 	},
-	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+	"include": [
+		"next-env.d.ts",
+		"**/*.ts",
+		"**/*.tsx",
+		".next/types/**/*.ts",
+		"../shared/**/*.ts"
+	],
 	"exclude": ["node_modules"]
 }
