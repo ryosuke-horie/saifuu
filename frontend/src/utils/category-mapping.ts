@@ -1,4 +1,4 @@
-import type { CategoryConfig } from "../../../shared/config/categories";
+import type { CategoryConfig } from "@shared/config/categories";
 import type { Category } from "../lib/api/types";
 
 /**

@@ -10,7 +10,7 @@ import type { Category } from "../../lib/api/types";
 import { NewExpenseDialog } from "./NewExpenseDialog";
 
 // グローバルカテゴリ設定のモック
-vi.mock("../../../../shared/config/categories", () => ({
+vi.mock("@shared/config/categories", () => ({
 	getCategoriesByType: vi.fn(() => [
 		{
 			id: "global-category-1",

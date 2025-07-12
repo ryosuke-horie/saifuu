@@ -1,5 +1,5 @@
-import type { CategoryConfig } from "../../../shared/config/categories";
-import { getCategoriesByType } from "../../../shared/config/categories";
+import type { CategoryConfig } from "@shared/config/categories";
+import { getCategoriesByType } from "@shared/config/categories";
 import type { Category } from "../types/category";
 
 /**

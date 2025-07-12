@@ -15,7 +15,7 @@ vi.mock("react-dom", async () => {
 });
 
 // グローバルカテゴリ設定をモック
-vi.mock("../../../../shared/config/categories", () => ({
+vi.mock("@shared/config/categories", () => ({
 	getCategoriesByType: vi.fn(() => [
 		{
 			id: "food",

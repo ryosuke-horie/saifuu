@@ -1,7 +1,7 @@
 "use client";
 
 import { type FC, useCallback, useMemo, useState } from "react";
-import { getCategoriesByType } from "../../../../shared/config/categories";
+import { getCategoriesByType } from "@shared/config/categories";
 import type {
 	Category,
 	NewSubscriptionDialogProps,
