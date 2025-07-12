@@ -1,13 +1,12 @@
 name: API CI (Self-hosted Runner)
 
 on:
-  # PRコメントからの手動トリガー
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: 'Pull Request number'
-        required: false
-        type: string
+  # プルリクエストで自動実行
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-ci.yml'
   # mainブランチへのpushは引き続き自動実行
   push:
     branches:
@@ -15,6 +14,13 @@ on:
     paths:
       - 'api/**'
       - '.github/workflows/api-ci.yml'
+  # 手動トリガー（デバッグ用に残す）
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull Request number'
+        required: false
+        type: string
 
 # GitHub Actions無料枠節約のため、同一PRで複数実行時は前の実行をキャンセル
 concurrency:
@@ -95,6 +101,6 @@ jobs:
           } > coverage_comment.md
           
           # Post comment to PR
-          gh pr comment ${{ github.event.number }} --body-file coverage_comment.md
+          gh pr comment ${{ github.event.pull_request.number }} --body-file coverage_comment.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
