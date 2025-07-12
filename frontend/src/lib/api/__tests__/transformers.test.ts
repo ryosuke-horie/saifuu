@@ -174,6 +174,8 @@ describe("Subscriptions Transformers", () => {
 				nextBillingDate: "2025-08-01", // YYYY-MM-DD形式に変換される
 				isActive: true,
 				description: "動画ストリーミング",
+				createdAt: "2025-07-05T07:06:39Z",
+				updatedAt: "2025-07-05T07:06:39Z",
 			});
 		});
 
@@ -215,7 +217,7 @@ describe("Subscriptions Transformers", () => {
 				mockCategories,
 			);
 
-			expect(result.description).toBeUndefined(); // null || undefined は undefined になる
+			expect(result.description).toBeNull(); // null のまま
 		});
 	});
 

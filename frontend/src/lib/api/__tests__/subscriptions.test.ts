@@ -101,6 +101,8 @@ describe("Subscriptions API", () => {
 				nextBillingDate: "2025-08-01", // YYYY-MM-DD形式に変換される
 				isActive: true,
 				description: "動画ストリーミング",
+				createdAt: "2025-07-05T07:06:39Z",
+				updatedAt: "2025-07-05T07:06:39Z",
 			});
 
 			// 第2サブスクリプションの検証
@@ -112,7 +114,9 @@ describe("Subscriptions API", () => {
 				billingCycle: "monthly",
 				nextBillingDate: "2025-08-01", // YYYY-MM-DD形式に変換される
 				isActive: true,
-				description: undefined, // null -> undefined 変換
+				description: null, // null のまま
+				createdAt: "2025-07-05T07:06:39Z",
+				updatedAt: "2025-07-05T07:06:39Z",
 			});
 		});
 

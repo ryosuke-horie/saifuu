@@ -65,7 +65,7 @@ describe("GlobalError", () => {
 
 	describe("基本レンダリング", () => {
 		it("エラーページの基本要素が表示される", () => {
-			const { unmount } = renderGlobalError(defaultError, mockReset);
+			renderGlobalError(defaultError, mockReset);
 
 			// タイトル
 			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
@@ -118,7 +118,7 @@ describe("GlobalError", () => {
 		});
 
 		it("開発環境ではエラーメッセージが表示される", () => {
-			const { unmount } = renderGlobalError(defaultError, mockReset);
+			renderGlobalError(defaultError, mockReset);
 
 			// 開発環境では、エラー詳細が表示される
 			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
@@ -133,7 +133,7 @@ describe("GlobalError", () => {
 		});
 
 		it("エラーダイジェストがある場合は表示される", () => {
-			const { unmount } = renderGlobalError(errorWithDigest, mockReset);
+			renderGlobalError(errorWithDigest, mockReset);
 
 			// 開発環境では、エラー詳細が表示される
 			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
@@ -161,7 +161,7 @@ describe("GlobalError", () => {
 		});
 
 		it("本番環境ではエラーメッセージが表示されない", () => {
-			const { unmount } = renderGlobalError(defaultError, mockReset);
+			renderGlobalError(defaultError, mockReset);
 
 			expect(screen.queryByText("テストエラー")).not.toBeInTheDocument();
 		});
@@ -170,7 +170,7 @@ describe("GlobalError", () => {
 	describe("インタラクション", () => {
 		it("再試行ボタンをクリックするとreset関数が呼ばれる", async () => {
 			const user = userEvent.setup();
-			const { unmount } = renderGlobalError(defaultError, mockReset);
+			renderGlobalError(defaultError, mockReset);
 
 			const resetButton = screen.getByRole("button", { name: "再試行" });
 			await user.click(resetButton);
@@ -181,7 +181,7 @@ describe("GlobalError", () => {
 		});
 
 		it("ホームに戻るリンクが正しいhref属性を持つ", () => {
-			const { unmount } = renderGlobalError(defaultError, mockReset);
+			renderGlobalError(defaultError, mockReset);
 
 			const homeLink = screen.getByRole("link", { name: "ホームに戻る" });
 			expect(homeLink).toHaveAttribute("href", "/");
@@ -190,7 +190,7 @@ describe("GlobalError", () => {
 
 	describe("スタイリング", () => {
 		it("再試行ボタンに適切なクラスが適用される", () => {
-			const { unmount } = renderGlobalError(defaultError, mockReset);
+			renderGlobalError(defaultError, mockReset);
 
 			const resetButton = screen.getByRole("button", { name: "再試行" });
 			expect(resetButton).toHaveClass(
@@ -208,7 +208,7 @@ describe("GlobalError", () => {
 		});
 
 		it("ホームに戻るリンクに適切なクラスが適用される", () => {
-			const { unmount } = renderGlobalError(defaultError, mockReset);
+			renderGlobalError(defaultError, mockReset);
 
 			const homeLink = screen.getByRole("link", { name: "ホームに戻る" });
 			expect(homeLink).toHaveClass(
@@ -226,7 +226,7 @@ describe("GlobalError", () => {
 
 	describe("アクセシビリティ", () => {
 		it("ボタンとリンクが適切なロールを持つ", () => {
-			const { unmount } = renderGlobalError(defaultError, mockReset);
+			renderGlobalError(defaultError, mockReset);
 
 			const resetButton = screen.getByRole("button", { name: "再試行" });
 			expect(resetButton).toHaveAttribute("type", "button");
@@ -237,7 +237,7 @@ describe("GlobalError", () => {
 
 		it("キーボード操作でアクセス可能", async () => {
 			const user = userEvent.setup();
-			const { unmount } = renderGlobalError(defaultError, mockReset);
+			renderGlobalError(defaultError, mockReset);
 
 			// Tabキーでフォーカス移動
 			await user.tab();

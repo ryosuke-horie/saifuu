@@ -3,7 +3,7 @@ import { createDatabase, createDevDatabase, createTestDatabase } from '../index'
 
 /**
  * データベース接続モジュール ユニットテスト
- * 
+ *
  * D1バインディングの初期化とDrizzle ORMの接続確認
  */
 
@@ -19,7 +19,7 @@ describe('Database Module', () => {
 	describe('createDatabase', () => {
 		it('should create database instance with D1 binding', () => {
 			const db = createDatabase(mockD1Binding as any)
-			
+
 			// Drizzleインスタンスが作成されることを確認
 			expect(db).toBeDefined()
 			expect(db.select).toBeDefined()
@@ -32,7 +32,7 @@ describe('Database Module', () => {
 	describe('createDevDatabase', () => {
 		it('should create development database instance with D1 binding', () => {
 			const db = createDevDatabase(mockD1Binding as any)
-			
+
 			// 開発環境用のDrizzleインスタンスが作成されることを確認
 			expect(db).toBeDefined()
 			expect(db.select).toBeDefined()
@@ -45,7 +45,7 @@ describe('Database Module', () => {
 	describe('createTestDatabase', () => {
 		it('should create test database instance with D1 binding', () => {
 			const db = createTestDatabase(mockD1Binding as any)
-			
+
 			// テスト環境用のDrizzleインスタンスが作成されることを確認
 			expect(db).toBeDefined()
 			expect(db.select).toBeDefined()
