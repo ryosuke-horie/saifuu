@@ -11,6 +11,7 @@ import ExpensesPage from "./page";
 // フックのモック
 vi.mock("../../hooks", () => ({
 	useExpenses: vi.fn(),
+	useCategories: vi.fn(),
 }));
 
 // カテゴリユーティリティのモック
@@ -105,9 +106,10 @@ vi.mock("../../components/expenses", () => ({
 	}),
 }));
 
-import { useExpenses } from "../../hooks";
+import { useExpenses, useCategories } from "../../hooks";
 
 const mockUseExpenses = vi.mocked(useExpenses);
+const mockUseCategories = vi.mocked(useCategories);
 
 // モックデータ
 const mockExpenses = [
@@ -160,6 +162,29 @@ describe("ExpensesPage", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockUseExpenses.mockReturnValue(defaultMockReturn);
+		mockUseCategories.mockReturnValue({
+			categories: [
+				{
+					id: "category-1",
+					name: "食費",
+					type: "expense",
+					color: "#FF0000",
+					createdAt: "2024-01-01T00:00:00.000Z",
+					updatedAt: "2024-01-01T00:00:00.000Z",
+				},
+				{
+					id: "category-2",
+					name: "交通費",
+					type: "expense",
+					color: "#00FF00",
+					createdAt: "2024-01-01T00:00:00.000Z",
+					updatedAt: "2024-01-01T00:00:00.000Z",
+				},
+			],
+			loading: false,
+			error: null,
+			refetch: vi.fn(),
+		});
 	});
 
 	describe("初期表示", () => {
