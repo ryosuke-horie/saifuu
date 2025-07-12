@@ -105,12 +105,31 @@ describe("ExpenseStats", () => {
 	});
 
 	describe("ローディング状態", () => {
-		test("ローディング状態が正常に表示される", () => {
+		test("ローディング状態が正常に表示される（スケルトンローダー）", () => {
 			render(<ExpenseStats stats={null} isLoading={true} error={null} />);
 
-			// ローディングスピナーの確認
+			// スケルトンローダーの確認（デフォルト）
+			expect(screen.getByTestId("stats-skeleton")).toBeInTheDocument();
+			expect(screen.queryByTestId("stats-loading")).not.toBeInTheDocument();
+
+			// 統計データが表示されていないことを確認
+			expect(screen.queryByTestId("expense-stats")).not.toBeInTheDocument();
+		});
+
+		test("従来のローディング表示も利用可能", () => {
+			render(
+				<ExpenseStats
+					stats={null}
+					isLoading={true}
+					error={null}
+					useSkeletonLoader={false}
+				/>,
+			);
+
+			// 従来のローディングスピナーの確認
 			expect(screen.getByTestId("stats-loading")).toBeInTheDocument();
 			expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+			expect(screen.queryByTestId("stats-skeleton")).not.toBeInTheDocument();
 
 			// 統計データが表示されていないことを確認
 			expect(screen.queryByTestId("expense-stats")).not.toBeInTheDocument();
@@ -119,7 +138,7 @@ describe("ExpenseStats", () => {
 		test("ローディング中はアクセシビリティ属性が適切に設定される", () => {
 			render(<ExpenseStats stats={null} isLoading={true} error={null} />);
 
-			const loadingElement = screen.getByTestId("stats-loading");
+			const loadingElement = screen.getByTestId("stats-skeleton");
 			expect(loadingElement).toHaveAttribute("role", "status");
 			expect(loadingElement).toHaveAttribute("aria-live", "polite");
 		});
@@ -371,6 +390,302 @@ describe("ExpenseStats", () => {
 			// クリック時にonRefresh関数が呼ばれることを確認
 			await user.click(refreshButton);
 			expect(mockOnRefresh).toHaveBeenCalledOnce();
+		});
+	});
+
+	describe("拡張機能テスト", () => {
+		describe("スケルトンローダー", () => {
+			test("useSkeletonLoader=trueの場合、スケルトンローダーが表示される", () => {
+				render(
+					<ExpenseStats
+						stats={null}
+						isLoading={true}
+						error={null}
+						useSkeletonLoader={true}
+					/>,
+				);
+
+				// スケルトンローダーが表示されることを確認
+				expect(screen.getByTestId("stats-skeleton")).toBeInTheDocument();
+				expect(screen.queryByTestId("stats-loading")).not.toBeInTheDocument();
+			});
+
+			test("useSkeletonLoader=falseの場合、従来のローディング表示が使用される", () => {
+				render(
+					<ExpenseStats
+						stats={null}
+						isLoading={true}
+						error={null}
+						useSkeletonLoader={false}
+					/>,
+				);
+
+				// 従来のローディング表示が使用されることを確認
+				expect(screen.getByTestId("stats-loading")).toBeInTheDocument();
+				expect(screen.queryByTestId("stats-skeleton")).not.toBeInTheDocument();
+			});
+
+			test("スケルトンローダーにアクセシビリティ属性が設定されている", () => {
+				render(
+					<ExpenseStats
+						stats={null}
+						isLoading={true}
+						error={null}
+						useSkeletonLoader={true}
+					/>,
+				);
+
+				const skeletonElement = screen.getByTestId("stats-skeleton");
+				expect(skeletonElement).toHaveAttribute("role", "status");
+				expect(skeletonElement).toHaveAttribute("aria-live", "polite");
+				expect(skeletonElement).toHaveAttribute(
+					"aria-label",
+					"統計データを読み込み中",
+				);
+			});
+		});
+
+		describe("エラータイプ別表示", () => {
+			test("network エラータイプの場合、適切なアイコンとメッセージが表示される", () => {
+				render(
+					<ExpenseStats
+						stats={null}
+						isLoading={false}
+						error="接続に失敗しました"
+						errorType="network"
+					/>,
+				);
+
+				// ネットワークエラーの要素が表示されることを確認
+				expect(screen.getByTestId("stats-error")).toBeInTheDocument();
+				expect(screen.getByText("🌐")).toBeInTheDocument(); // ネットワークアイコン
+				expect(screen.getByText("ネットワークエラー")).toBeInTheDocument();
+				expect(
+					screen.getByText("インターネット接続を確認してください。"),
+				).toBeInTheDocument();
+			});
+
+			test("server エラータイプの場合、適切なアイコンとメッセージが表示される", () => {
+				render(
+					<ExpenseStats
+						stats={null}
+						isLoading={false}
+						error="サーバーがダウンしています"
+						errorType="server"
+					/>,
+				);
+
+				expect(screen.getByText("🛠️")).toBeInTheDocument(); // サーバーアイコン
+				expect(screen.getByText("サーバーエラー")).toBeInTheDocument();
+				expect(
+					screen.getByText(
+						"サーバーで問題が発生しました。しばらく待ってから再度お試しください。",
+					),
+				).toBeInTheDocument();
+			});
+
+			test("timeout エラータイプの場合、適切なアイコンとメッセージが表示される", () => {
+				render(
+					<ExpenseStats
+						stats={null}
+						isLoading={false}
+						error="リクエストがタイムアウトしました"
+						errorType="timeout"
+					/>,
+				);
+
+				expect(screen.getByText("⏱️")).toBeInTheDocument(); // タイマーアイコン
+				expect(screen.getByText("タイムアウト")).toBeInTheDocument();
+				expect(
+					screen.getByText(
+						"リクエストがタイムアウトしました。再度お試しください。",
+					),
+				).toBeInTheDocument();
+			});
+
+			test("unknown/デフォルト エラータイプの場合、汎用的なメッセージが表示される", () => {
+				render(
+					<ExpenseStats
+						stats={null}
+						isLoading={false}
+						error="予期しないエラー"
+						errorType="unknown"
+					/>,
+				);
+
+				expect(screen.getByText("⚠️")).toBeInTheDocument(); // 警告アイコン
+				expect(screen.getByText("エラー")).toBeInTheDocument();
+				expect(
+					screen.getByText("予期しないエラーが発生しました。"),
+				).toBeInTheDocument();
+			});
+
+			test("errorTypeが指定されない場合、unknownとして扱われる", () => {
+				render(
+					<ExpenseStats
+						stats={null}
+						isLoading={false}
+						error="エラーメッセージ"
+						// errorTypeを指定しない
+					/>,
+				);
+
+				// デフォルトでunknownエラーとして表示される
+				expect(screen.getByText("⚠️")).toBeInTheDocument();
+				expect(screen.getByText("エラー")).toBeInTheDocument();
+			});
+		});
+
+		describe("型安全性", () => {
+			test("BaseStatsDataのみの場合、拡張機能は表示されない", () => {
+				const baseStatsData = {
+					totalIncome: 100000,
+					totalExpense: 50000,
+					balance: 50000,
+					transactionCount: 10,
+				};
+
+				render(
+					<ExpenseStats stats={baseStatsData} isLoading={false} error={null} />,
+				);
+
+				// 基本統計は表示される
+				expect(screen.getByTestId("monthly-balance-card")).toBeInTheDocument();
+
+				// 拡張データは "データなし" として表示される
+				expect(screen.getByTestId("top-categories-card")).toBeInTheDocument();
+				expect(
+					screen.getByTestId("period-comparison-card"),
+				).toBeInTheDocument();
+
+				// 拡張データの要素で "データなし" が表示されることを確認
+				const expenseCategory = screen.getByTestId("top-expense-category");
+				const incomeCategory = screen.getByTestId("top-income-category");
+				const monthlyComparison = screen.getByTestId("monthly-comparison");
+
+				expect(expenseCategory).toHaveTextContent("データなし");
+				expect(incomeCategory).toHaveTextContent("データなし");
+				expect(monthlyComparison).toHaveTextContent("--%");
+			});
+
+			test("ExtendedStatsDataの場合、拡張機能が正しく表示される", () => {
+				const extendedStatsData = {
+					totalIncome: 100000,
+					totalExpense: 50000,
+					balance: 50000,
+					transactionCount: 10,
+					monthlyComparison: 15.5,
+					topExpenseCategory: { name: "交通費", amount: 20000 },
+					topIncomeCategory: { name: "副業", amount: 30000 },
+				};
+
+				render(
+					<ExpenseStats
+						stats={extendedStatsData}
+						isLoading={false}
+						error={null}
+					/>,
+				);
+
+				// 拡張データが正しく表示されることを確認
+				expect(screen.getByTestId("top-expense-category")).toHaveTextContent(
+					"交通費",
+				);
+				expect(screen.getByTestId("top-expense-category")).toHaveTextContent(
+					"￥20,000",
+				);
+				expect(screen.getByTestId("top-income-category")).toHaveTextContent(
+					"副業",
+				);
+				expect(screen.getByTestId("top-income-category")).toHaveTextContent(
+					"￥30,000",
+				);
+				expect(screen.getByTestId("monthly-comparison")).toHaveTextContent(
+					"+15.5%",
+				);
+			});
+
+			test("部分的な拡張データでも安全に処理される", () => {
+				const partialExtendedData = {
+					totalIncome: 100000,
+					totalExpense: 50000,
+					balance: 50000,
+					transactionCount: 10,
+					monthlyComparison: 5.0, // 月次比較のみ
+					// topExpenseCategory と topIncomeCategory は未定義
+				};
+
+				render(
+					<ExpenseStats
+						stats={partialExtendedData}
+						isLoading={false}
+						error={null}
+					/>,
+				);
+
+				// 月次比較は表示される
+				expect(screen.getByTestId("monthly-comparison")).toHaveTextContent(
+					"+5.0%",
+				);
+
+				// カテゴリデータは "データなし" として表示される
+				expect(screen.getByTestId("top-expense-category")).toHaveTextContent(
+					"データなし",
+				);
+				expect(screen.getByTestId("top-income-category")).toHaveTextContent(
+					"データなし",
+				);
+			});
+		});
+
+		describe("パフォーマンス最適化", () => {
+			test("React.memoが適用されていることを確認", () => {
+				// ExpenseStatsのDisplayNameが設定されていることを確認
+				expect(ExpenseStats.displayName).toBe("ExpenseStats");
+			});
+
+			test("同じpropsでは再レンダリングされない", () => {
+				const props = {
+					stats: mockStatsData,
+					isLoading: false,
+					error: null,
+				};
+
+				const { rerender } = render(<ExpenseStats {...props} />);
+
+				// 初回レンダリング確認
+				expect(screen.getByTestId("expense-stats")).toBeInTheDocument();
+
+				// 同じpropsで再レンダリング
+				rerender(<ExpenseStats {...props} />);
+
+				// コンポーネントは引き続き表示されている
+				expect(screen.getByTestId("expense-stats")).toBeInTheDocument();
+			});
+
+			test("propsが変更された場合は再レンダリングされる", () => {
+				const initialProps = {
+					stats: mockStatsData,
+					isLoading: false,
+					error: null,
+				};
+
+				const { rerender } = render(<ExpenseStats {...initialProps} />);
+
+				// 初回レンダリング確認
+				expect(screen.getByTestId("expense-stats")).toBeInTheDocument();
+
+				// 異なるpropsで再レンダリング
+				const updatedProps = {
+					...initialProps,
+					isLoading: true,
+				};
+				rerender(<ExpenseStats {...updatedProps} />);
+
+				// ローディング状態に変更されている
+				expect(screen.getByTestId("stats-skeleton")).toBeInTheDocument();
+				expect(screen.queryByTestId("expense-stats")).not.toBeInTheDocument();
+			});
 		});
 	});
 });

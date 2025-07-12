@@ -12,7 +12,7 @@
  * - アクセシビリティを考慮したマークアップ
  */
 
-import type { FC } from "react";
+import React, { type FC } from "react";
 
 // 現在のAPI仕様で利用可能な基本統計データ
 export interface BaseStatsData {
@@ -29,14 +29,19 @@ export interface ExtendedStatsData extends BaseStatsData {
 	topIncomeCategory?: { name: string; amount: number } | null;
 }
 
+// エラータイプの定義
+export type ErrorType = "network" | "server" | "timeout" | "unknown";
+
 // プロパティの型定義
 export interface ExpenseStatsProps {
 	stats: BaseStatsData | ExtendedStatsData | null | undefined;
 	isLoading?: boolean;
 	error?: string | null;
+	errorType?: ErrorType;
 	className?: string;
 	onRefresh?: () => void;
 	onRetry?: () => void;
+	useSkeletonLoader?: boolean; // スケルトンローダーを使用するかどうか
 }
 
 /**
@@ -58,7 +63,80 @@ const formatPercentage = (percentage: number): string => {
 };
 
 /**
- * ローディング状態コンポーネント
+ * 統計データが拡張データかどうかを判定する型ガード
+ */
+const isExtendedStatsData = (
+	stats: BaseStatsData | ExtendedStatsData,
+): stats is ExtendedStatsData => {
+	return (
+		"monthlyComparison" in stats ||
+		"topExpenseCategory" in stats ||
+		"topIncomeCategory" in stats
+	);
+};
+
+/**
+ * 月次比較データが利用可能かどうかを判定
+ */
+const hasMonthlyComparison = (
+	stats: BaseStatsData | ExtendedStatsData,
+): boolean => {
+	return isExtendedStatsData(stats) && stats.monthlyComparison !== undefined;
+};
+
+/**
+ * カテゴリデータが利用可能かどうかを判定
+ */
+const hasCategoryData = (stats: BaseStatsData | ExtendedStatsData): boolean => {
+	return (
+		isExtendedStatsData(stats) &&
+		(stats.topExpenseCategory !== undefined ||
+			stats.topIncomeCategory !== undefined)
+	);
+};
+
+/**
+ * スケルトンローダーコンポーネント
+ * より良いUXを提供するためのスケルトンローダー
+ */
+const SkeletonLoader: FC = () => (
+	<div
+		className="animate-pulse space-y-6"
+		data-testid="stats-skeleton"
+		role="status"
+		aria-live="polite"
+		aria-label="統計データを読み込み中"
+	>
+		{/* ヘッダースケルトン */}
+		<div className="flex items-center justify-between">
+			<div>
+				<div className="h-8 bg-gray-300 rounded w-32 mb-2" />
+				<div className="h-4 bg-gray-300 rounded w-24" />
+			</div>
+			<div className="h-10 bg-gray-300 rounded w-20" />
+		</div>
+
+		{/* カードグリッドスケルトン */}
+		<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+			{["balance", "categories", "comparison"].map((cardType) => (
+				<div
+					key={cardType}
+					className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+				>
+					<div className="h-6 bg-gray-300 rounded w-24 mb-4" />
+					<div className="space-y-3">
+						<div className="h-4 bg-gray-300 rounded" />
+						<div className="h-4 bg-gray-300 rounded w-5/6" />
+						<div className="h-4 bg-gray-300 rounded w-4/6" />
+					</div>
+				</div>
+			))}
+		</div>
+	</div>
+);
+
+/**
+ * シンプルなローディング状態コンポーネント（後方互換性のため保持）
  */
 const LoadingState: FC = () => (
 	<div
@@ -75,35 +153,82 @@ const LoadingState: FC = () => (
 );
 
 /**
- * エラー状態コンポーネント
+ * エラータイプ別のメッセージとアイコンを取得
  */
-const ErrorState: FC<{ message: string; onRetry?: () => void }> = ({
+const getErrorDetails = (errorType: ErrorType) => {
+	switch (errorType) {
+		case "network":
+			return {
+				icon: "🌐",
+				title: "ネットワークエラー",
+				description: "インターネット接続を確認してください。",
+			};
+		case "server":
+			return {
+				icon: "🛠️",
+				title: "サーバーエラー",
+				description:
+					"サーバーで問題が発生しました。しばらく待ってから再度お試しください。",
+			};
+		case "timeout":
+			return {
+				icon: "⏱️",
+				title: "タイムアウト",
+				description: "リクエストがタイムアウトしました。再度お試しください。",
+			};
+		default:
+			return {
+				icon: "⚠️",
+				title: "エラー",
+				description: "予期しないエラーが発生しました。",
+			};
+	}
+};
+
+/**
+ * 拡張されたエラー状態コンポーネント
+ */
+interface ErrorStateProps {
+	errorType?: ErrorType;
+	message: string;
+	onRetry?: () => void;
+}
+
+const ErrorState: FC<ErrorStateProps> = ({
+	errorType = "unknown",
 	message,
 	onRetry,
-}) => (
-	<div
-		className="flex flex-col items-center justify-center py-16 text-center"
-		data-testid="stats-error"
-		role="alert"
-		aria-live="assertive"
-	>
-		<div className="flex items-center space-x-2 text-red-600 mb-4">
-			<span className="text-2xl">⚠️</span>
-			<span className="font-semibold">エラー</span>
+}) => {
+	const errorDetails = getErrorDetails(errorType);
+
+	return (
+		<div
+			className="flex flex-col items-center justify-center py-16 text-center"
+			data-testid="stats-error"
+			role="alert"
+			aria-live="assertive"
+		>
+			<div className="flex items-center space-x-2 text-red-600 mb-4">
+				<span className="text-2xl">{errorDetails.icon}</span>
+				<span className="font-semibold">{errorDetails.title}</span>
+			</div>
+			<p className="text-gray-700 mb-2 max-w-md">{message}</p>
+			<p className="text-gray-600 mb-4 max-w-md text-sm">
+				{errorDetails.description}
+			</p>
+			{onRetry && (
+				<button
+					type="button"
+					onClick={onRetry}
+					className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+					data-testid="stats-retry-button"
+				>
+					再試行
+				</button>
+			)}
 		</div>
-		<p className="text-gray-700 mb-4 max-w-md">{message}</p>
-		{onRetry && (
-			<button
-				type="button"
-				onClick={onRetry}
-				className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-				data-testid="stats-retry-button"
-			>
-				再試行
-			</button>
-		)}
-	</div>
-);
+	);
+};
 
 /**
  * 空データ状態コンポーネント
@@ -205,8 +330,9 @@ const MonthlyBalanceCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({
 const TopCategoriesCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({
 	stats,
 }) => {
-	// 型ガードで拡張データをチェック
-	const extendedStats = stats as ExtendedStatsData;
+	// 型ガードで安全に拡張データをチェック
+	const hasCategories = hasCategoryData(stats);
+	const extendedStats = isExtendedStatsData(stats) ? stats : null;
 
 	return (
 		<StatsCard title="主要カテゴリ" testId="top-categories-card">
@@ -218,7 +344,7 @@ const TopCategoriesCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({
 						className="flex justify-between items-center"
 						data-testid="top-expense-category"
 					>
-						{extendedStats.topExpenseCategory ? (
+						{hasCategories && extendedStats?.topExpenseCategory ? (
 							<>
 								<span className="font-medium text-gray-900">
 									{extendedStats.topExpenseCategory.name}
@@ -240,7 +366,7 @@ const TopCategoriesCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({
 						className="flex justify-between items-center"
 						data-testid="top-income-category"
 					>
-						{extendedStats.topIncomeCategory ? (
+						{hasCategories && extendedStats?.topIncomeCategory ? (
 							<>
 								<span className="font-medium text-gray-900">
 									{extendedStats.topIncomeCategory.name}
@@ -265,23 +391,23 @@ const TopCategoriesCard: FC<{ stats: BaseStatsData | ExtendedStatsData }> = ({
 const PeriodComparisonCard: FC<{
 	stats: BaseStatsData | ExtendedStatsData;
 }> = ({ stats }) => {
-	// 型ガードで拡張データをチェック
-	const extendedStats = stats as ExtendedStatsData;
+	// 型ガードで安全に拡張データをチェック
+	const hasComparison = hasMonthlyComparison(stats);
+	const extendedStats = isExtendedStatsData(stats) ? stats : null;
+	const monthlyComparison = extendedStats?.monthlyComparison;
 
 	return (
 		<StatsCard title="前月比" testId="period-comparison-card">
 			<div className="text-center">
-				{extendedStats.monthlyComparison !== undefined ? (
+				{hasComparison && monthlyComparison !== undefined ? (
 					<>
 						<div
 							className={`text-3xl font-bold ${
-								extendedStats.monthlyComparison >= 0
-									? "text-green-600"
-									: "text-red-600"
+								monthlyComparison >= 0 ? "text-green-600" : "text-red-600"
 							}`}
 							data-testid="monthly-comparison"
 						>
-							{formatPercentage(extendedStats.monthlyComparison)}
+							{formatPercentage(monthlyComparison)}
 						</div>
 						<p className="text-sm text-gray-600 mt-2">
 							前月と比較した収支の変化
@@ -304,24 +430,28 @@ const PeriodComparisonCard: FC<{
 };
 
 /**
- * メイン統計コンポーネント
+ * メイン統計コンポーネントの内部実装
  */
-export const ExpenseStats: FC<ExpenseStatsProps> = ({
+const ExpenseStatsBase: FC<ExpenseStatsProps> = ({
 	stats,
 	isLoading = false,
 	error = null,
+	errorType = "unknown",
 	className = "",
 	onRefresh,
 	onRetry,
+	useSkeletonLoader = true,
 }) => {
 	// ローディング状態
 	if (isLoading) {
-		return <LoadingState />;
+		return useSkeletonLoader ? <SkeletonLoader /> : <LoadingState />;
 	}
 
 	// エラー状態
 	if (error) {
-		return <ErrorState message={error} onRetry={onRetry} />;
+		return (
+			<ErrorState errorType={errorType} message={error} onRetry={onRetry} />
+		);
 	}
 
 	// 統計データなしまたは空データ
@@ -387,3 +517,12 @@ export const ExpenseStats: FC<ExpenseStatsProps> = ({
 		</section>
 	);
 };
+
+/**
+ * パフォーマンス最適化されたメイン統計コンポーネント
+ * React.memoでラップして不必要な再レンダリングを防ぐ
+ */
+export const ExpenseStats = React.memo<ExpenseStatsProps>(ExpenseStatsBase);
+
+// 表示名を設定（デバッグ時に便利）
+ExpenseStats.displayName = "ExpenseStats";

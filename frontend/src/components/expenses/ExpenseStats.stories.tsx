@@ -386,3 +386,243 @@ export const AccessibilityTest: Story = {
 		await expect(cards).toHaveLength(3); // 3つのregionカードが存在する
 	},
 };
+
+/**
+ * スケルトンローダー
+ * より良いUXを提供するスケルトンローダーの表示状態
+ */
+export const SkeletonLoader: Story = {
+	args: {
+		stats: null,
+		isLoading: true,
+		error: null,
+		useSkeletonLoader: true,
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// スケルトンローダーの確認
+		await expect(canvas.getByTestId("stats-skeleton")).toBeInTheDocument();
+		await expect(canvas.queryByTestId("stats-loading")).not.toBeInTheDocument();
+
+		// アクセシビリティ属性の確認
+		const skeletonElement = canvas.getByTestId("stats-skeleton");
+		await expect(skeletonElement).toHaveAttribute("role", "status");
+		await expect(skeletonElement).toHaveAttribute("aria-live", "polite");
+	},
+};
+
+/**
+ * 従来のローディング
+ * 後方互換性のための従来のローディング表示
+ */
+export const TraditionalLoading: Story = {
+	args: {
+		stats: null,
+		isLoading: true,
+		error: null,
+		useSkeletonLoader: false,
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// 従来のローディング表示の確認
+		await expect(canvas.getByTestId("stats-loading")).toBeInTheDocument();
+		await expect(
+			canvas.queryByTestId("stats-skeleton"),
+		).not.toBeInTheDocument();
+	},
+};
+
+/**
+ * ネットワークエラー
+ * ネットワーク接続エラーの表示状態
+ */
+export const NetworkError: Story = {
+	args: {
+		stats: null,
+		isLoading: false,
+		error: "インターネット接続が利用できません",
+		errorType: "network",
+		onRetry: () => console.log("Network retry clicked"),
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// ネットワークエラーの確認
+		await expect(canvas.getByTestId("stats-error")).toBeInTheDocument();
+		await expect(canvas.getByText("🌐")).toBeInTheDocument();
+		await expect(canvas.getByText("ネットワークエラー")).toBeInTheDocument();
+		await expect(
+			canvas.getByText("インターネット接続を確認してください。"),
+		).toBeInTheDocument();
+	},
+};
+
+/**
+ * サーバーエラー
+ * サーバー側エラーの表示状態
+ */
+export const ServerError: Story = {
+	args: {
+		stats: null,
+		isLoading: false,
+		error: "サーバーで問題が発生しました",
+		errorType: "server",
+		onRetry: () => console.log("Server retry clicked"),
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// サーバーエラーの確認
+		await expect(canvas.getByTestId("stats-error")).toBeInTheDocument();
+		await expect(canvas.getByText("🛠️")).toBeInTheDocument();
+		await expect(canvas.getByText("サーバーエラー")).toBeInTheDocument();
+	},
+};
+
+/**
+ * タイムアウトエラー
+ * リクエストタイムアウトの表示状態
+ */
+export const TimeoutError: Story = {
+	args: {
+		stats: null,
+		isLoading: false,
+		error: "リクエストがタイムアウトしました",
+		errorType: "timeout",
+		onRetry: () => console.log("Timeout retry clicked"),
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// タイムアウトエラーの確認
+		await expect(canvas.getByTestId("stats-error")).toBeInTheDocument();
+		await expect(canvas.getByText("⏱️")).toBeInTheDocument();
+		await expect(canvas.getByText("タイムアウト")).toBeInTheDocument();
+	},
+};
+
+/**
+ * 基本統計データのみ
+ * 拡張機能が利用できない場合の表示状態
+ */
+export const BaseStatsOnly: Story = {
+	args: {
+		stats: {
+			totalIncome: 250000,
+			totalExpense: 180000,
+			balance: 70000,
+			transactionCount: 24,
+		},
+		isLoading: false,
+		error: null,
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// 基本統計の確認
+		await expect(
+			canvas.getByTestId("monthly-balance-card"),
+		).toBeInTheDocument();
+		await expect(canvas.getByTestId("total-income")).toHaveTextContent(
+			"￥250,000",
+		);
+		await expect(canvas.getByTestId("total-expense")).toHaveTextContent(
+			"￥180,000",
+		);
+		await expect(canvas.getByTestId("balance-amount")).toHaveTextContent(
+			"￥70,000",
+		);
+
+		// 拡張データは "データなし" として表示される
+		await expect(canvas.getByTestId("top-expense-category")).toHaveTextContent(
+			"データなし",
+		);
+		await expect(canvas.getByTestId("top-income-category")).toHaveTextContent(
+			"データなし",
+		);
+		await expect(canvas.getByTestId("monthly-comparison")).toHaveTextContent(
+			"--%",
+		);
+	},
+};
+
+/**
+ * 部分的拡張データ
+ * 一部の拡張機能のみ利用可能な場合の表示状態
+ */
+export const PartialExtendedData: Story = {
+	args: {
+		stats: {
+			totalIncome: 300000,
+			totalExpense: 200000,
+			balance: 100000,
+			transactionCount: 30,
+			monthlyComparison: 8.5, // 月次比較のみ利用可能
+			// topExpenseCategory と topIncomeCategory は未定義
+		},
+		isLoading: false,
+		error: null,
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// 基本統計と月次比較は表示される
+		await expect(
+			canvas.getByTestId("monthly-balance-card"),
+		).toBeInTheDocument();
+		await expect(canvas.getByTestId("monthly-comparison")).toHaveTextContent(
+			"+8.5%",
+		);
+
+		// カテゴリデータは "データなし" として表示される
+		await expect(canvas.getByTestId("top-expense-category")).toHaveTextContent(
+			"データなし",
+		);
+		await expect(canvas.getByTestId("top-income-category")).toHaveTextContent(
+			"データなし",
+		);
+	},
+};
+
+/**
+ * パフォーマンス最適化デモ
+ * React.memoの効果をデモンストレーション
+ */
+export const PerformanceOptimized: Story = {
+	args: {
+		stats: defaultStatsData,
+		isLoading: false,
+		error: null,
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: `
+このストーリーはReact.memoによるパフォーマンス最適化をデモンストレーションします。
+同じpropsが渡された場合、コンポーネントは再レンダリングされません。
+
+## 最適化のポイント
+- React.memoでラップして不必要な再レンダリングを防止
+- 型ガード関数でtype assertionを排除し、型安全性を向上
+- スケルトンローダーでより良いUX体験を提供
+- エラータイプ別のメッセージで具体的なフィードバックを実現
+				`,
+			},
+		},
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		// パフォーマンス最適化されたコンポーネントの動作確認
+		await expect(canvas.getByTestId("expense-stats")).toBeInTheDocument();
+		await expect(
+			canvas.getByTestId("monthly-balance-card"),
+		).toBeInTheDocument();
+		await expect(canvas.getByTestId("top-categories-card")).toBeInTheDocument();
+		await expect(
+			canvas.getByTestId("period-comparison-card"),
+		).toBeInTheDocument();
+	},
+};
