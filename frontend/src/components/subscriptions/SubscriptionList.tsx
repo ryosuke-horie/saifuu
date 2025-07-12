@@ -1,8 +1,5 @@
 import type { FC } from "react";
-import type {
-	Subscription,
-	SubscriptionListProps,
-} from "../../types/subscription";
+import type { Subscription, SubscriptionListProps } from "../../lib/api/types";
 
 /**
  * サブスクリプション一覧コンポーネント

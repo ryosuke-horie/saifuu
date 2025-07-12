@@ -7,8 +7,6 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Category } from "../../../types/category";
-import type { SubscriptionFormData } from "../../../types/subscription";
 import { apiClient } from "../client";
 import {
 	createSubscription,
@@ -19,6 +17,7 @@ import {
 	updateSubscriptionStatus,
 } from "../subscriptions/api";
 import type { ApiSubscriptionResponse } from "../subscriptions/types";
+import type { Category, SubscriptionFormData } from "../types";
 
 // apiClientをモック化
 vi.mock("../client", () => ({
@@ -102,6 +101,8 @@ describe("Subscriptions API", () => {
 				nextBillingDate: "2025-08-01", // YYYY-MM-DD形式に変換される
 				isActive: true,
 				description: "動画ストリーミング",
+				createdAt: "2025-07-05T07:06:39Z",
+				updatedAt: "2025-07-05T07:06:39Z",
 			});
 
 			// 第2サブスクリプションの検証
@@ -113,7 +114,9 @@ describe("Subscriptions API", () => {
 				billingCycle: "monthly",
 				nextBillingDate: "2025-08-01", // YYYY-MM-DD形式に変換される
 				isActive: true,
-				description: undefined, // null -> undefined 変換
+				description: null, // null のまま
+				createdAt: "2025-07-05T07:06:39Z",
+				updatedAt: "2025-07-05T07:06:39Z",
 			});
 		});
 

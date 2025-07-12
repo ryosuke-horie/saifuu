@@ -1,10 +1,11 @@
-import { Hono } from 'hono'
+import { type Context, Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LoggerFactory } from '../../logger/factory'
 import {
 	getLogger,
 	getLoggerContext,
 	getRequestId,
+	type LoggingVariables,
 	loggingMiddleware,
 	logWithContext,
 } from '../logging'
@@ -44,17 +45,21 @@ describe('Logging Middleware', () => {
 			const app = new Hono()
 			app.use(loggingMiddleware())
 
-			let capturedContext: any
+			let capturedLogger: unknown
+			let capturedRequestId: unknown
 			app.get('/test', (c) => {
-				capturedContext = c
+				capturedLogger = (c as unknown as Context<{ Variables: LoggingVariables }>).get('logger')
+				capturedRequestId = (c as unknown as Context<{ Variables: LoggingVariables }>).get(
+					'requestId'
+				)
 				return c.text('OK')
 			})
 
 			const res = await app.request('/test')
 
 			expect(res.status).toBe(200)
-			expect(capturedContext.get('logger')).toBe(mockLogger)
-			expect(capturedContext.get('requestId')).toBe('test-request-id')
+			expect(capturedLogger).toBe(mockLogger)
+			expect(capturedRequestId).toBe('test-request-id')
 		})
 
 		it('should log request start and completion', async () => {
@@ -181,7 +186,12 @@ describe('Logging Middleware', () => {
 	})
 
 	describe('Helper Functions', () => {
-		let testContext: any
+		// テスト用のモックコンテキスト型定義
+		type MockedContext = {
+			get: ReturnType<typeof vi.fn>
+		}
+
+		let testContext: MockedContext
 
 		beforeEach(() => {
 			testContext = {
@@ -193,7 +203,7 @@ describe('Logging Middleware', () => {
 			it('should return logger from context', () => {
 				testContext.get.mockReturnValue(mockLogger)
 
-				const result = getLogger(testContext)
+				const result = getLogger(testContext as unknown as Context<{ Variables: LoggingVariables }>)
 
 				expect(result).toBe(mockLogger)
 				expect(testContext.get).toHaveBeenCalledWith('logger')
@@ -202,9 +212,9 @@ describe('Logging Middleware', () => {
 			it('should throw error if logger not found', () => {
 				testContext.get.mockReturnValue(undefined)
 
-				expect(() => getLogger(testContext)).toThrow(
-					'Logger not found in context. Ensure loggingMiddleware is applied.'
-				)
+				expect(() =>
+					getLogger(testContext as unknown as Context<{ Variables: LoggingVariables }>)
+				).toThrow('Logger not found in context. Ensure loggingMiddleware is applied.')
 			})
 		})
 
@@ -212,7 +222,9 @@ describe('Logging Middleware', () => {
 			it('should return request ID from context', () => {
 				testContext.get.mockReturnValue('test-request-id')
 
-				const result = getRequestId(testContext)
+				const result = getRequestId(
+					testContext as unknown as Context<{ Variables: LoggingVariables }>
+				)
 
 				expect(result).toBe('test-request-id')
 				expect(testContext.get).toHaveBeenCalledWith('requestId')
@@ -221,9 +233,9 @@ describe('Logging Middleware', () => {
 			it('should throw error if request ID not found', () => {
 				testContext.get.mockReturnValue(undefined)
 
-				expect(() => getRequestId(testContext)).toThrow(
-					'Request ID not found in context. Ensure loggingMiddleware is applied.'
-				)
+				expect(() =>
+					getRequestId(testContext as unknown as Context<{ Variables: LoggingVariables }>)
+				).toThrow('Request ID not found in context. Ensure loggingMiddleware is applied.')
 			})
 		})
 
@@ -235,7 +247,9 @@ describe('Logging Middleware', () => {
 					return undefined
 				})
 
-				const result = getLoggerContext(testContext)
+				const result = getLoggerContext(
+					testContext as unknown as Context<{ Variables: LoggingVariables }>
+				)
 
 				expect(result).toEqual({
 					logger: mockLogger,
@@ -252,7 +266,12 @@ describe('Logging Middleware', () => {
 					return undefined
 				})
 
-				logWithContext(testContext, 'info', 'Test message', { data: { value: 'test' } })
+				logWithContext(
+					testContext as unknown as Context<{ Variables: LoggingVariables }>,
+					'info',
+					'Test message',
+					{ data: { value: 'test' } }
+				)
 
 				expect(mockLogger.info).toHaveBeenCalledWith('Test message', {
 					requestId: 'test-request-id',
@@ -267,10 +286,11 @@ describe('Logging Middleware', () => {
 					return undefined
 				})
 
-				logWithContext(testContext, 'debug', 'Debug message')
-				logWithContext(testContext, 'info', 'Info message')
-				logWithContext(testContext, 'warn', 'Warn message')
-				logWithContext(testContext, 'error', 'Error message')
+				const ctx = testContext as unknown as Context<{ Variables: LoggingVariables }>
+				logWithContext(ctx, 'debug', 'Debug message')
+				logWithContext(ctx, 'info', 'Info message')
+				logWithContext(ctx, 'warn', 'Warn message')
+				logWithContext(ctx, 'error', 'Error message')
 
 				expect(mockLogger.debug).toHaveBeenCalledWith('Debug message', {
 					requestId: 'test-request-id',

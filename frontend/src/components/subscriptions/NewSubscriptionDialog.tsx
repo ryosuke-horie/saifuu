@@ -2,11 +2,11 @@
 
 import { type FC, useCallback, useMemo, useState } from "react";
 import { getCategoriesByType } from "../../../../shared/config/categories";
-import type { Category } from "../../lib/api/types";
 import type {
+	Category,
 	NewSubscriptionDialogProps,
 	SubscriptionFormData,
-} from "../../types/subscription";
+} from "../../lib/api/types";
 import { Dialog } from "../ui/Dialog";
 import { SubscriptionForm } from "./SubscriptionForm";
 

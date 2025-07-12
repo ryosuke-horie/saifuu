@@ -1,7 +1,7 @@
 "use client";
 
 import type { FC } from "react";
-import type { NewSubscriptionButtonProps } from "../../types/subscription";
+import type { NewSubscriptionButtonProps } from "../../lib/api/types";
 
 /**
  * 新規サブスクリプション登録ボタンコンポーネント

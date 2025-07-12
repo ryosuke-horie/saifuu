@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { mockCategories } from "../../../.storybook/mocks/data/categories";
 import { mockSubscriptions } from "../../../.storybook/mocks/data/subscriptions";
 import { SubscriptionList } from "./SubscriptionList";
 
@@ -183,7 +184,11 @@ export const ManyItems: Story = {
 				amount: 500,
 				billingCycle: "monthly" as const,
 				nextBillingDate: "2025-07-20",
-				category: "entertainment",
+				category: mockCategories[0], // エンターテイメント
+				isActive: true,
+				description: "動画・音楽・配送サービス",
+				createdAt: "2025-01-04T00:00:00Z",
+				updatedAt: "2025-01-04T00:00:00Z",
 			},
 			{
 				id: "5",
@@ -191,7 +196,11 @@ export const ManyItems: Story = {
 				amount: 1284,
 				billingCycle: "monthly" as const,
 				nextBillingDate: "2025-07-25",
-				category: "work",
+				category: mockCategories[1], // 仕事・ビジネス
+				isActive: true,
+				description: "オフィススイート",
+				createdAt: "2025-01-05T00:00:00Z",
+				updatedAt: "2025-01-05T00:00:00Z",
 			},
 			{
 				id: "6",
@@ -199,7 +208,11 @@ export const ManyItems: Story = {
 				amount: 1500,
 				billingCycle: "monthly" as const,
 				nextBillingDate: "2025-07-30",
-				category: "work",
+				category: mockCategories[1], // 仕事・ビジネス
+				isActive: true,
+				description: "デザインツール",
+				createdAt: "2025-01-06T00:00:00Z",
+				updatedAt: "2025-01-06T00:00:00Z",
 			},
 		],
 	},

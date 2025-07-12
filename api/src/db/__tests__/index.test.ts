@@ -1,15 +1,16 @@
+import type { D1Database } from '@cloudflare/workers-types'
 import { describe, expect, it, vi } from 'vitest'
 import { createDatabase, createDevDatabase, createTestDatabase } from '../index'
 
 /**
  * データベース接続モジュール ユニットテスト
- * 
+ *
  * D1バインディングの初期化とDrizzle ORMの接続確認
  */
 
 describe('Database Module', () => {
 	// モックD1データベースバインディング
-	const mockD1Binding = {
+	const mockD1Binding: Pick<D1Database, 'prepare' | 'batch' | 'exec' | 'dump'> = {
 		prepare: vi.fn(),
 		batch: vi.fn(),
 		exec: vi.fn(),
@@ -18,8 +19,8 @@ describe('Database Module', () => {
 
 	describe('createDatabase', () => {
 		it('should create database instance with D1 binding', () => {
-			const db = createDatabase(mockD1Binding as any)
-			
+			const db = createDatabase(mockD1Binding as D1Database)
+
 			// Drizzleインスタンスが作成されることを確認
 			expect(db).toBeDefined()
 			expect(db.select).toBeDefined()
@@ -31,8 +32,8 @@ describe('Database Module', () => {
 
 	describe('createDevDatabase', () => {
 		it('should create development database instance with D1 binding', () => {
-			const db = createDevDatabase(mockD1Binding as any)
-			
+			const db = createDevDatabase(mockD1Binding as D1Database)
+
 			// 開発環境用のDrizzleインスタンスが作成されることを確認
 			expect(db).toBeDefined()
 			expect(db.select).toBeDefined()
@@ -44,8 +45,8 @@ describe('Database Module', () => {
 
 	describe('createTestDatabase', () => {
 		it('should create test database instance with D1 binding', () => {
-			const db = createTestDatabase(mockD1Binding as any)
-			
+			const db = createTestDatabase(mockD1Binding as D1Database)
+
 			// テスト環境用のDrizzleインスタンスが作成されることを確認
 			expect(db).toBeDefined()
 			expect(db.select).toBeDefined()

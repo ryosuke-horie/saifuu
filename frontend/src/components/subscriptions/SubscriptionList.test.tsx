@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { mockSubscriptions } from "../../../.storybook/mocks/data/subscriptions";
-import type { Subscription } from "../../types/subscription";
+import type { Subscription } from "../../lib/api/types";
 import { SubscriptionList } from "./SubscriptionList";
 
 /**

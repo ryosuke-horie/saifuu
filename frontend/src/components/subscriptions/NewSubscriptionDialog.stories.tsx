@@ -178,7 +178,7 @@ export const InteractionSubmit: Story = {
 			amount: 1490,
 			billingCycle: "monthly",
 			nextBillingDate: nextMonthString,
-			category: "other",
+			categoryId: "cat-4", // その他カテゴリ
 			description: "",
 		});
 
@@ -331,7 +331,7 @@ export const VisualTestComplexForm: Story = {
 		// カテゴリを選択
 		await userEvent.selectOptions(
 			canvas.getByLabelText(/カテゴリ/),
-			"entertainment",
+			"cat-1", // エンターテイメントカテゴリ
 		);
 	},
 };

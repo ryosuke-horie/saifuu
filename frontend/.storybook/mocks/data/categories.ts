@@ -1,4 +1,4 @@
-import type { Category } from "../../../src/types/category";
+import type { Category } from "../../../src/lib/api/types";
 
 // カテゴリデータのモック
 export const mockCategories: Category[] = [

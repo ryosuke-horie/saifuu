@@ -7,8 +7,6 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { Category } from "../../../types/category";
-import type { SubscriptionFormData } from "../../../types/subscription";
 import {
 	transformApiCategoriesToFrontend,
 	transformApiCategoryToFrontend,
@@ -20,6 +18,7 @@ import {
 	transformFormDataToUpdateRequest,
 } from "../subscriptions/transformers";
 import type { ApiSubscriptionResponse } from "../subscriptions/types";
+import type { Category, SubscriptionFormData } from "../types";
 
 describe("Categories Transformers", () => {
 	describe("transformApiCategoryToFrontend", () => {
@@ -175,6 +174,8 @@ describe("Subscriptions Transformers", () => {
 				nextBillingDate: "2025-08-01", // YYYY-MM-DD形式に変換される
 				isActive: true,
 				description: "動画ストリーミング",
+				createdAt: "2025-07-05T07:06:39Z",
+				updatedAt: "2025-07-05T07:06:39Z",
 			});
 		});
 
@@ -216,7 +217,7 @@ describe("Subscriptions Transformers", () => {
 				mockCategories,
 			);
 
-			expect(result.description).toBeUndefined(); // null || undefined は undefined になる
+			expect(result.description).toBeNull(); // null のまま
 		});
 	});
 

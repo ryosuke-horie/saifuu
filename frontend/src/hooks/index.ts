@@ -4,4 +4,4 @@
 
 export { useCategories } from "./useCategories";
 export { useExpenses } from "./useExpenses";
-export { useSubscriptions } from "./useSubscriptions";
+// useSubscriptions moved to lib/api/hooks/useSubscriptions

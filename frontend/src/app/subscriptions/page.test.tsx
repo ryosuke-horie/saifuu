@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { mockCategories } from "../../../.storybook/mocks/data/categories";
 import { mockSubscriptions } from "../../../.storybook/mocks/data/subscriptions";
-import type { Subscription } from "../../types/subscription";
+import type { Subscription } from "../../lib/api/types";
 import SubscriptionsPage from "./page";
 
 /**
@@ -18,8 +18,9 @@ import SubscriptionsPage from "./page";
  */
 
 // モックの設定
-vi.mock("../../hooks/useSubscriptions", () => ({
+vi.mock("../../lib/api/hooks/useSubscriptions", () => ({
 	useSubscriptions: vi.fn(),
+	useCreateSubscription: vi.fn(),
 }));
 
 vi.mock("../../components/subscriptions", () => ({
@@ -53,18 +54,12 @@ vi.mock("../../components/subscriptions", () => ({
 }));
 
 describe("SubscriptionsPage", () => {
-	// デフォルトのモック値
+	// デフォルトのモック値（新しいAPIに合わせて更新）
 	const defaultSubscriptionsHook = {
 		subscriptions: mockSubscriptions,
-		loading: false,
+		isLoading: false,
 		error: null,
-		operationLoading: false,
 		refetch: vi.fn(),
-		createSubscriptionMutation: vi.fn(),
-		updateSubscriptionMutation: vi.fn(),
-		deleteSubscriptionMutation: vi.fn(),
-		updateStatusMutation: vi.fn(),
-		getSubscriptionById: vi.fn(),
 	};
 
 	beforeEach(async () => {
@@ -72,9 +67,16 @@ describe("SubscriptionsPage", () => {
 		vi.clearAllMocks();
 
 		// デフォルトのモック実装を設定
-		const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+		const { useSubscriptions, useCreateSubscription } = await import(
+			"../../lib/api/hooks/useSubscriptions"
+		);
 
 		vi.mocked(useSubscriptions).mockReturnValue(defaultSubscriptionsHook);
+		vi.mocked(useCreateSubscription).mockReturnValue({
+			isLoading: false,
+			error: null,
+			createSubscription: vi.fn(),
+		});
 	});
 
 	describe("基本的なレンダリング", () => {
@@ -134,7 +136,9 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("月間合計金額が正しく計算されること（年額サービスの月割り）", async () => {
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			const yearlySubscriptions = [
 				{
 					id: "1",
@@ -144,6 +148,9 @@ describe("SubscriptionsPage", () => {
 					nextBillingDate: "2025-07-01",
 					category: mockCategories[0],
 					isActive: true,
+					description: null,
+					createdAt: "2025-01-01T00:00:00Z",
+					updatedAt: "2025-01-01T00:00:00Z",
 				},
 			];
 			vi.mocked(useSubscriptions).mockReturnValue({
@@ -158,7 +165,9 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("非アクティブなサービスが合計金額から除外されること", async () => {
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			const subscriptionsWithInactive = [
 				...mockSubscriptions,
 				{
@@ -169,6 +178,9 @@ describe("SubscriptionsPage", () => {
 					nextBillingDate: "2025-07-20",
 					category: mockCategories[0],
 					isActive: false,
+					description: null,
+					createdAt: "2025-01-01T00:00:00Z",
+					updatedAt: "2025-01-01T00:00:00Z",
 				},
 			];
 			vi.mocked(useSubscriptions).mockReturnValue({
@@ -191,7 +203,9 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("アクティブなサービスがない場合、次回請求日が「---」と表示されること", async () => {
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
 				subscriptions: [],
@@ -203,10 +217,12 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("読み込み中の状態で統計情報が適切に表示されること", async () => {
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
-				loading: true,
+				isLoading: true,
 			});
 
 			render(<SubscriptionsPage />);
@@ -251,10 +267,13 @@ describe("SubscriptionsPage", () => {
 				id: "new-1",
 				name: "Test Service",
 			});
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
-			vi.mocked(useSubscriptions).mockReturnValue({
-				...defaultSubscriptionsHook,
-				createSubscriptionMutation: mockCreateMutation,
+			const { useCreateSubscription } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
+			vi.mocked(useCreateSubscription).mockReturnValue({
+				isLoading: false,
+				error: null,
+				createSubscription: mockCreateMutation,
 			});
 
 			render(<SubscriptionsPage />);
@@ -280,10 +299,13 @@ describe("SubscriptionsPage", () => {
 			const mockCreateMutation = vi
 				.fn()
 				.mockRejectedValue(new Error("登録エラー"));
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
-			vi.mocked(useSubscriptions).mockReturnValue({
-				...defaultSubscriptionsHook,
-				createSubscriptionMutation: mockCreateMutation,
+			const { useCreateSubscription } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
+			vi.mocked(useCreateSubscription).mockReturnValue({
+				isLoading: false,
+				error: null,
+				createSubscription: mockCreateMutation,
 			});
 
 			// コンソールエラーを抑制
@@ -312,7 +334,9 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("サブスクリプションフックがパラメータなしで呼び出されること（グローバルカテゴリ使用）", async () => {
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 
 			render(<SubscriptionsPage />);
 
@@ -320,10 +344,12 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("サブスクリプションフックのローディング状態が正しく伝播されること", async () => {
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
-				loading: true,
+				isLoading: true,
 			});
 
 			const { SubscriptionList } = await import(
@@ -340,7 +366,9 @@ describe("SubscriptionsPage", () => {
 
 	describe("データ処理テスト", () => {
 		it("空のサブスクリプションリストが正しく処理されること", async () => {
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
 				subscriptions: [],
@@ -354,7 +382,9 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("単一のサブスクリプションが正しく処理されること", async () => {
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			const singleSubscription = [mockSubscriptions[0]];
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
@@ -382,10 +412,13 @@ describe("SubscriptionsPage", () => {
 				id: "new-1",
 				name: "New Service",
 			});
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
-			vi.mocked(useSubscriptions).mockReturnValue({
-				...defaultSubscriptionsHook,
-				createSubscriptionMutation: mockCreateMutation,
+			const { useCreateSubscription } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
+			vi.mocked(useCreateSubscription).mockReturnValue({
+				isLoading: false,
+				error: null,
+				createSubscription: mockCreateMutation,
 			});
 
 			// コンソールログを監視
@@ -409,7 +442,9 @@ describe("SubscriptionsPage", () => {
 
 		it("データの再取得が正しく動作すること", async () => {
 			const mockRefetchSubscriptions = vi.fn();
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
 				refetch: mockRefetchSubscriptions,
@@ -429,7 +464,9 @@ describe("SubscriptionsPage", () => {
 
 	describe("エラーハンドリング", () => {
 		it("サブスクリプション取得エラーが表示されること", async () => {
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
 				error: "サブスクリプションの取得に失敗しました",
@@ -446,7 +483,9 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("サブスクリプションエラーが発生した場合の表示", async () => {
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
 				error: "サブスクリプションエラー",
@@ -463,7 +502,9 @@ describe("SubscriptionsPage", () => {
 
 		it("エラー時の再試行ボタンが正しく動作すること", async () => {
 			const mockRefetchSubscriptions = vi.fn();
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
 				error: "サブスクリプションエラー",
@@ -481,10 +522,13 @@ describe("SubscriptionsPage", () => {
 		it("サブスクリプション作成エラーがコンソールに出力されること", async () => {
 			const mockError = new Error("作成エラー");
 			const mockCreateMutation = vi.fn().mockRejectedValue(mockError);
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
-			vi.mocked(useSubscriptions).mockReturnValue({
-				...defaultSubscriptionsHook,
-				createSubscriptionMutation: mockCreateMutation,
+			const { useCreateSubscription } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
+			vi.mocked(useCreateSubscription).mockReturnValue({
+				isLoading: false,
+				error: null,
+				createSubscription: mockCreateMutation,
 			});
 
 			// コンソールエラーを監視
@@ -526,7 +570,9 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("エラー時の再試行ボタンがクリック可能であること", async () => {
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
 				error: "エラー",
@@ -560,10 +606,13 @@ describe("SubscriptionsPage", () => {
 
 		it("フォーム送信後の成功メッセージがコンソールに出力されること", async () => {
 			const mockCreateMutation = vi.fn().mockResolvedValue({ id: "1" });
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
-			vi.mocked(useSubscriptions).mockReturnValue({
-				...defaultSubscriptionsHook,
-				createSubscriptionMutation: mockCreateMutation,
+			const { useCreateSubscription } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
+			vi.mocked(useCreateSubscription).mockReturnValue({
+				isLoading: false,
+				error: null,
+				createSubscription: mockCreateMutation,
 			});
 
 			const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
@@ -638,7 +687,9 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("エラー時の見出し構造が適切であること", async () => {
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
 				error: "エラー",
@@ -651,7 +702,9 @@ describe("SubscriptionsPage", () => {
 		});
 
 		it("ボタンに適切なラベルが設定されていること", async () => {
-			const { useSubscriptions } = await import("../../hooks/useSubscriptions");
+			const { useSubscriptions } = await import(
+				"../../lib/api/hooks/useSubscriptions"
+			);
 			vi.mocked(useSubscriptions).mockReturnValue({
 				...defaultSubscriptionsHook,
 				error: "エラー",

@@ -7,8 +7,11 @@ import {
 	NewSubscriptionDialog,
 	SubscriptionList,
 } from "../../components/subscriptions";
-import { useSubscriptions } from "../../hooks/useSubscriptions";
-import type { SubscriptionFormData } from "../../types/subscription";
+import {
+	useCreateSubscription,
+	useSubscriptions,
+} from "../../lib/api/hooks/useSubscriptions";
+import type { CreateSubscriptionRequest } from "../../lib/api/types";
 
 /**
  * サブスクリプション管理ページ
@@ -33,12 +36,16 @@ const SubscriptionsPage: FC = () => {
 	// サブスクリプションデータの取得
 	const {
 		subscriptions,
-		loading: subscriptionsLoading,
+		isLoading: subscriptionsLoading,
 		error: subscriptionsError,
-		operationLoading,
 		refetch: refetchSubscriptions,
-		createSubscriptionMutation,
 	} = useSubscriptions();
+
+	// サブスクリプション作成用フック
+	const {
+		isLoading: operationLoading,
+		createSubscription: createSubscriptionMutation,
+	} = useCreateSubscription();
 
 	// ダイアログの状態管理
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -55,7 +62,7 @@ const SubscriptionsPage: FC = () => {
 
 	// 新規サブスクリプション登録処理
 	const handleSubmitNewSubscription = useCallback(
-		async (data: SubscriptionFormData) => {
+		async (data: CreateSubscriptionRequest) => {
 			try {
 				// API経由でサブスクリプションを作成
 				await createSubscriptionMutation(data);
