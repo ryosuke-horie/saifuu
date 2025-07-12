@@ -1,7 +1,7 @@
 "use client";
 
-import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { getCategoriesByType } from "@shared/config/categories";
+import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import type { Category } from "../../lib/api/types";
 import type {
 	ExpenseFormData,

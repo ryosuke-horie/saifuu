@@ -106,7 +106,7 @@ vi.mock("../../components/expenses", () => ({
 	}),
 }));
 
-import { useExpenses, useCategories } from "../../hooks";
+import { useCategories, useExpenses } from "../../hooks";
 
 const mockUseExpenses = vi.mocked(useExpenses);
 const mockUseCategories = vi.mocked(useCategories);
