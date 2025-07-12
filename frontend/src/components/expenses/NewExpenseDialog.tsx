@@ -1,7 +1,7 @@
 "use client";
 
+import { getCategoriesByType } from "@shared/config/categories";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
-import { getCategoriesByType } from "../../../../shared/config/categories";
 import type { Category } from "../../lib/api/types";
 import type {
 	ExpenseFormData,
@@ -51,12 +51,13 @@ export const NewExpenseDialog: FC<NewExpenseDialogProps> = ({
 		}
 
 		// グローバル設定から支出カテゴリを取得してCategory型に変換
+		// 注意: 暫定的にカテゴリ名ベースで数値IDを生成
 		const globalExpenseCategories = getCategoriesByType("expense");
-		return globalExpenseCategories.map((config) => ({
-			id: config.id,
+		return globalExpenseCategories.map((config, index) => ({
+			id: String(index + 1), // 暫定的に連番のIDを使用（string型に変換）
 			name: config.name,
-			type: config.type,
-			color: config.color,
+			type: config.type as "income" | "expense",
+			color: config.color || null,
 			createdAt: new Date().toISOString(), // ダミー値
 			updatedAt: new Date().toISOString(), // ダミー値
 		}));

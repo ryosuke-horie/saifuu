@@ -3,6 +3,7 @@
  */
 
 export type {
+	ExpenseFiltersProps,
 	ExpenseFormData,
 	ExpenseFormProps,
 	ExpenseListProps,
@@ -10,6 +11,7 @@ export type {
 	NewExpenseDialogProps,
 } from "../../types/expense";
 export { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+export { ExpenseFilters } from "./ExpenseFilters";
 export { ExpenseForm } from "./ExpenseForm";
 export { ExpenseList } from "./ExpenseList";
 export { ExpenseStats } from "./ExpenseStats";

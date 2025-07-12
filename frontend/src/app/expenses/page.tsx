@@ -7,10 +7,8 @@ import {
 	NewExpenseButton,
 	NewExpenseDialog,
 } from "../../components/expenses";
-import { useExpenses } from "../../hooks";
-import type { Category } from "../../lib/api/types";
+import { useCategories, useExpenses } from "../../hooks";
 import type { ExpenseFormData } from "../../types/expense";
-import { convertGlobalCategoriesToCategory } from "../../utils/categories";
 
 /**
  * 支出管理メインページ
@@ -46,10 +44,8 @@ export default function ExpensesPage() {
 	// 削除確認ダイアログの状態管理
 	const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-	// グローバル設定から支出カテゴリを取得
-	const categories = useMemo((): Category[] => {
-		return convertGlobalCategoriesToCategory("expense");
-	}, []);
+	// APIからカテゴリを取得
+	const { categories: allCategories } = useCategories();
 
 	// 新規登録ボタンクリックハンドラー
 	const handleNewClick = () => {
@@ -256,7 +252,7 @@ export default function ExpensesPage() {
 					onClose={handleNewDialogClose}
 					onSubmit={handleNewSubmit}
 					isSubmitting={operationLoading}
-					categories={categories}
+					categories={allCategories}
 				/>
 
 				{/* 削除確認ダイアログ */}
