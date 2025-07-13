@@ -6,14 +6,10 @@
 ## 📚 開発環境
 <!-- tags: setup, environment, troubleshooting, database, seed -->
 
-- [開発環境エラー修正プラン](./開発環境エラー修正プラン.md) - 開発環境のトラブルシューティング
-- [環境変数設定ガイド](./環境変数設定ガイド.md) - 環境変数の設定方法
+- [開発環境エラー修正プラン](./開発環境/開発環境エラー修正プラン.md) - 開発環境のトラブルシューティング
+- [環境変数設定ガイド](./開発環境/環境変数設定ガイド.md) - 環境変数の設定方法
 - [シード処理ガイド](./シード処理ガイド.md) - データベースシード処理の実装方法
-
-## 🛠 ツール
-<!-- tags: tools, ghost, background-process, development-tools -->
-
-- [ghost使用ガイド](./tools/ghost使用ガイド.md) - バックグラウンドプロセス管理ツールの使用方法
+- [ghost使用ガイド](./開発環境/ghost使用ガイド.md) - バックグラウンドプロセス管理ツールの使用方法
 
 ## 🔌 API開発
 <!-- tags: api, backend, hono, cloudflare, d1, database, logger, migration -->
