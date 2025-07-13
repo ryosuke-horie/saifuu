@@ -91,8 +91,9 @@ export function useApiQuery<TData>({
 	const [error, setError] = useState<string | null>(null);
 
 	// 共通のfetch処理
-	// queryFn、errorContext、およびカスタム依存関係が変更されたときのみ再作成される
-	// queryパラメータなどの外部依存関係も適切に追跡する
+	// errorContextとカスタム依存関係が変更されたときのみ再作成される
+	// queryFnは依存関係から除外（関数参照の変更で無限ループを防ぐ）
+	// biome-ignore lint/correctness/useExhaustiveDependencies: queryFnを依存関係に含めると無限ループが発生する
 	const fetchData = useCallback(async () => {
 		// ローディング開始とエラーリセット
 		setIsLoading(true);
@@ -112,7 +113,7 @@ export function useApiQuery<TData>({
 			// 成功・失敗に関わらずローディング状態を解除
 			setIsLoading(false);
 		}
-	}, [queryFn, errorContext, ...deps]);
+	}, [errorContext, ...deps]);
 
 	// refetch関数
 	// 手動でデータ再取得を行う際に使用
