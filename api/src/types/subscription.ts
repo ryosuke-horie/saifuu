@@ -6,7 +6,17 @@
  * - フロントエンド: string ID, ネストされたcategoryオブジェクト, 日付文字列
  */
 
-import type { Category, NewSubscription, Subscription } from '../db/schema'
+import type { NewSubscription, Subscription } from '../db/schema'
+
+// カテゴリの型定義（設定ファイルベースのため、個別に定義）
+interface Category {
+	id: number
+	name: string
+	type: 'income' | 'expense'
+	color?: string
+	createdAt: string
+	updatedAt: string
+}
 
 // =============================================================================
 // 基本型定義

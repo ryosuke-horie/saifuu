@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { type AnyDatabase, createDatabase, type Env } from './db'
-import { categories } from './db/schema'
+import { transactions } from './db/schema'
 import { type LoggingVariables, loggingMiddleware, logWithContext } from './middleware/logging'
 import { renderer } from './renderer'
 import categoriesRouter from './routes/categories'
@@ -95,9 +95,9 @@ app.get('/api/health', async (c) => {
 
 		logWithContext(c, 'debug', 'Health check: attempting database query')
 		// シンプルなクエリでデータベース接続をテスト
-		const result = await db.select().from(categories).limit(1)
+		const result = await db.select().from(transactions).limit(1)
 		logWithContext(c, 'info', 'Health check: query successful', {
-			categoriesCount: result.length,
+			transactionsCount: result.length,
 		})
 
 		return c.json({

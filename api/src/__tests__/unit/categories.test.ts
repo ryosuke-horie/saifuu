@@ -7,7 +7,25 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { Category, NewCategory } from '../../db/schema'
+
+// カテゴリの型定義（設定ファイルベースのため、個別に定義）
+interface Category {
+	id: number
+	name: string
+	type: 'income' | 'expense'
+	color?: string
+	createdAt: string
+	updatedAt: string
+}
+
+interface NewCategory {
+	name: string
+	type: 'income' | 'expense'
+	color?: string
+	createdAt: string
+	updatedAt: string
+}
+
 import { createTestRequest, getResponseJson } from '../helpers/test-app'
 import { cleanupTestDatabase, setupTestDatabase } from '../helpers/test-db'
 import testProductionApp from '../helpers/test-production-app'

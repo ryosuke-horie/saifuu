@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { ALL_CATEGORIES } from '../../../shared/config/categories'
 import { type AnyDatabase, type Env } from '../db'
-import { categories, type NewSubscription, subscriptions } from '../db/schema'
+import { type NewSubscription, subscriptions } from '../db/schema'
 import { type LoggingVariables, logWithContext } from '../middleware/logging'
 
 /**
@@ -27,37 +28,33 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 
 		try {
 			const db = options.testDatabase || c.get('db')
-			const result = await db
-				.select({
-					id: subscriptions.id,
-					name: subscriptions.name,
-					amount: subscriptions.amount,
-					billingCycle: subscriptions.billingCycle,
-					nextBillingDate: subscriptions.nextBillingDate,
-					description: subscriptions.description,
-					isActive: subscriptions.isActive,
-					categoryId: subscriptions.categoryId,
-					createdAt: subscriptions.createdAt,
-					updatedAt: subscriptions.updatedAt,
-					category: {
-						id: categories.id,
-						name: categories.name,
-						type: categories.type,
-						color: categories.color,
-						createdAt: categories.createdAt,
-						updatedAt: categories.updatedAt,
-					},
-				})
-				.from(subscriptions)
-				.leftJoin(categories, eq(subscriptions.categoryId, categories.id))
+			const result = await db.select().from(subscriptions)
+
+			// カテゴリ情報を設定ファイルから補完
+			const resultWithCategories = result.map((sub) => {
+				const category = ALL_CATEGORIES.find((cat) => cat.numericId === sub.categoryId)
+				return {
+					...sub,
+					category: category
+						? {
+								id: category.numericId,
+								name: category.name,
+								type: category.type,
+								color: category.color,
+								createdAt: new Date().toISOString(),
+								updatedAt: new Date().toISOString(),
+							}
+						: null,
+				}
+			})
 
 			// 構造化ログ: 取得成功時のログ
 			logWithContext(c, 'info', 'サブスクリプション一覧取得が完了', {
-				subscriptionsCount: result.length,
+				subscriptionsCount: resultWithCategories.length,
 				resource: 'subscriptions',
 			})
 
-			return c.json(result)
+			return c.json(resultWithCategories)
 		} catch (error) {
 			// 構造化ログ: エラー時の詳細ログ（リクエストIDと例外情報を含む）
 			logWithContext(c, 'error', 'サブスクリプション一覧取得でエラーが発生', {
@@ -196,30 +193,25 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 
 			const db = options.testDatabase || c.get('db')
 
-			const result = await db
-				.select({
-					id: subscriptions.id,
-					name: subscriptions.name,
-					amount: subscriptions.amount,
-					billingCycle: subscriptions.billingCycle,
-					nextBillingDate: subscriptions.nextBillingDate,
-					description: subscriptions.description,
-					isActive: subscriptions.isActive,
-					categoryId: subscriptions.categoryId,
-					createdAt: subscriptions.createdAt,
-					updatedAt: subscriptions.updatedAt,
-					category: {
-						id: categories.id,
-						name: categories.name,
-						type: categories.type,
-						color: categories.color,
-						createdAt: categories.createdAt,
-						updatedAt: categories.updatedAt,
-					},
-				})
-				.from(subscriptions)
-				.leftJoin(categories, eq(subscriptions.categoryId, categories.id))
-				.where(eq(subscriptions.id, id))
+			const result = await db.select().from(subscriptions).where(eq(subscriptions.id, id))
+
+			// カテゴリ情報を設定ファイルから補完
+			const resultWithCategories = result.map((sub) => {
+				const category = ALL_CATEGORIES.find((cat) => cat.numericId === sub.categoryId)
+				return {
+					...sub,
+					category: category
+						? {
+								id: category.numericId,
+								name: category.name,
+								type: category.type,
+								color: category.color,
+								createdAt: new Date().toISOString(),
+								updatedAt: new Date().toISOString(),
+							}
+						: null,
+				}
+			})
 
 			if (result.length === 0) {
 				// 構造化ログ: サブスクリプションが見つからない場合
@@ -238,11 +230,11 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 			// 構造化ログ: サブスクリプション詳細取得成功時のログ
 			logWithContext(c, 'info', 'サブスクリプション詳細取得が完了', {
 				subscriptionId: id,
-				subscriptionName: result[0].name,
+				subscriptionName: resultWithCategories[0].name,
 				resource: 'subscriptions',
 			})
 
-			return c.json(result[0])
+			return c.json(resultWithCategories[0])
 		} catch (error) {
 			// 構造化ログ: サブスクリプション詳細取得エラー時の詳細ログ
 			logWithContext(c, 'error', 'サブスクリプション詳細取得でエラーが発生', {

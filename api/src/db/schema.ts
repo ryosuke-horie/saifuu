@@ -1,27 +1,12 @@
 import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
-// カテゴリテーブル
-// 支出・収入のカテゴリを管理する
-export const categories = sqliteTable('categories', {
-	id: integer('id').primaryKey({ autoIncrement: true }),
-	name: text('name').notNull(),
-	type: text('type', { enum: ['income', 'expense'] }).notNull(),
-	color: text('color'), // UIでの色表示用
-	createdAt: text('created_at')
-		.notNull()
-		.$defaultFn(() => new Date().toISOString()),
-	updatedAt: text('updated_at')
-		.notNull()
-		.$defaultFn(() => new Date().toISOString()),
-})
-
 // 取引テーブル
 // 支出・収入の記録を管理する
 export const transactions = sqliteTable('transactions', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	amount: real('amount').notNull(), // 金額
 	type: text('type', { enum: ['income', 'expense'] }).notNull(),
-	categoryId: integer('category_id').references(() => categories.id),
+	categoryId: integer('category_id'), // 設定ファイルのnumericIdを参照
 	description: text('description'), // 説明・メモ
 	date: text('date').notNull(), // 取引日
 	createdAt: text('created_at')
@@ -42,7 +27,7 @@ export const subscriptions = sqliteTable('subscriptions', {
 		.notNull()
 		.default('monthly'),
 	nextBillingDate: text('next_billing_date').notNull(),
-	categoryId: integer('category_id').references(() => categories.id),
+	categoryId: integer('category_id'), // 設定ファイルのnumericIdを参照
 	description: text('description'),
 	isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
 	createdAt: text('created_at')
@@ -54,8 +39,6 @@ export const subscriptions = sqliteTable('subscriptions', {
 })
 
 // 型推論のためのエクスポート
-export type Category = typeof categories.$inferSelect
-export type NewCategory = typeof categories.$inferInsert
 export type Transaction = typeof transactions.$inferSelect
 export type NewTransaction = typeof transactions.$inferInsert
 export type Subscription = typeof subscriptions.$inferSelect

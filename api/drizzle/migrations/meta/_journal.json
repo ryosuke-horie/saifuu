@@ -15,6 +15,13 @@
       "when": 1751699123506,
       "tag": "0001_neat_tiger_shark",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1752417445169,
+      "tag": "0002_moaning_kabuki",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { ALL_CATEGORIES } from '../../../shared/config/categories'
 import { type AnyDatabase, type Env } from '../db'
-import { categories, type NewTransaction, transactions } from '../db/schema'
+import { type NewTransaction, transactions } from '../db/schema'
 import { type LoggingVariables, logWithContext } from '../middleware/logging'
 
 /**
@@ -27,35 +28,33 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 		try {
 			const db = options.testDatabase || c.get('db')
-			const result = await db
-				.select({
-					id: transactions.id,
-					amount: transactions.amount,
-					type: transactions.type,
-					categoryId: transactions.categoryId,
-					description: transactions.description,
-					date: transactions.date,
-					createdAt: transactions.createdAt,
-					updatedAt: transactions.updatedAt,
-					category: {
-						id: categories.id,
-						name: categories.name,
-						type: categories.type,
-						color: categories.color,
-						createdAt: categories.createdAt,
-						updatedAt: categories.updatedAt,
-					},
-				})
-				.from(transactions)
-				.leftJoin(categories, eq(transactions.categoryId, categories.id))
+			const result = await db.select().from(transactions)
+
+			// カテゴリ情報を設定ファイルから補完
+			const resultWithCategories = result.map((tx) => {
+				const category = ALL_CATEGORIES.find((cat) => cat.numericId === tx.categoryId)
+				return {
+					...tx,
+					category: category
+						? {
+								id: category.numericId,
+								name: category.name,
+								type: category.type,
+								color: category.color,
+								createdAt: new Date().toISOString(),
+								updatedAt: new Date().toISOString(),
+							}
+						: null,
+				}
+			})
 
 			// 構造化ログ: 取得成功時のログ
 			logWithContext(c, 'info', '取引一覧取得が完了', {
-				transactionsCount: result.length,
+				transactionsCount: resultWithCategories.length,
 				resource: 'transactions',
 			})
 
-			return c.json(result)
+			return c.json(resultWithCategories)
 		} catch (error) {
 			// 構造化ログ: エラー時の詳細ログ（リクエストIDと例外情報を含む）
 			logWithContext(c, 'error', '取引一覧取得でエラーが発生', {
@@ -233,28 +232,25 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 			const db = options.testDatabase || c.get('db')
 
-			const result = await db
-				.select({
-					id: transactions.id,
-					amount: transactions.amount,
-					type: transactions.type,
-					categoryId: transactions.categoryId,
-					description: transactions.description,
-					date: transactions.date,
-					createdAt: transactions.createdAt,
-					updatedAt: transactions.updatedAt,
-					category: {
-						id: categories.id,
-						name: categories.name,
-						type: categories.type,
-						color: categories.color,
-						createdAt: categories.createdAt,
-						updatedAt: categories.updatedAt,
-					},
-				})
-				.from(transactions)
-				.leftJoin(categories, eq(transactions.categoryId, categories.id))
-				.where(eq(transactions.id, id))
+			const result = await db.select().from(transactions).where(eq(transactions.id, id))
+
+			// カテゴリ情報を設定ファイルから補完
+			const resultWithCategories = result.map((tx) => {
+				const category = ALL_CATEGORIES.find((cat) => cat.numericId === tx.categoryId)
+				return {
+					...tx,
+					category: category
+						? {
+								id: category.numericId,
+								name: category.name,
+								type: category.type,
+								color: category.color,
+								createdAt: new Date().toISOString(),
+								updatedAt: new Date().toISOString(),
+							}
+						: null,
+				}
+			})
 
 			if (result.length === 0) {
 				// 構造化ログ: 取引が見つからない場合
@@ -268,11 +264,11 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 			// 構造化ログ: 取引詳細取得成功時のログ
 			logWithContext(c, 'info', '取引詳細取得が完了', {
 				transactionId: id,
-				amount: result[0].amount,
+				amount: resultWithCategories[0].amount,
 				resource: 'transactions',
 			})
 
-			return c.json(result[0])
+			return c.json(resultWithCategories[0])
 		} catch (error) {
 			// 構造化ログ: 取引詳細取得エラー時の詳細ログ
 			logWithContext(c, 'error', '取引詳細取得でエラーが発生', {

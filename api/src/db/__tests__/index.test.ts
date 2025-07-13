@@ -62,7 +62,6 @@ describe('Database Module', () => {
 			const { schema } = await import('../index')
 			expect(schema).toBeDefined()
 			expect(schema.transactions).toBeDefined()
-			expect(schema.categories).toBeDefined()
 			expect(schema.subscriptions).toBeDefined()
 		})
 	})
