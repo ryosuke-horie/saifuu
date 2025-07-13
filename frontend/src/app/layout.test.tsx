@@ -125,7 +125,9 @@ describe("RootLayout", () => {
 		it("apple-touch-iconが設定されている", () => {
 			const icons = metadata.icons as any;
 			expect(icons.apple).toBeDefined();
-			expect(icons.apple[0]).toBe("/apple-touch-icon.png");
+			expect(icons.apple[0].url).toBe("/apple-icon.png");
+			expect(icons.apple[0].sizes).toBe("180x180");
+			expect(icons.apple[0].type).toBe("image/png");
 		});
 
 		it("各サイズのアイコンファイルが設定されている", () => {
