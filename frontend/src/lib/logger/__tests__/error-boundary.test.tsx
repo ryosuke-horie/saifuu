@@ -73,7 +73,7 @@ const ConditionalThrowingComponent = () => {
 };
 
 // カスタムエラーフォールバック
-const CustomErrorFallback = ({
+const _CustomErrorFallback = ({
 	error,
 	retry,
 	canRetry,
@@ -112,9 +112,6 @@ describe("LoggedErrorBoundary", () => {
 		expect(screen.getByTestId("working-component")).toBeInTheDocument();
 	});
 
-
-
-
 	it("再試行機能が動作する", async () => {
 		const user = userEvent.setup();
 		const Wrapper = createWrapper();
@@ -146,11 +143,6 @@ describe("LoggedErrorBoundary", () => {
 		// コンポーネントが復旧することを確認
 		expect(screen.getByTestId("working-component")).toBeInTheDocument();
 	});
-
-
-
-
-
 });
 
 describe("DefaultErrorFallback", () => {
@@ -249,7 +241,6 @@ describe("withErrorBoundary HOC", () => {
 		expect(screen.getByTestId("working-component")).toBeInTheDocument();
 	});
 
-
 	it("displayNameが正しく設定される", () => {
 		const TestComponent = () => <div>Test</div>;
 		TestComponent.displayName = "TestComponent";
@@ -337,5 +328,4 @@ describe("ErrorBoundaryPresets", () => {
 			resetOnPropsChange: true,
 		});
 	});
-
 });
