@@ -114,9 +114,6 @@ export default function ExpensesPage() {
 				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
 					<div className="mb-4 sm:mb-0">
 						<h1 className="text-2xl font-bold text-gray-900">支出・収入管理</h1>
-						<p className="text-sm text-gray-600 mt-1">
-							日々の支出と収入を記録して家計を管理しましょう
-						</p>
 					</div>
 					<div className="flex-shrink-0">
 						<NewExpenseButton
