@@ -155,7 +155,6 @@ export const ExpenseList: FC<ExpenseListProps> = ({
 	transactions,
 	isLoading = false,
 	error = null,
-	onRefresh,
 	onEdit,
 	onDelete,
 	className = "",
@@ -169,26 +168,9 @@ export const ExpenseList: FC<ExpenseListProps> = ({
 		<div className={`bg-white rounded-lg shadow ${className}`}>
 			{/* テーブルヘッダー */}
 			<div className="px-4 py-4 border-b border-gray-200">
-				<div className="flex items-center justify-between">
-					<div>
-						<h2 className="text-lg font-semibold text-gray-900">取引一覧</h2>
-						<p className="text-sm text-gray-600 mt-1">支出・収入の履歴</p>
-					</div>
-					{onRefresh && (
-						<button
-							type="button"
-							onClick={onRefresh}
-							disabled={isLoading}
-							className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							{isLoading ? (
-								<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2" />
-							) : (
-								<span className="mr-2">🔄</span>
-							)}
-							更新
-						</button>
-					)}
+				<div>
+					<h2 className="text-lg font-semibold text-gray-900">取引一覧</h2>
+					<p className="text-sm text-gray-600 mt-1">支出・収入の履歴</p>
 				</div>
 			</div>
 
