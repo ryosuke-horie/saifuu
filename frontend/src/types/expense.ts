@@ -127,11 +127,6 @@ export interface ExpenseListProps {
 	error?: string | null;
 
 	/**
-	 * データ再取得用のコールバック
-	 */
-	onRefresh?: () => void;
-
-	/**
 	 * 編集時のコールバック
 	 */
 	onEdit?: (transaction: Transaction) => void;

@@ -173,21 +173,17 @@ describe("ExpenseList", () => {
 			expect(mockOnDelete).toHaveBeenCalledWith(mockTransactions[0].id);
 		});
 
-		it("更新ボタンが機能する", () => {
-			const mockOnRefresh = vi.fn();
+		it("更新ボタンが表示されない", () => {
 			render(
 				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
 					error={null}
-					onRefresh={mockOnRefresh}
 				/>,
 			);
 
-			const refreshButton = screen.getByText("更新");
-			fireEvent.click(refreshButton);
-
-			expect(mockOnRefresh).toHaveBeenCalled();
+			// 更新ボタンが存在しないことを確認
+			expect(screen.queryByText("更新")).not.toBeInTheDocument();
 		});
 	});
 

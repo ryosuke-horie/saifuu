@@ -241,7 +241,6 @@ export default function ExpensesPage() {
 					<ExpenseList
 						transactions={expenses}
 						isLoading={loading}
-						onRefresh={refetch}
 						onDelete={handleDelete}
 					/>
 				</div>

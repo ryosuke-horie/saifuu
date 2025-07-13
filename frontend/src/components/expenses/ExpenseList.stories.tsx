@@ -63,10 +63,6 @@ const meta: Meta<typeof ExpenseList> = {
 			description: "エラーメッセージ",
 			control: { type: "text" },
 		},
-		onRefresh: {
-			description: "更新ボタンのコールバック",
-			action: "refresh",
-		},
 		onEdit: {
 			description: "編集ボタンのコールバック",
 			action: "edit",
@@ -279,11 +275,10 @@ export const ManyItems: Story = {
 /**
  * インタラクション機能付き
  *
- * 編集・削除・更新機能が有効な状態
+ * 編集・削除機能が有効な状態
  */
 export const WithInteractions: Story = {
 	args: {
-		onRefresh: () => console.log("更新ボタンがクリックされました"),
 		onEdit: (transaction: Transaction) => console.log("編集:", transaction),
 		onDelete: (transactionId: string) => console.log("削除:", transactionId),
 	},
@@ -291,7 +286,7 @@ export const WithInteractions: Story = {
 		docs: {
 			description: {
 				story:
-					"編集・削除・更新ボタンが有効な状態です。各ボタンのクリック時にコールバックが実行されます。",
+					"編集・削除ボタンが有効な状態です。各ボタンのクリック時にコールバックが実行されます。",
 			},
 		},
 	},
