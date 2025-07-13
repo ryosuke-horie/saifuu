@@ -21,9 +21,9 @@ app.use(
 	cors({
 		origin: [
 			'http://localhost:3000',
-			'http://localhost:3002',
-			'http://localhost:3003',
+			'http://localhost:3001',
 			'https://saifuu.ryosuke-horie37.workers.dev',
+			'https://saifuu.pages.dev',
 		],
 		allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 		allowHeaders: ['Content-Type', 'Authorization'],
