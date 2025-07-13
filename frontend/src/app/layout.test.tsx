@@ -100,6 +100,50 @@ describe("RootLayout", () => {
 		});
 	});
 
+	describe("Favicon設定", () => {
+		it("favicon.icoが設定されている", () => {
+			expect(metadata.icons).toBeDefined();
+			// 実際の設定構造に合わせてテスト
+			const icons = metadata.icons as any;
+			expect(icons.icon).toBeDefined();
+			expect(icons.icon[0].url).toBe("/favicon.ico");
+			expect(icons.icon[0].sizes).toBe("any");
+		});
+
+		it("favicon.svgが設定されている", () => {
+			const icons = metadata.icons as any;
+			expect(icons.icon[1].url).toBe("/favicon.svg");
+			expect(icons.icon[1].type).toBe("image/svg+xml");
+		});
+
+		it("shortcut iconが設定されている", () => {
+			const icons = metadata.icons as any;
+			expect(icons.shortcut).toBeDefined();
+			expect(icons.shortcut[0]).toBe("/favicon.ico");
+		});
+
+		it("apple-touch-iconが設定されている", () => {
+			const icons = metadata.icons as any;
+			expect(icons.apple).toBeDefined();
+			expect(icons.apple[0].url).toBe("/apple-icon.png");
+			expect(icons.apple[0].sizes).toBe("180x180");
+			expect(icons.apple[0].type).toBe("image/png");
+		});
+
+		it("各サイズのアイコンファイルが設定されている", () => {
+			const icons = metadata.icons as any;
+			// 16x16
+			expect(icons.icon[2].url).toBe("/icon-16x16.png");
+			expect(icons.icon[2].sizes).toBe("16x16");
+			expect(icons.icon[2].type).toBe("image/png");
+
+			// 32x32
+			expect(icons.icon[3].url).toBe("/icon-32x32.png");
+			expect(icons.icon[3].sizes).toBe("32x32");
+			expect(icons.icon[3].type).toBe("image/png");
+		});
+	});
+
 	describe("レイアウト構造", () => {
 		it("正しいDOM構造を持つ", () => {
 			render(

@@ -43,12 +43,16 @@ export const metadata: Metadata = {
 	publisher: "Saifuu",
 
 	// アイコン設定
+	// Next.js 13+ App Routerでは、app/ディレクトリのfavicon.ico, icon.svg, apple-icon.pngが自動的に使用される
 	icons: {
 		icon: [
 			{ url: "/favicon.ico", sizes: "any" },
-			{ url: "/favicon.svg", type: "image/svg+xml" },
+			{ url: "/icon.svg", type: "image/svg+xml" },
+			{ url: "/icon-16x16.png", sizes: "16x16", type: "image/png" },
+			{ url: "/icon-32x32.png", sizes: "32x32", type: "image/png" },
 		],
 		shortcut: ["/favicon.ico"],
+		apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
 	},
 
 	// Open Graph設定（プライバシー重視）

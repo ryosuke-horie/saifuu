@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+  <!-- 財布のアイコン - Saifuu用 -->
+  <path d="M26 8H6C4.89543 8 4 8.89543 4 10V22C4 23.1046 4.89543 24 6 24H26C27.1046 24 28 23.1046 28 22V10C28 8.89543 27.1046 8 26 8Z" fill="#2563eb" stroke="#1e40af" stroke-width="1"/>
+  <path d="M4 12H28" stroke="#1e40af" stroke-width="1"/>
+  <circle cx="23" cy="18" r="2" fill="#1e40af"/>
+  <path d="M8 6V8" stroke="#1e40af" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M12 6V8" stroke="#1e40af" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M16 6V8" stroke="#1e40af" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
