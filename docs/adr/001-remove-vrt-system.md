@@ -107,7 +107,7 @@ VRT運用中に以下の課題が明らかになりました：
 
 ## 関連ドキュメント
 
-- [テストガイド](../テストガイド.md)
+- [テストガイド](../テスト/テストガイド.md)
 - [Issue #170: VRTシステム削除](https://github.com/ryosuke-horie/saifuu/issues/170)
 - [PR #171: VRTシステム削除実装](https://github.com/ryosuke-horie/saifuu/pull/171)
 
