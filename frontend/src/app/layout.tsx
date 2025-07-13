@@ -47,8 +47,11 @@ export const metadata: Metadata = {
 		icon: [
 			{ url: "/favicon.ico", sizes: "any" },
 			{ url: "/favicon.svg", type: "image/svg+xml" },
+			{ url: "/icon-16x16.png", sizes: "16x16", type: "image/png" },
+			{ url: "/icon-32x32.png", sizes: "32x32", type: "image/png" },
 		],
 		shortcut: ["/favicon.ico"],
+		apple: ["/apple-touch-icon.png"],
 	},
 
 	// Open Graph設定（プライバシー重視）
