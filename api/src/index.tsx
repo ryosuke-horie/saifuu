@@ -26,7 +26,7 @@ app.use(
 			'https://saifuu.pages.dev',
 		],
 		allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-		allowHeaders: ['Content-Type', 'Authorization'],
+		allowHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
 	})
 )
 
