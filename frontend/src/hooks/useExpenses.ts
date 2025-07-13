@@ -49,7 +49,18 @@ interface UseExpensesReturn extends UseExpensesState {
 /**
  * 支出データを管理するカスタムフック
  * グローバル設定のカテゴリを自動的に使用します
- * @returns 支出一覧とCRUD操作関数、ローディング状態、エラー状態
+ * @returns {UseExpensesReturn} 支出管理に必要な状態と操作関数
+ * @returns {Transaction[]} UseExpensesReturn.expenses - 支出一覧
+ * @returns {boolean} UseExpensesReturn.loading - 初期読み込み中フラグ
+ * @returns {string|null} UseExpensesReturn.error - エラーメッセージ
+ * @returns {boolean} UseExpensesReturn.operationLoading - CRUD操作中フラグ
+ * @returns {function} UseExpensesReturn.refetch - データ再取得関数
+ * @returns {function} UseExpensesReturn.createExpenseMutation - 支出作成関数
+ * @returns {function} UseExpensesReturn.updateExpenseMutation - 支出更新関数
+ * @returns {function} UseExpensesReturn.deleteExpenseMutation - 支出削除関数
+ * @returns {function} UseExpensesReturn.getExpenseById - ID指定での支出取得関数
+ * @example
+ * const { expenses, loading, createExpenseMutation } = useExpenses();
  */
 export function useExpenses(): UseExpensesReturn {
 	const [state, setState] = useState<UseExpensesState>({
