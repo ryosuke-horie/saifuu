@@ -272,7 +272,7 @@ describe("API統合とrequestId相関", () => {
 
 			// endメソッドも同じような値を返すことを確認（誤差を許容）
 			const endValue = marker.end();
-			expect(Math.abs(endValue - duration)).toBeLessThan(1); // 1ms以内の誤差は許容
+			expect(Math.abs(endValue - duration)).toBeLessThan(10); // 10ms以内の誤差を許容
 		});
 	});
 

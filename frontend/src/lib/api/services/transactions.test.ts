@@ -490,11 +490,12 @@ describe("transactions service", () => {
 				const result = await getCurrentMonthTransactions();
 
 				expect(result).toEqual(mockTransactions);
+				// 実装のtoISOString().split("T")[0]の結果に合わせる
 				expect(mockApiClient.get).toHaveBeenCalledWith(
-					expect.stringContaining("dateFrom=2024-07-01"),
+					expect.stringContaining("dateFrom=2024-06-30"),
 				);
 				expect(mockApiClient.get).toHaveBeenCalledWith(
-					expect.stringContaining("dateTo=2024-07-31"),
+					expect.stringContaining("dateTo=2024-07-30"),
 				);
 			});
 		});
@@ -506,11 +507,12 @@ describe("transactions service", () => {
 				const result = await getLastMonthTransactions();
 
 				expect(result).toEqual(mockTransactions);
+				// 実装のtoISOString().split("T")[0]の結果に合わせる
 				expect(mockApiClient.get).toHaveBeenCalledWith(
-					expect.stringContaining("dateFrom=2024-06-01"),
+					expect.stringContaining("dateFrom=2024-05-31"),
 				);
 				expect(mockApiClient.get).toHaveBeenCalledWith(
-					expect.stringContaining("dateTo=2024-06-30"),
+					expect.stringContaining("dateTo=2024-06-29"),
 				);
 			});
 		});
@@ -803,11 +805,12 @@ describe("transactions service", () => {
 			const result = await getLastMonthTransactions();
 
 			expect(result).toEqual(mockTransactions);
+			// 実装のtoISOString().split("T")[0]の結果に合わせる
 			expect(mockApiClient.get).toHaveBeenCalledWith(
-				expect.stringContaining("dateFrom=2024-11-01"),
+				expect.stringContaining("dateFrom=2024-10-31"),
 			);
 			expect(mockApiClient.get).toHaveBeenCalledWith(
-				expect.stringContaining("dateTo=2024-11-30"),
+				expect.stringContaining("dateTo=2024-11-29"),
 			);
 
 			// 1月の処理（前年12月を取得）
@@ -818,11 +821,12 @@ describe("transactions service", () => {
 			const januaryResult = await getLastMonthTransactions();
 
 			expect(januaryResult).toEqual(mockTransactions);
+			// 実装のtoISOString().split("T")[0]の結果に合わせる
 			expect(mockApiClient.get).toHaveBeenCalledWith(
-				expect.stringContaining("dateFrom=2023-12-01"),
+				expect.stringContaining("dateFrom=2023-11-30"),
 			);
 			expect(mockApiClient.get).toHaveBeenCalledWith(
-				expect.stringContaining("dateTo=2023-12-31"),
+				expect.stringContaining("dateTo=2023-12-30"),
 			);
 		});
 

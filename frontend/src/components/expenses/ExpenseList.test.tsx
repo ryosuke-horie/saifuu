@@ -425,7 +425,9 @@ describe("ExpenseList", () => {
 
 			// nullの説明は空文字列として表示
 			const rows = screen.getAllByRole("row");
-			expect(rows[1]).toHaveTextContent("ー\uffe5");
+			// 日付、金額、カテゴリが含まれることを確認
+			expect(rows[1]).toHaveTextContent("2025/07/09");
+			expect(rows[1]).toHaveTextContent("-\uffe51,000"); // 支出なのでマイナス
 
 			// nullのカテゴリは"未分類"として表示
 			expect(screen.getByText("未分類")).toBeInTheDocument();

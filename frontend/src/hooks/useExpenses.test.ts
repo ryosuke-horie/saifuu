@@ -119,7 +119,7 @@ describe("useExpenses", () => {
 	});
 
 	describe("初期状態", () => {
-		it("初期状態が正しく設定される", () => {
+		it("初期状態が正しく設定される", async () => {
 			mockGetExpenseTransactions.mockResolvedValueOnce([]);
 			const { result } = renderHook(() => useExpenses());
 
@@ -127,6 +127,11 @@ describe("useExpenses", () => {
 			expect(result.current.loading).toBe(true);
 			expect(result.current.error).toBeNull();
 			expect(result.current.operationLoading).toBe(false);
+
+			// 非同期処理が完了するまで待つ
+			await waitFor(() => {
+				expect(result.current.loading).toBe(false);
+			});
 		});
 	});
 

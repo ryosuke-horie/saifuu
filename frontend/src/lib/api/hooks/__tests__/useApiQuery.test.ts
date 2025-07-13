@@ -44,7 +44,7 @@ describe("useApiQuery", () => {
 	});
 
 	describe("基本的なデータ取得", () => {
-		it("初期データが正しく設定される", () => {
+		it("初期データが正しく設定される", async () => {
 			const mockQueryFn = vi.fn().mockResolvedValue(mockData);
 			const initialData: TestData[] = [];
 
@@ -60,6 +60,11 @@ describe("useApiQuery", () => {
 			expect(result.current.isLoading).toBe(true);
 			expect(result.current.error).toBe(null);
 			expect(typeof result.current.refetch).toBe("function");
+
+			// 非同期処理が完了するまで待つ
+			await waitFor(() => {
+				expect(result.current.isLoading).toBe(false);
+			});
 		});
 
 		it("API呼び出しが成功した場合、データが正しく設定される", async () => {
@@ -259,7 +264,10 @@ describe("useApiQuery", () => {
 			mockQueryFn.mockReturnValue(refetchPromise);
 
 			// refetch実行
-			const refetchCall = result.current.refetch();
+			let refetchCall: Promise<void>;
+			await act(async () => {
+				refetchCall = result.current.refetch();
+			});
 
 			// ローディング状態になることを確認
 			await waitFor(() => {
@@ -267,8 +275,10 @@ describe("useApiQuery", () => {
 			});
 
 			// refetch完了
-			resolveRefetch!([mockSingleData]);
-			await refetchCall;
+			await act(async () => {
+				resolveRefetch!([mockSingleData]);
+				await refetchCall!;
+			});
 
 			// ローディング状態が解除されることを確認
 			await waitFor(() => {

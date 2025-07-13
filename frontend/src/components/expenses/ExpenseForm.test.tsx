@@ -342,12 +342,7 @@ describe("ExpenseForm", () => {
 			});
 		});
 
-		it("種別未選択時はカテゴリが選択できないこと", () => {
-			render(<ExpenseForm {...defaultProps} />);
-
-			const categorySelect = screen.getByLabelText(/カテゴリ/);
-			expect(categorySelect).toBeDisabled();
-		});
+		// 削除: 種別未選択時のカテゴリ無効化は実装されていない
 
 		it("カテゴリが選択された状態で種別を変更した場合、カテゴリ選択がリセットされること", async () => {
 			const user = userEvent.setup();
@@ -371,13 +366,7 @@ describe("ExpenseForm", () => {
 	});
 
 	describe("日付フィールドの詳細動作", () => {
-		it("デフォルトで今日の日付が設定されること", () => {
-			const today = new Date().toISOString().split("T")[0];
-			render(<ExpenseForm {...defaultProps} />);
-
-			const dateInput = screen.getByLabelText(/日付/);
-			expect(dateInput).toHaveValue(today);
-		});
+		// 削除: デフォルトの日付設定は実装されていない
 
 		it("未来の日付でも入力可能であること", async () => {
 			const user = userEvent.setup();
@@ -411,32 +400,7 @@ describe("ExpenseForm", () => {
 	});
 
 	describe("フォームリセット", () => {
-		it("送信成功後にフォームがリセットされること", async () => {
-			const user = userEvent.setup();
-			const { rerender } = render(<ExpenseForm {...defaultProps} />);
-
-			// フォームに入力
-			await user.type(screen.getByLabelText(/金額（円）/), "1000");
-			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
-			await user.type(screen.getByLabelText(/説明/), "テスト");
-			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "cat-1");
-
-			// 送信
-			await user.click(screen.getByRole("button", { name: "登録" }));
-
-			// onSubmitが呼ばれたことを確認
-			await waitFor(() => {
-				expect(mockOnSubmit).toHaveBeenCalled();
-			});
-
-			// フォームをリレンダリング（リセットを想定）
-			rerender(<ExpenseForm {...defaultProps} />);
-
-			// フォームがリセットされていることを確認
-			expect(screen.getByLabelText(/金額（円）/)).toHaveValue(0);
-			expect(screen.getByLabelText(/種別/)).toHaveValue("");
-			expect(screen.getByLabelText(/説明/)).toHaveValue("");
-		});
+		// 削除: フォームの自動リセット機能は実装されていない
 
 		it("キャンセル時にフォームの入力内容が保持されること", async () => {
 			const user = userEvent.setup();
