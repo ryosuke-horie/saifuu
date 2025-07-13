@@ -315,4 +315,241 @@ describe("ExpenseForm", () => {
 			});
 		});
 	});
+
+	describe("カテゴリ選択の高度な動作", () => {
+		it("種別を変更した場合、選択可能なカテゴリが更新されること", async () => {
+			const user = userEvent.setup();
+			render(<ExpenseForm {...defaultProps} />);
+
+			// 最初に支出を選択
+			const typeSelect = screen.getByLabelText(/種別/);
+			await user.selectOptions(typeSelect, "expense");
+
+			// 支出カテゴリが選択可能であることを確認
+			const categorySelect = screen.getByLabelText(/カテゴリ/);
+			const expenseOptions = categorySelect.querySelectorAll(
+				'option[value^="cat-"]',
+			);
+			expect(expenseOptions.length).toBeGreaterThan(0);
+
+			// 収入に変更
+			await user.selectOptions(typeSelect, "income");
+
+			// カテゴリリストが更新されることを確認
+			await waitFor(() => {
+				const incomeOptions = categorySelect.querySelectorAll("option");
+				expect(incomeOptions.length).toBeGreaterThan(0);
+			});
+		});
+
+		it("種別未選択時はカテゴリが選択できないこと", () => {
+			render(<ExpenseForm {...defaultProps} />);
+
+			const categorySelect = screen.getByLabelText(/カテゴリ/);
+			expect(categorySelect).toBeDisabled();
+		});
+
+		it("カテゴリが選択された状態で種別を変更した場合、カテゴリ選択がリセットされること", async () => {
+			const user = userEvent.setup();
+			render(<ExpenseForm {...defaultProps} />);
+
+			// 支出とカテゴリを選択
+			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
+			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "cat-1");
+
+			// カテゴリが選択されていることを確認
+			expect(screen.getByLabelText(/カテゴリ/)).toHaveValue("cat-1");
+
+			// 種別を収入に変更
+			await user.selectOptions(screen.getByLabelText(/種別/), "income");
+
+			// カテゴリがリセットされることを確認
+			await waitFor(() => {
+				expect(screen.getByLabelText(/カテゴリ/)).toHaveValue("");
+			});
+		});
+	});
+
+	describe("日付フィールドの詳細動作", () => {
+		it("デフォルトで今日の日付が設定されること", () => {
+			const today = new Date().toISOString().split("T")[0];
+			render(<ExpenseForm {...defaultProps} />);
+
+			const dateInput = screen.getByLabelText(/日付/);
+			expect(dateInput).toHaveValue(today);
+		});
+
+		it("未来の日付でも入力可能であること", async () => {
+			const user = userEvent.setup();
+			const futureDate = new Date();
+			futureDate.setDate(futureDate.getDate() + 30);
+			const futureDateString = futureDate.toISOString().split("T")[0];
+
+			render(<ExpenseForm {...defaultProps} />);
+
+			const dateInput = screen.getByLabelText(/日付/);
+			await user.clear(dateInput);
+			await user.type(dateInput, futureDateString);
+
+			expect(dateInput).toHaveValue(futureDateString);
+		});
+
+		it("過去の日付でも入力可能であること", async () => {
+			const user = userEvent.setup();
+			const pastDate = new Date();
+			pastDate.setFullYear(pastDate.getFullYear() - 1);
+			const pastDateString = pastDate.toISOString().split("T")[0];
+
+			render(<ExpenseForm {...defaultProps} />);
+
+			const dateInput = screen.getByLabelText(/日付/);
+			await user.clear(dateInput);
+			await user.type(dateInput, pastDateString);
+
+			expect(dateInput).toHaveValue(pastDateString);
+		});
+	});
+
+	describe("フォームリセット", () => {
+		it("送信成功後にフォームがリセットされること", async () => {
+			const user = userEvent.setup();
+			const { rerender } = render(<ExpenseForm {...defaultProps} />);
+
+			// フォームに入力
+			await user.type(screen.getByLabelText(/金額（円）/), "1000");
+			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
+			await user.type(screen.getByLabelText(/説明/), "テスト");
+			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "cat-1");
+
+			// 送信
+			await user.click(screen.getByRole("button", { name: "登録" }));
+
+			// onSubmitが呼ばれたことを確認
+			await waitFor(() => {
+				expect(mockOnSubmit).toHaveBeenCalled();
+			});
+
+			// フォームをリレンダリング（リセットを想定）
+			rerender(<ExpenseForm {...defaultProps} />);
+
+			// フォームがリセットされていることを確認
+			expect(screen.getByLabelText(/金額（円）/)).toHaveValue(0);
+			expect(screen.getByLabelText(/種別/)).toHaveValue("");
+			expect(screen.getByLabelText(/説明/)).toHaveValue("");
+		});
+
+		it("キャンセル時にフォームの入力内容が保持されること", async () => {
+			const user = userEvent.setup();
+			render(<ExpenseForm {...defaultProps} />);
+
+			// フォームに入力
+			await user.type(screen.getByLabelText(/金額（円）/), "1000");
+			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
+			await user.type(screen.getByLabelText(/説明/), "テスト");
+
+			// キャンセル
+			await user.click(screen.getByRole("button", { name: "キャンセル" }));
+
+			// onCancelが呼ばれたことを確認
+			expect(mockOnCancel).toHaveBeenCalled();
+
+			// フォームの値が保持されていることを確認（親コンポーネントが閉じない場合）
+			expect(screen.getByLabelText(/金額（円）/)).toHaveValue(1000);
+			expect(screen.getByLabelText(/種別/)).toHaveValue("expense");
+			expect(screen.getByLabelText(/説明/)).toHaveValue("テスト");
+		});
+	});
+
+	describe("エッジケース", () => {
+		it("非常に長い説明文でも正常に処理されること", async () => {
+			const user = userEvent.setup();
+			const longDescription = "a".repeat(255);
+			render(<ExpenseForm {...defaultProps} />);
+
+			// フォームに入力
+			await user.type(screen.getByLabelText(/金額（円）/), "1000");
+			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
+			await user.type(screen.getByLabelText(/日付/), "2025-07-09");
+			await user.type(screen.getByLabelText(/説明/), longDescription);
+			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "cat-1");
+
+			// 送信
+			await user.click(screen.getByRole("button", { name: "登録" }));
+
+			// onSubmitが呼ばれることを確認
+			await waitFor(() => {
+				expect(mockOnSubmit).toHaveBeenCalledWith(
+					expect.objectContaining({
+						description: longDescription,
+					}),
+				);
+			});
+		});
+
+		it("特殊文字を含む説明文でも正常に処理されること", async () => {
+			const user = userEvent.setup();
+			const specialDescription = "テスト🎉<script>alert('XSS')</script>";
+			render(<ExpenseForm {...defaultProps} />);
+
+			// フォームに入力
+			await user.type(screen.getByLabelText(/金額（円）/), "1000");
+			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
+			await user.type(screen.getByLabelText(/日付/), "2025-07-09");
+			await user.type(screen.getByLabelText(/説明/), specialDescription);
+			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "cat-1");
+
+			// 送信
+			await user.click(screen.getByRole("button", { name: "登録" }));
+
+			// onSubmitが呼ばれることを確認
+			await waitFor(() => {
+				expect(mockOnSubmit).toHaveBeenCalledWith(
+					expect.objectContaining({
+						description: specialDescription,
+					}),
+				);
+			});
+		});
+
+		it("0円の金額でエラーが表示されること", async () => {
+			const user = userEvent.setup();
+			render(<ExpenseForm {...defaultProps} />);
+
+			const amountInput = screen.getByLabelText(/金額（円）/);
+			await user.clear(amountInput);
+			await user.type(amountInput, "0");
+
+			const submitButton = screen.getByRole("button", { name: "登録" });
+			await user.click(submitButton);
+
+			await waitFor(() => {
+				expect(
+					screen.getByText("金額は1円以上で入力してください"),
+				).toBeInTheDocument();
+			});
+		});
+
+		it("100万円ちょうどの金額で正常に処理されること", async () => {
+			const user = userEvent.setup();
+			render(<ExpenseForm {...defaultProps} />);
+
+			// フォームに入力
+			await user.type(screen.getByLabelText(/金額（円）/), "1000000");
+			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
+			await user.type(screen.getByLabelText(/日付/), "2025-07-09");
+			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "cat-1");
+
+			// 送信
+			await user.click(screen.getByRole("button", { name: "登録" }));
+
+			// onSubmitが呼ばれることを確認
+			await waitFor(() => {
+				expect(mockOnSubmit).toHaveBeenCalledWith(
+					expect.objectContaining({
+						amount: 1000000,
+					}),
+				);
+			});
+		});
+	});
 });

@@ -195,7 +195,7 @@ describe("ExpenseFilters", () => {
 			});
 		});
 
-		it.skip("無効な金額入力はエラーを表示する", async () => {
+		it("無効な金額入力はエラーを表示する", async () => {
 			const user = userEvent.setup();
 			render(<ExpenseFilters {...defaultProps} />);
 
@@ -210,9 +210,26 @@ describe("ExpenseFilters", () => {
 				).toBeInTheDocument();
 			});
 		});
+
+		it("最小金額が最大金額より大きい場合にエラーを表示する", async () => {
+			const user = userEvent.setup();
+			render(<ExpenseFilters {...defaultProps} />);
+
+			const minAmountInput = screen.getByLabelText("最小金額");
+			const maxAmountInput = screen.getByLabelText("最大金額");
+			await user.type(minAmountInput, "10000");
+			await user.type(maxAmountInput, "5000");
+			await user.tab();
+
+			await waitFor(() => {
+				expect(
+					screen.getByText("最小金額は最大金額以下にしてください"),
+				).toBeInTheDocument();
+			});
+		});
 	});
 
-	describe.skip("URLパラメータ連携", () => {
+	describe("URLパラメータ連携", () => {
 		it("URLパラメータから初期値を読み込む", () => {
 			// Next.jsのnavigationモックを再定義
 			const useSearchParams = vi.fn();
@@ -301,7 +318,7 @@ describe("ExpenseFilters", () => {
 			});
 		});
 
-		it.skip("リセット時にURLパラメータもクリアされる", async () => {
+		it("リセット時にURLパラメータもクリアされる", async () => {
 			const useRouter = vi.fn();
 			const mockReplace = vi.fn();
 			useRouter.mockReturnValue({
@@ -390,6 +407,188 @@ describe("ExpenseFilters", () => {
 				"aria-label",
 				"支出・収入フィルター",
 			);
+		});
+	});
+
+	describe("複合フィルター", () => {
+		it("複数のフィルターを同時に設定できる", async () => {
+			const user = userEvent.setup();
+			render(<ExpenseFilters {...defaultProps} />);
+
+			// 種別を選択
+			const typeSelect = screen.getByLabelText("種別");
+			await user.selectOptions(typeSelect, "expense");
+
+			// 期間を選択
+			const periodSelect = screen.getByLabelText("期間");
+			await user.selectOptions(periodSelect, "current_month");
+
+			// カテゴリを選択
+			const foodCheckbox = screen.getByRole("checkbox", { name: "食費" });
+			await user.click(foodCheckbox);
+
+			// 金額範囲を設定
+			const minAmountInput = screen.getByLabelText("最小金額");
+			await user.type(minAmountInput, "1000");
+
+			await waitFor(() => {
+				// 最後のonFiltersChangeの呼び出しが全てのフィルターを含むことを確認
+				const lastCall =
+					mockOnFiltersChange.mock.calls[
+						mockOnFiltersChange.mock.calls.length - 1
+					][0];
+				expect(lastCall).toMatchObject({
+					type: "expense",
+					period: "current_month",
+					categoryIds: ["food"],
+					minAmount: 1000,
+				});
+			});
+		});
+
+		it("フィルター変更時に以前のフィルター設定が保持される", async () => {
+			const user = userEvent.setup();
+			render(<ExpenseFilters {...defaultProps} />);
+
+			// 最初に種別を設定
+			const typeSelect = screen.getByLabelText("種別");
+			await user.selectOptions(typeSelect, "expense");
+
+			// 次に金額を設定（種別は保持されるはず）
+			const minAmountInput = screen.getByLabelText("最小金額");
+			await user.type(minAmountInput, "1000");
+
+			await waitFor(() => {
+				const lastCall =
+					mockOnFiltersChange.mock.calls[
+						mockOnFiltersChange.mock.calls.length - 1
+					][0];
+				expect(lastCall).toMatchObject({
+					type: "expense",
+					minAmount: 1000,
+				});
+			});
+		});
+	});
+
+	describe("デバウンス処理", () => {
+		it("金額入力がデバウンスされる", async () => {
+			const user = userEvent.setup();
+			render(<ExpenseFilters {...defaultProps} />);
+
+			const minAmountInput = screen.getByLabelText("最小金額");
+			// 素早く入力
+			await user.type(minAmountInput, "123456789");
+
+			// デバウンスタイマーが終わるまで待つ
+			await waitFor(
+				() => {
+					// 一度だけonFiltersChangeが呼ばれることを確認
+					expect(mockOnFiltersChange).toHaveBeenCalledTimes(1);
+					expect(mockOnFiltersChange).toHaveBeenCalledWith({
+						minAmount: 123456789,
+					});
+				},
+				{ timeout: 1000 },
+			);
+		});
+	});
+
+	describe("エッジケース", () => {
+		it("空のカテゴリリストでも正常に動作する", () => {
+			render(<ExpenseFilters {...defaultProps} categories={[]} />);
+
+			// カテゴリセクションが表示されるが、オプションがない
+			expect(screen.getByText("カテゴリ")).toBeInTheDocument();
+			const checkboxes = screen.queryAllByRole("checkbox");
+			expect(checkboxes).toHaveLength(0);
+		});
+
+		it("非常に大きな金額でも正常に処理される", async () => {
+			const user = userEvent.setup();
+			render(<ExpenseFilters {...defaultProps} />);
+
+			const maxAmountInput = screen.getByLabelText("最大金額");
+			await user.type(maxAmountInput, "999999999999");
+
+			await waitFor(() => {
+				expect(mockOnFiltersChange).toHaveBeenCalledWith({
+					maxAmount: 999999999999,
+				});
+			});
+		});
+
+		it("小数点を含む金額入力は整数に変換される", async () => {
+			const user = userEvent.setup();
+			render(<ExpenseFilters {...defaultProps} />);
+
+			const minAmountInput = screen.getByLabelText("最小金額");
+			await user.type(minAmountInput, "1234.56");
+
+			await waitFor(() => {
+				expect(mockOnFiltersChange).toHaveBeenCalledWith({
+					minAmount: 123456, // 小数点は無視される
+				});
+			});
+		});
+
+		it("同一カテゴリ名が複数あっても正しく処理される", () => {
+			const duplicateCategories = [
+				{
+					id: "cat1",
+					name: "食費",
+					type: "expense" as const,
+					color: "#FF6B6B",
+					createdAt: "2024-01-01T00:00:00Z",
+					updatedAt: "2024-01-01T00:00:00Z",
+				},
+				{
+					id: "cat2",
+					name: "食費",
+					type: "expense" as const,
+					color: "#FF6B6B",
+					createdAt: "2024-01-01T00:00:00Z",
+					updatedAt: "2024-01-01T00:00:00Z",
+				}, // 同じ名前
+				{
+					id: "cat3",
+					name: "交通費",
+					type: "expense" as const,
+					color: "#4ECDC4",
+					createdAt: "2024-01-01T00:00:00Z",
+					updatedAt: "2024-01-01T00:00:00Z",
+				},
+			];
+
+			render(
+				<ExpenseFilters {...defaultProps} categories={duplicateCategories} />,
+			);
+
+			// 両方の"食費"チェックボックスが表示される
+			const foodCheckboxes = screen.getAllByRole("checkbox", { name: "食費" });
+			expect(foodCheckboxes).toHaveLength(2);
+		});
+
+		it("カスタム期間の終了日が開始日より前の場合にエラーを表示する", async () => {
+			const user = userEvent.setup();
+			render(<ExpenseFilters {...defaultProps} />);
+
+			// カスタム期間を選択
+			const periodSelect = screen.getByLabelText("期間");
+			await user.selectOptions(periodSelect, "custom");
+
+			// 終了日を開始日より前に設定
+			const startDateInput = screen.getByLabelText("開始日");
+			const endDateInput = screen.getByLabelText("終了日");
+			await user.type(startDateInput, "2025-07-15");
+			await user.type(endDateInput, "2025-07-10");
+			await user.tab();
+
+			await waitFor(() => {
+				expect(
+					screen.getByText("終了日は開始日より後にしてください"),
+				).toBeInTheDocument();
+			});
 		});
 	});
 });
