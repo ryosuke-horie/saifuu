@@ -11,21 +11,27 @@ describe("Home Page", () => {
 
 	it("renders expense management link", () => {
 		render(<Home />);
-		const expenseLink = screen.getByRole("link", { name: /支出管理ページへ移動/i });
+		const expenseLink = screen.getByRole("link", {
+			name: /支出管理ページへ移動/i,
+		});
 		expect(expenseLink).toBeInTheDocument();
 		expect(expenseLink).toHaveAttribute("href", "/expenses");
 	});
 
 	it("renders subscription management link", () => {
 		render(<Home />);
-		const subscriptionLink = screen.getByRole("link", { name: /サブスクリプション管理ページへ移動/i });
+		const subscriptionLink = screen.getByRole("link", {
+			name: /サブスクリプション管理ページへ移動/i,
+		});
 		expect(subscriptionLink).toBeInTheDocument();
 		expect(subscriptionLink).toHaveAttribute("href", "/subscriptions");
 	});
 
 	it("renders navigation with correct aria-label", () => {
 		render(<Home />);
-		const nav = screen.getByRole("navigation", { name: "メインナビゲーション" });
+		const nav = screen.getByRole("navigation", {
+			name: "メインナビゲーション",
+		});
 		expect(nav).toBeInTheDocument();
 	});
 });
