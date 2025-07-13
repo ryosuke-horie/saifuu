@@ -49,25 +49,33 @@ describe('Categories API - Unit Tests', () => {
 			})
 		})
 
-		it('should return seeded categories', async () => {
+		it('should return categories from config file', async () => {
 			const response = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 			const data = await getResponseJson(response)
 
 			expect(response.status).toBe(200)
+			// 設定ファイルからのカテゴリを確認
 			expect(data).toEqual(
 				expect.arrayContaining([
 					expect.objectContaining({
 						id: 1,
-						name: 'エンターテイメント',
+						name: '家賃・水道・光熱・通信費',
 						type: 'expense',
 					}),
 					expect.objectContaining({
-						id: 2,
-						name: 'ソフトウェア',
+						id: 6,
+						name: 'システム関係日',
+						type: 'expense',
+					}),
+					expect.objectContaining({
+						id: 8,
+						name: '書籍代',
 						type: 'expense',
 					}),
 				])
 			)
+			// 設定ファイルのカテゴリ数を確認
+			expect(data).toHaveLength(17) // 支出12 + 収入17
 		})
 
 		it('should handle database errors gracefully', async () => {
@@ -85,7 +93,7 @@ describe('Categories API - Unit Tests', () => {
 	})
 
 	describe('POST /categories', () => {
-		it('should create a new category', async () => {
+		it('should return 405 as categories are fixed', async () => {
 			const newCategory: NewCategory = {
 				name: '新しいカテゴリ',
 				type: 'expense',
@@ -101,20 +109,13 @@ describe('Categories API - Unit Tests', () => {
 				newCategory
 			)
 
-			expect(response.status).toBe(201)
+			expect(response.status).toBe(405) // Method Not Allowed
 
 			const data = await getResponseJson(response)
-			expect(data).toMatchObject({
-				id: expect.any(Number),
-				name: '新しいカテゴリ',
-				type: 'expense',
-				color: '#123456',
-				createdAt: expect.any(String),
-				updatedAt: expect.any(String),
-			})
+			expect(data).toHaveProperty('error', 'Categories are fixed and cannot be created')
 		})
 
-		it('should handle missing required fields', async () => {
+		it('should return 405 even with missing fields', async () => {
 			const invalidCategory = {
 				// name が欠落
 				type: 'expense',
@@ -128,12 +129,12 @@ describe('Categories API - Unit Tests', () => {
 				invalidCategory
 			)
 
-			expect(response.status).toBe(400) // バリデーションエラー（改善）
+			expect(response.status).toBe(405) // 設定ファイル固定のため
 			const data = await getResponseJson(response)
 			expect(data).toHaveProperty('error')
 		})
 
-		it('should handle invalid type values', async () => {
+		it('should return 405 even with invalid type values', async () => {
 			const invalidCategory = {
 				name: 'テストカテゴリ',
 				type: 'invalid_type', // 無効なtype
@@ -149,17 +150,12 @@ describe('Categories API - Unit Tests', () => {
 				invalidCategory
 			)
 
-			expect(response.status).toBe(400) // バリデーションエラー（改善）
+			expect(response.status).toBe(405) // 設定ファイル固定のため
 		})
 	})
 
 	describe('PUT /categories/:id', () => {
-		it('should update existing category', async () => {
-			// まず既存のカテゴリを確認
-			const getResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
-			const categories = await getResponseJson(getResponse)
-			const firstCategory = categories[0]
-
+		it('should return 405 as categories are fixed', async () => {
 			const updateData = {
 				name: '更新されたカテゴリ',
 				color: '#ABCDEF',
@@ -168,28 +164,17 @@ describe('Categories API - Unit Tests', () => {
 			const response = await createTestRequest(
 				testProductionApp,
 				'PUT',
-				`/api/categories/${firstCategory.id}`,
+				'/api/categories/1',
 				updateData
 			)
 
-			expect(response.status).toBe(200)
+			expect(response.status).toBe(405) // Method Not Allowed
 
 			const data = await getResponseJson(response)
-			expect(data).toMatchObject({
-				id: firstCategory.id,
-				name: '更新されたカテゴリ',
-				color: '#ABCDEF',
-				type: firstCategory.type, // type は変更されない
-				updatedAt: expect.any(String),
-			})
-
-			// updatedAt が更新されていることを確認
-			expect(new Date(data.updatedAt).getTime()).toBeGreaterThan(
-				new Date(firstCategory.updatedAt).getTime()
-			)
+			expect(data).toHaveProperty('error', 'Categories are fixed and cannot be updated')
 		})
 
-		it('should return 404 for non-existent category', async () => {
+		it('should return 405 even for non-existent category', async () => {
 			const updateData = {
 				name: '存在しないカテゴリ',
 			}
@@ -201,54 +186,32 @@ describe('Categories API - Unit Tests', () => {
 				updateData
 			)
 
-			expect(response.status).toBe(404)
+			expect(response.status).toBe(405) // 設定ファイル固定のため
 			const data = await getResponseJson(response)
-			expect(data).toHaveProperty('error', 'Category not found')
+			expect(data).toHaveProperty('error')
 		})
 	})
 
 	describe('DELETE /categories/:id', () => {
-		it('should delete existing category', async () => {
-			// 新しいカテゴリを作成
-			const newCategory: NewCategory = {
-				name: '削除用カテゴリ',
-				type: 'expense',
-				color: '#FF0000',
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
-			}
-
-			const createResponse = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/categories',
-				newCategory
-			)
-			const createdCategory = await getResponseJson(createResponse)
-
+		it('should return 405 as categories are fixed', async () => {
 			// 削除実行
 			const deleteResponse = await createTestRequest(
 				testProductionApp,
 				'DELETE',
-				`/api/categories/${createdCategory.id}`
+				'/api/categories/1'
 			)
 
-			expect(deleteResponse.status).toBe(200)
+			expect(deleteResponse.status).toBe(405) // Method Not Allowed
 			const data = await getResponseJson(deleteResponse)
-			expect(data).toHaveProperty('message', 'Category deleted successfully')
-
-			// 削除されたことを確認
-			const getResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
-			const categories = await getResponseJson(getResponse)
-			expect(categories.find((c: Category) => c.id === createdCategory.id)).toBeUndefined()
+			expect(data).toHaveProperty('error', 'Categories are fixed and cannot be deleted')
 		})
 
-		it('should return 404 for non-existent category deletion', async () => {
+		it('should return 405 even for non-existent category deletion', async () => {
 			const response = await createTestRequest(testProductionApp, 'DELETE', '/api/categories/9999')
 
-			expect(response.status).toBe(404)
+			expect(response.status).toBe(405) // 設定ファイル固定のため
 			const data = await getResponseJson(response)
-			expect(data).toHaveProperty('error', 'Category not found')
+			expect(data).toHaveProperty('error')
 		})
 	})
 

@@ -14,6 +14,7 @@ export type CategoryType = 'income' | 'expense'
 
 export interface CategoryConfig {
   id: string
+  numericId: number // データベースで使用する固定ID
   name: string
   type: CategoryType
   color: string
@@ -27,6 +28,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
   // 生活必需品関連
   {
     id: 'utilities',
+    numericId: 1,
     name: '家賃・水道・光熱・通信費',
     type: 'expense',
     color: '#D35400',
@@ -34,6 +36,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
   },
   {
     id: 'housing',
+    numericId: 2,
     name: '住居費',
     type: 'expense',
     color: '#4ECDC4',
@@ -41,6 +44,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
   },
   {
     id: 'food',
+    numericId: 3,
     name: '食費',
     type: 'expense',
     color: '#FF6B6B',
@@ -48,6 +52,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
   },
   {
     id: 'transportation',
+    numericId: 4,
     name: '交通費',
     type: 'expense',
     color: '#3498DB',
@@ -57,6 +62,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
   // 仕事・学習関連
   {
     id: 'business',
+    numericId: 5,
     name: '仕事・ビジネス',
     type: 'expense',
     color: '#8E44AD',
@@ -64,6 +70,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
   },
   {
     id: 'system_fee',
+    numericId: 6,
     name: 'システム関係日',
     type: 'expense',
     color: '#9B59B6',
@@ -71,6 +78,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
   },
   {
     id: 'education',
+    numericId: 7,
     name: '学習・教育',
     type: 'expense',
     color: '#45B7D1',
@@ -78,6 +86,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
   },
   {
     id: 'books',
+    numericId: 8,
     name: '書籍代',
     type: 'expense',
     color: '#1E8BC3',
@@ -87,6 +96,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
   // 趣味・娯楽関連
   {
     id: 'entertainment',
+    numericId: 9,
     name: 'エンターテイメント',
     type: 'expense',
     color: '#E67E22',
@@ -94,6 +104,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
   },
   {
     id: 'health',
+    numericId: 10,
     name: '健康・フィットネス',
     type: 'expense',
     color: '#96CEB4',
@@ -101,6 +112,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
   },
   {
     id: 'shopping',
+    numericId: 11,
     name: '買い物',
     type: 'expense',
     color: '#F39C12',
@@ -110,6 +122,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
   // その他
   {
     id: 'other_expense',
+    numericId: 12,
     name: 'その他',
     type: 'expense',
     color: '#FFEAA7',
@@ -123,6 +136,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
 export const INCOME_CATEGORIES: CategoryConfig[] = [
   {
     id: 'salary',
+    numericId: 13,
     name: '給与',
     type: 'income',
     color: '#2ECC71',
@@ -130,6 +144,7 @@ export const INCOME_CATEGORIES: CategoryConfig[] = [
   },
   {
     id: 'freelance',
+    numericId: 14,
     name: '副業・フリーランス',
     type: 'income',
     color: '#27AE60',
@@ -137,6 +152,7 @@ export const INCOME_CATEGORIES: CategoryConfig[] = [
   },
   {
     id: 'investment',
+    numericId: 15,
     name: '投資・資産運用',
     type: 'income',
     color: '#16A085',
@@ -144,6 +160,7 @@ export const INCOME_CATEGORIES: CategoryConfig[] = [
   },
   {
     id: 'gift',
+    numericId: 16,
     name: '贈与・お祝い',
     type: 'income',
     color: '#1ABC9C',
@@ -151,6 +168,7 @@ export const INCOME_CATEGORIES: CategoryConfig[] = [
   },
   {
     id: 'other_income',
+    numericId: 17,
     name: 'その他',
     type: 'income',
     color: '#58D68D',
