@@ -71,7 +71,7 @@
 - [PRコメント駆動CI実装ガイド](./ci/PRコメント駆動CI実装ガイド.md) - PRコメントを使用したCI/CDの実装
 
 ## 📋 仕様書・要件定義
-<!-- tags: specification, requirements, documentation, feature-spec -->
+<!-- tags: specification, requirements, documentation, feature-spec, homepage -->
 
 - [ホームページ要件定義書](./ホームページ要件定義書.md) - ホームページ（ランディングページ）の要件定義
 - [支出管理画面要件定義書](./支出管理画面要件定義書.md) - 支出管理機能の要件定義
