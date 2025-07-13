@@ -73,6 +73,7 @@
 ## 📋 仕様書・要件定義
 <!-- tags: specification, requirements, documentation, feature-spec -->
 
+- [ホームページ要件定義書](./ホームページ要件定義書.md) - ホームページ（ランディングページ）の要件定義
 - [支出管理画面要件定義書](./支出管理画面要件定義書.md) - 支出管理機能の要件定義
 - [react-logger-integration-spec](./react-logger-integration-spec.md) - Reactロガー統合の仕様
 
