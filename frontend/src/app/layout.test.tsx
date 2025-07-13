@@ -110,9 +110,9 @@ describe("RootLayout", () => {
 			expect(icons.icon[0].sizes).toBe("any");
 		});
 
-		it("favicon.svgが設定されている", () => {
+		it("icon.svgが設定されている", () => {
 			const icons = metadata.icons as any;
-			expect(icons.icon[1].url).toBe("/favicon.svg");
+			expect(icons.icon[1].url).toBe("/icon.svg");
 			expect(icons.icon[1].type).toBe("image/svg+xml");
 		});
 
