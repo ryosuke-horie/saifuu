@@ -52,6 +52,23 @@ const transactionTypeLabels: Record<TransactionType, string> = {
 	income: "収入",
 };
 
+/**
+ * 支出・収入登録/編集フォームコンポーネント
+ * @param {ExpenseFormProps} props - フォームのプロパティ
+ * @param {function} props.onSubmit - フォーム送信時のコールバック関数
+ * @param {function} props.onCancel - キャンセルボタン押下時のコールバック関数
+ * @param {boolean} [props.isSubmitting=false] - 送信中の状態を示すフラグ
+ * @param {ExpenseFormData} [props.initialData] - 編集時の初期データ
+ * @param {Category[]} props.categories - カテゴリ一覧
+ * @param {string} [props.className=''] - 追加のCSSクラス名
+ * @returns {React.ReactElement} フォームコンポーネント
+ * @example
+ * <ExpenseForm
+ *   onSubmit={handleSubmit}
+ *   onCancel={handleCancel}
+ *   categories={categories}
+ * />
+ */
 export const ExpenseForm: FC<ExpenseFormProps> = ({
 	onSubmit,
 	onCancel,

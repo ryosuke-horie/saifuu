@@ -17,7 +17,12 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 		} & LoggingVariables
 	}>()
 
-	// 取引一覧取得
+	/**
+	 * 取引一覧を取得するエンドポイント
+	 * @route GET /api/transactions
+	 * @returns {Array<Transaction>} カテゴリ情報を含む取引一覧
+	 * @throws {500} データベースエラー
+	 */
 	app.get('/', async (c) => {
 		// 構造化ログ: 取引一覧取得操作の開始
 		logWithContext(c, 'info', '取引一覧取得を開始', {
@@ -70,7 +75,16 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 		}
 	})
 
-	// 取引統計取得 - 動的ルート（/:id）より前に定義
+	/**
+	 * 取引統計情報を取得するエンドポイント
+	 * @route GET /api/transactions/stats
+	 * @returns {TransactionStats} 収入・支出の統計情報
+	 * @returns {number} TransactionStats.totalIncome - 総収入額
+	 * @returns {number} TransactionStats.totalExpense - 総支出額
+	 * @returns {number} TransactionStats.balance - 収支バランス
+	 * @returns {number} TransactionStats.transactionCount - 取引件数
+	 * @throws {500} データベースエラー
+	 */
 	app.get('/stats', async (c) => {
 		try {
 			// 構造化ログ: 取引統計取得操作の開始
@@ -128,7 +142,19 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 		}
 	})
 
-	// 取引作成
+	/**
+	 * 新規取引を作成するエンドポイント
+	 * @route POST /api/transactions
+	 * @param {CreateTransactionRequest} request.body - 取引作成データ
+	 * @param {number} request.body.amount - 金額（1〜1,000,000円）
+	 * @param {string} request.body.type - 取引種別（income/expense）
+	 * @param {string} request.body.categoryId - カテゴリID
+	 * @param {string} [request.body.description] - 説明（任意・最大500文字）
+	 * @param {string} request.body.date - 日付（YYYY-MM-DD形式）
+	 * @returns {Transaction} 作成された取引データ
+	 * @throws {400} バリデーションエラー
+	 * @throws {500} データベースエラー
+	 */
 	app.post('/', async (c) => {
 		try {
 			const body = (await c.req.json()) as NewTransaction
