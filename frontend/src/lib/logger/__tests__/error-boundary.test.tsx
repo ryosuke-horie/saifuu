@@ -73,7 +73,7 @@ const ConditionalThrowingComponent = () => {
 };
 
 // カスタムエラーフォールバック
-const CustomErrorFallback = ({
+const _CustomErrorFallback = ({
 	error,
 	retry,
 	canRetry,
@@ -112,62 +112,6 @@ describe("LoggedErrorBoundary", () => {
 		expect(screen.getByTestId("working-component")).toBeInTheDocument();
 	});
 
-	it.skip("エラー発生時にデフォルトフォールバックUI表示", () => {
-		// React 18+ Error Boundary testing is complex - skip for CI
-		const Wrapper = createWrapper();
-
-		render(
-			<Wrapper>
-				<LoggedErrorBoundary>
-					<ThrowingComponent shouldThrow={true} message="Component error" />
-				</LoggedErrorBoundary>
-			</Wrapper>,
-		);
-
-		expect(screen.getByText("⚠️ エラーが発生しました")).toBeInTheDocument();
-		expect(screen.getByText(/Component error/)).toBeInTheDocument();
-	});
-
-	it.skip("カスタムフォールバックコンポーネントが表示される", () => {
-		const Wrapper = createWrapper();
-
-		render(
-			<Wrapper>
-				<LoggedErrorBoundary fallback={CustomErrorFallback}>
-					<ThrowingComponent shouldThrow={true} message="Custom error" />
-				</LoggedErrorBoundary>
-			</Wrapper>,
-		);
-
-		expect(screen.getByTestId("custom-fallback")).toBeInTheDocument();
-		expect(screen.getByText("Custom Error: Custom error")).toBeInTheDocument();
-	});
-
-	it.skip("エラー情報がカスタムハンドラに渡される", () => {
-		const mockOnError = vi.fn();
-		const Wrapper = createWrapper();
-
-		render(
-			<Wrapper>
-				<LoggedErrorBoundary onError={mockOnError}>
-					<ThrowingComponent shouldThrow={true} message="Handler test" />
-				</LoggedErrorBoundary>
-			</Wrapper>,
-		);
-
-		expect(mockOnError).toHaveBeenCalledTimes(1);
-		expect(mockOnError).toHaveBeenCalledWith(
-			expect.any(Error),
-			expect.any(Object),
-			expect.any(String),
-		);
-
-		const [error, errorInfo, errorId] = mockOnError.mock.calls[0];
-		expect(error.message).toBe("Handler test");
-		expect(errorInfo.componentStack).toBeDefined();
-		expect(typeof errorId).toBe("string");
-	});
-
 	it("再試行機能が動作する", async () => {
 		const user = userEvent.setup();
 		const Wrapper = createWrapper();
@@ -198,86 +142,6 @@ describe("LoggedErrorBoundary", () => {
 
 		// コンポーネントが復旧することを確認
 		expect(screen.getByTestId("working-component")).toBeInTheDocument();
-	});
-
-	it.skip("最大再試行回数に達すると再試行ボタンが無効", () => {
-		// React 18+ Error Boundary testing is complex - skip for CI
-		const Wrapper = createWrapper();
-
-		render(
-			<Wrapper>
-				<LoggedErrorBoundary enableRetry={true} maxRetries={0}>
-					<ThrowingComponent shouldThrow={true} />
-				</LoggedErrorBoundary>
-			</Wrapper>,
-		);
-
-		expect(screen.getByText("⚠️ エラーが発生しました")).toBeInTheDocument();
-		expect(screen.queryByText(/再試行/)).not.toBeInTheDocument();
-	});
-
-	it.skip("enableRetry=falseで再試行機能が無効", () => {
-		// React 18+ Error Boundary testing is complex - skip for CI
-		const Wrapper = createWrapper();
-
-		render(
-			<Wrapper>
-				<LoggedErrorBoundary enableRetry={false}>
-					<ThrowingComponent shouldThrow={true} />
-				</LoggedErrorBoundary>
-			</Wrapper>,
-		);
-
-		expect(screen.getByText("⚠️ エラーが発生しました")).toBeInTheDocument();
-		expect(screen.queryByText(/再試行/)).not.toBeInTheDocument();
-	});
-
-	it.skip("コンポーネント名が表示される", () => {
-		// React 18+ Error Boundary testing is complex - skip for CI
-		const Wrapper = createWrapper();
-
-		render(
-			<Wrapper>
-				<LoggedErrorBoundary componentName="TestBoundary">
-					<ThrowingComponent shouldThrow={true} />
-				</LoggedErrorBoundary>
-			</Wrapper>,
-		);
-
-		expect(
-			screen.getByText(/コンポーネント: TestBoundary/),
-		).toBeInTheDocument();
-	});
-
-	it.skip("エラーIDが表示される", () => {
-		// React 18+ Error Boundary testing is complex - skip for CI
-		const Wrapper = createWrapper();
-
-		render(
-			<Wrapper>
-				<LoggedErrorBoundary>
-					<ThrowingComponent shouldThrow={true} />
-				</LoggedErrorBoundary>
-			</Wrapper>,
-		);
-
-		expect(screen.getByText(/エラーID:/)).toBeInTheDocument();
-	});
-
-	it.skip("isolate=trueで独立したエラーハンドリング", () => {
-		// React 18+ Error Boundary testing is complex - skip for CI
-		const Wrapper = createWrapper();
-
-		render(
-			<Wrapper>
-				<LoggedErrorBoundary isolate={true}>
-					<ThrowingComponent shouldThrow={true} />
-				</LoggedErrorBoundary>
-			</Wrapper>,
-		);
-
-		// エラーが他のコンポーネントに影響しないことを確認
-		expect(screen.getByText("⚠️ エラーが発生しました")).toBeInTheDocument();
 	});
 });
 
@@ -377,28 +241,6 @@ describe("withErrorBoundary HOC", () => {
 		expect(screen.getByTestId("working-component")).toBeInTheDocument();
 	});
 
-	it.skip("HOCでラップしたコンポーネントでエラーハンドリング", () => {
-		// React 18+ Error Boundary testing is complex - skip for CI
-		const TestComponent = ({ shouldError }: { shouldError: boolean }) => (
-			<ThrowingComponent shouldThrow={shouldError} />
-		);
-
-		const WrappedComponent = withErrorBoundary(TestComponent, {
-			componentName: "WrappedTest",
-		});
-
-		const Wrapper = createWrapper();
-
-		render(
-			<Wrapper>
-				<WrappedComponent shouldError={true} />
-			</Wrapper>,
-		);
-
-		expect(screen.getByText("⚠️ エラーが発生しました")).toBeInTheDocument();
-		expect(screen.getByText("コンポーネント: WrappedTest")).toBeInTheDocument();
-	});
-
 	it("displayNameが正しく設定される", () => {
 		const TestComponent = () => <div>Test</div>;
 		TestComponent.displayName = "TestComponent";
@@ -485,25 +327,5 @@ describe("ErrorBoundaryPresets", () => {
 			maxRetries: 1,
 			resetOnPropsChange: true,
 		});
-	});
-
-	it.skip("プリセットを使用したエラーバウンダリ", () => {
-		// React 18+ Error Boundary testing is complex - skip for CI
-		const Wrapper = createWrapper();
-
-		render(
-			<Wrapper>
-				<LoggedErrorBoundary
-					{...ErrorBoundaryPresets.development}
-					componentName="TestPreset"
-				>
-					<ThrowingComponent shouldThrow={true} />
-				</LoggedErrorBoundary>
-			</Wrapper>,
-		);
-
-		expect(screen.getByText("⚠️ エラーが発生しました")).toBeInTheDocument();
-		// developmentプリセットでは再試行ボタンなし
-		expect(screen.queryByText(/再試行/)).not.toBeInTheDocument();
 	});
 });
