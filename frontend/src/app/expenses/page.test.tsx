@@ -54,7 +54,7 @@ vi.mock("../../components/expenses", () => ({
 			);
 		},
 	),
-	ExpenseList: vi.fn(({ transactions, isLoading, onRefresh, onDelete }) => (
+	ExpenseList: vi.fn(({ transactions, isLoading, onDelete }) => (
 		<div data-testid="expense-list">
 			{isLoading ? (
 				<p>読み込み中...</p>
@@ -69,9 +69,6 @@ vi.mock("../../components/expenses", () => ({
 							</button>
 						</div>
 					))}
-					<button type="button" onClick={onRefresh}>
-						更新
-					</button>
 				</div>
 			)}
 		</div>
