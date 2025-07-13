@@ -528,7 +528,7 @@ describe("useApiQuery", () => {
 			expect(mockQueryFn).toHaveBeenCalledTimes(3);
 		});
 
-		it("queryFnが変更された場合、自動で再取得される", async () => {
+		it("queryFnが変更された場合、自動で再取得されない（無限ループ防止）", async () => {
 			const mockQueryFn1 = vi.fn().mockResolvedValue(mockData);
 			const mockQueryFn2 = vi.fn().mockResolvedValue([mockSingleData]);
 			const initialData: TestData[] = [];
@@ -555,11 +555,24 @@ describe("useApiQuery", () => {
 			// queryFnを変更
 			rerender({ queryFn: mockQueryFn2 });
 
+			// 少し待機
 			await waitFor(() => {
-				expect(result.current.data).toEqual([mockSingleData]);
+				expect(result.current.isLoading).toBe(false);
 			});
 
-			expect(mockQueryFn2).toHaveBeenCalledTimes(1);
+			// データは変更されず、新しいqueryFnも呼ばれない
+			expect(result.current.data).toEqual(mockData);
+			expect(mockQueryFn2).toHaveBeenCalledTimes(0);
+
+			// 手動でrefetchすれば新しいqueryFnが実行される
+			await act(async () => {
+				await result.current.refetch();
+			});
+
+			// refetchはまだ前のqueryFn（mockQueryFn1）を使用する
+			expect(result.current.data).toEqual(mockData);
+			expect(mockQueryFn1).toHaveBeenCalledTimes(2); // 初回 + refetch
+			expect(mockQueryFn2).toHaveBeenCalledTimes(0);
 		});
 	});
 });

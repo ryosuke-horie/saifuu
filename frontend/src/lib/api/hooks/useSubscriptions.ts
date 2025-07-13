@@ -5,7 +5,7 @@
  * 簡単に使用できるカスタムフックを提供
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { handleApiError, subscriptionService } from "../index";
 import type {
 	CreateSubscriptionRequest,
@@ -33,11 +33,14 @@ interface BaseState {
  * 統一されたAPIクエリパターンを適用
  */
 export function useSubscriptions(query?: GetSubscriptionsQuery) {
+	// queryの値を安定させるため、JSONで文字列化して比較
+	const stableQuery = useMemo(() => JSON.stringify(query || {}), [query]);
+
 	const { data, isLoading, error, refetch } = useApiQuery({
 		queryFn: () => subscriptionService.getSubscriptions(query),
 		initialData: [] as Subscription[],
 		errorContext: "サブスクリプション一覧取得",
-		deps: [query],
+		deps: [stableQuery],
 	});
 
 	return {
@@ -60,7 +63,7 @@ export function useSubscription(id: string | null) {
 		initialData: null as Subscription | null,
 		errorContext: "サブスクリプション詳細取得",
 		shouldFetch: !!id,
-		deps: [id],
+		deps: [id || ""], // 安定した値にする
 	});
 
 	return {
