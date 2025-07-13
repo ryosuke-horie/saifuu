@@ -42,16 +42,6 @@ export const metadata: Metadata = {
 	creator: "Saifuu",
 	publisher: "Saifuu",
 
-	// ビューポート設定
-	viewport: {
-		width: "device-width",
-		initialScale: 1,
-		maximumScale: 1,
-		userScalable: false,
-	},
-
-	colorScheme: "light dark",
-
 	// アイコン設定
 	icons: {
 		icon: [
@@ -93,8 +83,15 @@ export const metadata: Metadata = {
 		"msapplication-TileColor": "#2563eb",
 		"format-detection": "telephone=no",
 		referrer: "strict-origin-when-cross-origin",
-		"color-scheme": "light dark",
 	},
+};
+
+export const viewport = {
+	width: "device-width",
+	initialScale: 1,
+	maximumScale: 1,
+	userScalable: false,
+	colorScheme: "light dark",
 };
 
 export default function RootLayout({
