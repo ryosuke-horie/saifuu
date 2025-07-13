@@ -282,4 +282,24 @@ test.describe("支出・収入管理", () => {
 			page.getByRole("dialog", { name: "新規支出・収入登録" }),
 		).toBeVisible();
 	});
+
+	test("取引一覧に更新ボタンが表示されない", async ({ page }) => {
+		// 支出・収入管理画面にアクセス
+		await page.goto("/expenses");
+
+		// ページのローディングを待つ
+		await page.waitForTimeout(2000);
+
+		// 取引一覧セクションが表示されていることを確認
+		const transactionListSection = page.locator(".bg-white.shadow").filter({ hasText: "取引一覧" });
+		await expect(transactionListSection).toBeVisible();
+
+		// 更新ボタンが存在しないことを確認
+		const refreshButton = page.getByRole("button", { name: "更新" });
+		await expect(refreshButton).not.toBeVisible();
+		
+		// 更新ボタンのアイコン（🔄）も存在しないことを確認
+		const refreshIcon = page.getByText("🔄");
+		await expect(refreshIcon).not.toBeVisible();
+	});
 });
