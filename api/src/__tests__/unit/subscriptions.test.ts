@@ -1,4 +1,7 @@
+import type { Context, Next } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { type AnyDatabase, type Env } from '../../db'
+import { type LoggingVariables } from '../../middleware/logging'
 import { invalidSubscriptionData, testRequestPayloads } from '../helpers/fixtures'
 import {
 	createTestRequest,
@@ -7,8 +10,8 @@ import {
 	expectJsonStructure,
 	getResponseJson,
 } from '../helpers/test-app'
-import { createTestProductionApp } from '../helpers/test-production-app'
 import { cleanupTestDatabase, setupTestDatabase } from '../helpers/test-db'
+import { createTestProductionApp } from '../helpers/test-production-app'
 
 /**
  * サブスクリプションAPI ユニットテスト
@@ -97,7 +100,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			// このテストは元のファイルとの互換性のために残されている
 			// 実際のデータベースエラーハンドリングは別のテストグループでカバーされている
 			const response = await createTestRequest(app, 'GET', '/api/subscriptions')
-			
+
 			// データベースが正常に動作している場合は200を返す
 			expect(response.status).toBe(200)
 		})
@@ -108,12 +111,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			// サブスクリプション作成のテスト
 			const newSubscription = testRequestPayloads.createSubscription
 
-			const response = await createTestRequest(
-				app,
-				'POST',
-				'/api/subscriptions',
-				newSubscription
-			)
+			const response = await createTestRequest(app, 'POST', '/api/subscriptions', newSubscription)
 
 			expect(response.status).toBe(201)
 
@@ -197,7 +195,11 @@ describe('Subscriptions API - Unit Tests', () => {
 			const createdSubscription = await getResponseJson(createResponse)
 
 			// ID指定でのサブスクリプション取得テスト
-			const response = await createTestRequest(app, 'GET', `/api/subscriptions/${createdSubscription.id}`)
+			const response = await createTestRequest(
+				app,
+				'GET',
+				`/api/subscriptions/${createdSubscription.id}`
+			)
 
 			expect(response.status).toBe(200)
 			const data = await getResponseJson(response)
@@ -223,11 +225,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 		it('should handle invalid id format', async () => {
 			// 無効なID形式のテスト
-			const response = await createTestRequest(
-				app,
-				'GET',
-				'/api/subscriptions/invalid-id'
-			)
+			const response = await createTestRequest(app, 'GET', '/api/subscriptions/invalid-id')
 
 			// parseInt()でNaNになるため、エラーが発生する
 			expect([400, 500]).toContain(response.status)
@@ -303,7 +301,11 @@ describe('Subscriptions API - Unit Tests', () => {
 			const createdSubscription = await getResponseJson(createResponse)
 
 			// サブスクリプション削除のテスト
-			const response = await createTestRequest(app, 'DELETE', `/api/subscriptions/${createdSubscription.id}`)
+			const response = await createTestRequest(
+				app,
+				'DELETE',
+				`/api/subscriptions/${createdSubscription.id}`
+			)
 
 			expect(response.status).toBe(200)
 			const data = await getResponseJson(response)
@@ -312,11 +314,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 		it('should return 404 for non-existent subscription deletion', async () => {
 			// 存在しないサブスクリプションの削除テスト
-			const response = await createTestRequest(
-				app,
-				'DELETE',
-				'/api/subscriptions/99999'
-			)
+			const response = await createTestRequest(app, 'DELETE', '/api/subscriptions/99999')
 
 			expect(response.status).toBe(404)
 			const data = await getResponseJson(response)
@@ -325,11 +323,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 		it('should handle invalid id format for deletion', async () => {
 			// 無効なID形式のテスト
-			const response = await createTestRequest(
-				app,
-				'DELETE',
-				'/api/subscriptions/invalid-id'
-			)
+			const response = await createTestRequest(app, 'DELETE', '/api/subscriptions/invalid-id')
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
@@ -350,14 +344,23 @@ describe('Subscriptions API - Unit Tests', () => {
 			const { createSubscriptionsApp } = await import('../../routes/subscriptions')
 			const { Hono } = await import('hono')
 			const { loggingMiddleware } = await import('../../middleware/logging')
-			
-			const testApp = new Hono()
+
+			const testApp = new Hono() as any
 			testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
-			testApp.use('/api/*', async (c, next) => {
-				c.set('db', mockDatabase as any)
-				await next()
-			})
-			testApp.route('/api/subscriptions', createSubscriptionsApp({ testDatabase: mockDatabase as any }))
+			testApp.use(
+				'/api/*',
+				async (
+					c: Context<{ Bindings: Env; Variables: { db: AnyDatabase } & LoggingVariables }>,
+					next: Next
+				) => {
+					c.set('db', mockDatabase as any)
+					await next()
+				}
+			)
+			testApp.route(
+				'/api/subscriptions',
+				createSubscriptionsApp({ testDatabase: mockDatabase as any })
+			)
 
 			const response = await createTestRequest(testApp, 'GET', '/api/subscriptions')
 
@@ -382,14 +385,23 @@ describe('Subscriptions API - Unit Tests', () => {
 			const { createSubscriptionsApp } = await import('../../routes/subscriptions')
 			const { Hono } = await import('hono')
 			const { loggingMiddleware } = await import('../../middleware/logging')
-			
-			const testApp = new Hono()
+
+			const testApp = new Hono() as any
 			testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
-			testApp.use('/api/*', async (c, next) => {
-				c.set('db', mockDatabase as any)
-				await next()
-			})
-			testApp.route('/api/subscriptions', createSubscriptionsApp({ testDatabase: mockDatabase as any }))
+			testApp.use(
+				'/api/*',
+				async (
+					c: Context<{ Bindings: Env; Variables: { db: AnyDatabase } & LoggingVariables }>,
+					next: Next
+				) => {
+					c.set('db', mockDatabase as any)
+					await next()
+				}
+			)
+			testApp.route(
+				'/api/subscriptions',
+				createSubscriptionsApp({ testDatabase: mockDatabase as any })
+			)
 
 			const response = await createTestRequest(
 				testApp,
@@ -421,14 +433,23 @@ describe('Subscriptions API - Unit Tests', () => {
 			const { createSubscriptionsApp } = await import('../../routes/subscriptions')
 			const { Hono } = await import('hono')
 			const { loggingMiddleware } = await import('../../middleware/logging')
-			
-			const testApp = new Hono()
+
+			const testApp = new Hono() as any
 			testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
-			testApp.use('/api/*', async (c, next) => {
-				c.set('db', mockDatabase as any)
-				await next()
-			})
-			testApp.route('/api/subscriptions', createSubscriptionsApp({ testDatabase: mockDatabase as any }))
+			testApp.use(
+				'/api/*',
+				async (
+					c: Context<{ Bindings: Env; Variables: { db: AnyDatabase } & LoggingVariables }>,
+					next: Next
+				) => {
+					c.set('db', mockDatabase as any)
+					await next()
+				}
+			)
+			testApp.route(
+				'/api/subscriptions',
+				createSubscriptionsApp({ testDatabase: mockDatabase as any })
+			)
 
 			const response = await createTestRequest(
 				testApp,
@@ -458,20 +479,25 @@ describe('Subscriptions API - Unit Tests', () => {
 			const { createSubscriptionsApp } = await import('../../routes/subscriptions')
 			const { Hono } = await import('hono')
 			const { loggingMiddleware } = await import('../../middleware/logging')
-			
-			const testApp = new Hono()
-			testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
-			testApp.use('/api/*', async (c, next) => {
-				c.set('db', mockDatabase as any)
-				await next()
-			})
-			testApp.route('/api/subscriptions', createSubscriptionsApp({ testDatabase: mockDatabase as any }))
 
-			const response = await createTestRequest(
-				testApp,
-				'DELETE',
-				'/api/subscriptions/1'
+			const testApp = new Hono() as any
+			testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
+			testApp.use(
+				'/api/*',
+				async (
+					c: Context<{ Bindings: Env; Variables: { db: AnyDatabase } & LoggingVariables }>,
+					next: Next
+				) => {
+					c.set('db', mockDatabase as any)
+					await next()
+				}
 			)
+			testApp.route(
+				'/api/subscriptions',
+				createSubscriptionsApp({ testDatabase: mockDatabase as any })
+			)
+
+			const response = await createTestRequest(testApp, 'DELETE', '/api/subscriptions/1')
 
 			expect(response.status).toBe(500)
 			const data = await getResponseJson(response)
@@ -494,14 +520,23 @@ describe('Subscriptions API - Unit Tests', () => {
 			const { createSubscriptionsApp } = await import('../../routes/subscriptions')
 			const { Hono } = await import('hono')
 			const { loggingMiddleware } = await import('../../middleware/logging')
-			
-			const testApp = new Hono()
+
+			const testApp = new Hono() as any
 			testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
-			testApp.use('/api/*', async (c, next) => {
-				c.set('db', mockDatabase as any)
-				await next()
-			})
-			testApp.route('/api/subscriptions', createSubscriptionsApp({ testDatabase: mockDatabase as any }))
+			testApp.use(
+				'/api/*',
+				async (
+					c: Context<{ Bindings: Env; Variables: { db: AnyDatabase } & LoggingVariables }>,
+					next: Next
+				) => {
+					c.set('db', mockDatabase as any)
+					await next()
+				}
+			)
+			testApp.route(
+				'/api/subscriptions',
+				createSubscriptionsApp({ testDatabase: mockDatabase as any })
+			)
 
 			const response = await createTestRequest(testApp, 'GET', '/api/subscriptions/1')
 
