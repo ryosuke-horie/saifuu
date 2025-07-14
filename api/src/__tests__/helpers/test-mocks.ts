@@ -85,12 +85,15 @@ export function createSelectByIdErrorMock() {
  * テスト用Honoアプリを作成する共通関数
  * モックデータベースを使用してエラーハンドリングテストを行う
  */
-export async function createMockTestApp(mockDatabase: any) {
+export async function createMockTestApp(mockDatabase: AnyDatabase) {
 	const { createSubscriptionsApp } = await import('../../routes/subscriptions')
 	const { Hono } = await import('hono')
 	const { loggingMiddleware } = await import('../../middleware/logging')
 
-	const testApp = new Hono() as any
+	const testApp = new Hono<{
+		Bindings: Env
+		Variables: { db: AnyDatabase } & LoggingVariables
+	}>()
 	testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
 	testApp.use(
 		'/api/*',
@@ -98,11 +101,11 @@ export async function createMockTestApp(mockDatabase: any) {
 			c: Context<{ Bindings: Env; Variables: { db: AnyDatabase } & LoggingVariables }>,
 			next: Next
 		) => {
-			c.set('db', mockDatabase as any)
+			c.set('db', mockDatabase as AnyDatabase)
 			await next()
 		}
 	)
-	testApp.route('/api/subscriptions', createSubscriptionsApp({ testDatabase: mockDatabase as any }))
+	testApp.route('/api/subscriptions', createSubscriptionsApp({ testDatabase: mockDatabase }))
 
 	return testApp
 }

@@ -357,7 +357,7 @@ describe('Subscriptions API - Unit Tests', () => {
 		}))
 	}
 
-	function createTestAppWithMockDatabase(mockDatabase: any) {
+	function createTestAppWithMockDatabase(mockDatabase: AnyDatabase) {
 		const testApp = new Hono<{
 			Bindings: Env
 			Variables: {
@@ -367,20 +367,17 @@ describe('Subscriptions API - Unit Tests', () => {
 
 		testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
 		testApp.use('/api/*', async (c, next) => {
-			c.set('db', mockDatabase as AnyDatabase)
+			c.set('db', mockDatabase)
 			await next()
 		})
-		testApp.route(
-			'/api/subscriptions',
-			createSubscriptionsApp({ testDatabase: mockDatabase as AnyDatabase })
-		)
+		testApp.route('/api/subscriptions', createSubscriptionsApp({ testDatabase: mockDatabase }))
 
 		return testApp
 	}
 
 	// データベースエラーハンドリングのメインヘルパー関数
 	function createDatabaseErrorApp(operation: 'select' | 'insert' | 'update' | 'delete') {
-		const mockDatabase: any = {}
+		const mockDatabase = {} as AnyDatabase
 
 		switch (operation) {
 			case 'select':

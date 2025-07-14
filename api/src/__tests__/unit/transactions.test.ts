@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { type Transaction } from '../../db/schema'
-import { invalidTransactionData, testRequestPayloads, testTransactions } from '../helpers/fixtures'
+import { invalidTransactionData, testRequestPayloads } from '../helpers/fixtures'
 import {
 	createTestRequest,
 	expectErrorResponse,
