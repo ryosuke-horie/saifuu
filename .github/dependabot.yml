@@ -40,6 +40,31 @@ updates:
     vendor: false
     versioning-strategy: "increase"
 
+  # E2E test dependencies (Playwright, etc.)
+  - package-ecosystem: "npm"
+    directory: "/e2e"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "12:00"
+      timezone: "Asia/Tokyo"
+    assignees:
+      - "ryosuke-horie"
+    labels:
+      - "dependencies"
+      - "e2e"
+      - "testing"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    target-branch: "main"
+    vendor: false
+    versioning-strategy: "increase"
+    groups:
+      e2e-dependencies:
+        patterns:
+          - "*"
+
   # GitHub Actions workflow dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
