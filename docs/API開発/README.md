@@ -22,8 +22,8 @@ This directory contains comprehensive documentation for the Saifuu API, which is
 
 ### 🗄️ Database Documentation
 
-- **[D1 Migration Strategy](./d1-migration-strategy.md)** - Migration plan from better-sqlite3 to Cloudflare D1
-- **[D1 Migration Success Report](./d1-migration-success.md)** - Complete migration results and verification
+- **[D1 Migration Strategy](../データベース/d1-migration-strategy.md)** - Migration plan from better-sqlite3 to Cloudflare D1
+- **[D1 Migration Success Report](../データベース/d1-migration-success.md)** - Complete migration results and verification
 
 ## API Endpoints
 
