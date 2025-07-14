@@ -1,7 +1,4 @@
-import type { Context, Next } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { type AnyDatabase, type Env } from '../../db'
-import { type LoggingVariables } from '../../middleware/logging'
 import { invalidSubscriptionData, testRequestPayloads } from '../helpers/fixtures'
 import {
 	createTestRequest,
@@ -11,6 +8,14 @@ import {
 	getResponseJson,
 } from '../helpers/test-app'
 import { cleanupTestDatabase, setupTestDatabase } from '../helpers/test-db'
+import {
+	createDeleteErrorMock,
+	createInsertErrorMock,
+	createMockTestApp,
+	createSelectByIdErrorMock,
+	createSelectErrorMock,
+	createUpdateErrorMock,
+} from '../helpers/test-mocks'
 import { createTestProductionApp } from '../helpers/test-production-app'
 
 /**
@@ -334,33 +339,8 @@ describe('Subscriptions API - Unit Tests', () => {
 	describe('Database Error Handling', () => {
 		it('should handle database errors during GET /subscriptions', async () => {
 			// データベースエラーをシミュレートするモックの作成
-			const mockDatabase = {
-				select: vi.fn().mockImplementation(() => {
-					throw new Error('Database connection failed')
-				}),
-			}
-
-			// モックデータベースを使用してアプリケーションを作成
-			const { createSubscriptionsApp } = await import('../../routes/subscriptions')
-			const { Hono } = await import('hono')
-			const { loggingMiddleware } = await import('../../middleware/logging')
-
-			const testApp = new Hono() as any
-			testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
-			testApp.use(
-				'/api/*',
-				async (
-					c: Context<{ Bindings: Env; Variables: { db: AnyDatabase } & LoggingVariables }>,
-					next: Next
-				) => {
-					c.set('db', mockDatabase as any)
-					await next()
-				}
-			)
-			testApp.route(
-				'/api/subscriptions',
-				createSubscriptionsApp({ testDatabase: mockDatabase as any })
-			)
+			const mockDatabase = createSelectErrorMock()
+			const testApp = await createMockTestApp(mockDatabase)
 
 			const response = await createTestRequest(testApp, 'GET', '/api/subscriptions')
 
@@ -371,37 +351,8 @@ describe('Subscriptions API - Unit Tests', () => {
 
 		it('should handle database errors during POST /subscriptions', async () => {
 			// データベースエラーをシミュレートするモックの作成
-			const mockDatabase = {
-				insert: vi.fn().mockImplementation(() => ({
-					values: vi.fn().mockImplementation(() => ({
-						returning: vi.fn().mockImplementation(() => {
-							throw new Error('Database connection failed')
-						}),
-					})),
-				})),
-			}
-
-			// モックデータベースを使用してアプリケーションを作成
-			const { createSubscriptionsApp } = await import('../../routes/subscriptions')
-			const { Hono } = await import('hono')
-			const { loggingMiddleware } = await import('../../middleware/logging')
-
-			const testApp = new Hono() as any
-			testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
-			testApp.use(
-				'/api/*',
-				async (
-					c: Context<{ Bindings: Env; Variables: { db: AnyDatabase } & LoggingVariables }>,
-					next: Next
-				) => {
-					c.set('db', mockDatabase as any)
-					await next()
-				}
-			)
-			testApp.route(
-				'/api/subscriptions',
-				createSubscriptionsApp({ testDatabase: mockDatabase as any })
-			)
+			const mockDatabase = createInsertErrorMock()
+			const testApp = await createMockTestApp(mockDatabase)
 
 			const response = await createTestRequest(
 				testApp,
@@ -417,39 +368,8 @@ describe('Subscriptions API - Unit Tests', () => {
 
 		it('should handle database errors during PUT /subscriptions/:id', async () => {
 			// データベースエラーをシミュレートするモックの作成
-			const mockDatabase = {
-				update: vi.fn().mockImplementation(() => ({
-					set: vi.fn().mockImplementation(() => ({
-						where: vi.fn().mockImplementation(() => ({
-							returning: vi.fn().mockImplementation(() => {
-								throw new Error('Database connection failed')
-							}),
-						})),
-					})),
-				})),
-			}
-
-			// モックデータベースを使用してアプリケーションを作成
-			const { createSubscriptionsApp } = await import('../../routes/subscriptions')
-			const { Hono } = await import('hono')
-			const { loggingMiddleware } = await import('../../middleware/logging')
-
-			const testApp = new Hono() as any
-			testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
-			testApp.use(
-				'/api/*',
-				async (
-					c: Context<{ Bindings: Env; Variables: { db: AnyDatabase } & LoggingVariables }>,
-					next: Next
-				) => {
-					c.set('db', mockDatabase as any)
-					await next()
-				}
-			)
-			testApp.route(
-				'/api/subscriptions',
-				createSubscriptionsApp({ testDatabase: mockDatabase as any })
-			)
+			const mockDatabase = createUpdateErrorMock()
+			const testApp = await createMockTestApp(mockDatabase)
 
 			const response = await createTestRequest(
 				testApp,
@@ -465,37 +385,8 @@ describe('Subscriptions API - Unit Tests', () => {
 
 		it('should handle database errors during DELETE /subscriptions/:id', async () => {
 			// データベースエラーをシミュレートするモックの作成
-			const mockDatabase = {
-				delete: vi.fn().mockImplementation(() => ({
-					where: vi.fn().mockImplementation(() => ({
-						returning: vi.fn().mockImplementation(() => {
-							throw new Error('Database connection failed')
-						}),
-					})),
-				})),
-			}
-
-			// モックデータベースを使用してアプリケーションを作成
-			const { createSubscriptionsApp } = await import('../../routes/subscriptions')
-			const { Hono } = await import('hono')
-			const { loggingMiddleware } = await import('../../middleware/logging')
-
-			const testApp = new Hono() as any
-			testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
-			testApp.use(
-				'/api/*',
-				async (
-					c: Context<{ Bindings: Env; Variables: { db: AnyDatabase } & LoggingVariables }>,
-					next: Next
-				) => {
-					c.set('db', mockDatabase as any)
-					await next()
-				}
-			)
-			testApp.route(
-				'/api/subscriptions',
-				createSubscriptionsApp({ testDatabase: mockDatabase as any })
-			)
+			const mockDatabase = createDeleteErrorMock()
+			const testApp = await createMockTestApp(mockDatabase)
 
 			const response = await createTestRequest(testApp, 'DELETE', '/api/subscriptions/1')
 
@@ -506,37 +397,8 @@ describe('Subscriptions API - Unit Tests', () => {
 
 		it('should handle database errors during GET /subscriptions/:id', async () => {
 			// データベースエラーをシミュレートするモックの作成
-			const mockDatabase = {
-				select: vi.fn().mockImplementation(() => ({
-					from: vi.fn().mockImplementation(() => ({
-						where: vi.fn().mockImplementation(() => {
-							throw new Error('Database connection failed')
-						}),
-					})),
-				})),
-			}
-
-			// モックデータベースを使用してアプリケーションを作成
-			const { createSubscriptionsApp } = await import('../../routes/subscriptions')
-			const { Hono } = await import('hono')
-			const { loggingMiddleware } = await import('../../middleware/logging')
-
-			const testApp = new Hono() as any
-			testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
-			testApp.use(
-				'/api/*',
-				async (
-					c: Context<{ Bindings: Env; Variables: { db: AnyDatabase } & LoggingVariables }>,
-					next: Next
-				) => {
-					c.set('db', mockDatabase as any)
-					await next()
-				}
-			)
-			testApp.route(
-				'/api/subscriptions',
-				createSubscriptionsApp({ testDatabase: mockDatabase as any })
-			)
+			const mockDatabase = createSelectByIdErrorMock()
+			const testApp = await createMockTestApp(mockDatabase)
 
 			const response = await createTestRequest(testApp, 'GET', '/api/subscriptions/1')
 

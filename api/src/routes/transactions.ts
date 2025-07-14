@@ -1,9 +1,38 @@
-import { eq } from 'drizzle-orm'
+import { and, eq, gte, lte } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { ALL_CATEGORIES } from '../../../shared/config/categories'
 import { type AnyDatabase, type Env } from '../db'
 import { type NewTransaction, transactions } from '../db/schema'
 import { type LoggingVariables, logWithContext } from '../middleware/logging'
+
+/**
+ * 取引データのバリデーション関数
+ * 作成時と更新時で共通利用
+ */
+function validateTransactionData(data: Partial<NewTransaction>): string | null {
+	// 金額のバリデーション
+	if (data.amount !== undefined) {
+		if (typeof data.amount !== 'number' || data.amount <= 0) {
+			return 'Amount must be a positive number'
+		}
+		// 金額の上限チェック（1000万円）
+		if (data.amount > 10000000) {
+			return 'Amount must not exceed 10,000,000'
+		}
+	}
+
+	// 取引種別のバリデーション
+	if (data.type !== undefined && !['income', 'expense'].includes(data.type)) {
+		return 'Type must be either "income" or "expense"'
+	}
+
+	// 説明文の文字数チェック（最大500文字）
+	if (data.description !== undefined && data.description && data.description.length > 500) {
+		return 'Description must not exceed 500 characters'
+	}
+
+	return null
+}
 
 /**
  * 取引APIのファクトリ関数
@@ -50,10 +79,10 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 		try {
 			const db = options.testDatabase || c.get('db')
 
-			// クエリを実行
+			// データベースレベルでのクエリ構築（シンプルな実装）
 			let result = await db.select().from(transactions)
 
-			// WHERE条件をインメモリでフィルタリング（Drizzle + D1の制約のため）
+			// WHERE条件をインメモリでフィルタリング（パフォーマンス改善は今後の課題）
 			if (type) {
 				result = result.filter((tx) => tx.type === type)
 			}
@@ -212,33 +241,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 			const db = options.testDatabase || c.get('db')
 
-			// Validate required fields and data
-			if (typeof body.amount !== 'number' || body.amount <= 0) {
-				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 金額が無効', {
-					validationError: 'amount_invalid',
-					providedAmount: body.amount,
-				})
-				return c.json({ error: 'Amount must be a positive number' }, 400)
-			}
-
-			// 金額の上限チェック（1000万円）
-			if (body.amount > 10000000) {
-				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 金額が上限を超過', {
-					validationError: 'amount_too_large',
-					providedAmount: body.amount,
-					maxAmount: 10000000,
-				})
-				return c.json({ error: 'Amount must not exceed 10,000,000' }, 400)
-			}
-
-			if (!body.type || !['income', 'expense'].includes(body.type)) {
-				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 種別が無効', {
-					validationError: 'type_invalid',
-					providedType: body.type,
-				})
-				return c.json({ error: 'Type must be either "income" or "expense"' }, 400)
-			}
-
+			// 必須フィールドチェック
 			if (!body.date) {
 				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 日付が無効', {
 					validationError: 'date_required',
@@ -247,14 +250,27 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				return c.json({ error: 'Date is required' }, 400)
 			}
 
-			// 説明文の文字数チェック（最大500文字）
-			if (body.description && body.description.length > 500) {
-				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 説明文が長すぎる', {
-					validationError: 'description_too_long',
-					providedLength: body.description.length,
-					maxLength: 500,
+			if (!body.type) {
+				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 種別が無効', {
+					validationError: 'type_required',
+					providedType: body.type,
 				})
-				return c.json({ error: 'Description must not exceed 500 characters' }, 400)
+				return c.json({ error: 'Type is required' }, 400)
+			}
+
+			// 共通バリデーション関数を使用
+			const validationError = validateTransactionData(body)
+			if (validationError) {
+				logWithContext(c, 'warn', '取引作成: バリデーションエラー', {
+					validationError: 'validation_failed',
+					error: validationError,
+					providedData: {
+						amount: body.amount,
+						type: body.type,
+						descriptionLength: body.description?.length,
+					},
+				})
+				return c.json({ error: validationError }, 400)
 			}
 
 			const newTransaction: NewTransaction = {
@@ -394,6 +410,22 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				resource: 'transactions',
 				updateFields: Object.keys(body),
 			})
+
+			// 更新データのバリデーション
+			const validationError = validateTransactionData(body)
+			if (validationError) {
+				logWithContext(c, 'warn', '取引更新: バリデーションエラー', {
+					transactionId: id,
+					validationError: 'validation_failed',
+					error: validationError,
+					providedData: {
+						amount: body.amount,
+						type: body.type,
+						descriptionLength: body.description?.length,
+					},
+				})
+				return c.json({ error: validationError }, 400)
+			}
 
 			const db = options.testDatabase || c.get('db')
 

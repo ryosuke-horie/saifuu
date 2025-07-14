@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { type Transaction } from '../../db/schema'
 import { invalidTransactionData, testRequestPayloads, testTransactions } from '../helpers/fixtures'
 import {
 	createTestRequest,
@@ -105,9 +106,9 @@ describe('Transactions API - Unit Tests', () => {
 			expect(Array.isArray(data)).toBe(true)
 
 			// すべての取引がincomeタイプであることを確認
-			data.forEach((transaction: any) => {
+			for (const transaction of data as Transaction[]) {
 				expect(transaction.type).toBe('income')
-			})
+			}
 		})
 
 		it('should filter transactions by category', async () => {
@@ -123,9 +124,9 @@ describe('Transactions API - Unit Tests', () => {
 			expect(Array.isArray(data)).toBe(true)
 
 			// すべての取引がカテゴリID 1であることを確認
-			data.forEach((transaction: any) => {
+			for (const transaction of data as Transaction[]) {
 				expect(transaction.categoryId).toBe(1)
-			})
+			}
 		})
 
 		it('should filter transactions by date range', async () => {
@@ -143,11 +144,11 @@ describe('Transactions API - Unit Tests', () => {
 			expect(Array.isArray(data)).toBe(true)
 
 			// すべての取引が指定期間内であることを確認
-			data.forEach((transaction: any) => {
+			for (const transaction of data as Transaction[]) {
 				const transactionDate = new Date(transaction.date)
 				expect(transactionDate >= new Date(startDate)).toBe(true)
 				expect(transactionDate <= new Date(endDate)).toBe(true)
-			})
+			}
 		})
 
 		it('should support pagination with limit and offset', async () => {
@@ -180,13 +181,13 @@ describe('Transactions API - Unit Tests', () => {
 			expect(data.length).toBeLessThanOrEqual(5)
 
 			// すべての条件を満たすことを確認
-			data.forEach((transaction: any) => {
+			for (const transaction of data as Transaction[]) {
 				expect(transaction.type).toBe('expense')
 				expect(transaction.categoryId).toBe(1)
 				const transactionDate = new Date(transaction.date)
 				expect(transactionDate >= new Date('2024-01-01')).toBe(true)
 				expect(transactionDate <= new Date('2024-01-31')).toBe(true)
-			})
+			}
 		})
 	})
 
