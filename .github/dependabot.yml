@@ -57,3 +57,25 @@ updates:
       prefix: "ci"
       include: "scope"
     target-branch: "main"
+
+  # E2E test dependencies (Playwright, TypeScript)
+  - package-ecosystem: "npm"
+    directory: "/e2e"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "12:00"
+      timezone: "Asia/Tokyo"
+    assignees:
+      - "ryosuke-horie"
+    labels:
+      - "dependencies"
+      - "e2e"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    target-branch: "main"
+    groups:
+      e2e-dependencies:
+        patterns:
+          - "*"
