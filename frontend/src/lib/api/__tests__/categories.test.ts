@@ -16,13 +16,13 @@ describe("Categories API", () => {
 			// 設定ファイルから全カテゴリを取得
 			const result = await fetchCategories();
 
-			// 期待される総カテゴリ数（支出12 + 収入5 = 17）
-			expect(result).toHaveLength(17);
+			// 期待される総カテゴリ数（支出10個のみ、収入カテゴリは削除済み）
+			expect(result).toHaveLength(10);
 
 			// 新しく追加されたカテゴリの確認
 			const systemFee = result.find((cat) => cat.id === "6");
 			expect(systemFee).toBeDefined();
-			expect(systemFee?.name).toBe("システム関係日");
+			expect(systemFee?.name).toBe("システム関係費");
 			expect(systemFee?.type).toBe("expense");
 			expect(systemFee?.color).toBe("#9B59B6");
 
@@ -55,7 +55,7 @@ describe("Categories API", () => {
 				// 型の確認
 				expect(typeof category.id).toBe("string");
 				expect(typeof category.name).toBe("string");
-				expect(["expense", "income"]).toContain(category.type);
+				expect(category.type).toBe("expense");
 				expect(typeof category.color).toBe("string");
 			});
 		});
@@ -71,15 +71,15 @@ describe("Categories API", () => {
 			expect(result1[0].name).toBe(result2[0].name);
 		});
 
-		it("should include both expense and income categories", async () => {
-			// 支出と収入両方のカテゴリが含まれることを確認
+		it("should include only expense categories", async () => {
+			// 支出カテゴリのみが含まれることを確認
 			const result = await fetchCategories();
 
 			const expenseCategories = result.filter((cat) => cat.type === "expense");
 			const incomeCategories = result.filter((cat) => cat.type === "income");
 
-			expect(expenseCategories.length).toBe(12); // 支出カテゴリ数
-			expect(incomeCategories.length).toBe(5); // 収入カテゴリ数
+			expect(expenseCategories.length).toBe(10); // 支出カテゴリ数
+			expect(incomeCategories.length).toBe(0); // 収入カテゴリは削除済み
 		});
 	});
 
@@ -93,20 +93,6 @@ describe("Categories API", () => {
 				name: "家賃・水道・光熱・通信費",
 				type: "expense",
 				color: "#D35400",
-				createdAt: expect.any(String),
-				updatedAt: expect.any(String),
-			});
-		});
-
-		it("should fetch income category by id", async () => {
-			// ID 13（給与）を取得
-			const result = await fetchCategoryById("13");
-
-			expect(result).toEqual({
-				id: "13",
-				name: "給与",
-				type: "income",
-				color: "#2ECC71",
 				createdAt: expect.any(String),
 				updatedAt: expect.any(String),
 			});
@@ -149,16 +135,11 @@ describe("Categories API", () => {
 			// numericIdの順序が保たれることを確認
 			const result = await fetchCategories();
 
-			// 支出カテゴリの順序確認（ID 1-12）
-			const expenseCategories = result.slice(0, 12);
+			// 支出カテゴリのnumericIDの確認（IDは飛び飛びになっている）
+			const expectedIds = ["1", "2", "3", "4", "5", "6", "8", "10", "11", "12"];
+			const expenseCategories = result.slice(0, 10);
 			expenseCategories.forEach((category, index) => {
-				expect(category.id).toBe((index + 1).toString());
-			});
-
-			// 収入カテゴリの順序確認（ID 13-17）
-			const incomeCategories = result.slice(12);
-			incomeCategories.forEach((category, index) => {
-				expect(category.id).toBe((index + 13).toString());
+				expect(category.id).toBe(expectedIds[index]);
 			});
 		});
 	});

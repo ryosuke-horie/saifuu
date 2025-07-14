@@ -136,7 +136,6 @@ describe("ExpenseFilters", () => {
 	});
 
 	describe("種別フィルター", () => {
-
 		it("支出のみを選択するとonFiltersChangeが呼ばれる", async () => {
 			const user = userEvent.setup();
 			render(<ExpenseFilters {...defaultProps} />);

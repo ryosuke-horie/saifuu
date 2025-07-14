@@ -82,7 +82,7 @@ describe('Categories API - Unit Tests', () => {
 					}),
 					expect.objectContaining({
 						id: 6,
-						name: 'システム関係日',
+						name: 'システム関係費',
 						type: 'expense',
 					}),
 					expect.objectContaining({
@@ -93,7 +93,7 @@ describe('Categories API - Unit Tests', () => {
 				])
 			)
 			// 設定ファイルのカテゴリ数を確認
-			expect(data).toHaveLength(17) // 支出12 + 収入17
+			expect(data).toHaveLength(10) // 支出10個のみ（収入カテゴリは削除済み）
 		})
 
 		it('should handle database errors gracefully', async () => {

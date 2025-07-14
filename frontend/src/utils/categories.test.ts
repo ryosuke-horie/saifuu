@@ -10,7 +10,7 @@ describe("カテゴリ設定", () => {
 		it("必要な支出カテゴリが全て存在すること", () => {
 			// Issue #282で追加が必要なカテゴリ
 			const requiredCategories = [
-				{ id: "system_fee", name: "システム関係日" },
+				{ id: "system_fee", name: "システム関係費" },
 				{ id: "books", name: "書籍代" },
 				{ id: "utilities", name: "家賃・水道・光熱・通信費" },
 			];
@@ -55,9 +55,9 @@ describe("カテゴリ設定", () => {
 	});
 
 	describe("カテゴリ数の確認", () => {
-		it("支出カテゴリが12個存在すること", () => {
-			// 既存の9個 + 新規3個 = 12個
-			expect(EXPENSE_CATEGORIES).toHaveLength(12);
+		it("支出カテゴリが10個存在すること", () => {
+			// 既存カテゴリのうち「学習・教育」と「エンターテイメント」を削除
+			expect(EXPENSE_CATEGORIES).toHaveLength(10);
 		});
 	});
 });
