@@ -9,6 +9,8 @@
 # testing
 /coverage
 **/coverage
+coverage-*.txt
+*.coverage
 
 # playwright
 **/test-results/
@@ -85,3 +87,6 @@ api/dev.db
 api/*.db
 api/*.db.backup*
 api/e2e-test.db
+
+# temporary files
+index.js

@@ -1,4 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { Hono } from 'hono'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { AnyDatabase, Env } from '../../db'
+import { type LoggingVariables, loggingMiddleware } from '../../middleware/logging'
+import { createSubscriptionsApp } from '../../routes/subscriptions'
 import { invalidSubscriptionData, testRequestPayloads } from '../helpers/fixtures'
 import {
 	createTestRequest,
@@ -7,15 +11,7 @@ import {
 	expectJsonStructure,
 	getResponseJson,
 } from '../helpers/test-app'
-import { cleanupTestDatabase, setupTestDatabase } from '../helpers/test-db'
-import {
-	createDeleteErrorMock,
-	createInsertErrorMock,
-	createMockTestApp,
-	createSelectByIdErrorMock,
-	createSelectErrorMock,
-	createUpdateErrorMock,
-} from '../helpers/test-mocks'
+import { cleanupTestDatabase } from '../helpers/test-db'
 import { createTestProductionApp } from '../helpers/test-production-app'
 
 /**
@@ -42,15 +38,14 @@ describe('Subscriptions API - Unit Tests', () => {
 		await cleanupTestDatabase()
 	})
 
+	afterEach(async () => {
+		// 各テストケース後の明示的なクリーンアップ
+		await cleanupTestDatabase()
+	})
+
 	describe('GET /subscriptions', () => {
 		it('should return empty array when no subscriptions exist', async () => {
 			const response = await createTestRequest(app, 'GET', '/api/subscriptions')
-
-			// Debug: Check what error is returned
-			if (response.status !== 200) {
-				const errorData = await getResponseJson(response)
-				console.log('Error response:', errorData)
-			}
 
 			expect(response.status).toBe(200)
 
@@ -100,15 +95,6 @@ describe('Subscriptions API - Unit Tests', () => {
 				}
 			}
 		})
-
-		it('should handle database errors gracefully', async () => {
-			// このテストは元のファイルとの互換性のために残されている
-			// 実際のデータベースエラーハンドリングは別のテストグループでカバーされている
-			const response = await createTestRequest(app, 'GET', '/api/subscriptions')
-
-			// データベースが正常に動作している場合は200を返す
-			expect(response.status).toBe(200)
-		})
 	})
 
 	describe('POST /subscriptions', () => {
@@ -145,8 +131,9 @@ describe('Subscriptions API - Unit Tests', () => {
 				invalidSubscriptionData.missingName
 			)
 
-			// バリデーションが実装されていれば400、そうでなければ500
-			expect([400, 500]).toContain(response.status)
+			expect(response.status).toBe(400)
+			const data = await getResponseJson(response)
+			expectErrorResponse(data, 'Name is required and must be a string')
 		})
 
 		it('should handle invalid billing cycle', async () => {
@@ -158,7 +145,9 @@ describe('Subscriptions API - Unit Tests', () => {
 				invalidSubscriptionData.invalidBillingCycle
 			)
 
-			expect([400, 500]).toContain(response.status)
+			expect(response.status).toBe(400)
+			const data = await getResponseJson(response)
+			expectErrorResponse(data, 'Invalid billing cycle')
 		})
 
 		it('should handle negative amount', async () => {
@@ -170,21 +159,9 @@ describe('Subscriptions API - Unit Tests', () => {
 				invalidSubscriptionData.negativeAmount
 			)
 
-			expect([400, 500]).toContain(response.status)
-		})
-
-		it('should handle database errors during creation', async () => {
-			// このテストは元のファイルとの互換性のために残されている
-			// 実際のデータベースエラーハンドリングは別のテストグループでカバーされている
-			const response = await createTestRequest(
-				app,
-				'POST',
-				'/api/subscriptions',
-				testRequestPayloads.createSubscription
-			)
-
-			// 正常なデータベースでは201を返す
-			expect(response.status).toBe(201)
+			expect(response.status).toBe(400)
+			const data = await getResponseJson(response)
+			expectErrorResponse(data, 'Amount must be a positive number')
 		})
 	})
 
@@ -232,8 +209,9 @@ describe('Subscriptions API - Unit Tests', () => {
 			// 無効なID形式のテスト
 			const response = await createTestRequest(app, 'GET', '/api/subscriptions/invalid-id')
 
-			// parseInt()でNaNになるため、エラーが発生する
-			expect([400, 500]).toContain(response.status)
+			expect(response.status).toBe(400)
+			const data = await getResponseJson(response)
+			expectErrorResponse(data, 'Invalid ID format')
 		})
 	})
 
@@ -336,75 +314,139 @@ describe('Subscriptions API - Unit Tests', () => {
 		})
 	})
 
+	// データベース操作別のモック生成ヘルパー関数
+	function createSelectMock() {
+		return vi.fn().mockImplementation(() => ({
+			from: vi.fn().mockImplementation(() => ({
+				where: vi.fn().mockImplementation(() => {
+					throw new Error('Database connection failed')
+				}),
+			})),
+		}))
+	}
+
+	function createInsertMock() {
+		return vi.fn().mockImplementation(() => ({
+			values: vi.fn().mockImplementation(() => ({
+				returning: vi.fn().mockImplementation(() => {
+					throw new Error('Database connection failed')
+				}),
+			})),
+		}))
+	}
+
+	function createUpdateMock() {
+		return vi.fn().mockImplementation(() => ({
+			set: vi.fn().mockImplementation(() => ({
+				where: vi.fn().mockImplementation(() => ({
+					returning: vi.fn().mockImplementation(() => {
+						throw new Error('Database connection failed')
+					}),
+				})),
+			})),
+		}))
+	}
+
+	function createDeleteMock() {
+		return vi.fn().mockImplementation(() => ({
+			where: vi.fn().mockImplementation(() => ({
+				returning: vi.fn().mockImplementation(() => {
+					throw new Error('Database connection failed')
+				}),
+			})),
+		}))
+	}
+
+	function createTestAppWithMockDatabase(mockDatabase: AnyDatabase) {
+		const testApp = new Hono<{
+			Bindings: Env
+			Variables: {
+				db: AnyDatabase
+			} & LoggingVariables
+		}>()
+
+		testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
+		testApp.use('/api/*', async (c, next) => {
+			c.set('db', mockDatabase)
+			await next()
+		})
+		testApp.route('/api/subscriptions', createSubscriptionsApp({ testDatabase: mockDatabase }))
+
+		return testApp
+	}
+
+	// データベースエラーハンドリングのメインヘルパー関数
+	function createDatabaseErrorApp(operation: 'select' | 'insert' | 'update' | 'delete') {
+		const mockDatabase = {} as AnyDatabase
+
+		switch (operation) {
+			case 'select':
+				mockDatabase.select = createSelectMock()
+				break
+			case 'insert':
+				mockDatabase.insert = createInsertMock()
+				break
+			case 'update':
+				mockDatabase.update = createUpdateMock()
+				break
+			case 'delete':
+				mockDatabase.delete = createDeleteMock()
+				break
+		}
+
+		return createTestAppWithMockDatabase(mockDatabase)
+	}
+
 	describe('Database Error Handling', () => {
-		it('should handle database errors during GET /subscriptions', async () => {
-			// データベースエラーをシミュレートするモックの作成
-			const mockDatabase = createSelectErrorMock()
-			const testApp = await createMockTestApp(mockDatabase)
-
-			const response = await createTestRequest(testApp, 'GET', '/api/subscriptions')
-
-			expect(response.status).toBe(500)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Failed to fetch subscriptions')
+		// モックテストではDBクリーンアップを省略
+		beforeEach(() => {
+			vi.clearAllMocks()
 		})
 
-		it('should handle database errors during POST /subscriptions', async () => {
-			// データベースエラーをシミュレートするモックの作成
-			const mockDatabase = createInsertErrorMock()
-			const testApp = await createMockTestApp(mockDatabase)
+		// パフォーマンス向上のため、テストをコンパクトに
+		it.each([
+			{
+				operation: 'select' as const,
+				method: 'GET' as const,
+				path: '/api/subscriptions',
+				expectedError: 'Failed to fetch subscriptions',
+			},
+			{
+				operation: 'insert' as const,
+				method: 'POST' as const,
+				path: '/api/subscriptions',
+				payload: testRequestPayloads.createSubscription,
+				expectedError: 'Failed to create subscription',
+			},
+			{
+				operation: 'update' as const,
+				method: 'PUT' as const,
+				path: '/api/subscriptions/1',
+				payload: testRequestPayloads.updateSubscription,
+				expectedError: 'Failed to update subscription',
+			},
+			{
+				operation: 'delete' as const,
+				method: 'DELETE' as const,
+				path: '/api/subscriptions/1',
+				expectedError: 'Failed to delete subscription',
+			},
+			{
+				operation: 'select' as const,
+				method: 'GET' as const,
+				path: '/api/subscriptions/1',
+				expectedError: 'Failed to fetch subscription',
+			},
+		])(
+			'should handle database errors during $method $path',
+			async ({ operation, method, path, payload, expectedError }) => {
+				const testApp = createDatabaseErrorApp(operation)
+				const response = await createTestRequest(testApp, method, path, payload)
 
-			const response = await createTestRequest(
-				testApp,
-				'POST',
-				'/api/subscriptions',
-				testRequestPayloads.createSubscription
-			)
-
-			expect(response.status).toBe(500)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Failed to create subscription')
-		})
-
-		it('should handle database errors during PUT /subscriptions/:id', async () => {
-			// データベースエラーをシミュレートするモックの作成
-			const mockDatabase = createUpdateErrorMock()
-			const testApp = await createMockTestApp(mockDatabase)
-
-			const response = await createTestRequest(
-				testApp,
-				'PUT',
-				'/api/subscriptions/1',
-				testRequestPayloads.updateSubscription
-			)
-
-			expect(response.status).toBe(500)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Failed to update subscription')
-		})
-
-		it('should handle database errors during DELETE /subscriptions/:id', async () => {
-			// データベースエラーをシミュレートするモックの作成
-			const mockDatabase = createDeleteErrorMock()
-			const testApp = await createMockTestApp(mockDatabase)
-
-			const response = await createTestRequest(testApp, 'DELETE', '/api/subscriptions/1')
-
-			expect(response.status).toBe(500)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Failed to delete subscription')
-		})
-
-		it('should handle database errors during GET /subscriptions/:id', async () => {
-			// データベースエラーをシミュレートするモックの作成
-			const mockDatabase = createSelectByIdErrorMock()
-			const testApp = await createMockTestApp(mockDatabase)
-
-			const response = await createTestRequest(testApp, 'GET', '/api/subscriptions/1')
-
-			expect(response.status).toBe(500)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Failed to fetch subscription')
-		})
+				expect(response.status).toBe(500)
+				const data = await getResponseJson(response)
+				expectErrorResponse(data, expectedError)
+			}
+		)
 	})
 })
