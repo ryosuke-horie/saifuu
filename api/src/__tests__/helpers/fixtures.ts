@@ -79,9 +79,9 @@ export const testTransactions = {
 
 	salary: {
 		amount: 300000,
-		type: 'income' as const,
+		type: 'expense' as const,
 		categoryId: 3,
-		description: '月給',
+		description: '家賃',
 		date: new Date('2024-01-25').toISOString(),
 		createdAt: new Date('2024-01-25').toISOString(),
 		updatedAt: new Date('2024-01-25').toISOString(),

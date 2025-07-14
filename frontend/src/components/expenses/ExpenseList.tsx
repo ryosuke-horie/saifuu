@@ -1,11 +1,11 @@
 /**
- * 支出・収入一覧コンポーネント
+ * 支出一覧コンポーネント
  *
- * 取引データをテーブル形式で表示する
+ * 支出データをテーブル形式で表示する
  * レスポンシブデザインに対応し、モバイルでは適切なレイアウトに切り替わる
  *
  * 設計方針:
- * - 収入/支出を明確に区別した表示（正負の金額表示）
+ * - 支出を明確に表示（負の金額表示）
  * - 日付降順（新しい順）でのソート
  * - 編集・削除機能の提供
  * - ローディング・エラー・空状態の適切な表示
@@ -16,6 +16,11 @@
 import type { FC } from "react";
 import type { Transaction } from "../../lib/api/types";
 import type { ExpenseListProps } from "../../types/expense";
+import {
+	formatCategoryName,
+	formatCurrency,
+	formatDate,
+} from "../../utils/format";
 
 /**
  * 単一の取引行コンポーネント
@@ -25,37 +30,9 @@ const TransactionRow: FC<{
 	onEdit?: (transaction: Transaction) => void;
 	onDelete?: (transactionId: string) => void;
 }> = ({ transaction, onEdit, onDelete }) => {
-	// 金額を日本円形式でフォーマット（収入は正、支出は負で表示）
-	const formatAmount = (amount: number, type: "income" | "expense"): string => {
-		const sign = type === "income" ? "+" : "-";
-		const formattedAmount = new Intl.NumberFormat("ja-JP", {
-			style: "currency",
-			currency: "JPY",
-		}).format(amount);
-		return `${sign}${formattedAmount}`;
-	};
-
-	// 日付をフォーマット（YYYY/MM/DD形式）
-	const formatDate = (dateString: string): string => {
-		const date = new Date(dateString);
-		return date.toLocaleDateString("ja-JP", {
-			year: "numeric",
-			month: "2-digit",
-			day: "2-digit",
-		});
-	};
-
-	// カテゴリ名を取得
-	const getCategoryName = (transaction: Transaction): string => {
-		if (transaction.category && typeof transaction.category === "object") {
-			return transaction.category.name;
-		}
-		return "未分類";
-	};
-
-	// 金額の色を取得（収入は緑、支出は赤）
-	const getAmountColor = (type: "income" | "expense"): string => {
-		return type === "income" ? "text-green-600" : "text-red-600";
+	// 金額の色を取得（支出は赤）
+	const getAmountColor = (): string => {
+		return "text-red-600";
 	};
 
 	return (
@@ -63,13 +40,11 @@ const TransactionRow: FC<{
 			<td className="px-4 py-3 text-sm text-gray-900">
 				{formatDate(transaction.date)}
 			</td>
-			<td
-				className={`px-4 py-3 text-sm font-medium ${getAmountColor(transaction.type)}`}
-			>
-				{formatAmount(transaction.amount, transaction.type)}
+			<td className={`px-4 py-3 text-sm font-medium ${getAmountColor()}`}>
+				{formatCurrency(transaction.amount, true)}
 			</td>
 			<td className="px-4 py-3 text-sm text-gray-700 hidden md:table-cell">
-				{getCategoryName(transaction)}
+				{formatCategoryName(transaction.category)}
 			</td>
 			<td className="px-4 py-3 text-sm text-gray-700 hidden sm:table-cell">
 				{transaction.description || ""}
@@ -149,7 +124,7 @@ const EmptyState: FC = () => (
 );
 
 /**
- * 支出・収入一覧コンポーネント
+ * 支出一覧コンポーネント
  */
 export const ExpenseList: FC<ExpenseListProps> = ({
 	transactions,
@@ -170,7 +145,7 @@ export const ExpenseList: FC<ExpenseListProps> = ({
 			<div className="px-4 py-4 border-b border-gray-200">
 				<div>
 					<h2 className="text-lg font-semibold text-gray-900">取引一覧</h2>
-					<p className="text-sm text-gray-600 mt-1">支出・収入の履歴</p>
+					<p className="text-sm text-gray-600 mt-1">支出の履歴</p>
 				</div>
 			</div>
 

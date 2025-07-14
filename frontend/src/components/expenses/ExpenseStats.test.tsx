@@ -15,23 +15,17 @@ import { ExpenseStats } from "./ExpenseStats";
 
 // モックデータ
 const mockStatsData = {
-	totalIncome: 123456,
 	totalExpense: 98765,
-	balance: 24691,
 	transactionCount: 42,
 	monthlyComparison: 12.5, // 前月比12.5%増
 	topExpenseCategory: { name: "食費", amount: 50000 },
-	topIncomeCategory: { name: "給与", amount: 100000 },
 };
 
 const mockEmptyStatsData = {
-	totalIncome: 0,
 	totalExpense: 0,
-	balance: 0,
 	transactionCount: 0,
 	monthlyComparison: 0,
 	topExpenseCategory: null,
-	topIncomeCategory: null,
 };
 
 describe("ExpenseStats", () => {
@@ -49,16 +43,15 @@ describe("ExpenseStats", () => {
 			// メインコンテナの表示確認
 			expect(screen.getByTestId("expense-stats")).toBeInTheDocument();
 
-			// 月間収支カードの確認
+			// 月間支出カードの確認
 			expect(screen.getByTestId("monthly-balance-card")).toBeInTheDocument();
-			expect(screen.getByText("月間収支")).toBeInTheDocument();
+			expect(screen.getByText("月間支出")).toBeInTheDocument();
 
 			// 統計数値の表示確認
-			expect(screen.getByTestId("total-income")).toHaveTextContent("￥123,456");
 			expect(screen.getByTestId("total-expense")).toHaveTextContent("￥98,765");
-			expect(screen.getByTestId("balance-amount")).toHaveTextContent(
-				"￥24,691",
-			);
+			// 収入とバランスは表示されない
+			expect(screen.queryByTestId("total-income")).not.toBeInTheDocument();
+			expect(screen.queryByTestId("balance-amount")).not.toBeInTheDocument();
 		});
 
 		test("主要カテゴリ情報が正常に表示される", () => {
@@ -80,12 +73,10 @@ describe("ExpenseStats", () => {
 			expect(screen.getByTestId("top-expense-category")).toHaveTextContent(
 				"￥50,000",
 			);
-			expect(screen.getByTestId("top-income-category")).toHaveTextContent(
-				"給与",
-			);
-			expect(screen.getByTestId("top-income-category")).toHaveTextContent(
-				"￥100,000",
-			);
+			// 収入カテゴリは表示されない
+			expect(
+				screen.queryByTestId("top-income-category"),
+			).not.toBeInTheDocument();
 		});
 
 		test("期間比較情報が正常に表示される", () => {
@@ -239,51 +230,18 @@ describe("ExpenseStats", () => {
 		test("日本円形式で正しくフォーマットされる", () => {
 			const testStats = {
 				...mockStatsData,
-				totalIncome: 1234567,
 				totalExpense: 987654,
-				balance: 246913,
 			};
 
 			render(<ExpenseStats stats={testStats} isLoading={false} error={null} />);
 
 			// カンマ区切りの確認
-			expect(screen.getByTestId("total-income")).toHaveTextContent(
-				"￥1,234,567",
-			);
 			expect(screen.getByTestId("total-expense")).toHaveTextContent(
 				"￥987,654",
 			);
-			expect(screen.getByTestId("balance-amount")).toHaveTextContent(
-				"￥246,913",
-			);
 		});
 
-		test("負の収支が正しく表示される", () => {
-			const testStats = {
-				...mockStatsData,
-				totalIncome: 50000,
-				totalExpense: 75000,
-				balance: -25000,
-			};
-
-			render(<ExpenseStats stats={testStats} isLoading={false} error={null} />);
-
-			// 負の収支の表示確認
-			const balanceElement = screen.getByTestId("balance-amount");
-			expect(balanceElement).toHaveTextContent("-￥25,000");
-			expect(balanceElement).toHaveClass("text-red-600"); // 負の値は赤色
-		});
-
-		test("正の収支が正しく表示される", () => {
-			render(
-				<ExpenseStats stats={mockStatsData} isLoading={false} error={null} />,
-			);
-
-			// 正の収支の表示確認
-			const balanceElement = screen.getByTestId("balance-amount");
-			expect(balanceElement).toHaveTextContent("￥24,691");
-			expect(balanceElement).toHaveClass("text-green-600"); // 正の値は緑色
-		});
+		// 収支バランスの表示は削除されるため、これらのテストは不要
 	});
 
 	describe("アクセシビリティ", () => {
@@ -348,9 +306,10 @@ describe("ExpenseStats", () => {
 			expect(screen.getByTestId("top-expense-category")).toHaveTextContent(
 				"データなし",
 			);
-			expect(screen.getByTestId("top-income-category")).toHaveTextContent(
-				"データなし",
-			);
+			// 収入カテゴリは削除される
+			expect(
+				screen.queryByTestId("top-income-category"),
+			).not.toBeInTheDocument();
 		});
 	});
 
@@ -539,9 +498,7 @@ describe("ExpenseStats", () => {
 		describe("型安全性", () => {
 			test("BaseStatsDataのみの場合、拡張機能は表示されない", () => {
 				const baseStatsData = {
-					totalIncome: 100000,
 					totalExpense: 50000,
-					balance: 50000,
 					transactionCount: 10,
 				};
 
@@ -560,23 +517,22 @@ describe("ExpenseStats", () => {
 
 				// 拡張データの要素で "データなし" が表示されることを確認
 				const expenseCategory = screen.getByTestId("top-expense-category");
-				const incomeCategory = screen.getByTestId("top-income-category");
 				const monthlyComparison = screen.getByTestId("monthly-comparison");
 
 				expect(expenseCategory).toHaveTextContent("データなし");
-				expect(incomeCategory).toHaveTextContent("データなし");
 				expect(monthlyComparison).toHaveTextContent("--%");
+				// 収入カテゴリは表示されない
+				expect(
+					screen.queryByTestId("top-income-category"),
+				).not.toBeInTheDocument();
 			});
 
 			test("ExtendedStatsDataの場合、拡張機能が正しく表示される", () => {
 				const extendedStatsData = {
-					totalIncome: 100000,
 					totalExpense: 50000,
-					balance: 50000,
 					transactionCount: 10,
 					monthlyComparison: 15.5,
 					topExpenseCategory: { name: "交通費", amount: 20000 },
-					topIncomeCategory: { name: "副業", amount: 30000 },
 				};
 
 				render(
@@ -594,12 +550,10 @@ describe("ExpenseStats", () => {
 				expect(screen.getByTestId("top-expense-category")).toHaveTextContent(
 					"￥20,000",
 				);
-				expect(screen.getByTestId("top-income-category")).toHaveTextContent(
-					"副業",
-				);
-				expect(screen.getByTestId("top-income-category")).toHaveTextContent(
-					"￥30,000",
-				);
+				// 収入カテゴリは表示されない
+				expect(
+					screen.queryByTestId("top-income-category"),
+				).not.toBeInTheDocument();
 				expect(screen.getByTestId("monthly-comparison")).toHaveTextContent(
 					"+15.5%",
 				);
@@ -607,12 +561,10 @@ describe("ExpenseStats", () => {
 
 			test("部分的な拡張データでも安全に処理される", () => {
 				const partialExtendedData = {
-					totalIncome: 100000,
 					totalExpense: 50000,
-					balance: 50000,
 					transactionCount: 10,
 					monthlyComparison: 5.0, // 月次比較のみ
-					// topExpenseCategory と topIncomeCategory は未定義
+					// topExpenseCategory は未定義
 				};
 
 				render(
@@ -632,9 +584,10 @@ describe("ExpenseStats", () => {
 				expect(screen.getByTestId("top-expense-category")).toHaveTextContent(
 					"データなし",
 				);
-				expect(screen.getByTestId("top-income-category")).toHaveTextContent(
-					"データなし",
-				);
+				// 収入カテゴリは表示されない
+				expect(
+					screen.queryByTestId("top-income-category"),
+				).not.toBeInTheDocument();
 			});
 		});
 

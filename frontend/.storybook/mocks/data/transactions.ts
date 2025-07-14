@@ -22,11 +22,11 @@ export const mockTransactions: Transaction[] = [
 	},
 	{
 		id: "txn-2",
-		amount: 50000,
-		type: "income",
-		description: "月次給与",
+		amount: 5000,
+		type: "expense",
+		description: "書籍代",
 		date: "2025-07-01",
-		category: null, // 収入カテゴリは削除済み
+		category: mockCategories.find((cat) => cat.name === "その他") || null,
 		createdAt: "2025-07-01T09:00:00Z",
 		updatedAt: "2025-07-01T09:00:00Z",
 	},

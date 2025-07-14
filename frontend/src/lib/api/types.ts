@@ -58,7 +58,7 @@ export interface PaginationQuery {
 /**
  * カテゴリタイプ
  */
-export type CategoryType = "income" | "expense";
+export type CategoryType = "expense";
 
 /**
  * カテゴリ
@@ -157,7 +157,7 @@ export interface GetSubscriptionsQuery extends PaginationQuery {
 /**
  * 取引タイプ
  */
-export type TransactionType = "income" | "expense";
+export type TransactionType = "expense";
 
 /**
  * 取引
@@ -249,12 +249,10 @@ export interface SubscriptionStatsResponse {
  * 取引統計
  */
 export interface TransactionStats {
-	totalIncome: number;
 	totalExpense: number;
-	netAmount: number;
 	transactionCount: number;
-	avgTransaction: number;
-	categoryBreakdown: Array<{
+	avgTransaction?: number;
+	categoryBreakdown?: Array<{
 		categoryId: string;
 		categoryName: string;
 		type: TransactionType;
@@ -269,9 +267,7 @@ export interface TransactionStats {
 export interface MonthlyStats {
 	year: number;
 	month: number;
-	income: number;
 	expense: number;
-	net: number;
 	subscriptionCost: number;
 }
 

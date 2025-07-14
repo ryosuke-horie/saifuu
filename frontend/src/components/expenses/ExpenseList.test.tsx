@@ -33,7 +33,7 @@ describe("ExpenseList", () => {
 
 			// ヘッダー部分の表示確認
 			expect(screen.getByText("取引一覧")).toBeInTheDocument();
-			expect(screen.getByText("支出・収入の履歴")).toBeInTheDocument();
+			expect(screen.getByText("支出の履歴")).toBeInTheDocument();
 		});
 
 		it("テーブルヘッダーが正しく表示される", () => {
@@ -105,9 +105,9 @@ describe("ExpenseList", () => {
 			expect(screen.getByText("-￥1,000")).toBeInTheDocument();
 			expect(screen.getByText("昼食代（コンビニ弁当）")).toBeInTheDocument();
 
-			// 収入データの確認（正の金額表示）
-			expect(screen.getByText("+￥50,000")).toBeInTheDocument();
-			expect(screen.getByText("月次給与")).toBeInTheDocument();
+			// 別の支出データの確認
+			expect(screen.getByText("-￥5,000")).toBeInTheDocument();
+			expect(screen.getByText("書籍代")).toBeInTheDocument();
 		});
 
 		it("日付が正しくフォーマットされて表示される", () => {

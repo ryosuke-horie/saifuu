@@ -55,7 +55,7 @@ export const NewExpenseDialog: FC<NewExpenseDialogProps> = ({
 		return ALL_CATEGORIES.map((config) => ({
 			id: config.numericId.toString(), // numericIdをstring型に変換
 			name: config.name,
-			type: config.type as "income" | "expense",
+			type: config.type as "expense",
 			color: config.color || null,
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),

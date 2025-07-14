@@ -48,7 +48,6 @@ describe("ExpenseForm", () => {
 
 			// 必要なフィールドがレンダリングされていることを確認
 			expect(screen.getByLabelText(/金額（円）/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/種別/)).toBeInTheDocument();
 			expect(screen.getByLabelText(/日付/)).toBeInTheDocument();
 			expect(screen.getByLabelText(/説明/)).toBeInTheDocument();
 			expect(screen.getByLabelText(/カテゴリ/)).toBeInTheDocument();
@@ -63,8 +62,7 @@ describe("ExpenseForm", () => {
 
 			// 必須フィールドのアスタリスクが表示されていることを確認
 			expect(screen.getByLabelText(/金額（円）/)).toBeInTheDocument();
-			expect(screen.getAllByText("*")).toHaveLength(3); // 3つの必須フィールド
-			expect(screen.getByLabelText(/種別/)).toBeInTheDocument();
+			expect(screen.getAllByText("*")).toHaveLength(2); // 2つの必須フィールド
 			expect(screen.getByLabelText(/日付/)).toBeInTheDocument();
 		});
 
@@ -74,12 +72,6 @@ describe("ExpenseForm", () => {
 			expect(screen.getByDisplayValue("1000")).toBeInTheDocument();
 			expect(screen.getByDisplayValue("2025-07-09")).toBeInTheDocument();
 			expect(screen.getByDisplayValue("コンビニ弁当")).toBeInTheDocument();
-
-			// selectフィールドの値を確認
-			const typeSelect = screen.getByLabelText(
-				/種別/,
-			) as unknown as HTMLSelectElement;
-			expect(typeSelect.value).toBe("expense");
 		});
 	});
 
@@ -93,16 +85,6 @@ describe("ExpenseForm", () => {
 			await user.type(amountInput, "1500");
 
 			expect(amountInput).toHaveValue(1500);
-		});
-
-		it("種別フィールドで選択できること", async () => {
-			const user = userEvent.setup();
-			render(<ExpenseForm {...defaultProps} />);
-
-			const typeSelect = screen.getByLabelText(/種別/);
-			await user.selectOptions(typeSelect, "income");
-
-			expect(typeSelect).toHaveValue("income");
 		});
 
 		it("日付フィールドに値を入力できること", async () => {
@@ -130,10 +112,6 @@ describe("ExpenseForm", () => {
 		it("カテゴリフィールドで選択できること", async () => {
 			const user = userEvent.setup();
 			render(<ExpenseForm {...defaultProps} />);
-
-			// 種別を選択してからカテゴリを選択
-			const typeSelect = screen.getByLabelText(/種別/);
-			await user.selectOptions(typeSelect, "expense");
 
 			const categorySelect = screen.getByLabelText(/カテゴリ/);
 			await user.selectOptions(categorySelect, "3");
@@ -193,30 +171,12 @@ describe("ExpenseForm", () => {
 			});
 		});
 
-		it("種別が選択されていない場合、エラーメッセージが表示されること", async () => {
-			const user = userEvent.setup();
-			render(<ExpenseForm {...defaultProps} />);
-
-			const amountInput = screen.getByLabelText(/金額（円）/);
-			await user.type(amountInput, "1000");
-
-			const submitButton = screen.getByRole("button", { name: "登録" });
-			await user.click(submitButton);
-
-			await waitFor(() => {
-				expect(screen.getByText("種別は必須です")).toBeInTheDocument();
-			});
-		});
-
 		it("日付が空の場合、エラーメッセージが表示されること", async () => {
 			const user = userEvent.setup();
 			render(<ExpenseForm {...defaultProps} />);
 
 			const amountInput = screen.getByLabelText(/金額（円）/);
 			await user.type(amountInput, "1000");
-
-			const typeSelect = screen.getByLabelText(/種別/);
-			await user.selectOptions(typeSelect, "expense");
 
 			const submitButton = screen.getByRole("button", { name: "登録" });
 			await user.click(submitButton);
@@ -234,7 +194,6 @@ describe("ExpenseForm", () => {
 
 			// フォームに有効なデータを入力
 			await user.type(screen.getByLabelText(/金額（円）/), "1000");
-			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
 			await user.type(screen.getByLabelText(/日付/), "2025-07-09");
 			await user.type(screen.getByLabelText(/説明/), "テスト説明");
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "3");
@@ -294,10 +253,6 @@ describe("ExpenseForm", () => {
 				"aria-required",
 				"true",
 			);
-			expect(screen.getByLabelText(/種別/)).toHaveAttribute(
-				"aria-required",
-				"true",
-			);
 			expect(screen.getByLabelText(/日付/)).toHaveAttribute("required");
 		});
 
@@ -317,51 +272,24 @@ describe("ExpenseForm", () => {
 	});
 
 	describe("カテゴリ選択の高度な動作", () => {
-		it("種別を変更した場合、選択可能なカテゴリが更新されること", async () => {
-			const user = userEvent.setup();
+		it("支出カテゴリのみ選択可能であること", async () => {
+			const _user = userEvent.setup();
 			render(<ExpenseForm {...defaultProps} />);
-
-			// 最初に支出を選択
-			const typeSelect = screen.getByLabelText(/種別/);
-			await user.selectOptions(typeSelect, "expense");
 
 			// 支出カテゴリが選択可能であることを確認
 			const categorySelect = screen.getByLabelText(/カテゴリ/);
 			const expenseOptions = categorySelect.querySelectorAll(
 				'option:not([value=""])', // 空のオプションを除外
 			);
+
+			// 支出カテゴリのみが存在することを確認
 			expect(expenseOptions.length).toBeGreaterThan(0);
 
-			// 収入に変更
-			await user.selectOptions(typeSelect, "income");
-
-			// カテゴリリストが更新されることを確認
-			await waitFor(() => {
-				const incomeOptions = categorySelect.querySelectorAll("option");
-				expect(incomeOptions.length).toBeGreaterThan(0);
-			});
-		});
-
-		// 削除: 種別未選択時のカテゴリ無効化は実装されていない
-
-		it("カテゴリが選択された状態で種別を変更した場合、カテゴリ選択がリセットされること", async () => {
-			const user = userEvent.setup();
-			render(<ExpenseForm {...defaultProps} />);
-
-			// 支出とカテゴリを選択
-			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
-			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "3");
-
-			// カテゴリが選択されていることを確認
-			expect(screen.getByLabelText(/カテゴリ/)).toHaveValue("3");
-
-			// 種別を収入に変更
-			await user.selectOptions(screen.getByLabelText(/種別/), "income");
-
-			// カテゴリがリセットされることを確認
-			await waitFor(() => {
-				expect(screen.getByLabelText(/カテゴリ/)).toHaveValue("");
-			});
+			// すべてのカテゴリが支出タイプであることを確認
+			const expenseCategories = mockCategories.filter(
+				(cat) => cat.type === "expense",
+			);
+			expect(expenseOptions.length).toBe(expenseCategories.length);
 		});
 	});
 
@@ -408,7 +336,6 @@ describe("ExpenseForm", () => {
 
 			// フォームに入力
 			await user.type(screen.getByLabelText(/金額（円）/), "1000");
-			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
 			await user.type(screen.getByLabelText(/説明/), "テスト");
 
 			// キャンセル
@@ -419,7 +346,6 @@ describe("ExpenseForm", () => {
 
 			// フォームの値が保持されていることを確認（親コンポーネントが閉じない場合）
 			expect(screen.getByLabelText(/金額（円）/)).toHaveValue(1000);
-			expect(screen.getByLabelText(/種別/)).toHaveValue("expense");
 			expect(screen.getByLabelText(/説明/)).toHaveValue("テスト");
 		});
 	});
@@ -432,7 +358,6 @@ describe("ExpenseForm", () => {
 
 			// フォームに入力
 			await user.type(screen.getByLabelText(/金額（円）/), "1000");
-			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
 			await user.type(screen.getByLabelText(/日付/), "2025-07-09");
 			await user.type(screen.getByLabelText(/説明/), longDescription);
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "3");
@@ -457,7 +382,6 @@ describe("ExpenseForm", () => {
 
 			// フォームに入力
 			await user.type(screen.getByLabelText(/金額（円）/), "1000");
-			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
 			await user.type(screen.getByLabelText(/日付/), "2025-07-09");
 			await user.type(screen.getByLabelText(/説明/), specialDescription);
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "3");
@@ -499,7 +423,6 @@ describe("ExpenseForm", () => {
 
 			// フォームに入力
 			await user.type(screen.getByLabelText(/金額（円）/), "1000000");
-			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
 			await user.type(screen.getByLabelText(/日付/), "2025-07-09");
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "3");
 

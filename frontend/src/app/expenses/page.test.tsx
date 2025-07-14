@@ -130,9 +130,9 @@ const mockExpenses = [
 	{
 		id: "2",
 		amount: 5000,
-		description: "給料",
+		description: "書籍代",
 		date: "2024-01-02",
-		type: "income" as const,
+		type: "expense" as const,
 		category: null,
 		createdAt: "2024-01-02T00:00:00.000Z",
 		updatedAt: "2024-01-02T00:00:00.000Z",
@@ -187,7 +187,7 @@ describe("ExpensesPage", () => {
 	describe("初期表示", () => {
 		it("ページタイトルが表示される", () => {
 			render(<ExpensesPage />);
-			expect(screen.getByText("支出・収入管理")).toBeInTheDocument();
+			expect(screen.getByText("支出管理")).toBeInTheDocument();
 		});
 
 		it("新規登録ボタンが表示される", () => {
@@ -197,12 +197,10 @@ describe("ExpensesPage", () => {
 
 		it("統計情報が正しく計算される", () => {
 			render(<ExpensesPage />);
-			// 支出合計: 1000円
-			expect(screen.getByText("¥1,000")).toBeInTheDocument();
-			// 収入合計: 5000円
-			expect(screen.getByText("¥5,000")).toBeInTheDocument();
-			// 収支バランス: +4000円
-			expect(screen.getByText("+¥4,000")).toBeInTheDocument();
+			// 支出合計: 1000円 + 5000円 = 6000円
+			expect(screen.getByText("¥6,000")).toBeInTheDocument();
+			// 取引件数: 2件
+			expect(screen.getByText("2件")).toBeInTheDocument();
 		});
 	});
 
@@ -215,7 +213,7 @@ describe("ExpensesPage", () => {
 			render(<ExpensesPage />);
 
 			const loadingMessages = screen.getAllByText("読み込み中...");
-			expect(loadingMessages).toHaveLength(4); // 支出、収入、収支、リスト
+			expect(loadingMessages).toHaveLength(3); // 支出統計、取引件数、リスト
 		});
 	});
 
@@ -346,14 +344,13 @@ describe("ExpensesPage", () => {
 			});
 			render(<ExpensesPage />);
 
-			// 支出合計と収入合計の2つの¥0が表示される
+			// 支出合計の¥0が表示される
 			const zeroValues = screen.getAllByText("¥0");
-			expect(zeroValues).toHaveLength(2);
-			// 収支バランスは+¥0と表示される
-			expect(screen.getByText("+¥0")).toBeInTheDocument();
+			expect(zeroValues).toHaveLength(1);
+			// 収支バランスは削除されました
 		});
 
-		it("収支がマイナスの場合は赤色で表示される", () => {
+		it("支出合計が表示される", () => {
 			mockUseExpenses.mockReturnValue({
 				...defaultMockReturn,
 				expenses: [
@@ -365,8 +362,8 @@ describe("ExpensesPage", () => {
 			});
 			render(<ExpensesPage />);
 
-			const balance = screen.getByText("¥-10,000");
-			expect(balance.className).toContain("text-red-600");
+			const expense = screen.getByText("¥10,000");
+			expect(expense.className).toContain("text-red-600");
 		});
 	});
 });

@@ -31,7 +31,6 @@ const PERIOD_OPTIONS: Array<{ value: PeriodType | ""; label: string }> = [
  */
 const TYPE_OPTIONS = [
 	{ value: "", label: "すべて" },
-	{ value: "income", label: "収入のみ" },
 	{ value: "expense", label: "支出のみ" },
 ];
 
@@ -44,7 +43,7 @@ const parseFiltersFromURL = (
 	const filters: ExpenseFiltersState = {};
 
 	const type = searchParams.get("type");
-	if (type === "income" || type === "expense") {
+	if (type === "expense") {
 		filters.type = type;
 	}
 

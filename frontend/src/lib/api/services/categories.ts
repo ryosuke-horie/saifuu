@@ -74,12 +74,7 @@ export async function deleteCategory(id: string): Promise<DeleteResponse> {
 	return apiClient.delete<DeleteResponse>(endpoint);
 }
 
-/**
- * 収入カテゴリのみを取得する
- */
-export async function getIncomeCategories(): Promise<Category[]> {
-	return getCategories({ type: "income" });
-}
+// 収入カテゴリは廃止されました。支出カテゴリのみを使用してください。
 
 /**
  * 支出カテゴリのみを取得する
@@ -104,18 +99,7 @@ export async function createDefaultCategories(): Promise<Category[]> {
 		{ name: "その他", type: "expense", color: "#A8E6CF" },
 	];
 
-	// デフォルトの収入カテゴリ
-	const defaultIncomeCategories: CreateCategoryRequest[] = [
-		{ name: "給与", type: "income", color: "#54A0FF" },
-		{ name: "副業", type: "income", color: "#5F27CD" },
-		{ name: "ボーナス", type: "income", color: "#00D2D3" },
-		{ name: "その他", type: "income", color: "#1DD1A1" },
-	];
-
-	const allCategories = [
-		...defaultExpenseCategories,
-		...defaultIncomeCategories,
-	];
+	const allCategories = defaultExpenseCategories;
 
 	// 並列で作成
 	const createdCategories = await Promise.all(
@@ -149,7 +133,7 @@ export const categoryService = {
 	createCategory,
 	updateCategory,
 	deleteCategory,
-	getIncomeCategories,
+	// getIncomeCategories は廃止されました
 	getExpenseCategories,
 	createDefaultCategories,
 	checkCategoryUsage,

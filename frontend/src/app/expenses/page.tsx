@@ -1,14 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
 	DeleteConfirmDialog,
 	ExpenseList,
 	NewExpenseButton,
 	NewExpenseDialog,
 } from "../../components/expenses";
+import { ErrorAlert } from "../../components/ui/ErrorAlert";
 import { useCategories, useExpenses } from "../../hooks";
+import { useExpenseStats } from "../../hooks/useExpenseStats";
 import type { ExpenseFormData } from "../../types/expense";
+import { formatCurrency, formatTransactionCount } from "../../utils/format";
 
 /**
  * 支出管理メインページ
@@ -80,32 +83,8 @@ export default function ExpensesPage() {
 		setDeleteTarget(null);
 	};
 
-	// 統計情報の計算
-	const stats = useMemo(() => {
-		if (loading || !expenses) {
-			return {
-				totalExpenses: 0,
-				totalIncome: 0,
-				balance: 0,
-				transactionCount: expenses?.length ?? 0,
-			};
-		}
-
-		const totalExpenses = expenses
-			.filter((t) => t.type === "expense")
-			.reduce((sum, t) => sum + t.amount, 0);
-
-		const totalIncome = expenses
-			.filter((t) => t.type === "income")
-			.reduce((sum, t) => sum + t.amount, 0);
-
-		return {
-			totalExpenses,
-			totalIncome,
-			balance: totalIncome - totalExpenses,
-			transactionCount: expenses.length,
-		};
-	}, [expenses, loading]);
+	// 統計情報の計算（カスタムフックに委譲）
+	const stats = useExpenseStats(expenses, loading);
 
 	return (
 		<div className="min-h-screen bg-gray-50">
@@ -113,7 +92,7 @@ export default function ExpensesPage() {
 				{/* ページヘッダー */}
 				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
 					<div className="mb-4 sm:mb-0">
-						<h1 className="text-2xl font-bold text-gray-900">支出・収入管理</h1>
+						<h1 className="text-2xl font-bold text-gray-900">支出管理</h1>
 					</div>
 					<div className="flex-shrink-0">
 						<NewExpenseButton
@@ -124,7 +103,7 @@ export default function ExpensesPage() {
 				</div>
 
 				{/* 統計情報カード */}
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
 					{/* 支出合計 */}
 					<div className="bg-white overflow-hidden shadow rounded-lg">
 						<div className="p-5">
@@ -141,7 +120,7 @@ export default function ExpensesPage() {
 											{loading ? (
 												<span className="text-gray-400">読み込み中...</span>
 											) : (
-												`¥${stats.totalExpenses.toLocaleString()}`
+												formatCurrency(stats.totalExpense)
 											)}
 										</dd>
 									</dl>
@@ -150,52 +129,23 @@ export default function ExpensesPage() {
 						</div>
 					</div>
 
-					{/* 収入合計 */}
+					{/* 取引件数 */}
 					<div className="bg-white overflow-hidden shadow rounded-lg">
 						<div className="p-5">
 							<div className="flex items-center">
 								<div className="flex-shrink-0">
-									<span className="text-2xl">💰</span>
+									<span className="text-2xl">📊</span>
 								</div>
 								<div className="ml-5 w-0 flex-1">
 									<dl>
 										<dt className="text-sm font-medium text-gray-500 truncate">
-											収入合計
+											取引件数
 										</dt>
-										<dd className="text-lg font-semibold text-green-600">
+										<dd className="text-lg font-semibold text-gray-900">
 											{loading ? (
 												<span className="text-gray-400">読み込み中...</span>
 											) : (
-												`¥${stats.totalIncome.toLocaleString()}`
-											)}
-										</dd>
-									</dl>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					{/* 収支バランス */}
-					<div className="bg-white overflow-hidden shadow rounded-lg">
-						<div className="p-5">
-							<div className="flex items-center">
-								<div className="flex-shrink-0">
-									<span className="text-2xl">💹</span>
-								</div>
-								<div className="ml-5 w-0 flex-1">
-									<dl>
-										<dt className="text-sm font-medium text-gray-500 truncate">
-											収支バランス
-										</dt>
-										<dd
-											className={`text-lg font-semibold ${
-												stats.balance >= 0 ? "text-green-600" : "text-red-600"
-											}`}
-										>
-											{loading ? (
-												<span className="text-gray-400">読み込み中...</span>
-											) : (
-												`${stats.balance >= 0 ? "+" : ""}¥${stats.balance.toLocaleString()}`
+												formatTransactionCount(stats.transactionCount)
 											)}
 										</dd>
 									</dl>
@@ -207,29 +157,8 @@ export default function ExpensesPage() {
 
 				{/* エラー表示 */}
 				{error && (
-					<div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-						<div className="flex">
-							<div className="flex-shrink-0">
-								<span className="text-red-400">⚠️</span>
-							</div>
-							<div className="ml-3">
-								<h3 className="text-sm font-medium text-red-800">
-									エラーが発生しました
-								</h3>
-								<div className="mt-2 text-sm text-red-700">
-									<p>{error}</p>
-								</div>
-								<div className="mt-4">
-									<button
-										type="button"
-										onClick={refetch}
-										className="text-sm font-medium text-red-800 hover:text-red-700"
-									>
-										再読み込み
-									</button>
-								</div>
-							</div>
-						</div>
+					<div className="mb-6">
+						<ErrorAlert message={error} onRetry={refetch} />
 					</div>
 				)}
 

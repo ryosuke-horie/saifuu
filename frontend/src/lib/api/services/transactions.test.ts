@@ -29,7 +29,7 @@ import {
 	getCurrentMonthTransactions,
 	getCurrentYearTransactions,
 	getExpenseTransactions,
-	getIncomeTransactions,
+	// getIncomeTransactions は廃止されました
 	getLargeTransactions,
 	getLastMonthTransactions,
 	getMonthlyStats,
@@ -84,16 +84,16 @@ const mockTransaction: Transaction = {
 	updatedAt: "2024-07-15T12:00:00Z",
 };
 
-const mockIncomeTransaction: Transaction = {
+const mockHighExpenseTransaction: Transaction = {
 	id: "txn2",
-	amount: 250000,
-	type: "income",
+	amount: 50000,
+	type: "expense",
 	date: "2024-07-01",
-	description: "給与",
+	description: "家賃",
 	category: {
 		id: "cat2",
-		name: "給与",
-		type: "income",
+		name: "家賃",
+		type: "expense",
 		color: "#4ECDC4",
 		createdAt: "2024-01-01T00:00:00Z",
 		updatedAt: "2024-01-01T00:00:00Z",
@@ -104,7 +104,7 @@ const mockIncomeTransaction: Transaction = {
 
 const mockTransactions: Transaction[] = [
 	mockTransaction,
-	mockIncomeTransaction,
+	mockHighExpenseTransaction,
 ];
 
 const mockCreateRequest: CreateTransactionRequest = {
@@ -121,24 +121,22 @@ const mockUpdateRequest: UpdateTransactionRequest = {
 };
 
 const mockStats: TransactionStats = {
-	totalIncome: 250000,
-	totalExpense: 50000,
-	netAmount: 200000,
+	totalExpense: 53000,
 	transactionCount: 11,
-	avgTransaction: 27272,
+	avgTransaction: 4818,
 	categoryBreakdown: [
 		{
 			categoryId: "cat1",
 			categoryName: "食費",
 			type: "expense",
-			totalAmount: 30000,
+			totalAmount: 3000,
 			count: 10,
 		},
 		{
 			categoryId: "cat2",
-			categoryName: "給与",
-			type: "income",
-			totalAmount: 250000,
+			categoryName: "家賃",
+			type: "expense",
+			totalAmount: 50000,
 			count: 1,
 		},
 	],
@@ -148,17 +146,13 @@ const mockMonthlyStats: MonthlyStats[] = [
 	{
 		year: 2024,
 		month: 6,
-		income: 230000,
 		expense: 45000,
-		net: 185000,
 		subscriptionCost: 0,
 	},
 	{
 		year: 2024,
 		month: 7,
-		income: 250000,
 		expense: 50000,
-		net: 200000,
 		subscriptionCost: 0,
 	},
 ];
@@ -344,39 +338,13 @@ describe("transactions service", () => {
 		});
 	});
 
-	describe("収入・支出フィルター関数", () => {
+	describe("支出フィルター関数", () => {
 		beforeEach(() => {
 			vi.mocked(mockApiClient.get).mockImplementation((endpoint: string) => {
-				if (endpoint.includes("type=income")) {
-					return Promise.resolve([mockIncomeTransaction]);
-				}
 				if (endpoint.includes("type=expense")) {
 					return Promise.resolve([mockTransaction]);
 				}
 				return Promise.resolve(mockTransactions);
-			});
-		});
-
-		describe("getIncomeTransactions", () => {
-			it("収入取引のみを取得する", async () => {
-				const result = await getIncomeTransactions();
-
-				expect(result).toEqual([mockIncomeTransaction]);
-				expect(mockApiClient.get).toHaveBeenCalledWith(
-					expect.stringContaining("type=income"),
-				);
-			});
-
-			it("追加のクエリパラメータを適用できる", async () => {
-				const result = await getIncomeTransactions({ categoryId: "cat2" });
-
-				expect(result).toEqual([mockIncomeTransaction]);
-				expect(mockApiClient.get).toHaveBeenCalledWith(
-					expect.stringContaining("type=income"),
-				);
-				expect(mockApiClient.get).toHaveBeenCalledWith(
-					expect.stringContaining("categoryId=cat2"),
-				);
 			});
 		});
 
@@ -591,11 +559,11 @@ describe("transactions service", () => {
 
 		describe("getLargeTransactions", () => {
 			it("指定金額以上の取引を取得する", async () => {
-				mockApiClient.get.mockResolvedValue([mockIncomeTransaction]);
+				mockApiClient.get.mockResolvedValue([mockHighExpenseTransaction]);
 
 				const result = await getLargeTransactions(100000);
 
-				expect(result).toEqual([mockIncomeTransaction]);
+				expect(result).toEqual([mockHighExpenseTransaction]);
 				expect(mockApiClient.get).toHaveBeenCalledWith(
 					expect.stringContaining("/transactions/large"),
 				);
@@ -605,16 +573,16 @@ describe("transactions service", () => {
 			});
 
 			it("タイプを指定して大きな金額の取引を取得する", async () => {
-				mockApiClient.get.mockResolvedValue([mockIncomeTransaction]);
+				mockApiClient.get.mockResolvedValue([mockHighExpenseTransaction]);
 
-				const result = await getLargeTransactions(100000, "income");
+				const result = await getLargeTransactions(10000, "expense");
 
-				expect(result).toEqual([mockIncomeTransaction]);
+				expect(result).toEqual([mockHighExpenseTransaction]);
 				expect(mockApiClient.get).toHaveBeenCalledWith(
-					expect.stringContaining("type=income"),
+					expect.stringContaining("type=expense"),
 				);
 				expect(mockApiClient.get).toHaveBeenCalledWith(
-					expect.stringContaining("threshold=100000"),
+					expect.stringContaining("threshold=10000"),
 				);
 			});
 		});
@@ -697,9 +665,7 @@ describe("transactions service", () => {
 			expect(transactionService.updateTransaction).toBe(updateTransaction);
 			expect(transactionService.deleteTransaction).toBe(deleteTransaction);
 			expect(transactionService.getTransactionStats).toBe(getTransactionStats);
-			expect(transactionService.getIncomeTransactions).toBe(
-				getIncomeTransactions,
-			);
+			// getIncomeTransactions は廃止されました
 			expect(transactionService.getExpenseTransactions).toBe(
 				getExpenseTransactions,
 			);

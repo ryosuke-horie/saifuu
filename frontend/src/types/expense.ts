@@ -20,9 +20,9 @@ export interface ExpenseFormData {
 	amount: number;
 
 	/**
-	 * 取引種別（収入または支出）
+	 * 取引種別（常に支出）
 	 */
-	type: TransactionType | null;
+	type: TransactionType;
 
 	/**
 	 * 説明・メモ（オプション）
