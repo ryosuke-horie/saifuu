@@ -70,7 +70,7 @@ describe('Categories API - Integration Tests', () => {
 			const data = await getResponseJson(response)
 
 			// Issue #282で追加されたカテゴリを確認
-			const systemFee = data.find((cat: { name: string }) => cat.name === 'システム関係日')
+			const systemFee = data.find((cat: { name: string }) => cat.name === 'システム関係費')
 			expect(systemFee).toBeDefined()
 			expect(systemFee.id).toBe(6)
 			expect(systemFee.type).toBe('expense')
@@ -149,8 +149,8 @@ describe('Categories API - Integration Tests', () => {
 			const expenseCategories = data.filter((cat: { type: string }) => cat.type === 'expense')
 			const incomeCategories = data.filter((cat: { type: string }) => cat.type === 'income')
 
-			expect(expenseCategories.length).toBe(12)
-			expect(incomeCategories.length).toBe(5)
+			expect(expenseCategories.length).toBe(10) // 削除・変更済み
+			expect(incomeCategories.length).toBe(0) // 収入カテゴリは削除済み
 		})
 
 		it('should maintain consistent order from config', async () => {

@@ -25,9 +25,9 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 	describe('Category Reference Integrity', () => {
 		it('should create subscription with valid category ID from config', async () => {
 			// 設定ファイルから既存のカテゴリIDを使用
-			const entertainmentCategory = ALL_CATEGORIES.find((cat) => cat.id === 'entertainment')
-			expect(entertainmentCategory).toBeDefined()
-			const categoryId = entertainmentCategory!.numericId
+			const systemFeeCategory = ALL_CATEGORIES.find((cat) => cat.id === 'system_fee')
+			expect(systemFeeCategory).toBeDefined()
+			const categoryId = systemFeeCategory!.numericId
 
 			// 既存のカテゴリIDを使用してサブスクリプションを作成
 			const subscription = {
