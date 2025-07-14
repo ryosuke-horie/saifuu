@@ -4,22 +4,27 @@
 このディレクトリには、Saifuuプロジェクトのすべての技術ドキュメントが含まれています。
 
 ## 📚 開発環境
-<!-- tags: setup, environment, troubleshooting, database, seed -->
+<!-- tags: setup, environment, troubleshooting -->
 
 - [開発環境エラー修正プラン](./開発環境/開発環境エラー修正プラン.md) - 開発環境のトラブルシューティング
 - [環境変数設定ガイド](./開発環境/環境変数設定ガイド.md) - 環境変数の設定方法
-- [シード処理ガイド](./開発環境/シード処理ガイド.md) - データベースシード処理の実装方法
 - [ghost使用ガイド](./開発環境/ghost使用ガイド.md) - バックグラウンドプロセス管理ツールの使用方法
 
 ## 🔌 API開発
-<!-- tags: api, backend, hono, cloudflare, d1, database, logger, migration -->
+<!-- tags: api, backend, hono, cloudflare, logger -->
 
 - [API開発README](./API開発/README.md) - API開発の概要
 - [APIセットアップ](./API開発/setup.md) - APIの初期設定
 - [テスト環境セットアップ](./API開発/test-environment-setup.md) - APIテスト環境の構築
 - [エンドポイント検証](./API開発/endpoint-verification.md) - APIエンドポイントの検証方法
-- [D1マイグレーション戦略](./API開発/d1-migration-strategy.md) - Cloudflare D1へのマイグレーション戦略
-- [D1マイグレーション成功](./API開発/d1-migration-success.md) - D1マイグレーションの成功事例
+
+## 🗄️ データベース
+<!-- tags: database, d1, migration, seed, cloudflare -->
+
+- [カテゴリマイグレーションガイド](./データベース/カテゴリマイグレーションガイド.md) - カテゴリ管理のマイグレーション手順
+- [シード処理ガイド](./データベース/シード処理ガイド.md) - データベースシード処理の実装方法
+- [D1マイグレーション戦略](./データベース/d1-migration-strategy.md) - Cloudflare D1へのマイグレーション戦略
+- [D1マイグレーション成功](./データベース/d1-migration-success.md) - D1マイグレーションの成功事例
 
 ## 📊 ロギング
 <!-- tags: logging, logger, monitoring, api-logger, frontend-logger -->
