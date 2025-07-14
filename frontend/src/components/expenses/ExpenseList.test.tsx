@@ -133,8 +133,8 @@ describe("ExpenseList", () => {
 				/>,
 			);
 
-			expect(screen.getByText("給与")).toBeInTheDocument();
-			expect(screen.getByText("エンターテイメント")).toBeInTheDocument();
+			expect(screen.getAllByText("その他").length).toBeGreaterThan(0);
+			expect(screen.getByText("仕事・ビジネス")).toBeInTheDocument();
 		});
 	});
 

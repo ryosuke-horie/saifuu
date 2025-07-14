@@ -35,7 +35,7 @@ describe("ExpenseForm", () => {
 		type: "expense",
 		date: "2025-07-09",
 		description: "コンビニ弁当",
-		categoryId: "cat-1",
+		categoryId: "3", // 食費
 	};
 
 	beforeEach(() => {
@@ -62,10 +62,10 @@ describe("ExpenseForm", () => {
 			render(<ExpenseForm {...defaultProps} />);
 
 			// 必須フィールドのアスタリスクが表示されていることを確認
-			expect(screen.getByText(/金額（円）/)).toBeInTheDocument();
+			expect(screen.getByLabelText(/金額（円）/)).toBeInTheDocument();
 			expect(screen.getAllByText("*")).toHaveLength(3); // 3つの必須フィールド
-			expect(screen.getByText(/種別/)).toBeInTheDocument();
-			expect(screen.getByText(/日付/)).toBeInTheDocument();
+			expect(screen.getByLabelText(/種別/)).toBeInTheDocument();
+			expect(screen.getByLabelText(/日付/)).toBeInTheDocument();
 		});
 
 		it("初期データが設定されている場合、フォームフィールドに値が表示されること", () => {
@@ -136,9 +136,9 @@ describe("ExpenseForm", () => {
 			await user.selectOptions(typeSelect, "expense");
 
 			const categorySelect = screen.getByLabelText(/カテゴリ/);
-			await user.selectOptions(categorySelect, "cat-1");
+			await user.selectOptions(categorySelect, "3");
 
-			expect(categorySelect).toHaveValue("cat-1");
+			expect(categorySelect).toHaveValue("3");
 		});
 	});
 
@@ -237,7 +237,7 @@ describe("ExpenseForm", () => {
 			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
 			await user.type(screen.getByLabelText(/日付/), "2025-07-09");
 			await user.type(screen.getByLabelText(/説明/), "テスト説明");
-			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "cat-1");
+			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "3");
 
 			// 送信ボタンをクリック
 			const submitButton = screen.getByRole("button", { name: "登録" });
@@ -250,7 +250,7 @@ describe("ExpenseForm", () => {
 					type: "expense",
 					date: "2025-07-09",
 					description: "テスト説明",
-					categoryId: "cat-1",
+					categoryId: "3", // 食費
 				});
 			});
 		});
@@ -328,7 +328,7 @@ describe("ExpenseForm", () => {
 			// 支出カテゴリが選択可能であることを確認
 			const categorySelect = screen.getByLabelText(/カテゴリ/);
 			const expenseOptions = categorySelect.querySelectorAll(
-				'option[value^="cat-"]',
+				'option:not([value=""])', // 空のオプションを除外
 			);
 			expect(expenseOptions.length).toBeGreaterThan(0);
 
@@ -350,10 +350,10 @@ describe("ExpenseForm", () => {
 
 			// 支出とカテゴリを選択
 			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
-			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "cat-1");
+			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "3");
 
 			// カテゴリが選択されていることを確認
-			expect(screen.getByLabelText(/カテゴリ/)).toHaveValue("cat-1");
+			expect(screen.getByLabelText(/カテゴリ/)).toHaveValue("3");
 
 			// 種別を収入に変更
 			await user.selectOptions(screen.getByLabelText(/種別/), "income");
@@ -435,7 +435,7 @@ describe("ExpenseForm", () => {
 			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
 			await user.type(screen.getByLabelText(/日付/), "2025-07-09");
 			await user.type(screen.getByLabelText(/説明/), longDescription);
-			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "cat-1");
+			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "3");
 
 			// 送信
 			await user.click(screen.getByRole("button", { name: "登録" }));
@@ -460,7 +460,7 @@ describe("ExpenseForm", () => {
 			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
 			await user.type(screen.getByLabelText(/日付/), "2025-07-09");
 			await user.type(screen.getByLabelText(/説明/), specialDescription);
-			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "cat-1");
+			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "3");
 
 			// 送信
 			await user.click(screen.getByRole("button", { name: "登録" }));
@@ -501,7 +501,7 @@ describe("ExpenseForm", () => {
 			await user.type(screen.getByLabelText(/金額（円）/), "1000000");
 			await user.selectOptions(screen.getByLabelText(/種別/), "expense");
 			await user.type(screen.getByLabelText(/日付/), "2025-07-09");
-			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "cat-1");
+			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "3");
 
 			// 送信
 			await user.click(screen.getByRole("button", { name: "登録" }));

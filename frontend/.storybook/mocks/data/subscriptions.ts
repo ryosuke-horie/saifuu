@@ -9,7 +9,7 @@ export const mockSubscriptions: Subscription[] = [
 		amount: 1480,
 		billingCycle: "monthly" as const,
 		nextBillingDate: "2025-07-01",
-		category: mockCategories[0], // エンターテイメント
+		category: mockCategories[3], // その他
 		isActive: true,
 		description: "動画ストリーミングサービス",
 		createdAt: "2025-01-01T00:00:00Z",
@@ -21,7 +21,7 @@ export const mockSubscriptions: Subscription[] = [
 		amount: 980,
 		billingCycle: "monthly" as const,
 		nextBillingDate: "2025-07-15",
-		category: mockCategories[0], // エンターテイメント
+		category: mockCategories[3], // その他
 		isActive: true,
 		description: "音楽ストリーミングサービス",
 		createdAt: "2025-01-02T00:00:00Z",

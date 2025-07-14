@@ -25,6 +25,71 @@ vi.mock("@shared/config/categories", () => ({
 			color: "#00FF00",
 		},
 	]),
+	ALL_CATEGORIES: [
+		{
+			id: "utilities",
+			numericId: 1,
+			name: "家賃・水道・光熱・通信費",
+			type: "expense",
+			color: "#D35400",
+		},
+		{
+			id: "food",
+			numericId: 3,
+			name: "食費",
+			type: "expense",
+			color: "#FF6B6B",
+		},
+		{
+			id: "transportation",
+			numericId: 4,
+			name: "交通費",
+			type: "expense",
+			color: "#3498DB",
+		},
+		{
+			id: "business",
+			numericId: 5,
+			name: "仕事・ビジネス",
+			type: "expense",
+			color: "#8E44AD",
+		},
+		{
+			id: "system_fee",
+			numericId: 6,
+			name: "システム関係費",
+			type: "expense",
+			color: "#9B59B6",
+		},
+		{
+			id: "books",
+			numericId: 8,
+			name: "書籍代",
+			type: "expense",
+			color: "#1E8BC3",
+		},
+		{
+			id: "health",
+			numericId: 10,
+			name: "健康・フィットネス",
+			type: "expense",
+			color: "#96CEB4",
+		},
+		{
+			id: "shopping",
+			numericId: 11,
+			name: "買い物",
+			type: "expense",
+			color: "#F39C12",
+		},
+		{
+			id: "other_expense",
+			numericId: 12,
+			name: "その他",
+			type: "expense",
+			color: "#FFEAA7",
+		},
+	],
 }));
 
 // UIコンポーネントのモック
@@ -153,7 +218,7 @@ describe("NewExpenseDialog", () => {
 				/>,
 			);
 
-			expect(screen.getByTestId("categories-count")).toHaveTextContent("2");
+			expect(screen.getByTestId("categories-count")).toHaveTextContent("9");
 		});
 
 		it("空のカテゴリ配列が提供された場合、グローバル設定を使用する", () => {
@@ -166,7 +231,7 @@ describe("NewExpenseDialog", () => {
 				/>,
 			);
 
-			expect(screen.getByTestId("categories-count")).toHaveTextContent("2");
+			expect(screen.getByTestId("categories-count")).toHaveTextContent("9");
 		});
 	});
 
