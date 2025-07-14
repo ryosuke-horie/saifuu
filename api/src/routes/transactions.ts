@@ -1,9 +1,38 @@
-import { eq } from 'drizzle-orm'
+import { and, eq, gte, lte } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { ALL_CATEGORIES } from '../../../shared/config/categories'
 import { type AnyDatabase, type Env } from '../db'
 import { type NewTransaction, transactions } from '../db/schema'
 import { type LoggingVariables, logWithContext } from '../middleware/logging'
+
+/**
+ * 取引データのバリデーション関数
+ * 作成時と更新時で共通利用
+ */
+function validateTransactionData(data: Partial<NewTransaction>): string | null {
+	// 金額のバリデーション
+	if (data.amount !== undefined) {
+		if (typeof data.amount !== 'number' || data.amount <= 0) {
+			return 'Amount must be a positive number'
+		}
+		// 金額の上限チェック（1000万円）
+		if (data.amount > 10000000) {
+			return 'Amount must not exceed 10,000,000'
+		}
+	}
+
+	// 取引種別のバリデーション
+	if (data.type !== undefined && !['income', 'expense'].includes(data.type)) {
+		return 'Type must be either "income" or "expense"'
+	}
+
+	// 説明文の文字数チェック（最大500文字）
+	if (data.description !== undefined && data.description && data.description.length > 500) {
+		return 'Description must not exceed 500 characters'
+	}
+
+	return null
+}
 
 /**
  * 取引APIのファクトリ関数
@@ -21,19 +50,59 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 	/**
 	 * 取引一覧を取得するエンドポイント
 	 * @route GET /api/transactions
+	 * @query {string} [type] - 取引タイプでフィルタ（income/expense）
+	 * @query {number} [categoryId] - カテゴリIDでフィルタ
+	 * @query {string} [startDate] - 開始日でフィルタ（YYYY-MM-DD）
+	 * @query {string} [endDate] - 終了日でフィルタ（YYYY-MM-DD）
+	 * @query {number} [limit] - 取得件数の制限
+	 * @query {number} [offset] - 取得開始位置
 	 * @returns {Array<Transaction>} カテゴリ情報を含む取引一覧
 	 * @throws {500} データベースエラー
 	 */
 	app.get('/', async (c) => {
+		// クエリパラメータを取得
+		const query = c.req.query()
+		const type = query.type as 'income' | 'expense' | undefined
+		const categoryId = query.categoryId ? Number.parseInt(query.categoryId) : undefined
+		const startDate = query.startDate
+		const endDate = query.endDate
+		const limit = query.limit ? Number.parseInt(query.limit) : undefined
+		const offset = query.offset ? Number.parseInt(query.offset) : undefined
+
 		// 構造化ログ: 取引一覧取得操作の開始
 		logWithContext(c, 'info', '取引一覧取得を開始', {
 			operationType: 'read',
 			resource: 'transactions',
+			filters: { type, categoryId, startDate, endDate, limit, offset },
 		})
 
 		try {
 			const db = options.testDatabase || c.get('db')
-			const result = await db.select().from(transactions)
+
+			// データベースレベルでのクエリ構築（シンプルな実装）
+			let result = await db.select().from(transactions)
+
+			// WHERE条件をインメモリでフィルタリング（パフォーマンス改善は今後の課題）
+			if (type) {
+				result = result.filter((tx) => tx.type === type)
+			}
+			if (categoryId !== undefined) {
+				result = result.filter((tx) => tx.categoryId === categoryId)
+			}
+			if (startDate) {
+				result = result.filter((tx) => new Date(tx.date) >= new Date(startDate))
+			}
+			if (endDate) {
+				result = result.filter((tx) => new Date(tx.date) <= new Date(endDate))
+			}
+
+			// ページネーション（インメモリ）
+			if (offset !== undefined) {
+				result = result.slice(offset)
+			}
+			if (limit !== undefined) {
+				result = result.slice(0, limit)
+			}
 
 			// カテゴリ情報を設定ファイルから補完
 			const resultWithCategories = result.map((tx) => {
@@ -172,29 +241,36 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 			const db = options.testDatabase || c.get('db')
 
-			// Validate required fields and data
-			if (typeof body.amount !== 'number' || body.amount <= 0) {
-				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 金額が無効', {
-					validationError: 'amount_invalid',
-					providedAmount: body.amount,
-				})
-				return c.json({ error: 'Amount must be a positive number' }, 400)
-			}
-
-			if (!body.type || !['income', 'expense'].includes(body.type)) {
-				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 種別が無効', {
-					validationError: 'type_invalid',
-					providedType: body.type,
-				})
-				return c.json({ error: 'Type must be either "income" or "expense"' }, 400)
-			}
-
+			// 必須フィールドチェック
 			if (!body.date) {
 				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 日付が無効', {
 					validationError: 'date_required',
 					providedDate: body.date,
 				})
 				return c.json({ error: 'Date is required' }, 400)
+			}
+
+			if (!body.type) {
+				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 種別が無効', {
+					validationError: 'type_required',
+					providedType: body.type,
+				})
+				return c.json({ error: 'Type is required' }, 400)
+			}
+
+			// 共通バリデーション関数を使用
+			const validationError = validateTransactionData(body)
+			if (validationError) {
+				logWithContext(c, 'warn', '取引作成: バリデーションエラー', {
+					validationError: 'validation_failed',
+					error: validationError,
+					providedData: {
+						amount: body.amount,
+						type: body.type,
+						descriptionLength: body.description?.length,
+					},
+				})
+				return c.json({ error: validationError }, 400)
 			}
 
 			const newTransaction: NewTransaction = {
@@ -334,6 +410,22 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				resource: 'transactions',
 				updateFields: Object.keys(body),
 			})
+
+			// 更新データのバリデーション
+			const validationError = validateTransactionData(body)
+			if (validationError) {
+				logWithContext(c, 'warn', '取引更新: バリデーションエラー', {
+					transactionId: id,
+					validationError: 'validation_failed',
+					error: validationError,
+					providedData: {
+						amount: body.amount,
+						type: body.type,
+						descriptionLength: body.description?.length,
+					},
+				})
+				return c.json({ error: validationError }, 400)
+			}
 
 			const db = options.testDatabase || c.get('db')
 
