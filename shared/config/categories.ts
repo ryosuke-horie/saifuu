@@ -17,7 +17,7 @@
  * - カテゴリを削除する場合でも、IDの再利用は絶対に行わないでください
  */
 
-export type CategoryType = 'income' | 'expense'
+export type CategoryType = 'expense'
 
 export interface CategoryConfig {
 	id: string
@@ -80,18 +80,10 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
 	{
 		id: 'system_fee',
 		numericId: 6,
-		name: 'システム関係日',
+		name: 'システム関係費',
 		type: 'expense',
 		color: '#9B59B6',
 		description: 'システム利用料、サブスクリプション費用',
-	},
-	{
-		id: 'education',
-		numericId: 7,
-		name: '学習・教育',
-		type: 'expense',
-		color: '#45B7D1',
-		description: '書籍、講座、研修、学習教材',
 	},
 	{
 		id: 'books',
@@ -102,15 +94,6 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
 		description: '書籍、電子書籍、雑誌',
 	},
 
-	// 趣味・娯楽関連
-	{
-		id: 'entertainment',
-		numericId: 9,
-		name: 'エンターテイメント',
-		type: 'expense',
-		color: '#E67E22',
-		description: '映画、ゲーム、音楽、書籍',
-	},
 	{
 		id: 'health',
 		numericId: 10,
@@ -128,7 +111,6 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
 		description: '衣類、日用品、雑貨',
 	},
 
-	// その他
 	{
 		id: 'other_expense',
 		numericId: 12,
@@ -144,48 +126,7 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
  *
  * ⚠️ 注意: numericIdは既存データとの整合性を保つため、絶対に変更しないでください
  */
-export const INCOME_CATEGORIES: CategoryConfig[] = [
-	{
-		id: 'salary',
-		numericId: 13,
-		name: '給与',
-		type: 'income',
-		color: '#2ECC71',
-		description: '月給、賞与、給与所得',
-	},
-	{
-		id: 'freelance',
-		numericId: 14,
-		name: '副業・フリーランス',
-		type: 'income',
-		color: '#27AE60',
-		description: '副業収入、フリーランス収入',
-	},
-	{
-		id: 'investment',
-		numericId: 15,
-		name: '投資・資産運用',
-		type: 'income',
-		color: '#16A085',
-		description: '株式、投資信託、配当金',
-	},
-	{
-		id: 'gift',
-		numericId: 16,
-		name: '贈与・お祝い',
-		type: 'income',
-		color: '#1ABC9C',
-		description: 'お祝い金、贈り物、臨時収入',
-	},
-	{
-		id: 'other_income',
-		numericId: 17,
-		name: 'その他',
-		type: 'income',
-		color: '#58D68D',
-		description: 'その他の収入',
-	},
-]
+export const INCOME_CATEGORIES: CategoryConfig[] = []
 
 /**
  * 全カテゴリ設定
@@ -196,7 +137,7 @@ export const ALL_CATEGORIES: CategoryConfig[] = [...EXPENSE_CATEGORIES, ...INCOM
  * カテゴリタイプ別の設定取得
  */
 export function getCategoriesByType(type: CategoryType): CategoryConfig[] {
-	return type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
+	return EXPENSE_CATEGORIES
 }
 
 /**
@@ -234,7 +175,7 @@ export function getCategoryOptions(type?: CategoryType): Array<{
  * デフォルトカテゴリの取得
  */
 export function getDefaultCategory(type: CategoryType): CategoryConfig {
-	return type === 'expense' ? EXPENSE_CATEGORIES[0] : INCOME_CATEGORIES[0]
+	return EXPENSE_CATEGORIES[0]
 }
 
 /**
@@ -273,7 +214,7 @@ export function validateCategoryConfig(): boolean {
 
 	// タイプの妥当性チェック
 	const invalidTypes = ALL_CATEGORIES.filter(
-		(category) => category.type !== 'expense' && category.type !== 'income'
+		(category) => category.type !== 'expense'
 	)
 
 	if (invalidTypes.length > 0) {

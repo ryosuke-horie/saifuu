@@ -18,20 +18,20 @@ describe("Categories API", () => {
 
 			// 期待される総カテゴリ数（支出12 + 収入5 = 17）
 			expect(result).toHaveLength(17);
-			
+
 			// 新しく追加されたカテゴリの確認
 			const systemFee = result.find((cat) => cat.id === "6");
 			expect(systemFee).toBeDefined();
 			expect(systemFee?.name).toBe("システム関係日");
 			expect(systemFee?.type).toBe("expense");
 			expect(systemFee?.color).toBe("#9B59B6");
-			
+
 			const books = result.find((cat) => cat.id === "8");
 			expect(books).toBeDefined();
 			expect(books?.name).toBe("書籍代");
 			expect(books?.type).toBe("expense");
 			expect(books?.color).toBe("#1E8BC3");
-			
+
 			const utilities = result.find((cat) => cat.id === "1");
 			expect(utilities).toBeDefined();
 			expect(utilities?.name).toBe("家賃・水道・光熱・通信費");
@@ -51,7 +51,7 @@ describe("Categories API", () => {
 				expect(category).toHaveProperty("color");
 				expect(category).toHaveProperty("createdAt");
 				expect(category).toHaveProperty("updatedAt");
-				
+
 				// 型の確認
 				expect(typeof category.id).toBe("string");
 				expect(typeof category.name).toBe("string");
@@ -97,7 +97,7 @@ describe("Categories API", () => {
 				updatedAt: expect.any(String),
 			});
 		});
-		
+
 		it("should fetch income category by id", async () => {
 			// ID 13（給与）を取得
 			const result = await fetchCategoryById("13");
@@ -118,7 +118,7 @@ describe("Categories API", () => {
 				"カテゴリID 999 が見つかりません",
 			);
 		});
-		
+
 		it("should handle invalid id format", async () => {
 			// 無効なID形式の場合
 			await expect(fetchCategoryById("invalid")).rejects.toThrow(

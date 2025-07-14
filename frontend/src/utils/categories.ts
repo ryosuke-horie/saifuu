@@ -1,4 +1,4 @@
-import type { CategoryConfig } from "@shared/config/categories";
+import type { CategoryConfig, CategoryType } from "@shared/config/categories";
 import { getCategoriesByType } from "@shared/config/categories";
 import type { Category } from "../types/category";
 
@@ -8,11 +8,11 @@ import type { Category } from "../types/category";
  * グローバルカテゴリ設定は実行時の設定値として扱われるため、
  * DBのカテゴリエンティティとして扱うために固定の日付を設定する
  *
- * @param type - 取得するカテゴリのタイプ ("expense" | "income")
+ * @param type - 取得するカテゴリのタイプ ("expense")
  * @returns カテゴリの配列
  */
 export const convertGlobalCategoriesToCategory = (
-	type: "expense" | "income",
+	type: CategoryType,
 ): Category[] => {
 	const globalCategories = getCategoriesByType(type);
 	// 固定の日付を使用して参照の一貫性を保つ
