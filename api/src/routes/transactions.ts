@@ -21,19 +21,59 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 	/**
 	 * 取引一覧を取得するエンドポイント
 	 * @route GET /api/transactions
+	 * @query {string} [type] - 取引タイプでフィルタ（income/expense）
+	 * @query {number} [categoryId] - カテゴリIDでフィルタ
+	 * @query {string} [startDate] - 開始日でフィルタ（YYYY-MM-DD）
+	 * @query {string} [endDate] - 終了日でフィルタ（YYYY-MM-DD）
+	 * @query {number} [limit] - 取得件数の制限
+	 * @query {number} [offset] - 取得開始位置
 	 * @returns {Array<Transaction>} カテゴリ情報を含む取引一覧
 	 * @throws {500} データベースエラー
 	 */
 	app.get('/', async (c) => {
+		// クエリパラメータを取得
+		const query = c.req.query()
+		const type = query.type as 'income' | 'expense' | undefined
+		const categoryId = query.categoryId ? Number.parseInt(query.categoryId) : undefined
+		const startDate = query.startDate
+		const endDate = query.endDate
+		const limit = query.limit ? Number.parseInt(query.limit) : undefined
+		const offset = query.offset ? Number.parseInt(query.offset) : undefined
+
 		// 構造化ログ: 取引一覧取得操作の開始
 		logWithContext(c, 'info', '取引一覧取得を開始', {
 			operationType: 'read',
 			resource: 'transactions',
+			filters: { type, categoryId, startDate, endDate, limit, offset },
 		})
 
 		try {
 			const db = options.testDatabase || c.get('db')
-			const result = await db.select().from(transactions)
+
+			// クエリを実行
+			let result = await db.select().from(transactions)
+
+			// WHERE条件をインメモリでフィルタリング（Drizzle + D1の制約のため）
+			if (type) {
+				result = result.filter((tx) => tx.type === type)
+			}
+			if (categoryId !== undefined) {
+				result = result.filter((tx) => tx.categoryId === categoryId)
+			}
+			if (startDate) {
+				result = result.filter((tx) => new Date(tx.date) >= new Date(startDate))
+			}
+			if (endDate) {
+				result = result.filter((tx) => new Date(tx.date) <= new Date(endDate))
+			}
+
+			// ページネーション（インメモリ）
+			if (offset !== undefined) {
+				result = result.slice(offset)
+			}
+			if (limit !== undefined) {
+				result = result.slice(0, limit)
+			}
 
 			// カテゴリ情報を設定ファイルから補完
 			const resultWithCategories = result.map((tx) => {
@@ -181,6 +221,16 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				return c.json({ error: 'Amount must be a positive number' }, 400)
 			}
 
+			// 金額の上限チェック（1000万円）
+			if (body.amount > 10000000) {
+				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 金額が上限を超過', {
+					validationError: 'amount_too_large',
+					providedAmount: body.amount,
+					maxAmount: 10000000,
+				})
+				return c.json({ error: 'Amount must not exceed 10,000,000' }, 400)
+			}
+
 			if (!body.type || !['income', 'expense'].includes(body.type)) {
 				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 種別が無効', {
 					validationError: 'type_invalid',
@@ -195,6 +245,16 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 					providedDate: body.date,
 				})
 				return c.json({ error: 'Date is required' }, 400)
+			}
+
+			// 説明文の文字数チェック（最大500文字）
+			if (body.description && body.description.length > 500) {
+				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 説明文が長すぎる', {
+					validationError: 'description_too_long',
+					providedLength: body.description.length,
+					maxLength: 500,
+				})
+				return c.json({ error: 'Description must not exceed 500 characters' }, 400)
 			}
 
 			const newTransaction: NewTransaction = {
