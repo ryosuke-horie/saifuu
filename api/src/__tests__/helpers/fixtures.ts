@@ -1,4 +1,4 @@
-import type { NewCategory, NewSubscription, NewTransaction } from '../../db/schema'
+import type { NewSubscription, NewTransaction } from '../../db/schema'
 
 /**
  * テスト用データフィクスチャ
@@ -7,26 +7,8 @@ import type { NewCategory, NewSubscription, NewTransaction } from '../../db/sche
 
 /**
  * テスト用カテゴリデータ
+ * 設定ファイルベースのカテゴリに移行したため、カテゴリ作成のテストデータは不要
  */
-export const testCategories = {
-	entertainment: {
-		name: 'エンターテイメント',
-		type: 'expense' as const,
-		color: '#FF6B6B',
-	} satisfies NewCategory,
-
-	software: {
-		name: 'ソフトウェア',
-		type: 'expense' as const,
-		color: '#4ECDC4',
-	} satisfies NewCategory,
-
-	income: {
-		name: '給与',
-		type: 'income' as const,
-		color: '#45B7D1',
-	} satisfies NewCategory,
-}
 
 /**
  * テスト用サブスクリプションデータ
@@ -192,7 +174,6 @@ export const testRequestPayloads = {
 		amount: 2200,
 		description: 'Netflix Premium Plan',
 	},
-	createCategory: testCategories.entertainment,
 	createTransaction: testTransactions.groceries,
 	updateTransaction: {
 		amount: 4000,

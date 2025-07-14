@@ -223,8 +223,12 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 	);
 
 	// カテゴリフィルタリングの最適化
+	// 種別が選択されていない場合は全カテゴリを表示
 	const filteredCategories = useMemo(
-		() => categories.filter((cat) => cat.type === formData.type),
+		() =>
+			formData.type
+				? categories.filter((cat) => cat.type === formData.type)
+				: categories,
 		[categories, formData.type],
 	);
 
@@ -437,7 +441,11 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 						<option value="">カテゴリを読み込み中...</option>
 					) : (
 						<>
-							<option value="">カテゴリを選択してください</option>
+							<option value="">
+								{!formData.type
+									? "カテゴリを選択（種別選択で絞り込み）"
+									: "カテゴリを選択してください"}
+							</option>
 							{filteredCategories.map((category) => (
 								<option key={category.id} value={category.id}>
 									{category.name}

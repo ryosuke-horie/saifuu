@@ -26,7 +26,7 @@ export const mockTransactions: Transaction[] = [
 		type: "income",
 		description: "月次給与",
 		date: "2025-07-01",
-		category: mockCategories.find((cat) => cat.name === "給与") || null,
+		category: null, // 収入カテゴリは削除済み
 		createdAt: "2025-07-01T09:00:00Z",
 		updatedAt: "2025-07-01T09:00:00Z",
 	},
@@ -46,8 +46,7 @@ export const mockTransactions: Transaction[] = [
 		type: "expense",
 		description: "映画チケット",
 		date: "2025-07-07",
-		category:
-			mockCategories.find((cat) => cat.name === "エンターテイメント") || null,
+		category: mockCategories.find((cat) => cat.name === "その他") || null,
 		createdAt: "2025-07-07T19:30:00Z",
 		updatedAt: "2025-07-07T19:30:00Z",
 	},

@@ -35,7 +35,7 @@ describe("SubscriptionForm", () => {
 		amount: 1480,
 		billingCycle: "monthly" as const,
 		nextBillingDate: "2025-12-01",
-		categoryId: "cat-1",
+		categoryId: "3", // 食費
 		isActive: true,
 		description: "動画配信サービス",
 	};
@@ -459,9 +459,9 @@ describe("SubscriptionForm", () => {
 		it("カテゴリが日本語で表示されること", () => {
 			render(<SubscriptionForm {...defaultProps} />);
 
-			expect(screen.getByText("エンターテイメント")).toBeInTheDocument();
+			expect(screen.getByText("食費")).toBeInTheDocument();
 			expect(screen.getByText("仕事・ビジネス")).toBeInTheDocument();
-			expect(screen.getByText("ライフスタイル")).toBeInTheDocument();
+			expect(screen.getByText("健康・フィットネス")).toBeInTheDocument();
 			expect(screen.getByText("その他")).toBeInTheDocument();
 		});
 

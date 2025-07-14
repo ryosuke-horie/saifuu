@@ -23,24 +23,15 @@ function initializeTestDatabase() {
 		globalSqliteInstance = new Database(':memory:')
 		globalDrizzleInstance = drizzle(globalSqliteInstance, { schema })
 
-		// テーブルを作成（新しいスキーマに合わせてTEXT型のタイムスタンプを使用）
+		// テーブルを作成（categoriesテーブルは削除され、categoryIdは設定ファイルのnumericIdを参照）
 		globalSqliteInstance.exec(`
-			CREATE TABLE IF NOT EXISTS categories (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				name TEXT NOT NULL,
-				type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
-				color TEXT,
-				created_at TEXT NOT NULL,
-				updated_at TEXT NOT NULL
-			);
-			
 			CREATE TABLE IF NOT EXISTS subscriptions (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				name TEXT NOT NULL,
 				amount REAL NOT NULL,
 				billing_cycle TEXT NOT NULL DEFAULT 'monthly' CHECK (billing_cycle IN ('monthly', 'yearly', 'weekly')),
 				next_billing_date TEXT NOT NULL,
-				category_id INTEGER REFERENCES categories(id),
+				category_id INTEGER,
 				description TEXT,
 				is_active INTEGER NOT NULL DEFAULT 1,
 				created_at TEXT NOT NULL,
@@ -51,7 +42,7 @@ function initializeTestDatabase() {
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				amount REAL NOT NULL,
 				type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
-				category_id INTEGER REFERENCES categories(id),
+				category_id INTEGER,
 				description TEXT,
 				date TEXT NOT NULL,
 				created_at TEXT NOT NULL,
@@ -59,21 +50,7 @@ function initializeTestDatabase() {
 			);
 		`)
 
-		// テスト用のカテゴリを挿入（ISO文字列形式のタイムスタンプを使用）
-		const now = new Date().toISOString()
-		globalSqliteInstance
-			.prepare(`
-			INSERT INTO categories (id, name, type, color, created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?, ?)
-		`)
-			.run(1, 'エンターテイメント', 'expense', '#FF6B6B', now, now)
-
-		globalSqliteInstance
-			.prepare(`
-			INSERT INTO categories (id, name, type, color, created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?, ?)
-		`)
-			.run(2, 'ソフトウェア', 'expense', '#4ECDC4', now, now)
+		// カテゴリは設定ファイルで管理されるため、テストデータの挿入は不要
 	}
 }
 

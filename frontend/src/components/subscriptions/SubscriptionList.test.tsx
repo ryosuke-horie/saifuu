@@ -82,9 +82,7 @@ describe("SubscriptionList", () => {
 		it("カテゴリが日本語で表示されること", () => {
 			render(<SubscriptionList {...defaultProps} />);
 
-			expect(screen.getAllByText("エンターテイメント").length).toBeGreaterThan(
-				0,
-			);
+			expect(screen.getAllByText("その他").length).toBeGreaterThan(0);
 			expect(screen.getByText("仕事・ビジネス")).toBeInTheDocument();
 		});
 

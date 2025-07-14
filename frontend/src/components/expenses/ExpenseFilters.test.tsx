@@ -24,10 +24,7 @@ vi.mock("next/navigation", () => ({
 
 describe("ExpenseFilters", () => {
 	const mockOnFiltersChange = vi.fn();
-	const defaultCategories = [
-		...convertGlobalCategoriesToCategory("expense"),
-		...convertGlobalCategoriesToCategory("income"),
-	];
+	const defaultCategories = convertGlobalCategoriesToCategory("expense");
 
 	const defaultProps: ExpenseFiltersProps = {
 		onFiltersChange: mockOnFiltersChange,
@@ -139,20 +136,6 @@ describe("ExpenseFilters", () => {
 	});
 
 	describe("種別フィルター", () => {
-		it("収入のみを選択するとonFiltersChangeが呼ばれる", async () => {
-			const user = userEvent.setup();
-			render(<ExpenseFilters {...defaultProps} />);
-
-			const typeSelect = screen.getByLabelText("種別");
-			await user.selectOptions(typeSelect, "income");
-
-			await waitFor(() => {
-				expect(mockOnFiltersChange).toHaveBeenCalledWith({
-					type: "income",
-				});
-			});
-		});
-
 		it("支出のみを選択するとonFiltersChangeが呼ばれる", async () => {
 			const user = userEvent.setup();
 			render(<ExpenseFilters {...defaultProps} />);

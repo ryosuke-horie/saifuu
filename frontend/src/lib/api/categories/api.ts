@@ -1,48 +1,56 @@
 /**
  * カテゴリ関連のAPI呼び出し
  * バックエンドのカテゴリAPIとの通信を担当
+ *
+ * 設定ファイルから直接カテゴリを取得するように変更
  */
 
+import {
+	ALL_CATEGORIES,
+	type CategoryConfig,
+} from "../../../../../shared/config/categories";
 import type { Category } from "../../../types/category";
-import { apiClient } from "../client";
-import { transformApiCategoriesToFrontend } from "./transformers";
-import type { ApiCategoryResponse } from "./types";
 
 /**
- * カテゴリ一覧を取得
+ * カテゴリ一覧を取得（設定ファイルから）
  * @returns カテゴリ一覧
  */
 export async function fetchCategories(): Promise<Category[]> {
-	try {
-		const response = await apiClient.get<ApiCategoryResponse[]>("/categories");
-		return transformApiCategoriesToFrontend(response);
-	} catch (error) {
-		console.error("Failed to fetch categories:", error);
-		throw new Error("カテゴリ一覧の取得に失敗しました");
-	}
+	// 設定ファイルから直接カテゴリを取得
+	// 非同期処理との互換性のためPromiseを返す
+	return Promise.resolve(
+		ALL_CATEGORIES.map((category: CategoryConfig) => ({
+			id: category.numericId.toString(), // フロントエンドではstring型を使用
+			name: category.name,
+			type: category.type,
+			color: category.color,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+		})),
+	);
 }
 
 /**
- * カテゴリを詳細取得
+ * カテゴリを詳細取得（設定ファイルから）
  * @param id - カテゴリID
  * @returns カテゴリ詳細
  */
 export async function fetchCategoryById(id: string): Promise<Category> {
-	try {
-		const response = await apiClient.get<ApiCategoryResponse>(
-			`/categories/${id}`,
-		);
+	const numericId = Number.parseInt(id);
+	const category = ALL_CATEGORIES.find(
+		(c: CategoryConfig) => c.numericId === numericId,
+	);
 
-		return {
-			id: response.id.toString(),
-			name: response.name,
-			type: "expense", // デフォルトとして expense を設定
-			color: null, // デフォルトでは null
-			createdAt: response.createdAt,
-			updatedAt: response.updatedAt,
-		};
-	} catch (error) {
-		console.error(`Failed to fetch category ${id}:`, error);
-		throw new Error("カテゴリ詳細の取得に失敗しました");
+	if (!category) {
+		throw new Error(`カテゴリID ${id} が見つかりません`);
 	}
+
+	return Promise.resolve({
+		id: category.numericId.toString(),
+		name: category.name,
+		type: category.type,
+		color: category.color,
+		createdAt: new Date().toISOString(),
+		updatedAt: new Date().toISOString(),
+	});
 }

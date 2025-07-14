@@ -94,15 +94,16 @@ const sampleExpenseData: ExpenseFormData = {
 	type: "expense",
 	date: "2025-07-09",
 	description: "コンビニ弁当",
-	categoryId: "cat-1",
+	categoryId: "3", // 食費
 };
 
-const sampleIncomeData: ExpenseFormData = {
-	amount: 300000,
-	type: "income",
+// 収入カテゴリは削除済みのため、支出のサンプルデータに変更
+const sampleLargeExpenseData: ExpenseFormData = {
+	amount: 30000,
+	type: "expense",
 	date: "2025-07-01",
-	description: "給与",
-	categoryId: "cat-5",
+	description: "家賃支払い",
+	categoryId: "1", // 家賃・水道・光熱・通信費
 };
 
 /**
@@ -157,7 +158,7 @@ export const EditExpenseMode: Story = {
  */
 export const EditIncomeMode: Story = {
 	args: {
-		initialData: sampleIncomeData,
+		initialData: sampleLargeExpenseData,
 	},
 	parameters: {
 		docs: {
@@ -301,7 +302,7 @@ export const IncomeInteractionTest: Story = {
 		docs: {
 			description: {
 				story:
-					"収入フォームの入力から送信までの完全なインタラクションテストです。収入カテゴリの選択も含めて確認できます。",
+					"収入フォームの入力から送信までの完全なインタラクションテストです。収入カテゴリは削除されたため、カテゴリは選択されません。",
 			},
 		},
 	},
@@ -313,7 +314,7 @@ export const IncomeInteractionTest: Story = {
 		await userEvent.selectOptions(canvas.getByLabelText(/種別/), "income");
 		await userEvent.type(canvas.getByLabelText(/日付/), "2025-07-01");
 		await userEvent.type(canvas.getByLabelText(/説明/), "給与");
-		await userEvent.selectOptions(canvas.getByLabelText(/カテゴリ/), "cat-5");
+		// 収入カテゴリは削除されたため、カテゴリ選択はスキップ
 
 		// 送信ボタンのクリック
 		await userEvent.click(canvas.getByRole("button", { name: "登録" }));
@@ -324,7 +325,7 @@ export const IncomeInteractionTest: Story = {
 			type: "income",
 			date: "2025-07-01",
 			description: "給与",
-			categoryId: "cat-5",
+			categoryId: "", // カテゴリは選択されない
 		});
 	},
 };
@@ -507,20 +508,10 @@ export const CategoryFilteringTest: Story = {
 		await userEvent.selectOptions(typeSelect, "expense");
 
 		// 支出カテゴリが表示されることを確認
-		await expect(canvas.getByText("エンターテイメント")).toBeInTheDocument();
+		await expect(canvas.getByText("食費")).toBeInTheDocument();
 		await expect(canvas.getByText("仕事・ビジネス")).toBeInTheDocument();
-		await expect(canvas.getByText("ライフスタイル")).toBeInTheDocument();
+		await expect(canvas.getByText("健康・フィットネス")).toBeInTheDocument();
 		await expect(canvas.getByText("その他")).toBeInTheDocument();
-
-		// 収入を選択
-		await userEvent.selectOptions(typeSelect, "income");
-
-		// 収入カテゴリが表示されることを確認
-		await expect(canvas.getByText("給与")).toBeInTheDocument();
-		// 支出カテゴリは表示されない
-		await expect(
-			canvas.queryByText("エンターテイメント"),
-		).not.toBeInTheDocument();
 	},
 };
 

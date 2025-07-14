@@ -302,4 +302,56 @@ test.describe("支出・収入管理", () => {
 		const refreshIcon = page.getByText("🔄");
 		await expect(refreshIcon).not.toBeVisible();
 	});
+
+	test("新規追加されたカテゴリが選択可能", async ({ page }) => {
+		// Issue #282で追加される新しいカテゴリ
+		const newCategories = [
+			"システム関係日",
+			"書籍代",
+			"家賃・水道・光熱・通信費"
+		];
+
+		// 支出・収入管理画面にアクセス
+		await page.goto("/expenses");
+
+		// ページのローディングを待つ
+		await page.waitForTimeout(2000);
+
+		// 新規登録ボタンをクリック
+		const addButton = page.getByText("新規登録");
+		await addButton.click();
+
+		// ダイアログが表示されることを確認
+		await expect(
+			page.getByRole("dialog", { name: "新規支出・収入登録" }),
+		).toBeVisible();
+
+		// 種別を支出に設定
+		await page.getByLabel("種別").selectOption("expense");
+
+		// カテゴリセレクトボックスが有効になるまで待つ
+		const categorySelect = page.getByLabel("カテゴリ");
+		await expect(categorySelect).toBeEnabled({ timeout: 15000 });
+
+		// カテゴリのオプションを取得
+		const categoryOptions = await categorySelect.locator("option").allTextContents();
+		console.log("[E2E] 利用可能なカテゴリ:", categoryOptions);
+
+		// 新しいカテゴリが存在することを確認
+		newCategories.forEach(categoryName => {
+			expect(categoryOptions).toContain(categoryName);
+		});
+
+		// 各新しいカテゴリが選択できることを確認
+		for (const categoryName of newCategories) {
+			// カテゴリを選択
+			await categorySelect.selectOption({ label: categoryName });
+			
+			// 選択されたことを確認
+			const selectedValue = await categorySelect.inputValue();
+			const selectedOption = await categorySelect.locator(`option[value="${selectedValue}"]`).textContent();
+			expect(selectedOption).toBe(categoryName);
+			console.log(`[E2E] カテゴリ「${categoryName}」が正常に選択されました`);
+		}
+	});
 });

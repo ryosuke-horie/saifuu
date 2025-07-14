@@ -38,10 +38,7 @@ const meta: Meta<typeof ExpenseFilters> = {
 		},
 	},
 	args: {
-		categories: [
-			...convertGlobalCategoriesToCategory("expense"),
-			...convertGlobalCategoriesToCategory("income"),
-		],
+		categories: convertGlobalCategoriesToCategory("expense"),
 	},
 	tags: ["autodocs"],
 };

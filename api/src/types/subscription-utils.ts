@@ -5,7 +5,16 @@
  * 型安全性を保ちながら、IDの変換や日付フォーマットの変更を処理
  */
 
-import type { Category } from '../db/schema'
+// カテゴリの型定義（設定ファイルベースのため、個別に定義）
+interface Category {
+	id: number
+	name: string
+	type: 'income' | 'expense'
+	color?: string
+	createdAt: string
+	updatedAt: string
+}
+
 import type {
 	ApiCategory,
 	ApiSubscription,
@@ -31,7 +40,7 @@ export function transformCategoryDbToApi(category: Category): ApiCategory {
 		id: category.id.toString(),
 		name: category.name,
 		type: category.type,
-		color: category.color,
+		color: category.color ?? null,
 		createdAt: category.createdAt,
 		updatedAt: category.updatedAt,
 	}
