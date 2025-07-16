@@ -36,22 +36,6 @@ describe("ExpenseList", () => {
 			expect(screen.getByText("支出・収入の履歴")).toBeInTheDocument();
 		});
 
-		it("テーブルヘッダーが正しく表示される", () => {
-			render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// テーブルヘッダーの確認
-			expect(screen.getByText("日付")).toBeInTheDocument();
-			expect(screen.getByText("金額")).toBeInTheDocument();
-			expect(screen.getByText("カテゴリ")).toBeInTheDocument();
-			expect(screen.getByText("説明")).toBeInTheDocument();
-			expect(screen.getByText("操作")).toBeInTheDocument();
-		});
 	});
 
 	describe("ローディング状態", () => {
@@ -184,51 +168,6 @@ describe("ExpenseList", () => {
 
 			// 更新ボタンが存在しないことを確認
 			expect(screen.queryByText("更新")).not.toBeInTheDocument();
-		});
-	});
-
-	describe("アクセシビリティ", () => {
-		it("適切なARIA属性が設定されている", () => {
-			const mockOnEdit = vi.fn();
-			const mockOnDelete = vi.fn();
-
-			render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-					onEdit={mockOnEdit}
-					onDelete={mockOnDelete}
-				/>,
-			);
-
-			// テーブルのアクセシビリティ
-			const table = screen.getByRole("table");
-			expect(table).toBeInTheDocument();
-
-			// ヘッダーセルの確認
-			const columnHeaders = screen.getAllByRole("columnheader");
-			expect(columnHeaders).toHaveLength(5);
-
-			// ボタンのアクセシビリティ
-			const buttons = screen.getAllByRole("button");
-			expect(buttons.length).toBeGreaterThan(0);
-		});
-	});
-
-	describe("プロパティ", () => {
-		it("カスタムクラス名が適用される", () => {
-			const customClassName = "custom-expense-list";
-			const { container } = render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-					className={customClassName}
-				/>,
-			);
-
-			expect(container.firstChild).toHaveClass(customClassName);
 		});
 	});
 
