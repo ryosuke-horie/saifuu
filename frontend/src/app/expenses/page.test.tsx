@@ -197,21 +197,26 @@ describe("ExpensesPage", () => {
 
 		it("統計情報が正しく計算される", () => {
 			render(<ExpensesPage />);
-			
+
 			// 支出合計のラベルを確認
 			expect(screen.getByText("支出合計")).toBeInTheDocument();
-			
+
 			// 支出合計: 1000円 + 5000円 = 6000円
 			// text-red-600クラスを持つ要素を探す
 			const expenseTotalElement = screen.getByText((content, element) => {
-				return element?.className?.includes('text-red-600') && content.includes('￥6,000');
+				return (
+					!!element?.className?.includes("text-red-600") &&
+					content.includes("￥6,000")
+				);
 			});
 			expect(expenseTotalElement).toBeInTheDocument();
-			
+
 			// 取引件数: 2件
 			expect(screen.getByText("取引件数")).toBeInTheDocument();
 			const transactionCountElement = screen.getByText((content, element) => {
-				return element?.className?.includes('text-gray-900') && content === '2件';
+				return (
+					!!element?.className?.includes("text-gray-900") && content === "2件"
+				);
 			});
 			expect(transactionCountElement).toBeInTheDocument();
 		});
@@ -359,13 +364,18 @@ describe("ExpensesPage", () => {
 
 			// 支出合計の¥0が表示される
 			const expenseTotalElement = screen.getByText((content, element) => {
-				return element?.className?.includes('text-red-600') && content.includes('￥0');
+				return (
+					!!element?.className?.includes("text-red-600") &&
+					content.includes("￥0")
+				);
 			});
 			expect(expenseTotalElement).toBeInTheDocument();
-			
+
 			// 取引件数が0件で表示される
 			const transactionCountElement = screen.getByText((content, element) => {
-				return element?.className?.includes('text-gray-900') && content === '0件';
+				return (
+					!!element?.className?.includes("text-gray-900") && content === "0件"
+				);
 			});
 			expect(transactionCountElement).toBeInTheDocument();
 		});
@@ -384,7 +394,10 @@ describe("ExpensesPage", () => {
 
 			// 支出合計が赤文字で表示される
 			const expenseTotalElement = screen.getByText((content, element) => {
-				return element?.className?.includes('text-red-600') && content.includes('￥10,000');
+				return (
+					!!element?.className?.includes("text-red-600") &&
+					content.includes("￥10,000")
+				);
 			});
 			expect(expenseTotalElement).toBeInTheDocument();
 		});
