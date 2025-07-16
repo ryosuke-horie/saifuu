@@ -30,6 +30,19 @@ describe("カテゴリ設定", () => {
 			});
 		});
 
+		// Issue #297: 娯楽カテゴリの追加テスト
+		it("娯楽カテゴリが存在すること", () => {
+			const entertainmentCategory = getCategoryById("entertainment");
+			expect(entertainmentCategory).toBeDefined();
+			expect(entertainmentCategory?.name).toBe("娯楽");
+			expect(entertainmentCategory?.type).toBe("expense");
+			expect(entertainmentCategory?.numericId).toBe(18);
+			expect(entertainmentCategory?.color).toBe("#E67E22");
+			expect(entertainmentCategory?.description).toBe(
+				"映画、ゲーム、音楽、趣味などのエンターテイメント関連支出",
+			);
+		});
+
 		it("新しいカテゴリに適切な色が設定されていること", () => {
 			const newCategories = ["system_fee", "books", "utilities"];
 
@@ -55,9 +68,10 @@ describe("カテゴリ設定", () => {
 	});
 
 	describe("カテゴリ数の確認", () => {
-		it("支出カテゴリが10個存在すること", () => {
+		it("支出カテゴリが11個存在すること", () => {
 			// 既存カテゴリのうち「学習・教育」と「エンターテイメント」を削除
-			expect(EXPENSE_CATEGORIES).toHaveLength(10);
+			// Issue #297で「娯楽」カテゴリを追加
+			expect(EXPENSE_CATEGORIES).toHaveLength(11);
 		});
 	});
 });

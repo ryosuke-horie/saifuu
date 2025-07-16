@@ -119,6 +119,15 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
 		color: '#FFEAA7',
 		description: 'その他の支出',
 	},
+	// Issue #297: 娯楽カテゴリの追加
+	{
+		id: 'entertainment',
+		numericId: 18,
+		name: '娯楽',
+		type: 'expense',
+		color: '#E67E22',
+		description: '映画、ゲーム、音楽、趣味などのエンターテイメント関連支出',
+	},
 ]
 
 /**

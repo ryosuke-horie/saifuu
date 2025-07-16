@@ -90,10 +90,16 @@ describe('Categories API - Unit Tests', () => {
 						name: '書籍代',
 						type: 'expense',
 					}),
+					// Issue #297: 娯楽カテゴリの追加
+					expect.objectContaining({
+						id: 18,
+						name: '娯楽',
+						type: 'expense',
+					}),
 				])
 			)
 			// 設定ファイルのカテゴリ数を確認
-			expect(data).toHaveLength(10) // 支出10個のみ（収入カテゴリは削除済み）
+			expect(data).toHaveLength(11) // 支出11個のみ（収入カテゴリは削除済み、娯楽カテゴリ追加）
 		})
 
 		it('should handle database errors gracefully', async () => {
