@@ -14,7 +14,7 @@ import { ExpenseForm } from "./ExpenseForm";
  * 新規支出登録ダイアログコンポーネント
  *
  * DialogコンポーネントとExpenseFormコンポーネントを組み合わせて
- * モーダル形式での新規支出・収入登録機能を提供
+ * モーダル形式での新規支出登録機能を提供
  *
  * 設計方針:
  * - 既存のDialogとExpenseFormコンポーネントを再利用

@@ -5,6 +5,8 @@
  * 支出管理機能全体で再利用可能
  */
 
+import type { Category } from "@/lib/api/types";
+
 /**
  * 金額を日本円形式でフォーマット
  * @param amount フォーマットする金額
@@ -52,8 +54,8 @@ export const formatTransactionCount = (count: number): string => {
  * カテゴリ名を取得（null安全）
  * @param category カテゴリオブジェクトまたはnull
  */
-export const formatCategoryName = (category: any): string => {
-	if (category && typeof category === "object" && category.name) {
+export const formatCategoryName = (category: Category | null): string => {
+	if (category?.name) {
 		return category.name;
 	}
 	return "未分類";

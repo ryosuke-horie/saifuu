@@ -13,9 +13,9 @@ import type {
 } from "../../types/expense";
 
 /**
- * 支出・収入フォームコンポーネント
+ * 支出フォームコンポーネント
  *
- * 支出・収入の新規作成・編集を行うフォームコンポーネント
+ * 支出の新規作成・編集を行うフォームコンポーネント
  * バリデーション機能付きの制御されたコンポーネントとして実装
  *
  * 設計方針:
@@ -52,7 +52,7 @@ const _transactionTypeLabels: Record<TransactionType, string> = {
 };
 
 /**
- * 支出・収入登録/編集フォームコンポーネント
+ * 支出登録/編集フォームコンポーネント
  * @param {ExpenseFormProps} props - フォームのプロパティ
  * @param {function} props.onSubmit - フォーム送信時のコールバック関数
  * @param {function} props.onCancel - キャンセルボタン押下時のコールバック関数
