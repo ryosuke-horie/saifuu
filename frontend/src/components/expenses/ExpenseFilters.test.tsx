@@ -248,7 +248,7 @@ describe("ExpenseFilters", () => {
 			expect(filterContainer).toHaveAttribute("role", "search");
 			expect(filterContainer).toHaveAttribute(
 				"aria-label",
-				"支出・収入フィルター",
+				"支出フィルター",
 			);
 		});
 	});

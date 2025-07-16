@@ -197,10 +197,23 @@ describe("ExpensesPage", () => {
 
 		it("統計情報が正しく計算される", () => {
 			render(<ExpensesPage />);
+			
+			// 支出合計のラベルを確認
+			expect(screen.getByText("支出合計")).toBeInTheDocument();
+			
 			// 支出合計: 1000円 + 5000円 = 6000円
-			expect(screen.getByText("¥6,000")).toBeInTheDocument();
+			// text-red-600クラスを持つ要素を探す
+			const expenseTotalElement = screen.getByText((content, element) => {
+				return element?.className?.includes('text-red-600') && content.includes('￥6,000');
+			});
+			expect(expenseTotalElement).toBeInTheDocument();
+			
 			// 取引件数: 2件
-			expect(screen.getByText("2件")).toBeInTheDocument();
+			expect(screen.getByText("取引件数")).toBeInTheDocument();
+			const transactionCountElement = screen.getByText((content, element) => {
+				return element?.className?.includes('text-gray-900') && content === '2件';
+			});
+			expect(transactionCountElement).toBeInTheDocument();
 		});
 	});
 
@@ -345,9 +358,16 @@ describe("ExpensesPage", () => {
 			render(<ExpensesPage />);
 
 			// 支出合計の¥0が表示される
-			const zeroValues = screen.getAllByText("¥0");
-			expect(zeroValues).toHaveLength(1);
-			// 収支バランスは削除されました
+			const expenseTotalElement = screen.getByText((content, element) => {
+				return element?.className?.includes('text-red-600') && content.includes('￥0');
+			});
+			expect(expenseTotalElement).toBeInTheDocument();
+			
+			// 取引件数が0件で表示される
+			const transactionCountElement = screen.getByText((content, element) => {
+				return element?.className?.includes('text-gray-900') && content === '0件';
+			});
+			expect(transactionCountElement).toBeInTheDocument();
 		});
 
 		it("支出合計が表示される", () => {
@@ -362,8 +382,11 @@ describe("ExpensesPage", () => {
 			});
 			render(<ExpensesPage />);
 
-			const expense = screen.getByText("¥10,000");
-			expect(expense.className).toContain("text-red-600");
+			// 支出合計が赤文字で表示される
+			const expenseTotalElement = screen.getByText((content, element) => {
+				return element?.className?.includes('text-red-600') && content.includes('￥10,000');
+			});
+			expect(expenseTotalElement).toBeInTheDocument();
 		});
 	});
 });
