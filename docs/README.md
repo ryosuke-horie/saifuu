@@ -72,6 +72,7 @@
 <!-- tags: ci, cd, github-actions, automation, deployment, workflow -->
 
 - [PRコメント駆動CI実装ガイド](./ci/PRコメント駆動CI実装ガイド.md) - PRコメントを使用したCI/CDの実装
+- [ドキュメントメンテナンスワークフロー](./ci/ドキュメントメンテナンスワークフロー.md) - mainへのマージ後に自動でドキュメントを更新するワークフロー
 
 ## 📋 仕様書・要件定義
 <!-- tags: specification, requirements, documentation, feature-spec, homepage -->
