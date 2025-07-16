@@ -1,0 +1,207 @@
+name: Docs Maintenance
+
+on:
+  push:
+    branches: [main]
+    # Skip if the push is only updating docs
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'README.md'
+      - 'CLAUDE.md'
+
+jobs:
+  docs-maintenance:
+    runs-on: self-hosted
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+      id-token: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files from merge
+        id: changed-files
+        run: |
+          # Get the commit SHA before this push
+          BEFORE_SHA=$(git rev-parse HEAD~1)
+          
+          # Get changed files between previous commit and current commit
+          CHANGED_FILES=$(git diff --name-only $BEFORE_SHA HEAD)
+          
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Show changed files for debugging
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+      - name: Extract issue number from commit
+        id: extract-issue
+        run: |
+          # Try to extract issue number from the most recent commit message
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+          echo "Commit message: $COMMIT_MSG"
+          
+          # Extract issue number from commit message (looking for #123 or issue-123)
+          ISSUE_NUM=$(echo "$COMMIT_MSG" | grep -oE '#[0-9]+' | head -1 | sed 's/#//')
+          if [ -z "$ISSUE_NUM" ]; then
+            ISSUE_NUM=$(echo "$COMMIT_MSG" | grep -oE 'issue-[0-9]+' | head -1 | sed 's/issue-//')
+          fi
+          
+          # If no issue number found, use current timestamp as fallback
+          if [ -z "$ISSUE_NUM" ]; then
+            ISSUE_NUM="auto-$(date +%s)"
+          fi
+          
+          echo "issue_number=$ISSUE_NUM" >> $GITHUB_OUTPUT
+          echo "Extracted issue number: $ISSUE_NUM"
+
+      - name: Check if documentation update is needed
+        id: check-docs-needed
+        run: |
+          CHANGED_FILES="${{ steps.changed-files.outputs.changed_files }}"
+          
+          # Check if any significant files were changed that might require docs update
+          DOCS_NEEDED=false
+          
+          # Check for API changes
+          if echo "$CHANGED_FILES" | grep -qE "^api/"; then
+            echo "API changes detected"
+            DOCS_NEEDED=true
+          fi
+          
+          # Check for frontend changes
+          if echo "$CHANGED_FILES" | grep -qE "^frontend/"; then
+            echo "Frontend changes detected"
+            DOCS_NEEDED=true
+          fi
+          
+          # Check for E2E test changes
+          if echo "$CHANGED_FILES" | grep -qE "^e2e/"; then
+            echo "E2E test changes detected"
+            DOCS_NEEDED=true
+          fi
+          
+          # Check for CI changes
+          if echo "$CHANGED_FILES" | grep -qE "^\.github/"; then
+            echo "CI changes detected"
+            DOCS_NEEDED=true
+          fi
+          
+          # Check for root level config changes
+          if echo "$CHANGED_FILES" | grep -qE "(package\.json|CLAUDE\.md|\.env\.|tsconfig|biome\.json|wrangler\.jsonc)"; then
+            echo "Configuration changes detected"
+            DOCS_NEEDED=true
+          fi
+          
+          echo "docs_needed=$DOCS_NEEDED" >> $GITHUB_OUTPUT
+          echo "Documentation update needed: $DOCS_NEEDED"
+
+      - name: Create docs branch
+        if: steps.check-docs-needed.outputs.docs_needed == 'true'
+        run: |
+          ISSUE_NUM="${{ steps.extract-issue.outputs.issue_number }}"
+          BRANCH_NAME="docs/issue-$ISSUE_NUM"
+          
+          # Create and switch to new branch
+          git checkout -b "$BRANCH_NAME"
+          git push origin "$BRANCH_NAME"
+          
+          echo "Created branch: $BRANCH_NAME"
+
+      - name: Run Claude Code for documentation maintenance
+        if: steps.check-docs-needed.outputs.docs_needed == 'true'
+        uses: anthropics/claude-code-action@beta
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          model: "claude-sonnet-4-20250514"
+          
+          direct_prompt: |
+            【ドキュメント自動メンテナンス】
+            
+            mainブランチにマージされた変更に基づいて、ドキュメントの更新が必要かどうかを分析し、必要に応じて更新を行ってください。
+            
+            ## 変更されたファイル一覧
+            ```
+            ${{ steps.changed-files.outputs.changed_files }}
+            ```
+            
+            ## 実行タスク
+            
+            ### 1. 変更内容の分析
+            - 上記の変更されたファイルを確認
+            - 各変更がドキュメントに与える影響を分析
+            - docs/README.mdを参照して、関連するドキュメントを特定
+            
+            ### 2. ドキュメント更新の必要性判定
+            - 以下の場合はドキュメント更新が必要:
+              - 新しい機能やAPIの追加
+              - 既存機能の大幅な変更
+              - 新しい設定やツールの導入
+              - アーキテクチャの変更
+              - テスト戦略の変更
+              - 開発環境のセットアップ手順の変更
+            
+            ### 3. ドキュメントの更新実行
+            必要に応じて以下のドキュメントを更新:
+            - **API開発**: API関連の変更があった場合
+            - **フロントエンド開発**: フロントエンド関連の変更があった場合
+            - **テスト**: テスト関連の変更があった場合
+            - **CI/CD**: CI/CD関連の変更があった場合
+            - **開発環境**: 開発環境関連の変更があった場合
+            - **その他**: 該当する分野のドキュメント
+            
+            ### 4. docs/README.mdの更新
+            - 新しいドキュメントを追加した場合はREADME.mdにリンクを追加
+            - 既存のドキュメントの説明を更新
+            - 適切なタグを追加
+            
+            ### 5. 更新が不要な場合の処理
+            以下の場合は更新不要として正常終了:
+            - 変更がドキュメントに影響しない
+            - 直前のコミットがドキュメント更新のみ
+            - 設定の微調整のみ
+            - コメントやフォーマットの変更のみ
+            
+            ## 注意事項
+            - 日本語で記載し、設計意図を明確に説明する
+            - 既存のドキュメント構造と形式に従う
+            - 技術的な背景や設計判断を含める
+            - ファイル名は日本語のMarkdownファイルとする
+            - 更新内容を簡潔に説明する
+            
+            ## 最後に
+            更新を行った場合は、変更内容をコミットし、PRを作成してください。
+            更新が不要な場合は、その理由を説明して終了してください。
+            
+            対象Issue: #${{ steps.extract-issue.outputs.issue_number }}
+            
+          allowed_tools: "Bash(git *),Bash(npm *),Bash(find *),Bash(ls *),Bash(cat *),Bash(grep *),Bash(rg *)"
+          
+          custom_instructions: |
+            このプロジェクトのドキュメント管理方針に従ってください。
+            
+            ドキュメント作成規約:
+            - すべてのドキュメントは日本語ファイル名のMarkdownファイルとしてdocs/以下に作成
+            - 機能や目的に応じてサブディレクトリに分類
+            - 実装と同時にドキュメントを更新し、常に最新状態を保つ
+            - 重要な技術的選定を行った場合はADRとして記録
+            
+            プロジェクト構造:
+            - api/: APIアプリケーション
+            - frontend/: フロントエンドアプリケーション  
+            - e2e/: E2Eテスト
+            - docs/: プロジェクトドキュメント
+            
+            コミット規約:
+            - コミットメッセージは日本語で記載
+            - docs: プレフィックスを使用
+            - 変更理由を明記
+            - 小さな単位で頻繁にコミット
