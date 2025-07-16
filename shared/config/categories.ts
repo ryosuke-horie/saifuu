@@ -110,6 +110,14 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
 		color: '#F39C12',
 		description: '衣類、日用品、雑貨',
 	},
+	{
+		id: 'entertainment',
+		numericId: 18,
+		name: '娯楽',
+		type: 'expense',
+		color: '#E67E22',
+		description: '映画、ゲーム、音楽、趣味などのエンターテイメント関連支出',
+	},
 
 	{
 		id: 'other_expense',

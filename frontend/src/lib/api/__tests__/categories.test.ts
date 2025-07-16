@@ -16,8 +16,8 @@ describe("Categories API", () => {
 			// 設定ファイルから全カテゴリを取得
 			const result = await fetchCategories();
 
-			// 期待される総カテゴリ数（支出10個のみ、収入カテゴリは削除済み）
-			expect(result).toHaveLength(10);
+			// 期待される総カテゴリ数（支出11個のみ、収入カテゴリは削除済み、娯楽カテゴリ追加）
+			expect(result).toHaveLength(11);
 
 			// 新しく追加されたカテゴリの確認
 			const systemFee = result.find((cat) => cat.id === "6");
@@ -78,7 +78,7 @@ describe("Categories API", () => {
 			const expenseCategories = result.filter((cat) => cat.type === "expense");
 			// 収入カテゴリは廃止されました
 
-			expect(expenseCategories.length).toBe(10); // 支出カテゴリ数
+			expect(expenseCategories.length).toBe(11); // 支出カテゴリ数（娯楽カテゴリ追加）
 			// 収入カテゴリは削除済み
 		});
 	});
@@ -136,8 +136,20 @@ describe("Categories API", () => {
 			const result = await fetchCategories();
 
 			// 支出カテゴリのnumericIDの確認（IDは飛び飛びになっている）
-			const expectedIds = ["1", "2", "3", "4", "5", "6", "8", "10", "11", "12"];
-			const expenseCategories = result.slice(0, 10);
+			const expectedIds = [
+				"1",
+				"2",
+				"3",
+				"4",
+				"5",
+				"6",
+				"8",
+				"10",
+				"11",
+				"18",
+				"12",
+			];
+			const expenseCategories = result.slice(0, 11);
 			expenseCategories.forEach((category, index) => {
 				expect(category.id).toBe(expectedIds[index]);
 			});
