@@ -20,7 +20,7 @@ export const createMockCategory = (
 		"公共料金",
 		"その他",
 	]),
-	type: faker.helpers.arrayElement(["income", "expense"] as const),
+	type: "expense" as const,
 	color: faker.helpers.arrayElement([null, faker.color.human()]),
 	createdAt: faker.date.past().toISOString(),
 	updatedAt: faker.date.recent().toISOString(),

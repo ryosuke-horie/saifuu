@@ -93,21 +93,35 @@ describe('Transactions API - Unit Tests', () => {
 		})
 
 		// フィルタリングのテスト
-		it('should filter transactions by type', async () => {
-			// Red: タイプ別フィルタリングのテスト
+		it('should only allow expense type filter', async () => {
+			// Red: 収入タイプのフィルタリングは許可されない
 			const response = await createTestRequest(
 				testProductionApp,
 				'GET',
 				'/api/transactions?type=income'
 			)
 
+			// 収入タイプのフィルタリングは無効なリクエストとして扱う
+			expect(response.status).toBe(400)
+			const data = await getResponseJson(response)
+			expectErrorResponse(data, 'Invalid type filter. Only "expense" is allowed')
+		})
+
+		it('should filter transactions by expense type', async () => {
+			// Red: 支出タイプのフィルタリングのテスト
+			const response = await createTestRequest(
+				testProductionApp,
+				'GET',
+				'/api/transactions?type=expense'
+			)
+
 			expect(response.status).toBe(200)
 			const data = await getResponseJson(response)
 			expect(Array.isArray(data)).toBe(true)
 
-			// すべての取引がincomeタイプであることを確認
+			// すべての取引がexpenseタイプであることを確認
 			for (const transaction of data as Transaction[]) {
-				expect(transaction.type).toBe('income')
+				expect(transaction.type).toBe('expense')
 			}
 		})
 
@@ -192,9 +206,12 @@ describe('Transactions API - Unit Tests', () => {
 	})
 
 	describe('POST /transactions', () => {
-		it('should create a new transaction with valid data', async () => {
-			// Red: 取引作成のテスト
-			const newTransaction = testRequestPayloads.createTransaction
+		it('should create a new expense transaction with valid data', async () => {
+			// Red: 支出取引作成のテスト
+			const newTransaction = {
+				...testRequestPayloads.createTransaction,
+				type: 'expense' as const,
+			}
 
 			const response = await createTestRequest(
 				testProductionApp,
@@ -218,8 +235,27 @@ describe('Transactions API - Unit Tests', () => {
 			])
 
 			expect(data.amount).toBe(newTransaction.amount)
-			expect(data.type).toBe(newTransaction.type)
+			expect(data.type).toBe('expense')
 			expect(data.description).toBe(newTransaction.description)
+		})
+
+		it('should reject income type transactions', async () => {
+			// Red: 収入タイプの取引は拒否される
+			const incomeTransaction = {
+				...testRequestPayloads.createTransaction,
+				type: 'income' as const,
+			}
+
+			const response = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/transactions',
+				incomeTransaction
+			)
+
+			expect(response.status).toBe(400)
+			const data = await getResponseJson(response)
+			expectErrorResponse(data, 'Only expense type is allowed')
 		})
 
 		it('should handle missing required fields', async () => {
@@ -244,7 +280,9 @@ describe('Transactions API - Unit Tests', () => {
 				invalidTransactionData.invalidType
 			)
 
-			expect([400, 500]).toContain(response.status)
+			expect(response.status).toBe(400)
+			const data = await getResponseJson(response)
+			expectErrorResponse(data, 'Only expense type is allowed')
 		})
 
 		it('should handle negative amount', async () => {
@@ -592,30 +630,32 @@ describe('Transactions API - Unit Tests', () => {
 
 			if (response.status === 200) {
 				const data = await getResponseJson(response)
-				expectJsonStructure(data, ['totalIncome', 'totalExpense', 'balance', 'transactionCount'])
+				// 支出専用なので、収入関連の統計は削除
+				expectJsonStructure(data, ['totalExpense', 'transactionCount'])
+				// totalIncomeとbalanceは存在しないことを確認
+				expect(data.totalIncome).toBeUndefined()
+				expect(data.balance).toBeUndefined()
 			} else {
 				expect([400, 500]).toContain(response.status)
 			}
 		})
 
-		it('should return correct statistics calculation', async () => {
-			// Red: 統計計算の正確性テスト
+		it('should return correct expense-only statistics', async () => {
+			// Red: 支出専用統計の正確性テスト
 			const response = await createTestRequest(testProductionApp, 'GET', '/api/transactions/stats')
 
 			expect(response.status).toBe(200)
 			const data = await getResponseJson(response)
 
-			// 統計値の妥当性チェック
-			expect(typeof data.totalIncome).toBe('number')
+			// 支出専用の統計値チェック
 			expect(typeof data.totalExpense).toBe('number')
-			expect(typeof data.balance).toBe('number')
 			expect(typeof data.transactionCount).toBe('number')
 
-			// 収支バランスの計算チェック
-			expect(data.balance).toBe(data.totalIncome - data.totalExpense)
+			// 収入関連の統計は存在しない
+			expect(data.totalIncome).toBeUndefined()
+			expect(data.balance).toBeUndefined()
 
 			// 非負の値チェック
-			expect(data.totalIncome).toBeGreaterThanOrEqual(0)
 			expect(data.totalExpense).toBeGreaterThanOrEqual(0)
 			expect(data.transactionCount).toBeGreaterThanOrEqual(0)
 		})
@@ -627,10 +667,13 @@ describe('Transactions API - Unit Tests', () => {
 			expect(response.status).toBe(200)
 			const data = await getResponseJson(response)
 
-			// すべての統計がゼロまたは存在することを確認
-			expect(data.totalIncome).toBeGreaterThanOrEqual(0)
+			// 支出専用統計の確認
 			expect(data.totalExpense).toBeGreaterThanOrEqual(0)
 			expect(data.transactionCount).toBeGreaterThanOrEqual(0)
+
+			// 収入関連統計は存在しない
+			expect(data.totalIncome).toBeUndefined()
+			expect(data.balance).toBeUndefined()
 		})
 	})
 })

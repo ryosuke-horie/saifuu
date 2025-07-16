@@ -246,10 +246,7 @@ describe("ExpenseFilters", () => {
 
 			const filterContainer = screen.getByTestId("expense-filters");
 			expect(filterContainer).toHaveAttribute("role", "search");
-			expect(filterContainer).toHaveAttribute(
-				"aria-label",
-				"支出・収入フィルター",
-			);
+			expect(filterContainer).toHaveAttribute("aria-label", "支出フィルター");
 		});
 	});
 

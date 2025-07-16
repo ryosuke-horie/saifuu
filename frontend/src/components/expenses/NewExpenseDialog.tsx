@@ -14,7 +14,7 @@ import { ExpenseForm } from "./ExpenseForm";
  * 新規支出登録ダイアログコンポーネント
  *
  * DialogコンポーネントとExpenseFormコンポーネントを組み合わせて
- * モーダル形式での新規支出・収入登録機能を提供
+ * モーダル形式での新規支出登録機能を提供
  *
  * 設計方針:
  * - 既存のDialogとExpenseFormコンポーネントを再利用
@@ -55,7 +55,7 @@ export const NewExpenseDialog: FC<NewExpenseDialogProps> = ({
 		return ALL_CATEGORIES.map((config) => ({
 			id: config.numericId.toString(), // numericIdをstring型に変換
 			name: config.name,
-			type: config.type as "income" | "expense",
+			type: config.type as "expense",
 			color: config.color || null,
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),

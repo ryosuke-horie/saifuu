@@ -76,10 +76,10 @@ describe("Categories API", () => {
 			const result = await fetchCategories();
 
 			const expenseCategories = result.filter((cat) => cat.type === "expense");
-			const incomeCategories = result.filter((cat) => cat.type === "income");
+			// 収入カテゴリは廃止されました
 
 			expect(expenseCategories.length).toBe(10); // 支出カテゴリ数
-			expect(incomeCategories.length).toBe(0); // 収入カテゴリは削除済み
+			// 収入カテゴリは削除済み
 		});
 	});
 

@@ -1,7 +1,7 @@
 /**
  * ExpenseFiltersコンポーネント
  *
- * 支出・収入の絞り込み機能を提供するフィルタリングコンポーネント
+ * 支出の絞り込み機能を提供するフィルタリングコンポーネント
  * 期間指定、カテゴリ絞り込み、種別絞り込み、金額範囲指定の機能を提供
  * URLパラメータとの双方向バインディングをサポート
  */
@@ -31,7 +31,6 @@ const PERIOD_OPTIONS: Array<{ value: PeriodType | ""; label: string }> = [
  */
 const TYPE_OPTIONS = [
 	{ value: "", label: "すべて" },
-	{ value: "income", label: "収入のみ" },
 	{ value: "expense", label: "支出のみ" },
 ];
 
@@ -44,7 +43,7 @@ const parseFiltersFromURL = (
 	const filters: ExpenseFiltersState = {};
 
 	const type = searchParams.get("type");
-	if (type === "income" || type === "expense") {
+	if (type === "expense") {
 		filters.type = type;
 	}
 
@@ -243,7 +242,7 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({
 			data-testid="expense-filters"
 			className={`bg-white p-4 rounded-lg shadow-sm space-y-4 ${className}`}
 			role="search"
-			aria-label="支出・収入フィルター"
+			aria-label="支出フィルター"
 		>
 			<div className={`flex ${isMobile ? "flex-col" : "flex-row"} gap-4`}>
 				{/* 期間フィルター */}

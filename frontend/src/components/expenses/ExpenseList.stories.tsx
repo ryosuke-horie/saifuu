@@ -183,19 +183,21 @@ export const SingleItem: Story = {
 };
 
 /**
- * 収入のみ
+ * 高額支出のみ
  *
- * 収入取引のみが表示されている状態
+ * 高額支出取引のみが表示されている状態
  */
-export const IncomeOnly: Story = {
+export const HighAmountExpenseOnly: Story = {
 	args: {
-		transactions: mockTransactions.filter((txn) => txn.type === "income"),
+		transactions: mockTransactions.filter(
+			(txn) => txn.type === "expense" && txn.amount > 10000,
+		),
 	},
 	parameters: {
 		docs: {
 			description: {
 				story:
-					"収入取引のみが表示されている状態です。金額が緑色で+表示されます。",
+					"高額支出取引のみが表示されている状態です。金額が大きい支出の確認ができます。",
 			},
 		},
 	},
@@ -241,9 +243,9 @@ export const ManyItems: Story = {
 			},
 			{
 				id: "txn-7",
-				amount: 120000,
-				type: "income",
-				description: "副業収入",
+				amount: 12000,
+				type: "expense",
+				description: "食品買い出し",
 				date: "2025-07-03",
 				category: null,
 				createdAt: "2025-07-03T10:00:00Z",

@@ -86,14 +86,7 @@ export async function getTransactionStats(
 	return apiClient.get<TransactionStats>(endpoint);
 }
 
-/**
- * 収入取引のみを取得する
- */
-export async function getIncomeTransactions(
-	query?: Omit<GetTransactionsQuery, "type">,
-): Promise<Transaction[]> {
-	return getTransactions({ ...query, type: "income" });
-}
+// 収入取引は廃止されました。支出取引のみを使用してください。
 
 /**
  * 支出取引のみを取得する
@@ -238,7 +231,7 @@ export const transactionService = {
 	updateTransaction,
 	deleteTransaction,
 	getTransactionStats,
-	getIncomeTransactions,
+	// getIncomeTransactions は廃止されました
 	getExpenseTransactions,
 	getTransactionsByCategory,
 	getTransactionsByDateRange,

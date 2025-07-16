@@ -98,7 +98,7 @@ export {
 	getCategories,
 	getCategory,
 	getExpenseCategories,
-	getIncomeCategories,
+	// getIncomeCategories は廃止されました
 	updateCategory,
 } from "./services/categories";
 // サブスクリプションサービス
@@ -125,7 +125,7 @@ export {
 	getCurrentMonthTransactions,
 	getCurrentYearTransactions,
 	getExpenseTransactions,
-	getIncomeTransactions,
+	// getIncomeTransactions は廃止されました
 	getLargeTransactions,
 	getLastMonthTransactions,
 	getMonthlyStats,

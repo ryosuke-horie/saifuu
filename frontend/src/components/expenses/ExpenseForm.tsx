@@ -4,7 +4,6 @@ import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import {
 	validateAmount,
 	validateDate,
-	validateRequiredString,
 	validateStringLength,
 } from "../../lib/validation/form-validation";
 import type {
@@ -14,9 +13,9 @@ import type {
 } from "../../types/expense";
 
 /**
- * 支出・収入フォームコンポーネント
+ * 支出フォームコンポーネント
  *
- * 支出・収入の新規作成・編集を行うフォームコンポーネント
+ * 支出の新規作成・編集を行うフォームコンポーネント
  * バリデーション機能付きの制御されたコンポーネントとして実装
  *
  * 設計方針:
@@ -40,20 +39,20 @@ interface FormErrors {
 // デフォルトフォームデータ
 const defaultFormData: ExpenseFormData = {
 	amount: 0,
-	type: null,
+	type: "expense" as TransactionType, // 常に支出として扱う
 	date: "",
 	description: "",
 	categoryId: "",
 };
 
 // 取引種別マッピング（日本語表示用）
-const transactionTypeLabels: Record<TransactionType, string> = {
+// 現在は支出のみだが、将来の拡張のために残す
+const _transactionTypeLabels: Record<TransactionType, string> = {
 	expense: "支出",
-	income: "収入",
 };
 
 /**
- * 支出・収入登録/編集フォームコンポーネント
+ * 支出登録/編集フォームコンポーネント
  * @param {ExpenseFormProps} props - フォームのプロパティ
  * @param {function} props.onSubmit - フォーム送信時のコールバック関数
  * @param {function} props.onCancel - キャンセルボタン押下時のコールバック関数
@@ -107,7 +106,8 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 					return validateAmount(value as number);
 
 				case "type":
-					return validateRequiredString(value as string | null, "種別");
+					// 種別は常に"expense"なのでバリデーション不要
+					return undefined;
 
 				case "date":
 					return validateDate(value as string);
@@ -281,51 +281,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 				)}
 			</div>
 
-			{/* 種別 */}
-			<div>
-				<label
-					htmlFor="expense-type"
-					className="block text-sm font-medium text-gray-700 mb-2"
-				>
-					種別 <span className="text-red-500">*</span>
-				</label>
-				<select
-					id="expense-type"
-					value={formData.type || ""}
-					onChange={(e) => handleFieldChange("type", e.target.value || null)}
-					onBlur={() => handleFieldBlur("type")}
-					disabled={isSubmitting}
-					aria-required="true"
-					className={`
-						block w-full px-3 py-2 border rounded-md shadow-sm
-						focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-						disabled:bg-gray-100 disabled:cursor-not-allowed
-						${
-							errors.type
-								? "border-red-300 focus:ring-red-500 focus:border-red-500"
-								: "border-gray-300"
-						}
-					`}
-					aria-invalid={!!errors.type}
-					aria-describedby={errors.type ? "type-error" : undefined}
-				>
-					<option value="">選択してください</option>
-					{(
-						Object.entries(transactionTypeLabels) as Array<
-							[TransactionType, string]
-						>
-					).map(([value, label]) => (
-						<option key={value} value={value}>
-							{label}
-						</option>
-					))}
-				</select>
-				{errors.type && (
-					<p id="type-error" className="mt-1 text-sm text-red-600" role="alert">
-						{errors.type}
-					</p>
-				)}
-			</div>
+			{/* 種別フィールドは削除（常に支出として扱う） */}
 
 			{/* 日付 */}
 			<div>
@@ -441,11 +397,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 						<option value="">カテゴリを読み込み中...</option>
 					) : (
 						<>
-							<option value="">
-								{!formData.type
-									? "カテゴリを選択（種別選択で絞り込み）"
-									: "カテゴリを選択してください"}
-							</option>
+							<option value="">カテゴリを選択してください</option>
 							{filteredCategories.map((category) => (
 								<option key={category.id} value={category.id}>
 									{category.name}

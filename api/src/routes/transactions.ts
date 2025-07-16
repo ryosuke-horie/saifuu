@@ -21,9 +21,9 @@ function validateTransactionData(data: Partial<NewTransaction>): string | null {
 		}
 	}
 
-	// 取引種別のバリデーション
-	if (data.type !== undefined && !['income', 'expense'].includes(data.type)) {
-		return 'Type must be either "income" or "expense"'
+	// 取引種別のバリデーション（支出のみ許可）
+	if (data.type !== undefined && data.type !== 'expense') {
+		return 'Only expense type is allowed'
 	}
 
 	// 説明文の文字数チェック（最大500文字）
@@ -63,6 +63,16 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 		// クエリパラメータを取得
 		const query = c.req.query()
 		const type = query.type as 'income' | 'expense' | undefined
+
+		// 収入タイプのフィルタリングはエラー
+		if (type === 'income') {
+			logWithContext(c, 'warn', '取引一覧取得: 無効なフィルタタイプ', {
+				validationError: 'invalid_type_filter',
+				providedType: type,
+			})
+			return c.json({ error: 'Invalid type filter. Only "expense" is allowed' }, 400)
+		}
+
 		const categoryId = query.categoryId ? Number.parseInt(query.categoryId) : undefined
 		const startDate = query.startDate
 		const endDate = query.endDate
@@ -171,21 +181,15 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				})
 				.from(transactions)
 
-			const totalIncome = allTransactions
-				.filter((t) => t.type === 'income')
-				.reduce((sum, t) => sum + t.amount, 0)
-
+			// 支出専用の統計計算
 			const totalExpense = allTransactions
 				.filter((t) => t.type === 'expense')
 				.reduce((sum, t) => sum + t.amount, 0)
 
-			const balance = totalIncome - totalExpense
 			const transactionCount = allTransactions.length
 
 			const stats = {
-				totalIncome,
 				totalExpense,
-				balance,
 				transactionCount,
 			}
 

@@ -181,7 +181,6 @@ export const Empty: Story = {
 		await expect(canvas.getByText("データがありません")).toBeInTheDocument();
 
 		// ゼロ金額の表示確認
-		await expect(canvas.getByTestId("total-income")).toHaveTextContent("¥0");
 		await expect(canvas.getByTestId("total-expense")).toHaveTextContent("¥0");
 		await expect(canvas.getByTestId("balance-amount")).toHaveTextContent("¥0");
 	},
@@ -224,9 +223,6 @@ export const LargeAmounts: Story = {
 		const canvas = within(canvasElement);
 
 		// 大きな金額のフォーマット確認
-		await expect(canvas.getByTestId("total-income")).toHaveTextContent(
-			"¥12,345,678",
-		);
 		await expect(canvas.getByTestId("total-expense")).toHaveTextContent(
 			"¥9,876,543",
 		);
@@ -525,9 +521,6 @@ export const BaseStatsOnly: Story = {
 		await expect(
 			canvas.getByTestId("monthly-balance-card"),
 		).toBeInTheDocument();
-		await expect(canvas.getByTestId("total-income")).toHaveTextContent(
-			"￥250,000",
-		);
 		await expect(canvas.getByTestId("total-expense")).toHaveTextContent(
 			"￥180,000",
 		);
