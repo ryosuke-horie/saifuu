@@ -146,8 +146,8 @@ describe("Categories API", () => {
 				"8",
 				"10",
 				"11",
-				"12",
 				"18",
+				"12",
 			];
 			const expenseCategories = result.slice(0, 11);
 			expenseCategories.forEach((category, index) => {
