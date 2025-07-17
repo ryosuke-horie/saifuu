@@ -42,6 +42,13 @@ describe("ExpenseForm", () => {
 		vi.clearAllMocks();
 	});
 
+	it("正常にレンダリングされること", () => {
+		// スモークテスト: コンポーネントがクラッシュせずにレンダリングされることを確認
+		render(<ExpenseForm {...defaultProps} />);
+		// 基本的な要素の存在を確認（レンダリングの健全性チェック）
+		expect(screen.getByRole("button", { name: "登録" })).toBeInTheDocument();
+	});
+
 	describe("基本的なレンダリング", () => {
 		it("初期データが設定されている場合、フォームフィールドに値が表示されること", () => {
 			render(<ExpenseForm {...defaultProps} initialData={validFormData} />);
