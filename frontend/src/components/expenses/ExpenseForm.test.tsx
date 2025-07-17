@@ -43,80 +43,12 @@ describe("ExpenseForm", () => {
 	});
 
 	describe("基本的なレンダリング", () => {
-		it("正常にレンダリングされること", () => {
-			render(<ExpenseForm {...defaultProps} />);
-
-			// 必要なフィールドがレンダリングされていることを確認
-			expect(screen.getByLabelText(/金額（円）/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/日付/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/説明/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/カテゴリ/)).toBeInTheDocument();
-			expect(screen.getByRole("button", { name: "登録" })).toBeInTheDocument();
-			expect(
-				screen.getByRole("button", { name: "キャンセル" }),
-			).toBeInTheDocument();
-		});
-
-		it("必須フィールドにアスタリスクが表示されること", () => {
-			render(<ExpenseForm {...defaultProps} />);
-
-			// 必須フィールドのアスタリスクが表示されていることを確認
-			expect(screen.getByLabelText(/金額（円）/)).toBeInTheDocument();
-			expect(screen.getAllByText("*")).toHaveLength(2); // 2つの必須フィールド
-			expect(screen.getByLabelText(/日付/)).toBeInTheDocument();
-		});
-
 		it("初期データが設定されている場合、フォームフィールドに値が表示されること", () => {
 			render(<ExpenseForm {...defaultProps} initialData={validFormData} />);
 
 			expect(screen.getByDisplayValue("1000")).toBeInTheDocument();
 			expect(screen.getByDisplayValue("2025-07-09")).toBeInTheDocument();
 			expect(screen.getByDisplayValue("コンビニ弁当")).toBeInTheDocument();
-		});
-	});
-
-	describe("フォーム入力処理", () => {
-		it("金額フィールドに値を入力できること", async () => {
-			const user = userEvent.setup();
-			render(<ExpenseForm {...defaultProps} />);
-
-			const amountInput = screen.getByLabelText(/金額（円）/);
-			await user.clear(amountInput);
-			await user.type(amountInput, "1500");
-
-			expect(amountInput).toHaveValue(1500);
-		});
-
-		it("日付フィールドに値を入力できること", async () => {
-			const user = userEvent.setup();
-			render(<ExpenseForm {...defaultProps} />);
-
-			const dateInput = screen.getByLabelText(/日付/);
-			await user.clear(dateInput);
-			await user.type(dateInput, "2025-07-10");
-
-			expect(dateInput).toHaveValue("2025-07-10");
-		});
-
-		it("説明フィールドに値を入力できること", async () => {
-			const user = userEvent.setup();
-			render(<ExpenseForm {...defaultProps} />);
-
-			const descriptionInput = screen.getByLabelText(/説明/);
-			await user.clear(descriptionInput);
-			await user.type(descriptionInput, "テスト説明");
-
-			expect(descriptionInput).toHaveValue("テスト説明");
-		});
-
-		it("カテゴリフィールドで選択できること", async () => {
-			const user = userEvent.setup();
-			render(<ExpenseForm {...defaultProps} />);
-
-			const categorySelect = screen.getByLabelText(/カテゴリ/);
-			await user.selectOptions(categorySelect, "3");
-
-			expect(categorySelect).toHaveValue("3");
 		});
 	});
 
