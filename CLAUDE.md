@@ -4,44 +4,40 @@
 
 完全個人用の家計管理アプリケーション。支出・収入の記録と分析、サブスクリプション管理を行うためのWebアプリケーション。
 
-## 機能
+**詳細**: [プロジェクト概要](./docs/プロジェクト概要.md)
+
+## 主要機能
 
 - 支出/収入を登録/編集/一覧するインターフェース
 - 支出/収入を中心にデータベースに保存
-- サブスクの管理
+- サブスクリプション管理
+- カテゴリ別の支出分析
+- データの可視化
 
-## 技術スタック
+## 技術スタック（主要技術）
 
-### フレームワーク・ランタイム
+### フロントエンド
+- **Next.js 15.3.4** - App Router使用
+- **React 19.1.0** - 最新の並行機能活用
+- **TypeScript 5** - 型安全な開発
+- **Tailwind CSS v4** - @tailwindcss/postcss使用
 
-#### フロントエンド
-- **Next.js v15** - フルスタックWebフレームワーク
-- **React 19** - UIライブラリ
-- **Cloudflare Workers** - エッジランタイム環境
-- **TypeScript** - 型安全な開発
+### バックエンド
+- **Hono 4.8.3** - 軽量・高速なAPIフレームワーク
+- **Drizzle ORM 0.44.2** - 型安全なORM
+- **Cloudflare Workers** - エッジ実行環境
 
-#### バックエンド
-- **hono** - API用フレームワーク
-- **drizzle** - D1へアクセスするORM
+### データベース
+- **Cloudflare D1** - SQLiteベースのエッジDB
+- **開発環境**: ローカルSQLite（dev.db）
 
-### スタイリング・UI
-- **Tailwind CSS v4** - ユーティリティファーストCSSフレームワーク
+### テストツール
+- **Vitest 3.2.4** - ユニットテスト
+- **Playwright 1.53.1** - E2Eテスト（ローカルのみ）
+- **Storybook 8.6.14** - コンポーネント開発
+- **MSW 2.10.2** - APIモック
 
-### 開発ツール
-- **Vite** - 高速なビルドツール
-- **Biome** - コードフォーマッター・リンター
-- **npm** - パッケージマネージャー
-
-### テスト・開発ツール
-- **Playwright** - E2Eテストフレームワーク（専用ディレクトリで開発環境のみ実行）
-- **Vitest** - ユニットテストフレームワーク
-- **React Testing Library** - Reactコンポーネントテスト
-- **Storybook** - コンポーネント開発・テスト環境
-- **MSW (Mock Service Worker)** - APIモック
-
-### データベース・状態管理
-- **Cloudflare D1** - SQLiteベースのエッジデータベース（予定）
-- **Zod** - スキーマバリデーション
+**詳細**: [技術スタック](./docs/技術スタック.md)
 
 ## 開発ルール
 
@@ -247,105 +243,97 @@ docs/
 
 ## 開発環境セットアップ
 
-### 1. 前提条件
-- **mise** - Node.jsバージョン管理ツール
-- プロジェクトルートに `.mise.toml` でNode.js 22を固定
+### 前提条件
+- **mise** - Node.jsバージョン管理（Node.js 22固定）
+- **npm** - パッケージマネージャー
 
-### 2. 初回セットアップ
+### クイックスタート
 ```bash
-# mise経由でNode.js 22をインストール
+# Node.js 22をインストール
 mise install
 
 # 依存関係のインストール
-npm ci
+npm install
+cd api && npm install
+cd frontend && npm install
+
+# 環境変数ファイルの作成
+cp api/.env.example api/.env
+cp frontend/.env.example frontend/.env
+
+# データベースのセットアップ
+cd api && npm run db:setup:dev
 ```
 
-### 3. 開発環境の確認
-```bash
-# Node.jsバージョンの確認（22系であることを確認）
-node --version
-```
+**詳細**: [環境変数設定ガイド](./docs/開発環境/環境変数設定ガイド.md)
 
-## スクリプト
+## 主要コマンド（AIアシスタント用）
 
+### 開発サーバー
 ```bash
-# 開発サーバー起動
-# 重要: バックグラウンドで実行する場合は必ずghostを使用すること
+# フロントエンド（別ターミナル）
+npm run dev  # http://localhost:3000
+
+# API（別ターミナル）
+cd api && npm run dev  # http://localhost:5173
+
+# バックグラウンド実行（Ghost使用）
 ghost run npm run dev
-# または、ユーザーに別セッションでの起動を依頼
-
-# 型チェックとリント修正
-npm run check:fix
-
-# ビルド
-npm run build
-
-# Storybook起動（バックグラウンド実行の場合）
 ghost run npm run storybook
+```
 
-# Storybookビルド
-npm run build-storybook
+### コード品質チェック
+```bash
+# 型チェック・リント・テスト実行
+npm run check:fix
+cd api && npm run check:fix
+```
 
-# E2Eテスト（e2eディレクトリで実行）
-npm run test:e2e
-
-# E2EテストUI付き実行
-npm run test:e2e:ui
-
-# E2Eテストレポート表示
-npm run test:e2e:report
-
+### テスト実行
+```bash
 # ユニットテスト
 npm run test:unit
 
-# デプロイ（Cloudflare Workers）
-# 注意: Workers Build自動化との競合を避けるため、手動デプロイスクリプトは deploy:manual に変更されています
-npm run deploy:manual
-
-# Ghostプロセス管理
-ghost list                     # 実行中のプロセス一覧
-ghost log <task-id>           # ログ確認
-ghost stop <task-id>          # プロセス停止
-ghost cleanup --days 7        # 古いタスクのクリーンアップ
+# E2Eテスト（ローカルのみ）
+npm run test:e2e
+npm run test:e2e:ui  # UIモード
 ```
 
-## プロジェクト構造
+### データベース操作
+```bash
+# 開発環境マイグレーション
+cd api && npm run db:migrate:dev
+
+# Drizzle Studio起動
+cd api && npm run db:studio:dev
+```
+
+**全コマンド一覧**: [コマンドリファレンス](./docs/コマンドリファレンス.md)
+
+## プロジェクト構造（重要ディレクトリ）
 
 ```
 saifuu/
-├── api/                   # APIアプリケーション
-│   ├── src/              # APIソースコード
+├── api/                   # バックエンドAPI（Hono + Cloudflare Workers）
+│   ├── src/
 │   │   ├── routes/       # APIエンドポイント
 │   │   ├── db/           # データベース設定
-│   │   └── __tests__/    # APIテスト
-│   ├── drizzle/          # データベースマイグレーション
-│   └── package.json      # API依存関係
-├── frontend/             # フロントエンドアプリケーション
-│   ├── src/              # フロントエンドソースコード
-│   │   ├── app/          # Next.jsアプリディレクトリ
-│   │   ├── components/   # 共通コンポーネント
-│   │   │   ├── **/*.stories.tsx  # Storybookストーリー
-│   │   │   └── **/*.tsx  # コンポーネント本体
+│   │   └── __tests__/    # テスト（unit/integration）
+│   └── drizzle/          # マイグレーション
+├── frontend/             # フロントエンド（Next.js）
+│   ├── src/
+│   │   ├── app/          # App Router
+│   │   ├── components/   # UIコンポーネント
 │   │   ├── hooks/        # カスタムフック
-│   │   ├── lib/          # ライブラリ・ユーティリティ
-│   │   └── types/        # 型定義
-│   ├── .storybook/       # Storybook設定
-│   │   ├── main.ts       # Storybook設定ファイル
-│   │   ├── preview.tsx   # グローバル設定・デコレーター
-│   │   └── mocks/        # MSWモックファイル
-│   ├── public/           # 静的ファイル
-│   └── package.json      # フロントエンド依存関係
-├── e2e/                  # E2Eテスト専用ディレクトリ
-│   ├── homepage.spec.ts  # ホームページE2Eテスト
-│   ├── subscriptions.spec.ts # サブスクリプションE2Eテスト
-│   ├── playwright.config.ts  # Playwright設定
-│   └── package.json      # E2E専用依存関係
-├── docs/                 # プロジェクトドキュメント
-│   ├── テスト/           # テスト関連ドキュメント
-│   │   └── テストガイド.md  # テスト全般の方針
-│   └── API開発/          # API関連ドキュメント
+│   │   └── lib/          # ユーティリティ
+│   └── .storybook/       # Storybook設定
+├── e2e/                  # E2Eテスト（Playwright）
+├── shared/               # 共有設定
+├── docs/                 # 詳細ドキュメント
 └── CLAUDE.md            # このファイル
 ```
+
+**詳細**: [プロジェクト構造](./docs/プロジェクト構造.md)
 
 ## Storybook コンポーネント開発
 
@@ -599,3 +587,19 @@ GitHub Actions無料枠を効率的に使用するため、E2Eテストは最小
 - 個人情報や機密情報をコミットしない
 - 環境変数は `.env` ファイルで管理し、サンプルは `.env.example` に記載
 - Cloudflare Workersのシークレットは `wrangler secret` で管理
+
+## 詳細ドキュメント参照
+
+AIアシスタントとして作業する際は、以下のドキュメントも参照してください：
+
+- 📌 **基本情報**
+  - [プロジェクト概要](./docs/プロジェクト概要.md) - 詳細な機能とアーキテクチャ
+  - [技術スタック](./docs/技術スタック.md) - 技術選定の理由と詳細
+  - [プロジェクト構造](./docs/プロジェクト構造.md) - ディレクトリ構成の詳細
+
+- 🛠 **開発ガイド**
+  - [コマンドリファレンス](./docs/コマンドリファレンス.md) - 全コマンドの詳細
+  - [テストガイド](./docs/テスト/テストガイド.md) - テスト戦略の詳細
+  - [環境変数設定](./docs/開発環境/環境変数設定ガイド.md) - 環境設定の詳細
+
+- 📚 **全ドキュメント一覧**: [docs/README.md](./docs/README.md)
