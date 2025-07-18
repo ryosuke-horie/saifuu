@@ -91,7 +91,7 @@ jobs:
           } > coverage_comment.md
           
           # Post or update comment to PR
-          node .github/scripts/update-pr-comment.js "FRONTEND_COVERAGE_REPORT" "$(cat coverage_comment.md)"
+          node ../.github/scripts/update-pr-comment.js "FRONTEND_COVERAGE_REPORT" "$(cat coverage_comment.md)"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
