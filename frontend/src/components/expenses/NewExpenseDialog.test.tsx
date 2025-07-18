@@ -10,12 +10,59 @@ import type { Category } from "../../lib/api/types";
 import { NewExpenseDialog } from "./NewExpenseDialog";
 
 // グローバルカテゴリ設定のモック
-vi.mock("@shared/config/categories", () => ({
-	getCategoriesByType: vi.fn(() => [
-		{ id: "food", name: "食費", type: "expense", color: "#FF6B6B" },
-		{ id: "transportation", name: "交通費", type: "expense", color: "#3498DB" },
-	]),
-}));
+vi.mock("@shared/config/categories", async () => {
+	const actual = await vi.importActual<
+		typeof import("@shared/config/categories")
+	>("@shared/config/categories");
+	return {
+		...actual,
+		EXPENSE_CATEGORIES: [
+			{
+				id: "food",
+				numericId: 3,
+				name: "食費",
+				type: "expense",
+				color: "#FF6B6B",
+				description: "食材、外食、飲食代",
+			},
+			{
+				id: "transportation",
+				numericId: 4,
+				name: "交通費",
+				type: "expense",
+				color: "#3498DB",
+				description: "電車、バス、タクシー、ガソリン代",
+			},
+		],
+		ALL_CATEGORIES: [
+			{
+				id: "food",
+				numericId: 3,
+				name: "食費",
+				type: "expense",
+				color: "#FF6B6B",
+				description: "食材、外食、飲食代",
+			},
+			{
+				id: "transportation",
+				numericId: 4,
+				name: "交通費",
+				type: "expense",
+				color: "#3498DB",
+				description: "電車、バス、タクシー、ガソリン代",
+			},
+		],
+		getCategoriesByType: vi.fn(() => [
+			{ id: "food", name: "食費", type: "expense", color: "#FF6B6B" },
+			{
+				id: "transportation",
+				name: "交通費",
+				type: "expense",
+				color: "#3498DB",
+			},
+		]),
+	};
+});
 
 // UIコンポーネントのモック
 vi.mock("../ui/Dialog", () => ({

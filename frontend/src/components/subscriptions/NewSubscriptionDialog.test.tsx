@@ -16,6 +16,42 @@ vi.mock("react-dom", async () => {
 
 // グローバルカテゴリ設定をモック
 vi.mock("@shared/config/categories", () => ({
+	EXPENSE_CATEGORIES: [
+		{
+			id: "food",
+			numericId: 3,
+			name: "食費",
+			type: "expense",
+			color: "#FF6B6B",
+			description: "食材、外食、飲食代",
+		},
+		{
+			id: "system",
+			numericId: 6,
+			name: "システム関係費",
+			type: "expense",
+			color: "#27AE60",
+			description: "システム利用料、サブスクリプション費用",
+		},
+	],
+	ALL_CATEGORIES: [
+		{
+			id: "food",
+			numericId: 3,
+			name: "食費",
+			type: "expense",
+			color: "#FF6B6B",
+			description: "食材、外食、飲食代",
+		},
+		{
+			id: "system",
+			numericId: 6,
+			name: "システム関係費",
+			type: "expense",
+			color: "#27AE60",
+			description: "システム利用料、サブスクリプション費用",
+		},
+	],
 	getCategoriesByType: vi.fn(() => [
 		{ id: "food", name: "食費", type: "expense", color: "#FF6B6B" },
 		{ id: "system", name: "システム関係費", type: "expense", color: "#27AE60" },
