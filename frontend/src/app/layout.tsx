@@ -18,6 +18,12 @@ export const metadata: Metadata = {
 	title: "Saifuu - 家計管理アプリ",
 	description:
 		"個人用家計管理アプリケーション - 支出・収入の記録と分析、サブスクリプション管理",
+	// 本番環境のベースURL設定（Open Graph画像の解決に必要）
+	metadataBase: new URL(
+		process.env.NODE_ENV === "production"
+			? "https://saifuu.ryosuke-horie37.workers.dev"
+			: "http://localhost:3000",
+	),
 
 	// プライバシー重視のロボット設定
 	robots: {
@@ -63,23 +69,16 @@ export const metadata: Metadata = {
 		description:
 			"個人用家計管理アプリケーション - 支出・収入の記録と分析、サブスクリプション管理",
 		siteName: "Saifuu",
-		images: [
-			{
-				url: "/og-image.png",
-				width: 1200,
-				height: 630,
-				alt: "Saifuu - 家計管理アプリ",
-			},
-		],
+		// OG画像は個人用アプリのため設定しない（プライバシー重視）
 	},
 
 	// Twitter Card設定
 	twitter: {
-		card: "summary_large_image",
+		card: "summary",
 		title: "Saifuu - 家計管理アプリ",
 		description:
 			"個人用家計管理アプリケーション - 支出・収入の記録と分析、サブスクリプション管理",
-		images: ["/og-image.png"],
+		// 画像は個人用アプリのため設定しない（プライバシー重視）
 	},
 
 	// その他のメタタグ
