@@ -280,7 +280,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 			const newTransaction: NewTransaction = {
 				amount: body.amount,
 				type: body.type,
-				categoryId: body.categoryId,
+				categoryId: body.categoryId ? Number(body.categoryId) : undefined,
 				description: body.description,
 				date: body.date,
 				createdAt: new Date().toISOString(),
@@ -310,7 +310,9 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				databaseOperation: 'insert',
 			})
 
-			return c.json({ error: 'Failed to create transaction' }, 500)
+			// 開発環境ではより詳細なエラー情報を返す
+			const errorMessage = error instanceof Error ? error.message : 'Failed to create transaction'
+			return c.json({ error: errorMessage }, 500)
 		}
 	})
 
@@ -435,6 +437,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 			const updateData = {
 				...body,
+				categoryId: body.categoryId !== undefined ? Number(body.categoryId) : undefined,
 				updatedAt: new Date().toISOString(),
 			}
 
