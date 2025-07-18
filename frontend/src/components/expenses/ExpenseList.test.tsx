@@ -6,7 +6,7 @@
  * - 編集・削除コールバック処理
  * - パフォーマンス（大量データ処理）
  * - アクセシビリティ要素
- * 
+ *
  * 注: UI表示・レスポンシブデザインテストはStorybookに移行
  */
 
@@ -16,8 +16,6 @@ import { mockTransactions } from "../../../.storybook/mocks/data/transactions";
 import { ExpenseList } from "./ExpenseList";
 
 describe("ExpenseList", () => {
-
-
 	describe("インタラクション", () => {
 		it("編集ボタンが機能する", () => {
 			const mockOnEdit = vi.fn();
@@ -52,7 +50,6 @@ describe("ExpenseList", () => {
 
 			expect(mockOnDelete).toHaveBeenCalledWith(mockTransactions[0].id);
 		});
-
 	});
 
 	describe("アクセシビリティ", () => {
@@ -83,7 +80,6 @@ describe("ExpenseList", () => {
 			expect(buttons.length).toBeGreaterThan(0);
 		});
 	});
-
 
 	describe("ソート機能", () => {
 		it("取引が日付降順でソートされる", () => {
@@ -201,9 +197,7 @@ describe("ExpenseList", () => {
 		});
 	});
 
-
 	describe("エッジケース", () => {
-
 		it("取引データのnull値でも安全に処理される", () => {
 			const transactionWithNulls = [
 				{

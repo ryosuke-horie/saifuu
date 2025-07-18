@@ -14,7 +14,7 @@ import { ExpenseForm } from "./ExpenseForm";
  * - 編集モードのデータ処理
  * - アクセシビリティ要素
  * - エッジケース処理
- * 
+ *
  * 注: UI表示・インタラクションテストはStorybookに移行
  */
 
@@ -146,7 +146,6 @@ describe("ExpenseForm", () => {
 		});
 	});
 
-
 	describe("編集モード", () => {
 		it("初期データが正しく処理されること", () => {
 			render(<ExpenseForm {...defaultProps} initialData={validFormData} />);
@@ -200,7 +199,6 @@ describe("ExpenseForm", () => {
 			expect(expenseOptions.length).toBe(expenseCategories.length);
 		});
 	});
-
 
 	describe("エッジケース", () => {
 		it("非常に長い説明文でも正常に処理されること", async () => {

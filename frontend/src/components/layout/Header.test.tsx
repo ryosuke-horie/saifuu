@@ -14,11 +14,10 @@ vi.mock("next/navigation", () => ({
  * - プロパティの適用（title, className）
  * - アクセシビリティ要素
  * - エッジケース処理
- * 
+ *
  * 注: UI表示・スタイリングテストはStorybookに移行
  */
 describe("Header", () => {
-
 	describe("プロパティテスト", () => {
 		it("カスタムタイトルが正しく表示される", () => {
 			const customTitle = "家計管理アプリ";
@@ -95,7 +94,6 @@ describe("Header", () => {
 			expect(logo).toHaveAttribute("aria-label", "Saifuuロゴ");
 		});
 	});
-
 
 	describe("エッジケース", () => {
 		it("undefined値のプロパティでも正常に動作する", () => {

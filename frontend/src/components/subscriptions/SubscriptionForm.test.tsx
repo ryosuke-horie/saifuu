@@ -13,7 +13,7 @@ import { SubscriptionForm } from "./SubscriptionForm";
  * - 送信処理とエラーハンドリング
  * - 編集モードのデータ処理
  * - アクセシビリティ要素
- * 
+ *
  * 注: UI表示・インタラクションテストはStorybookに移行
  */
 
@@ -41,7 +41,6 @@ describe("SubscriptionForm", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
-
 
 	describe("バリデーション機能", () => {
 		describe("サービス名のバリデーション", () => {
@@ -292,5 +291,4 @@ describe("SubscriptionForm", () => {
 			expect(form).toHaveAttribute("noValidate");
 		});
 	});
-
 });
