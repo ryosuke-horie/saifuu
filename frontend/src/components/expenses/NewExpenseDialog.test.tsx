@@ -241,5 +241,4 @@ describe("NewExpenseDialog", () => {
 			expect(dialog).toHaveAttribute("data-close-on-overlay", "false");
 		});
 	});
-
 });

@@ -56,7 +56,6 @@ describe("ExpenseForm", () => {
 			});
 		});
 
-
 		it("日付が空の場合、エラーメッセージが表示されること", async () => {
 			const user = userEvent.setup();
 			render(<ExpenseForm {...defaultProps} />);

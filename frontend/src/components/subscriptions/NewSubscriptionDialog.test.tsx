@@ -215,5 +215,4 @@ describe("NewSubscriptionDialog", () => {
 			expect(dialog).toHaveAttribute("aria-modal", "true");
 		});
 	});
-
 });

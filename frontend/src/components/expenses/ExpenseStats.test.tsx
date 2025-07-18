@@ -53,7 +53,6 @@ describe("ExpenseStats", () => {
 			expect(screen.queryByTestId("total-income")).not.toBeInTheDocument();
 			expect(screen.queryByTestId("balance-amount")).not.toBeInTheDocument();
 		});
-
 	});
 
 	describe("ローディング状態", () => {
@@ -107,7 +106,6 @@ describe("ExpenseStats", () => {
 
 			expect(mockOnRetry).toHaveBeenCalledOnce();
 		});
-
 	});
 
 	describe("空データ状態", () => {
@@ -125,7 +123,6 @@ describe("ExpenseStats", () => {
 			expect(screen.getByText("データがありません")).toBeInTheDocument();
 			expect(screen.getByText("取引を登録してください")).toBeInTheDocument();
 		});
-
 	});
 
 	describe("数値フォーマット", () => {
@@ -158,7 +155,6 @@ describe("ExpenseStats", () => {
 			);
 		});
 	});
-
 
 	describe("カスタムprops", () => {
 		test("classNameプロパティが適用される", () => {
@@ -198,5 +194,4 @@ describe("ExpenseStats", () => {
 			expect(mockOnRefresh).toHaveBeenCalledOnce();
 		});
 	});
-
 });
