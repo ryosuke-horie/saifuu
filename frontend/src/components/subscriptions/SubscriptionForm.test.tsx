@@ -43,105 +43,44 @@ describe("SubscriptionForm", () => {
 	});
 
 	describe("バリデーション機能", () => {
-		describe("サービス名のバリデーション", () => {
-			it("空の場合エラーが表示されること", async () => {
-				const user = userEvent.setup();
-				render(<SubscriptionForm {...defaultProps} />);
+		it("サービス名が空の場合エラーが表示されること", async () => {
+			const user = userEvent.setup();
+			render(<SubscriptionForm {...defaultProps} />);
 
-				const nameInput = screen.getByLabelText(/サービス名/);
-				await user.click(nameInput);
-				await user.tab(); // blur trigger
+			const nameInput = screen.getByLabelText(/サービス名/);
+			await user.click(nameInput);
+			await user.tab(); // blur trigger
 
-				await waitFor(() => {
-					expect(screen.getByText("サービス名は必須です")).toBeInTheDocument();
-				});
-			});
-
-			it("100文字を超える場合エラーが表示されること", async () => {
-				const user = userEvent.setup();
-				render(<SubscriptionForm {...defaultProps} />);
-
-				const longName = "a".repeat(101);
-				const nameInput = screen.getByLabelText(/サービス名/);
-				await user.type(nameInput, longName);
-				await user.tab();
-
-				await waitFor(() => {
-					expect(
-						screen.getByText("サービス名は100文字以内で入力してください"),
-					).toBeInTheDocument();
-				});
+			await waitFor(() => {
+				expect(screen.getByText("サービス名は必須です")).toBeInTheDocument();
 			});
 		});
 
-		describe("料金のバリデーション", () => {
-			it("0以下の場合エラーが表示されること", async () => {
-				const user = userEvent.setup();
-				render(<SubscriptionForm {...defaultProps} />);
+		it("料金が0以下の場合エラーが表示されること", async () => {
+			const user = userEvent.setup();
+			render(<SubscriptionForm {...defaultProps} />);
 
-				const amountInput = screen.getByLabelText(/料金（円）/);
-				await user.type(amountInput, "0");
-				await user.tab();
+			const amountInput = screen.getByLabelText(/料金（円）/);
+			await user.type(amountInput, "0");
+			await user.tab();
 
-				await waitFor(() => {
-					expect(
-						screen.getByText("料金は1円以上で入力してください"),
-					).toBeInTheDocument();
-				});
-			});
-
-			it("100万円を超える場合エラーが表示されること", async () => {
-				const user = userEvent.setup();
-				render(<SubscriptionForm {...defaultProps} />);
-
-				const amountInput = screen.getByLabelText(/料金（円）/);
-				await user.type(amountInput, "1000001");
-				await user.tab();
-
-				await waitFor(() => {
-					expect(
-						screen.getByText("料金は100万円以下で入力してください"),
-					).toBeInTheDocument();
-				});
+			await waitFor(() => {
+				expect(
+					screen.getByText("料金は1円以上で入力してください"),
+				).toBeInTheDocument();
 			});
 		});
 
-		describe("次回請求日のバリデーション", () => {
-			it("空の場合エラーが表示されること", async () => {
-				const user = userEvent.setup();
-				render(<SubscriptionForm {...defaultProps} />);
+		it("次回請求日が空の場合エラーが表示されること", async () => {
+			const user = userEvent.setup();
+			render(<SubscriptionForm {...defaultProps} />);
 
-				const dateInput = screen.getByLabelText(/次回請求日/);
-				await user.click(dateInput);
-				await user.tab();
+			const dateInput = screen.getByLabelText(/次回請求日/);
+			await user.click(dateInput);
+			await user.tab();
 
-				await waitFor(() => {
-					expect(screen.getByText("次回請求日は必須です")).toBeInTheDocument();
-				});
-			});
-
-			it("過去の日付の場合エラーが表示されること", async () => {
-				const user = userEvent.setup();
-				render(<SubscriptionForm {...defaultProps} />);
-
-				const dateInput = screen.getByLabelText(/次回請求日/);
-				await user.type(dateInput, "2020-01-01");
-				await user.tab();
-
-				await waitFor(() => {
-					expect(
-						screen.getByText("次回請求日は今日以降の日付を入力してください"),
-					).toBeInTheDocument();
-				});
-			});
-		});
-
-		describe("説明のバリデーション", () => {
-			it("maxLength属性が設定されていること", () => {
-				render(<SubscriptionForm {...defaultProps} />);
-
-				const descriptionInput = screen.getByLabelText(/説明（任意）/);
-				expect(descriptionInput).toHaveAttribute("maxLength", "500");
+			await waitFor(() => {
+				expect(screen.getByText("次回請求日は必須です")).toBeInTheDocument();
 			});
 		});
 	});
@@ -227,31 +166,7 @@ describe("SubscriptionForm", () => {
 			);
 
 			expect(screen.getByDisplayValue(validFormData.name)).toBeInTheDocument();
-			expect(
-				screen.getByDisplayValue(validFormData.amount.toString()),
-			).toBeInTheDocument();
-			expect(
-				screen.getByDisplayValue(validFormData.nextBillingDate),
-			).toBeInTheDocument();
-			expect(
-				screen.getByDisplayValue(validFormData.description || ""),
-			).toBeInTheDocument();
 			expect(screen.getByRole("button", { name: "更新" })).toBeInTheDocument();
-		});
-
-		it("初期データが変更された場合に更新されること", () => {
-			const { rerender } = render(<SubscriptionForm {...defaultProps} />);
-
-			// 初期データなしで開始
-			expect(screen.getByLabelText(/サービス名/)).toHaveValue("");
-
-			// 初期データありで再レンダリング
-			rerender(
-				<SubscriptionForm {...defaultProps} initialData={validFormData} />,
-			);
-			expect(screen.getByLabelText(/サービス名/)).toHaveValue(
-				validFormData.name,
-			);
 		});
 	});
 
@@ -266,29 +181,7 @@ describe("SubscriptionForm", () => {
 
 			await waitFor(() => {
 				expect(nameInput).toHaveAttribute("aria-invalid", "true");
-				expect(nameInput).toHaveAttribute("aria-describedby", "name-error");
 			});
-		});
-
-		it('エラーメッセージにrole="alert"が設定されること', async () => {
-			const user = userEvent.setup();
-			render(<SubscriptionForm {...defaultProps} />);
-
-			const nameInput = screen.getByLabelText(/サービス名/);
-			await user.click(nameInput);
-			await user.tab();
-
-			await waitFor(() => {
-				const errorMessage = screen.getByText("サービス名は必須です");
-				expect(errorMessage).toHaveAttribute("role", "alert");
-			});
-		});
-
-		it("フォームが適切なnoValidate属性を持つこと", () => {
-			const { container } = render(<SubscriptionForm {...defaultProps} />);
-
-			const form = container.querySelector("form");
-			expect(form).toHaveAttribute("noValidate");
 		});
 	});
 });

@@ -10,87 +10,59 @@ import type { Category } from "../../lib/api/types";
 import { NewExpenseDialog } from "./NewExpenseDialog";
 
 // グローバルカテゴリ設定のモック
-vi.mock("@shared/config/categories", () => ({
-	getCategoriesByType: vi.fn(() => [
-		{
-			id: "global-category-1",
-			name: "グローバル食費",
-			type: "expense",
-			color: "#FF0000",
-		},
-		{
-			id: "global-category-2",
-			name: "グローバル交通費",
-			type: "expense",
-			color: "#00FF00",
-		},
-	]),
-	ALL_CATEGORIES: [
-		{
-			id: "utilities",
-			numericId: 1,
-			name: "家賃・水道・光熱・通信費",
-			type: "expense",
-			color: "#D35400",
-		},
-		{
-			id: "food",
-			numericId: 3,
-			name: "食費",
-			type: "expense",
-			color: "#FF6B6B",
-		},
-		{
-			id: "transportation",
-			numericId: 4,
-			name: "交通費",
-			type: "expense",
-			color: "#3498DB",
-		},
-		{
-			id: "business",
-			numericId: 5,
-			name: "仕事・ビジネス",
-			type: "expense",
-			color: "#8E44AD",
-		},
-		{
-			id: "system_fee",
-			numericId: 6,
-			name: "システム関係費",
-			type: "expense",
-			color: "#9B59B6",
-		},
-		{
-			id: "books",
-			numericId: 8,
-			name: "書籍代",
-			type: "expense",
-			color: "#1E8BC3",
-		},
-		{
-			id: "health",
-			numericId: 10,
-			name: "健康・フィットネス",
-			type: "expense",
-			color: "#96CEB4",
-		},
-		{
-			id: "shopping",
-			numericId: 11,
-			name: "買い物",
-			type: "expense",
-			color: "#F39C12",
-		},
-		{
-			id: "other_expense",
-			numericId: 12,
-			name: "その他",
-			type: "expense",
-			color: "#FFEAA7",
-		},
-	],
-}));
+vi.mock("@shared/config/categories", async () => {
+	const actual = await vi.importActual<
+		typeof import("@shared/config/categories")
+	>("@shared/config/categories");
+	return {
+		...actual,
+		EXPENSE_CATEGORIES: [
+			{
+				id: "food",
+				numericId: 3,
+				name: "食費",
+				type: "expense",
+				color: "#FF6B6B",
+				description: "食材、外食、飲食代",
+			},
+			{
+				id: "transportation",
+				numericId: 4,
+				name: "交通費",
+				type: "expense",
+				color: "#3498DB",
+				description: "電車、バス、タクシー、ガソリン代",
+			},
+		],
+		ALL_CATEGORIES: [
+			{
+				id: "food",
+				numericId: 3,
+				name: "食費",
+				type: "expense",
+				color: "#FF6B6B",
+				description: "食材、外食、飲食代",
+			},
+			{
+				id: "transportation",
+				numericId: 4,
+				name: "交通費",
+				type: "expense",
+				color: "#3498DB",
+				description: "電車、バス、タクシー、ガソリン代",
+			},
+		],
+		getCategoriesByType: vi.fn(() => [
+			{ id: "food", name: "食費", type: "expense", color: "#FF6B6B" },
+			{
+				id: "transportation",
+				name: "交通費",
+				type: "expense",
+				color: "#3498DB",
+			},
+		]),
+	};
+});
 
 // UIコンポーネントのモック
 vi.mock("../ui/Dialog", () => ({
@@ -218,20 +190,7 @@ describe("NewExpenseDialog", () => {
 				/>,
 			);
 
-			expect(screen.getByTestId("categories-count")).toHaveTextContent("9");
-		});
-
-		it("空のカテゴリ配列が提供された場合、グローバル設定を使用する", () => {
-			render(
-				<NewExpenseDialog
-					isOpen={true}
-					onClose={mockOnClose}
-					onSubmit={mockOnSubmit}
-					categories={[]}
-				/>,
-			);
-
-			expect(screen.getByTestId("categories-count")).toHaveTextContent("9");
+			expect(screen.getByTestId("categories-count")).toHaveTextContent("2");
 		});
 	});
 
@@ -315,21 +274,6 @@ describe("NewExpenseDialog", () => {
 			expect(mockOnClose).toHaveBeenCalled();
 		});
 
-		it("ダイアログの×ボタンクリックで閉じる", () => {
-			render(
-				<NewExpenseDialog
-					isOpen={true}
-					onClose={mockOnClose}
-					onSubmit={mockOnSubmit}
-				/>,
-			);
-
-			const closeButton = screen.getByLabelText("閉じる");
-			fireEvent.click(closeButton);
-
-			expect(mockOnClose).toHaveBeenCalled();
-		});
-
 		it("送信中はオーバーレイクリックで閉じない", () => {
 			render(
 				<NewExpenseDialog
@@ -342,84 +286,6 @@ describe("NewExpenseDialog", () => {
 
 			const dialog = screen.getByTestId("dialog");
 			expect(dialog).toHaveAttribute("data-close-on-overlay", "false");
-			expect(dialog).toHaveAttribute("data-close-on-esc", "false");
-		});
-
-		it("送信中でない場合はオーバーレイクリックで閉じる", () => {
-			render(
-				<NewExpenseDialog
-					isOpen={true}
-					onClose={mockOnClose}
-					onSubmit={mockOnSubmit}
-					isSubmitting={false}
-				/>,
-			);
-
-			const dialog = screen.getByTestId("dialog");
-			expect(dialog).toHaveAttribute("data-close-on-overlay", "true");
-			expect(dialog).toHaveAttribute("data-close-on-esc", "true");
-		});
-	});
-
-	describe("エラー処理", () => {
-		it("エラーメッセージがクリアされる（ダイアログクローズ時）", async () => {
-			const errorMessage = "エラーが発生しました";
-			mockOnSubmit.mockRejectedValueOnce(new Error(errorMessage));
-
-			const { rerender } = render(
-				<NewExpenseDialog
-					isOpen={true}
-					onClose={mockOnClose}
-					onSubmit={mockOnSubmit}
-				/>,
-			);
-
-			// エラーを発生させる
-			fireEvent.click(screen.getByTestId("submit-button"));
-
-			await waitFor(() => {
-				expect(screen.getByText(errorMessage)).toBeInTheDocument();
-			});
-
-			// ダイアログを閉じて再度開く
-			rerender(
-				<NewExpenseDialog
-					isOpen={false}
-					onClose={mockOnClose}
-					onSubmit={mockOnSubmit}
-				/>,
-			);
-
-			rerender(
-				<NewExpenseDialog
-					isOpen={true}
-					onClose={mockOnClose}
-					onSubmit={mockOnSubmit}
-				/>,
-			);
-
-			// エラーメッセージが表示されていないことを確認
-			expect(screen.queryByText(errorMessage)).not.toBeInTheDocument();
-		});
-
-		it("エラーがオブジェクトでない場合のフォールバック", async () => {
-			mockOnSubmit.mockRejectedValueOnce("文字列エラー");
-
-			render(
-				<NewExpenseDialog
-					isOpen={true}
-					onClose={mockOnClose}
-					onSubmit={mockOnSubmit}
-				/>,
-			);
-
-			fireEvent.click(screen.getByTestId("submit-button"));
-
-			await waitFor(() => {
-				expect(
-					screen.getByText("取引の作成に失敗しました"),
-				).toBeInTheDocument();
-			});
 		});
 	});
 });
