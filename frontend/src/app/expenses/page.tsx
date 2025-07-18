@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
 	DeleteConfirmDialog,
+	EditExpenseDialog,
 	ExpenseList,
 	NewExpenseButton,
 	NewExpenseDialog,
@@ -10,6 +11,7 @@ import {
 import { ErrorAlert } from "../../components/ui/ErrorAlert";
 import { useCategories, useExpenses } from "../../hooks";
 import { useExpenseStats } from "../../hooks/useExpenseStats";
+import type { Transaction } from "../../lib/api/types";
 import type { ExpenseFormData } from "../../types/expense";
 import { formatCurrency, formatTransactionCount } from "../../utils/format";
 
@@ -38,11 +40,16 @@ export default function ExpensesPage() {
 		operationLoading,
 		refetch,
 		createExpenseMutation,
+		updateExpenseMutation,
 		deleteExpenseMutation,
 	} = useExpenses();
 
 	// 新規登録ダイアログの状態管理
 	const [isNewDialogOpen, setIsNewDialogOpen] = useState(false);
+
+	// 編集ダイアログの状態管理
+	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+	const [editTarget, setEditTarget] = useState<Transaction | null>(null);
 
 	// 削除確認ダイアログの状態管理
 	const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -63,6 +70,23 @@ export default function ExpensesPage() {
 	// 新規登録送信ハンドラー
 	const handleNewSubmit = async (formData: ExpenseFormData) => {
 		await createExpenseMutation(formData);
+	};
+
+	// 編集ハンドラー
+	const handleEdit = (transaction: Transaction) => {
+		setEditTarget(transaction);
+		setIsEditDialogOpen(true);
+	};
+
+	// 編集ダイアログクローズハンドラー
+	const handleEditDialogClose = () => {
+		setIsEditDialogOpen(false);
+		setEditTarget(null);
+	};
+
+	// 編集送信ハンドラー
+	const handleEditSubmit = async (id: string, formData: ExpenseFormData) => {
+		await updateExpenseMutation(id, formData);
 	};
 
 	// 削除ハンドラー
@@ -167,6 +191,7 @@ export default function ExpensesPage() {
 					<ExpenseList
 						transactions={expenses}
 						isLoading={loading}
+						onEdit={handleEdit}
 						onDelete={handleDelete}
 					/>
 				</div>
@@ -177,6 +202,16 @@ export default function ExpensesPage() {
 					onClose={handleNewDialogClose}
 					onSubmit={handleNewSubmit}
 					isSubmitting={operationLoading}
+					categories={allCategories}
+				/>
+
+				{/* 編集ダイアログ */}
+				<EditExpenseDialog
+					isOpen={isEditDialogOpen}
+					onClose={handleEditDialogClose}
+					onSubmit={handleEditSubmit}
+					isSubmitting={operationLoading}
+					transaction={editTarget}
 					categories={allCategories}
 				/>
 
