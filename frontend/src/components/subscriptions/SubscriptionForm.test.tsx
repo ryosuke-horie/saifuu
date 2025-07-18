@@ -9,14 +9,12 @@ import { SubscriptionForm } from "./SubscriptionForm";
  * SubscriptionFormコンポーネントのテスト
  *
  * テスト内容:
- * - 基本的なレンダリング
- * - フォーム入力処理
- * - バリデーション機能
- * - 送信処理
- * - エラーハンドリング
- * - ローディング状態
- * - 編集モード
- * - アクセシビリティ
+ * - バリデーション機能（重点）
+ * - 送信処理とエラーハンドリング
+ * - 編集モードのデータ処理
+ * - アクセシビリティ要素
+ * 
+ * 注: UI表示・インタラクションテストはStorybookに移行
  */
 
 describe("SubscriptionForm", () => {
@@ -44,105 +42,6 @@ describe("SubscriptionForm", () => {
 		vi.clearAllMocks();
 	});
 
-	describe("基本的なレンダリング", () => {
-		it("正常にレンダリングされること", () => {
-			render(<SubscriptionForm {...defaultProps} />);
-
-			expect(screen.getByLabelText(/サービス名/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/料金（円）/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/請求サイクル/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/次回請求日/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/カテゴリ/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/説明（任意）/)).toBeInTheDocument();
-		});
-
-		it("必須フィールドマークが表示されること", () => {
-			render(<SubscriptionForm {...defaultProps} />);
-
-			const requiredMarks = screen.getAllByText("*");
-			// name, amount, billingCycle, nextBillingDate, category = 5個
-			expect(requiredMarks).toHaveLength(5);
-		});
-
-		it("ボタンが正しく表示されること", () => {
-			render(<SubscriptionForm {...defaultProps} />);
-
-			expect(
-				screen.getByRole("button", { name: "キャンセル" }),
-			).toBeInTheDocument();
-			expect(screen.getByRole("button", { name: "登録" })).toBeInTheDocument();
-		});
-
-		it("カスタムクラス名が適用されること", () => {
-			const { container } = render(
-				<SubscriptionForm {...defaultProps} className="custom-class" />,
-			);
-
-			expect(container.firstChild).toHaveClass("custom-class");
-		});
-	});
-
-	describe("フォーム入力処理", () => {
-		it("テキスト入力が正しく動作すること", async () => {
-			const user = userEvent.setup();
-			render(<SubscriptionForm {...defaultProps} />);
-
-			const nameInput = screen.getByLabelText(/サービス名/);
-			await user.type(nameInput, "Netflix");
-
-			expect(nameInput).toHaveValue("Netflix");
-		});
-
-		it("数値入力が正しく動作すること", async () => {
-			const user = userEvent.setup();
-			render(<SubscriptionForm {...defaultProps} />);
-
-			const amountInput = screen.getByLabelText(/料金（円）/);
-			await user.type(amountInput, "1480");
-
-			expect(amountInput).toHaveValue(1480);
-		});
-
-		it("セレクト選択が正しく動作すること", async () => {
-			const user = userEvent.setup();
-			render(<SubscriptionForm {...defaultProps} />);
-
-			const billingCycleSelect = screen.getByLabelText(/請求サイクル/);
-			await user.selectOptions(billingCycleSelect, "yearly");
-
-			expect(billingCycleSelect).toHaveValue("yearly");
-		});
-
-		it("日付入力が正しく動作すること", async () => {
-			const user = userEvent.setup();
-			render(<SubscriptionForm {...defaultProps} />);
-
-			const dateInput = screen.getByLabelText(/次回請求日/);
-			await user.type(dateInput, "2025-07-01");
-
-			expect(dateInput).toHaveValue("2025-07-01");
-		});
-
-		it("テキストエリア入力が正しく動作すること", async () => {
-			const user = userEvent.setup();
-			render(<SubscriptionForm {...defaultProps} />);
-
-			const descriptionInput = screen.getByLabelText(/説明（任意）/);
-			await user.type(descriptionInput, "動画配信サービス");
-
-			expect(descriptionInput).toHaveValue("動画配信サービス");
-		});
-
-		it("文字数カウンターが正しく動作すること", async () => {
-			const user = userEvent.setup();
-			render(<SubscriptionForm {...defaultProps} />);
-
-			const descriptionInput = screen.getByLabelText(/説明（任意）/);
-			await user.type(descriptionInput, "テスト");
-
-			expect(screen.getByText("3/500文字")).toBeInTheDocument();
-		});
-	});
 
 	describe("バリデーション機能", () => {
 		describe("サービス名のバリデーション", () => {
@@ -308,19 +207,6 @@ describe("SubscriptionForm", () => {
 	});
 
 	describe("ローディング状態", () => {
-		it("送信中の状態が正しく表示されること", () => {
-			render(<SubscriptionForm {...defaultProps} isSubmitting={true} />);
-
-			const submitButton = screen.getByRole("button", { name: /登録/ });
-			const cancelButton = screen.getByRole("button", { name: "キャンセル" });
-
-			expect(submitButton).toBeDisabled();
-			expect(cancelButton).toBeDisabled();
-			expect(screen.getByRole("button", { name: /登録/ })).toHaveClass(
-				"disabled:opacity-50",
-			);
-		});
-
 		it("送信中はフォーム入力が無効化されること", () => {
 			render(<SubscriptionForm {...defaultProps} isSubmitting={true} />);
 
@@ -330,18 +216,13 @@ describe("SubscriptionForm", () => {
 			expect(screen.getByLabelText(/次回請求日/)).toBeDisabled();
 			expect(screen.getByLabelText(/カテゴリ/)).toBeDisabled();
 			expect(screen.getByLabelText(/説明（任意）/)).toBeDisabled();
-		});
-
-		it("送信中のスピナーが表示されること", () => {
-			render(<SubscriptionForm {...defaultProps} isSubmitting={true} />);
-
-			const spinner = document.querySelector(".animate-spin");
-			expect(spinner).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: /登録/ })).toBeDisabled();
+			expect(screen.getByRole("button", { name: "キャンセル" })).toBeDisabled();
 		});
 	});
 
 	describe("編集モード", () => {
-		it("初期データが正しく表示されること", () => {
+		it("初期データが正しく処理されること", () => {
 			render(
 				<SubscriptionForm {...defaultProps} initialData={validFormData} />,
 			);
@@ -356,21 +237,6 @@ describe("SubscriptionForm", () => {
 			expect(
 				screen.getByDisplayValue(validFormData.description || ""),
 			).toBeInTheDocument();
-
-			// セレクト要素の値確認
-			expect(screen.getByLabelText(/請求サイクル/)).toHaveValue(
-				validFormData.billingCycle,
-			);
-			expect(screen.getByLabelText(/カテゴリ/)).toHaveValue(
-				validFormData.categoryId,
-			);
-		});
-
-		it("編集モードでボタンテキストが「更新」になること", () => {
-			render(
-				<SubscriptionForm {...defaultProps} initialData={validFormData} />,
-			);
-
 			expect(screen.getByRole("button", { name: "更新" })).toBeInTheDocument();
 		});
 
@@ -391,13 +257,6 @@ describe("SubscriptionForm", () => {
 	});
 
 	describe("アクセシビリティ", () => {
-		it("必須フィールドマークが表示されること", () => {
-			render(<SubscriptionForm {...defaultProps} />);
-
-			const requiredMarks = screen.getAllByText("*");
-			expect(requiredMarks).toHaveLength(5); // name, amount, billingCycle, nextBillingDate, category
-		});
-
 		it("エラー時に適切なARIA属性が設定されること", async () => {
 			const user = userEvent.setup();
 			render(<SubscriptionForm {...defaultProps} />);
@@ -434,42 +293,4 @@ describe("SubscriptionForm", () => {
 		});
 	});
 
-	describe("デフォルト値", () => {
-		it("デフォルト値が正しく設定されること", () => {
-			render(<SubscriptionForm {...defaultProps} />);
-
-			expect(screen.getByLabelText(/サービス名/)).toHaveValue(""); // name
-			expect(screen.getByLabelText(/料金（円）/)).toHaveValue(null); // amount (empty number input is null)
-			expect(screen.getByLabelText(/請求サイクル/)).toHaveValue("monthly"); // billingCycle
-			expect(screen.getByLabelText(/カテゴリ/)).toHaveValue(""); // categoryId
-		});
-	});
-
-	describe("日付の制約", () => {
-		it("日付入力フィールドに最小値が設定されること", () => {
-			render(<SubscriptionForm {...defaultProps} />);
-
-			const dateInput = screen.getByLabelText(/次回請求日/);
-			const today = new Date().toISOString().split("T")[0];
-			expect(dateInput).toHaveAttribute("min", today);
-		});
-	});
-
-	describe("カテゴリオプションの表示", () => {
-		it("カテゴリが日本語で表示されること", () => {
-			render(<SubscriptionForm {...defaultProps} />);
-
-			expect(screen.getByText("食費")).toBeInTheDocument();
-			expect(screen.getByText("仕事・ビジネス")).toBeInTheDocument();
-			expect(screen.getByText("健康・フィットネス")).toBeInTheDocument();
-			expect(screen.getByText("その他")).toBeInTheDocument();
-		});
-
-		it("請求サイクルが日本語で表示されること", () => {
-			render(<SubscriptionForm {...defaultProps} />);
-
-			expect(screen.getByText("月額")).toBeInTheDocument();
-			expect(screen.getByText("年額")).toBeInTheDocument();
-		});
-	});
 });
