@@ -9,14 +9,13 @@ import { ExpenseForm } from "./ExpenseForm";
  * ExpenseFormコンポーネントのテスト
  *
  * テスト内容:
- * - 基本的なレンダリング
- * - フォーム入力処理
- * - バリデーション機能
- * - 送信処理
- * - エラーハンドリング
- * - ローディング状態
- * - 編集モード
- * - アクセシビリティ
+ * - バリデーション機能（重点）
+ * - 送信処理とエラーハンドリング
+ * - 編集モードのデータ処理
+ * - アクセシビリティ要素
+ * - エッジケース処理
+ *
+ * 注: UI表示・インタラクションテストはStorybookに移行
  */
 
 describe("ExpenseForm", () => {
@@ -40,23 +39,6 @@ describe("ExpenseForm", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-	});
-
-	it("正常にレンダリングされること", () => {
-		// スモークテスト: コンポーネントがクラッシュせずにレンダリングされることを確認
-		render(<ExpenseForm {...defaultProps} />);
-		// 基本的な要素の存在を確認（レンダリングの健全性チェック）
-		expect(screen.getByRole("button", { name: "登録" })).toBeInTheDocument();
-	});
-
-	describe("基本的なレンダリング", () => {
-		it("初期データが設定されている場合、フォームフィールドに値が表示されること", () => {
-			render(<ExpenseForm {...defaultProps} initialData={validFormData} />);
-
-			expect(screen.getByDisplayValue("1000")).toBeInTheDocument();
-			expect(screen.getByDisplayValue("2025-07-09")).toBeInTheDocument();
-			expect(screen.getByDisplayValue("コンビニ弁当")).toBeInTheDocument();
-		});
 	});
 
 	describe("バリデーション機能", () => {
@@ -164,22 +146,13 @@ describe("ExpenseForm", () => {
 		});
 	});
 
-	describe("キャンセル処理", () => {
-		it("キャンセルボタンをクリックした場合、onCancelが呼ばれること", async () => {
-			const user = userEvent.setup();
-			render(<ExpenseForm {...defaultProps} />);
-
-			const cancelButton = screen.getByRole("button", { name: "キャンセル" });
-			await user.click(cancelButton);
-
-			expect(mockOnCancel).toHaveBeenCalledOnce();
-		});
-	});
-
 	describe("編集モード", () => {
-		it("編集モードの場合、ボタンテキストが「更新」になること", () => {
+		it("初期データが正しく処理されること", () => {
 			render(<ExpenseForm {...defaultProps} initialData={validFormData} />);
 
+			expect(screen.getByDisplayValue("1000")).toBeInTheDocument();
+			expect(screen.getByDisplayValue("2025-07-09")).toBeInTheDocument();
+			expect(screen.getByDisplayValue("コンビニ弁当")).toBeInTheDocument();
 			expect(screen.getByRole("button", { name: "更新" })).toBeInTheDocument();
 		});
 	});
@@ -210,82 +183,20 @@ describe("ExpenseForm", () => {
 		});
 	});
 
-	describe("カテゴリ選択の高度な動作", () => {
-		it("支出カテゴリのみ選択可能であること", async () => {
-			const _user = userEvent.setup();
+	describe("カテゴリ選択", () => {
+		it("支出カテゴリのみ選択可能であること", () => {
 			render(<ExpenseForm {...defaultProps} />);
 
-			// 支出カテゴリが選択可能であることを確認
 			const categorySelect = screen.getByLabelText(/カテゴリ/);
 			const expenseOptions = categorySelect.querySelectorAll(
 				'option:not([value=""])', // 空のオプションを除外
 			);
 
 			// 支出カテゴリのみが存在することを確認
-			expect(expenseOptions.length).toBeGreaterThan(0);
-
-			// すべてのカテゴリが支出タイプであることを確認
 			const expenseCategories = mockCategories.filter(
 				(cat) => cat.type === "expense",
 			);
 			expect(expenseOptions.length).toBe(expenseCategories.length);
-		});
-	});
-
-	describe("日付フィールドの詳細動作", () => {
-		// 削除: デフォルトの日付設定は実装されていない
-
-		it("未来の日付でも入力可能であること", async () => {
-			const user = userEvent.setup();
-			const futureDate = new Date();
-			futureDate.setDate(futureDate.getDate() + 30);
-			const futureDateString = futureDate.toISOString().split("T")[0];
-
-			render(<ExpenseForm {...defaultProps} />);
-
-			const dateInput = screen.getByLabelText(/日付/);
-			await user.clear(dateInput);
-			await user.type(dateInput, futureDateString);
-
-			expect(dateInput).toHaveValue(futureDateString);
-		});
-
-		it("過去の日付でも入力可能であること", async () => {
-			const user = userEvent.setup();
-			const pastDate = new Date();
-			pastDate.setFullYear(pastDate.getFullYear() - 1);
-			const pastDateString = pastDate.toISOString().split("T")[0];
-
-			render(<ExpenseForm {...defaultProps} />);
-
-			const dateInput = screen.getByLabelText(/日付/);
-			await user.clear(dateInput);
-			await user.type(dateInput, pastDateString);
-
-			expect(dateInput).toHaveValue(pastDateString);
-		});
-	});
-
-	describe("フォームリセット", () => {
-		// 削除: フォームの自動リセット機能は実装されていない
-
-		it("キャンセル時にフォームの入力内容が保持されること", async () => {
-			const user = userEvent.setup();
-			render(<ExpenseForm {...defaultProps} />);
-
-			// フォームに入力
-			await user.type(screen.getByLabelText(/金額（円）/), "1000");
-			await user.type(screen.getByLabelText(/説明/), "テスト");
-
-			// キャンセル
-			await user.click(screen.getByRole("button", { name: "キャンセル" }));
-
-			// onCancelが呼ばれたことを確認
-			expect(mockOnCancel).toHaveBeenCalled();
-
-			// フォームの値が保持されていることを確認（親コンポーネントが閉じない場合）
-			expect(screen.getByLabelText(/金額（円）/)).toHaveValue(1000);
-			expect(screen.getByLabelText(/説明/)).toHaveValue("テスト");
 		});
 	});
 

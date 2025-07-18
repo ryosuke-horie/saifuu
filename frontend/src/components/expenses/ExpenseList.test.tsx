@@ -1,18 +1,13 @@
 /**
  * ExpenseListコンポーネントのテスト
  *
- * TDD（Test-Driven Development）アプローチに従った実装
- * Red-Green-Refactorサイクルで品質を担保
+ * テスト内容:
+ * - データ処理ロジック（ソート、null値処理）
+ * - 編集・削除コールバック処理
+ * - パフォーマンス（大量データ処理）
+ * - アクセシビリティ要素
  *
- * テスト観点:
- * - 基本的なレンダリング
- * - ローディング状態の表示
- * - エラー状態の表示
- * - 空状態の表示
- * - データ一覧の正常表示
- * - レスポンシブデザイン
- * - 編集・削除機能
- * - アクセシビリティ
+ * 注: UI表示・レスポンシブデザインテストはStorybookに移行
  */
 
 import { fireEvent, render, screen } from "@testing-library/react";
@@ -21,123 +16,6 @@ import { mockTransactions } from "../../../.storybook/mocks/data/transactions";
 import { ExpenseList } from "./ExpenseList";
 
 describe("ExpenseList", () => {
-	describe("基本レンダリング", () => {
-		it("コンポーネントが正常にレンダリングされる", () => {
-			render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// ヘッダー部分の表示確認
-			expect(screen.getByText("取引一覧")).toBeInTheDocument();
-			expect(screen.getByText("支出の履歴")).toBeInTheDocument();
-		});
-
-		it("テーブルヘッダーが正しく表示される", () => {
-			render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// テーブルヘッダーの確認
-			expect(screen.getByText("日付")).toBeInTheDocument();
-			expect(screen.getByText("金額")).toBeInTheDocument();
-			expect(screen.getByText("カテゴリ")).toBeInTheDocument();
-			expect(screen.getByText("説明")).toBeInTheDocument();
-			expect(screen.getByText("操作")).toBeInTheDocument();
-		});
-	});
-
-	describe("ローディング状態", () => {
-		it("ローディング中の表示が正しく動作する", () => {
-			render(<ExpenseList transactions={[]} isLoading={true} error={null} />);
-
-			expect(screen.getByText("読み込み中...")).toBeInTheDocument();
-			expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
-		});
-	});
-
-	describe("エラー状態", () => {
-		it("エラーメッセージが正しく表示される", () => {
-			const errorMessage = "データの取得に失敗しました";
-			render(
-				<ExpenseList
-					transactions={[]}
-					isLoading={false}
-					error={errorMessage}
-				/>,
-			);
-
-			expect(screen.getByText(`エラー: ${errorMessage}`)).toBeInTheDocument();
-		});
-	});
-
-	describe("空状態", () => {
-		it("取引データが空の場合の表示が正しい", () => {
-			render(<ExpenseList transactions={[]} isLoading={false} error={null} />);
-
-			expect(
-				screen.getByText("登録されている取引がありません"),
-			).toBeInTheDocument();
-			expect(
-				screen.getByText("新規登録ボタンから追加してください"),
-			).toBeInTheDocument();
-		});
-	});
-
-	describe("データ表示", () => {
-		it("取引データが正しく表示される", () => {
-			render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// 支出データの確認（負の金額表示）
-			expect(screen.getByText("-￥1,000")).toBeInTheDocument();
-			expect(screen.getByText("昼食代（コンビニ弁当）")).toBeInTheDocument();
-
-			// 別の支出データの確認
-			expect(screen.getByText("-￥5,000")).toBeInTheDocument();
-			expect(screen.getByText("書籍代")).toBeInTheDocument();
-		});
-
-		it("日付が正しくフォーマットされて表示される", () => {
-			render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// 日付フォーマットの確認（YYYY/MM/DD形式）
-			expect(screen.getByText("2025/07/09")).toBeInTheDocument();
-			expect(screen.getByText("2025/07/01")).toBeInTheDocument();
-		});
-
-		it("カテゴリが正しく表示される", () => {
-			render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			expect(screen.getAllByText("その他").length).toBeGreaterThan(0);
-			expect(screen.getByText("仕事・ビジネス")).toBeInTheDocument();
-		});
-	});
-
 	describe("インタラクション", () => {
 		it("編集ボタンが機能する", () => {
 			const mockOnEdit = vi.fn();
@@ -172,19 +50,6 @@ describe("ExpenseList", () => {
 
 			expect(mockOnDelete).toHaveBeenCalledWith(mockTransactions[0].id);
 		});
-
-		it("更新ボタンが表示されない", () => {
-			render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// 更新ボタンが存在しないことを確認
-			expect(screen.queryByText("更新")).not.toBeInTheDocument();
-		});
 	});
 
 	describe("アクセシビリティ", () => {
@@ -213,22 +78,6 @@ describe("ExpenseList", () => {
 			// ボタンのアクセシビリティ
 			const buttons = screen.getAllByRole("button");
 			expect(buttons.length).toBeGreaterThan(0);
-		});
-	});
-
-	describe("プロパティ", () => {
-		it("カスタムクラス名が適用される", () => {
-			const customClassName = "custom-expense-list";
-			const { container } = render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-					className={customClassName}
-				/>,
-			);
-
-			expect(container.firstChild).toHaveClass(customClassName);
 		});
 	});
 
@@ -348,64 +197,7 @@ describe("ExpenseList", () => {
 		});
 	});
 
-	describe("レスポンシブデザイン", () => {
-		it("モバイルではカテゴリ列が非表示になる", () => {
-			// window.matchMediaをモック
-			Object.defineProperty(window, "matchMedia", {
-				writable: true,
-				value: vi.fn().mockImplementation((query) => ({
-					matches: query === "(max-width: 767px)",
-					media: query,
-					onchange: null,
-					addEventListener: vi.fn(),
-					removeEventListener: vi.fn(),
-					dispatchEvent: vi.fn(),
-				})),
-			});
-
-			render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// カテゴリヘッダーがhiddenクラスを持つことを確認
-			const categoryHeader = screen.getByText("カテゴリ");
-			expect(categoryHeader.closest("th")).toHaveClass(
-				"hidden",
-				"md:table-cell",
-			);
-		});
-
-		it("タブレットでは説明列が非表示になる", () => {
-			render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// 説明ヘッダーがhiddenクラスを持つことを確認
-			const descriptionHeader = screen.getByText("説明");
-			expect(descriptionHeader.closest("th")).toHaveClass(
-				"hidden",
-				"sm:table-cell",
-			);
-		});
-	});
-
 	describe("エッジケース", () => {
-		it("空の取引配列を渡してもエラーにならない", () => {
-			expect(() => {
-				render(
-					<ExpenseList transactions={[]} isLoading={false} error={null} />,
-				);
-			}).not.toThrow();
-		});
-
 		it("取引データのnull値でも安全に処理される", () => {
 			const transactionWithNulls = [
 				{

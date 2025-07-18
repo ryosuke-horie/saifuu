@@ -1,8 +1,13 @@
 /**
  * ExpenseFiltersコンポーネントのユニットテスト
  *
- * 期間指定、カテゴリ絞り込み、種別絞り込み、金額範囲指定の機能と
- * URLパラメータとの連携をテストする
+ * テスト内容:
+ * - フィルター変更時のコールバック処理（重点）
+ * - 複合フィルターのロジック
+ * - カスタム期間の処理
+ * - 金額範囲の妥当性検証
+ *
+ * 注: UI表示・インタラクションテストはStorybookに移行
  */
 
 import { render, screen, waitFor } from "@testing-library/react";
@@ -33,41 +38,6 @@ describe("ExpenseFilters", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-	});
-
-	describe("基本的な表示", () => {
-		it("フィルターコンポーネントが正しく表示される", () => {
-			render(<ExpenseFilters {...defaultProps} />);
-
-			// 各フィルター要素の存在確認
-			expect(screen.getByLabelText("期間")).toBeInTheDocument();
-			expect(screen.getByText("カテゴリ")).toBeInTheDocument();
-			expect(screen.getByLabelText("種別")).toBeInTheDocument();
-			expect(screen.getByLabelText("最小金額")).toBeInTheDocument();
-			expect(screen.getByLabelText("最大金額")).toBeInTheDocument();
-			expect(
-				screen.getByRole("button", { name: "リセット" }),
-			).toBeInTheDocument();
-		});
-
-		it("初期状態では全てのフィルターが未選択状態", () => {
-			render(<ExpenseFilters {...defaultProps} />);
-
-			const periodSelect = screen.getByLabelText("期間");
-			const typeSelect = screen.getByLabelText("種別");
-			const minAmountInput = screen.getByLabelText(
-				"最小金額",
-			) as HTMLInputElement;
-			const maxAmountInput = screen.getByLabelText(
-				"最大金額",
-			) as HTMLInputElement;
-
-			expect((periodSelect as unknown as HTMLSelectElement).value).toBe("");
-			// カテゴリは複数選択のため個別のチェックボックスで確認するため、ここでは確認しない
-			expect((typeSelect as unknown as HTMLSelectElement).value).toBe("");
-			expect(minAmountInput.value).toBe("");
-			expect(maxAmountInput.value).toBe("");
-		});
 	});
 
 	describe("期間フィルター", () => {
@@ -187,60 +157,7 @@ describe("ExpenseFilters", () => {
 
 	// 削除: リセット機能は実装されていない
 
-	describe("レスポンシブデザイン", () => {
-		it("モバイル表示では縦並びレイアウトになる", () => {
-			// window.matchMediaのモック
-			window.matchMedia = vi.fn().mockImplementation((query) => ({
-				matches: query === "(max-width: 768px)",
-				media: query,
-				addEventListener: vi.fn(),
-				removeEventListener: vi.fn(),
-			}));
-
-			render(<ExpenseFilters {...defaultProps} />);
-
-			// 最初のflexコンテナを取得
-			const filterContainer = screen.getByTestId("expense-filters");
-			const flexContainers = filterContainer.querySelectorAll(".flex");
-			expect(flexContainers[0]).toHaveClass("flex-col");
-		});
-
-		it("デスクトップ表示では横並びレイアウトになる", () => {
-			window.matchMedia = vi.fn().mockImplementation((query) => ({
-				matches: query === "(min-width: 769px)",
-				media: query,
-				addEventListener: vi.fn(),
-				removeEventListener: vi.fn(),
-			}));
-
-			render(<ExpenseFilters {...defaultProps} />);
-
-			// 最初のflexコンテナを取得
-			const filterContainer = screen.getByTestId("expense-filters");
-			const flexContainers = filterContainer.querySelectorAll(".flex");
-			expect(flexContainers[0]).toHaveClass("flex-row");
-		});
-	});
-
 	describe("アクセシビリティ", () => {
-		it("キーボードナビゲーションが可能", async () => {
-			const user = userEvent.setup();
-			render(<ExpenseFilters {...defaultProps} />);
-
-			// Tabキーで各要素にフォーカス可能
-			await user.tab();
-			expect(screen.getByLabelText("期間")).toHaveFocus();
-
-			// 種別にフォーカス
-			await user.tab();
-			expect(screen.getByLabelText("種別")).toHaveFocus();
-
-			// カテゴリの最初のチェックボックスにフォーカス
-			await user.tab();
-			const firstCategoryCheckbox = screen.getAllByRole("checkbox")[0];
-			expect(firstCategoryCheckbox).toHaveFocus();
-		});
-
 		it("適切なARIA属性が設定されている", () => {
 			render(<ExpenseFilters {...defaultProps} />);
 
@@ -335,43 +252,6 @@ describe("ExpenseFilters", () => {
 					maxAmount: 999999999999,
 				});
 			});
-		});
-
-		it("同一カテゴリ名が複数あっても正しく処理される", () => {
-			const duplicateCategories = [
-				{
-					id: "cat1",
-					name: "食費",
-					type: "expense" as const,
-					color: "#FF6B6B",
-					createdAt: "2024-01-01T00:00:00Z",
-					updatedAt: "2024-01-01T00:00:00Z",
-				},
-				{
-					id: "cat2",
-					name: "食費",
-					type: "expense" as const,
-					color: "#FF6B6B",
-					createdAt: "2024-01-01T00:00:00Z",
-					updatedAt: "2024-01-01T00:00:00Z",
-				}, // 同じ名前
-				{
-					id: "cat3",
-					name: "交通費",
-					type: "expense" as const,
-					color: "#4ECDC4",
-					createdAt: "2024-01-01T00:00:00Z",
-					updatedAt: "2024-01-01T00:00:00Z",
-				},
-			];
-
-			render(
-				<ExpenseFilters {...defaultProps} categories={duplicateCategories} />,
-			);
-
-			// 両方の"食費"チェックボックスが表示される
-			const foodCheckboxes = screen.getAllByRole("checkbox", { name: "食費" });
-			expect(foodCheckboxes).toHaveLength(2);
 		});
 	});
 });
