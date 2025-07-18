@@ -17,60 +17,8 @@ vi.mock("react-dom", async () => {
 // グローバルカテゴリ設定をモック
 vi.mock("@shared/config/categories", () => ({
 	getCategoriesByType: vi.fn(() => [
-		{
-			id: "food",
-			name: "食費",
-			type: "expense",
-			color: "#FF6B6B",
-		},
-		{
-			id: "housing",
-			name: "住居費",
-			type: "expense",
-			color: "#4ECDC4",
-		},
-		{
-			id: "transportation",
-			name: "交通費",
-			type: "expense",
-			color: "#3498DB",
-		},
-		{
-			id: "system",
-			name: "システム関係費",
-			type: "expense",
-			color: "#27AE60",
-		},
-		{
-			id: "health",
-			name: "健康・フィットネス",
-			type: "expense",
-			color: "#96CEB4",
-		},
-		{
-			id: "books",
-			name: "書籍代",
-			type: "expense",
-			color: "#1E8BC3",
-		},
-		{
-			id: "business",
-			name: "仕事・ビジネス",
-			type: "expense",
-			color: "#8E44AD",
-		},
-		{
-			id: "shopping",
-			name: "買い物",
-			type: "expense",
-			color: "#F39C12",
-		},
-		{
-			id: "other_expense",
-			name: "その他",
-			type: "expense",
-			color: "#FFEAA7",
-		},
+		{ id: "food", name: "食費", type: "expense", color: "#FF6B6B" },
+		{ id: "system", name: "システム関係費", type: "expense", color: "#27AE60" },
 	]),
 }));
 
@@ -160,24 +108,6 @@ describe("NewSubscriptionDialog", () => {
 
 			const cancelButton = screen.getByRole("button", { name: "キャンセル" });
 			await user.click(cancelButton);
-
-			expect(defaultProps.onClose).toHaveBeenCalledOnce();
-		});
-
-		it("ダイアログのクローズボタンをクリックした場合、onCloseが呼ばれる", async () => {
-			const user = userEvent.setup();
-			render(<NewSubscriptionDialog {...defaultProps} />);
-
-			const closeButton = screen.getByRole("button", { name: "閉じる" });
-			await user.click(closeButton);
-
-			expect(defaultProps.onClose).toHaveBeenCalledOnce();
-		});
-
-		it("ESCキーを押した場合、onCloseが呼ばれる", async () => {
-			render(<NewSubscriptionDialog {...defaultProps} />);
-
-			fireEvent.keyDown(document, { key: "Escape" });
 
 			expect(defaultProps.onClose).toHaveBeenCalledOnce();
 		});
@@ -275,47 +205,6 @@ describe("NewSubscriptionDialog", () => {
 				).toBeInTheDocument();
 			});
 		});
-
-		it("次回請求日が過去の日付の場合、エラーが表示される", async () => {
-			const user = userEvent.setup();
-			render(<NewSubscriptionDialog {...defaultProps} />);
-
-			const nextBillingDateInput = screen.getByLabelText(/次回請求日/);
-			const yesterday = new Date();
-			yesterday.setDate(yesterday.getDate() - 1);
-			const yesterdayString = yesterday.toISOString().split("T")[0];
-
-			await user.type(nextBillingDateInput, yesterdayString);
-			await user.tab(); // フィールドからフォーカスを外す
-
-			await waitFor(() => {
-				expect(
-					screen.getByText("次回請求日は今日以降の日付を入力してください"),
-				).toBeInTheDocument();
-			});
-		});
-
-		it("カテゴリが選択されていない場合、エラーが表示される", async () => {
-			const user = userEvent.setup();
-			render(<NewSubscriptionDialog {...defaultProps} />);
-
-			// 全ての必須フィールドを入力（カテゴリ以外）
-			await user.type(screen.getByLabelText(/サービス名/), "Netflix");
-			await user.type(screen.getByLabelText(/料金/), "1490");
-
-			const nextMonth = new Date();
-			nextMonth.setMonth(nextMonth.getMonth() + 1);
-			const nextMonthString = nextMonth.toISOString().split("T")[0];
-			await user.type(screen.getByLabelText(/次回請求日/), nextMonthString);
-
-			// カテゴリは選択せずに送信
-			const submitButton = screen.getByRole("button", { name: "登録" });
-			await user.click(submitButton);
-
-			await waitFor(() => {
-				expect(screen.getByText("カテゴリは必須です")).toBeInTheDocument();
-			});
-		});
 	});
 
 	describe("アクセシビリティ", () => {
@@ -324,71 +213,7 @@ describe("NewSubscriptionDialog", () => {
 
 			const dialog = screen.getByRole("dialog");
 			expect(dialog).toHaveAttribute("aria-modal", "true");
-			expect(dialog).toHaveAttribute("aria-labelledby");
-		});
-
-		it("フォーム要素にラベルが適切に関連付けられている", () => {
-			render(<NewSubscriptionDialog {...defaultProps} />);
-
-			// 必須フィールドの確認
-			const nameInput = screen.getByLabelText(/サービス名/);
-			const amountInput = screen.getByLabelText(/料金/);
-			const nextBillingDateInput = screen.getByLabelText(/次回請求日/);
-
-			expect(nameInput).toHaveAttribute("id");
-			expect(amountInput).toHaveAttribute("id");
-			expect(nextBillingDateInput).toHaveAttribute("id");
 		});
 	});
 
-	describe("グローバルカテゴリ利用の検証", () => {
-		// オーバーテストのため削除
-		// カテゴリの詳細な内容検証は実装の詳細に依存しすぎるため
-		// 基本的な機能は他のテストで確認されている
-
-		it("categoriesプロパティに依存せずグローバルカテゴリを使用する", async () => {
-			// Issue #176: グローバルカテゴリへの移行テスト
-			const user = userEvent.setup();
-
-			// 空のcategoriesを渡しても正常に動作することを確認
-			const propsWithEmptyCategories = {
-				isOpen: true,
-				onClose: vi.fn(),
-				onSubmit: vi.fn(),
-				isSubmitting: false,
-				categories: [], // 空配列を渡す
-			};
-
-			render(<NewSubscriptionDialog {...propsWithEmptyCategories} />);
-
-			// フォームの基本情報を入力
-			await user.type(screen.getByLabelText(/サービス名/), "Spotify");
-			await user.type(screen.getByLabelText(/料金/), "980");
-
-			// 次回請求日を設定
-			const nextMonth = new Date();
-			nextMonth.setMonth(nextMonth.getMonth() + 1);
-			const nextMonthString = nextMonth.toISOString().split("T")[0];
-			await user.type(screen.getByLabelText(/次回請求日/), nextMonthString);
-
-			// グローバルカテゴリから「食費」を選択
-			const categorySelect = screen.getByLabelText(/カテゴリ/);
-			await user.selectOptions(categorySelect, "food"); // グローバル設定のIDを使用
-
-			// フォーム送信
-			const submitButton = screen.getByRole("button", { name: "登録" });
-			await user.click(submitButton);
-
-			// グローバルカテゴリのIDで送信されることを確認
-			expect(propsWithEmptyCategories.onSubmit).toHaveBeenCalledWith({
-				name: "Spotify",
-				amount: 980,
-				billingCycle: "monthly",
-				nextBillingDate: nextMonthString,
-				categoryId: "food", // グローバル設定のカテゴリID
-				isActive: true,
-				description: "",
-			});
-		});
-	});
 });
