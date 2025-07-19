@@ -206,10 +206,11 @@ describe("React Logger Integration", () => {
 			// フォールバックが表示される
 			expect(screen.getByText("Error occurred")).toBeInTheDocument();
 
-			// エラーハンドラーが呼ばれる
+			// エラーハンドラーが呼ばれる（3つの引数）
 			expect(errorSpy).toHaveBeenCalledWith(
 				expect.any(Error),
 				expect.any(Object),
+				expect.stringMatching(/^error_/),
 			);
 
 			consoleSpy.mockRestore();

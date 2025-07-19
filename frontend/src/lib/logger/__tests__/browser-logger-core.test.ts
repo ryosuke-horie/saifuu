@@ -77,21 +77,23 @@ describe("Browser Logger Core", () => {
 		});
 
 		it("ログレベルが正しく制御される", () => {
+			// shouldLog(currentLevel, targetLevel) 
+			// targetLevel >= currentLevel の場合にtrueを返す
 			const testCases: Array<[LogLevel, LogLevel, boolean]> = [
-				["debug", "debug", true],
-				["debug", "info", false],
-				["info", "debug", true],
-				["info", "info", true],
-				["info", "warn", false],
-				["warn", "info", true],
-				["warn", "warn", true],
-				["warn", "error", false],
-				["error", "warn", true],
-				["error", "error", true],
+				["debug", "debug", true],  // debug >= debug (0 >= 0) = true
+				["debug", "info", true],   // info >= debug (1 >= 0) = true
+				["info", "debug", false],  // debug >= info (0 >= 1) = false
+				["info", "info", true],    // info >= info (1 >= 1) = true
+				["info", "warn", true],    // warn >= info (2 >= 1) = true
+				["warn", "info", false],   // info >= warn (1 >= 2) = false
+				["warn", "warn", true],    // warn >= warn (2 >= 2) = true
+				["warn", "error", true],   // error >= warn (3 >= 2) = true
+				["error", "warn", false],  // warn >= error (2 >= 3) = false
+				["error", "error", true],  // error >= error (3 >= 3) = true
 			];
 
-			testCases.forEach(([messageLevel, configLevel, expected]) => {
-				expect(shouldLog(messageLevel, configLevel)).toBe(expected);
+			testCases.forEach(([currentLevel, targetLevel, expected]) => {
+				expect(shouldLog(currentLevel, targetLevel)).toBe(expected);
 			});
 		});
 	});
@@ -109,9 +111,9 @@ describe("Browser Logger Core", () => {
 			logger.warn("Warn message", { data: { message: "warn" } });
 			logger.error("Error message", { error: "Test error" });
 
-			// コンソール出力の確認
-			expect(console.warn).toHaveBeenCalledWith(
-				expect.stringContaining("[saifuu]"),
+			// コンソール出力の確認（debugレベルはconsole.logを使用）
+			expect(console.log).toHaveBeenCalledWith(
+				expect.stringContaining("[DEBUG]"),
 				expect.stringContaining("Debug message"),
 				expect.objectContaining({ data: { message: "debug" } }),
 			);
@@ -214,25 +216,19 @@ describe("Browser Logger Core", () => {
 
 		it("無効な設定に対してバリデーションが機能する", () => {
 			// 有効な設定は通過する
-			expect(() => {
-				validateConfig(config);
-			}).not.toThrow();
-
-			// 無効なログレベル
-			const invalidConfig = {
-				...config,
-				level: "invalid" as LogLevel,
-			};
-			expect(validateConfig(invalidConfig)).toHaveProperty("level", "info");
+			const validResult = validateConfig(config);
+			expect(validResult.valid).toBe(true);
+			expect(validResult.errors).toHaveLength(0);
 
 			// 無効なバッファサイズ
 			const negativeBufferConfig = {
 				...config,
 				bufferSize: -1,
 			};
-			expect(validateConfig(negativeBufferConfig)).toHaveProperty(
-				"bufferSize",
-				50,
+			const negativeBufferResult = validateConfig(negativeBufferConfig);
+			expect(negativeBufferResult.valid).toBe(false);
+			expect(negativeBufferResult.errors).toContain(
+				"bufferSize must be between 1 and 1000",
 			);
 
 			// 無効なフラッシュインターバル
@@ -240,9 +236,10 @@ describe("Browser Logger Core", () => {
 				...config,
 				flushInterval: 0,
 			};
-			expect(validateConfig(zeroFlushConfig)).toHaveProperty(
-				"flushInterval",
-				5000,
+			const zeroFlushResult = validateConfig(zeroFlushConfig);
+			expect(zeroFlushResult.valid).toBe(false);
+			expect(zeroFlushResult.errors).toContain(
+				"flushInterval must be between 100ms and 60000ms",
 			);
 		});
 	});

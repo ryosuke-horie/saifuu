@@ -388,11 +388,27 @@ export function usePerformanceLogger(
 
 	// カスタムパフォーマンス測定
 	const measureCustom = useCallback(
-		(name: string, _fn: () => void | Promise<void>) => {
-			return logger.performance(name, 0, {
-				component: componentName,
-				customMeasurement: name,
-			});
+		async (name: string, fn: () => void | Promise<void>) => {
+			const startTime = performance.now();
+			try {
+				await fn();
+				const endTime = performance.now();
+				const duration = endTime - startTime;
+				logger.performance(name, duration, {
+					component: componentName,
+					customMeasurement: name,
+				});
+			} catch (error) {
+				const endTime = performance.now();
+				const duration = endTime - startTime;
+				logger.error(`Performance measurement failed: ${name}`, {
+					component: componentName,
+					customMeasurement: name,
+					duration,
+					error: error instanceof Error ? error.message : String(error),
+				});
+				throw error;
+			}
 		},
 		[logger, componentName],
 	);

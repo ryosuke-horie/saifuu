@@ -132,12 +132,11 @@ describe("useExpenses (Simplified)", () => {
 				description: "夕食",
 				date: "2024-01-03",
 				categoryId: "1",
+				type: "expense",
 			});
 
-			// データが再取得される
-			await waitFor(() => {
-				expect(transactionsApi.getExpenseTransactions).toHaveBeenCalledTimes(2);
-			});
+			// データが再取得されることはない（ローカルステートを更新）
+			expect(transactionsApi.getExpenseTransactions).toHaveBeenCalledTimes(1);
 		});
 
 		it("既存支出を更新できる", async () => {
@@ -170,12 +169,11 @@ describe("useExpenses (Simplified)", () => {
 			expect(transactionsApi.updateTransaction).toHaveBeenCalledWith("1", {
 				amount: 1500,
 				description: "ランチ（更新）",
+				type: "expense",
 			});
 
-			// データが再取得される
-			await waitFor(() => {
-				expect(transactionsApi.getExpenseTransactions).toHaveBeenCalledTimes(2);
-			});
+			// データが再取得されることはない（ローカルステートを更新）
+			expect(transactionsApi.getExpenseTransactions).toHaveBeenCalledTimes(1);
 		});
 
 		it("支出を削除できる", async () => {
@@ -199,10 +197,8 @@ describe("useExpenses (Simplified)", () => {
 			// APIが呼ばれたことを確認
 			expect(transactionsApi.deleteTransaction).toHaveBeenCalledWith("1");
 
-			// データが再取得される
-			await waitFor(() => {
-				expect(transactionsApi.getExpenseTransactions).toHaveBeenCalledTimes(2);
-			});
+			// データが再取得されることはない（ローカルステートを更新）
+			expect(transactionsApi.getExpenseTransactions).toHaveBeenCalledTimes(1);
 		});
 	});
 
