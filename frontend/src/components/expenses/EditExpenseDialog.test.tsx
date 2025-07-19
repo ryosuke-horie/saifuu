@@ -76,15 +76,15 @@ describe("EditExpenseDialog", () => {
 		render(<EditExpenseDialog {...defaultProps} />);
 
 		// 金額
-		const amountInput = screen.getByLabelText("金額");
+		const amountInput = screen.getByLabelText(/金額（円）/);
 		expect(amountInput).toHaveValue(1000);
 
 		// 説明
-		const descriptionInput = screen.getByLabelText("メモ（任意）");
+		const descriptionInput = screen.getByLabelText("説明（任意）");
 		expect(descriptionInput).toHaveValue("昼食代");
 
 		// 日付
-		const dateInput = screen.getByLabelText("日付");
+		const dateInput = screen.getByLabelText(/日付/);
 		expect(dateInput).toHaveValue("2024-01-15");
 
 		// カテゴリ
@@ -97,7 +97,7 @@ describe("EditExpenseDialog", () => {
 		render(<EditExpenseDialog {...defaultProps} />);
 
 		// 金額を変更
-		const amountInput = screen.getByLabelText("金額");
+		const amountInput = screen.getByLabelText(/金額（円）/);
 		await user.clear(amountInput);
 		await user.type(amountInput, "2000");
 
@@ -131,7 +131,7 @@ describe("EditExpenseDialog", () => {
 		render(<EditExpenseDialog {...defaultProps} />);
 
 		// Dialogコンポーネントのクローズボタンを探す
-		const closeButton = screen.getByRole("button", { name: /close/i });
+		const closeButton = screen.getByRole("button", { name: "閉じる" });
 		await user.click(closeButton);
 
 		expect(defaultProps.onClose).toHaveBeenCalled();
