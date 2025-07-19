@@ -13,6 +13,7 @@
  */
 
 import React, { type FC } from "react";
+import { LoadingState, Skeleton } from "../ui";
 import { formatCurrency, formatPercentage } from "../../utils/format";
 
 // 現在のAPI仕様で利用可能な基本統計データ
@@ -75,24 +76,20 @@ const SkeletonLoader: FC = () => (
 	<div
 		className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
 		data-testid="stats-skeleton"
-		role="status"
-		aria-live="polite"
-		aria-label="統計データを読み込み中"
 	>
 		{[1, 2, 3].map((index) => (
 			<div
 				key={index}
-				className="bg-white rounded-lg shadow-sm p-6 animate-pulse"
+				className="bg-white rounded-lg shadow-sm p-6"
 			>
-				<div className="h-6 bg-gray-200 rounded w-3/4 mb-4" />
+				<Skeleton variant="text" width="75%" height={24} className="mb-4" />
 				<div className="space-y-3">
-					<div className="h-4 bg-gray-200 rounded w-full" />
-					<div className="h-4 bg-gray-200 rounded w-5/6" />
-					<div className="h-8 bg-gray-300 rounded w-1/2 mt-4" />
+					<Skeleton variant="text" width="100%" />
+					<Skeleton variant="text" width="83%" />
+					<Skeleton variant="rectangular" width="50%" height={32} className="mt-4" />
 				</div>
 			</div>
 		))}
-		<span className="sr-only">読み込み中...</span>
 	</div>
 );
 
@@ -100,14 +97,8 @@ const SkeletonLoader: FC = () => (
  * 従来のローディング表示（シンプルなスピナー）
  */
 const LoadingSpinner: FC = () => (
-	<div
-		className="flex flex-col items-center justify-center py-12"
-		data-testid="stats-loading"
-		role="status"
-		aria-live="polite"
-	>
-		<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-		<p className="mt-4 text-gray-600">読み込み中...</p>
+	<div className="py-12">
+		<LoadingState size="lg" layout="block" testId="stats-loading" />
 	</div>
 );
 

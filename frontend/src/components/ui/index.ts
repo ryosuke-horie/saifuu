@@ -1,26 +1,3 @@
-/**
- * UI Components Barrel Export
- *
- * 汎用UIコンポーネントの統一エクスポートファイル
- * プロジェクト全体で使用される再利用可能なUIコンポーネントをまとめて管理
- *
- * 使用方法:
- * import { Dialog } from '@/components/ui';
- *
- * 設計方針:
- * - 他のコンポーネントから簡単にインポートできるよう統一されたエクスポート
- * - コンポーネント追加時にはここに追加してアクセシビリティを向上
- * - 型定義も含めてエクスポートし、TypeScriptの恩恵を最大化
- */
-
-export type { DialogProps } from "./Dialog";
-// Dialog関連のエクスポート
-export { Dialog } from "./Dialog";
-
-// 将来追加予定のUIコンポーネント
-// export { Button } from './Button';
-// export { Input } from './Input';
-// export { Modal } from './Modal';
-// export { Tooltip } from './Tooltip';
-// export { Card } from './Card';
-// export { Badge } from './Badge';
+export { LoadingState, type LoadingStateProps } from "./LoadingState";
+export { Skeleton, type SkeletonProps } from "./Skeleton";
+export { Spinner, type SpinnerProps } from "./Spinner";
