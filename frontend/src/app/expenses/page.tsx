@@ -154,7 +154,7 @@ export default function ExpensesPage() {
 					</div>
 
 					{/* 取引件数 */}
-					<div className="bg-white overflow-hidden shadow rounded-lg">
+					<div className="bg-white overflow-hidden shadow rounded-lg hidden sm:block">
 						<div className="p-5">
 							<div className="flex items-center">
 								<div className="flex-shrink-0">
