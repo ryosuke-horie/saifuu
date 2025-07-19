@@ -37,25 +37,27 @@ const TransactionRow: FC<{
 
 	return (
 		<tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-			<td className="px-4 py-3 text-sm text-gray-900">
+			<td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">
 				{formatDate(transaction.date)}
 			</td>
-			<td className={`px-4 py-3 text-sm font-medium ${getAmountColor()}`}>
+			<td
+				className={`px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium ${getAmountColor()}`}
+			>
 				{formatCurrency(transaction.amount, true)}
 			</td>
-			<td className="px-4 py-3 text-sm text-gray-700 hidden md:table-cell">
+			<td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700 max-w-[80px] sm:max-w-none truncate">
 				{formatCategoryName(transaction.category)}
 			</td>
-			<td className="px-4 py-3 text-sm text-gray-700 hidden sm:table-cell">
+			<td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700 max-w-[120px] sm:max-w-none truncate">
 				{transaction.description || ""}
 			</td>
-			<td className="px-4 py-3 text-sm text-gray-700">
-				<div className="flex space-x-2">
+			<td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
+				<div className="flex flex-col gap-1">
 					{onEdit && (
 						<button
 							type="button"
 							onClick={() => onEdit(transaction)}
-							className="text-blue-600 hover:text-blue-800 transition-colors"
+							className="text-blue-600 hover:text-blue-800 transition-colors text-xs sm:text-sm whitespace-nowrap"
 						>
 							編集
 						</button>
@@ -64,7 +66,7 @@ const TransactionRow: FC<{
 						<button
 							type="button"
 							onClick={() => onDelete(transaction.id)}
-							className="text-red-600 hover:text-red-800 transition-colors"
+							className="text-red-600 hover:text-red-800 transition-colors text-xs sm:text-sm whitespace-nowrap"
 						>
 							削除
 						</button>
@@ -156,31 +158,32 @@ export const ExpenseList: FC<ExpenseListProps> = ({
 						<tr>
 							<th
 								scope="col"
-								className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+								className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-tighter sm:tracking-wider"
 							>
 								日付
 							</th>
 							<th
 								scope="col"
-								className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+								className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-tighter sm:tracking-wider"
 							>
 								金額
 							</th>
 							<th
 								scope="col"
-								className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
+								className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-tighter sm:tracking-wider"
 							>
-								カテゴリ
+								<span className="sm:hidden">カテ</span>
+								<span className="hidden sm:inline">カテゴリ</span>
 							</th>
 							<th
 								scope="col"
-								className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell"
+								className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-tighter sm:tracking-wider"
 							>
 								説明
 							</th>
 							<th
 								scope="col"
-								className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+								className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-tighter sm:tracking-wider"
 							>
 								操作
 							</th>
