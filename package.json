@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docs:search": "node docs/scripts/search.js"
+    "docs:search": "node docs/scripts/search.js",
+    "test:ratio": "node scripts/monitor-test-ratio-simple.js",
+    "test:ratio:detailed": "node scripts/monitor-test-ratio.js"
   },
   "private": true
 }
