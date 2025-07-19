@@ -11,6 +11,9 @@ import { BrowserLogger } from "../browser-logger";
 import { getDefaultConfig, shouldLog, validateConfig } from "../config";
 import type { BrowserLoggerConfig, LogLevel } from "../types";
 
+// テスト環境を示すグローバルフラグを設定
+globalThis.IS_TEST_ENV = true;
+
 // 統合テスト: browser-logger.test.ts と config.test.ts の重要な部分を統合
 describe("Browser Logger Core", () => {
 	let logger: BrowserLogger;
@@ -113,8 +116,7 @@ describe("Browser Logger Core", () => {
 
 			// コンソール出力の確認（debugレベルはconsole.logを使用）
 			expect(console.log).toHaveBeenCalledWith(
-				expect.stringContaining("[DEBUG]"),
-				expect.stringContaining("Debug message"),
+				expect.stringContaining("[DEBUG] Debug message"),
 				expect.objectContaining({ data: { message: "debug" } }),
 			);
 

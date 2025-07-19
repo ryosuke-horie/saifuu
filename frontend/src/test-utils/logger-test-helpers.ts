@@ -91,15 +91,21 @@ export const setupFetchMock = () => {
  * コンソールスパイのセットアップ
  */
 export const setupConsoleSpy = () => {
+	const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+	const consoleInfoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
 	const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 	const consoleErrorSpy = vi
 		.spyOn(console, "error")
 		.mockImplementation(() => {});
 
 	return {
+		consoleLogSpy,
+		consoleInfoSpy,
 		consoleWarnSpy,
 		consoleErrorSpy,
 		restore: () => {
+			consoleLogSpy.mockRestore();
+			consoleInfoSpy.mockRestore();
 			consoleWarnSpy.mockRestore();
 			consoleErrorSpy.mockRestore();
 		},
