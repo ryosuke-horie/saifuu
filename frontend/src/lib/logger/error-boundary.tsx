@@ -417,22 +417,23 @@ export function useErrorHandler() {
 		(error: Error, errorInfo?: ErrorInfo | FrontendLogMeta) => {
 			if (loggerContext) {
 				const { logger } = loggerContext;
-				
+
 				// errorInfoがErrorInfoかFrontendLogMetaかを判定
-				const meta: FrontendLogMeta = errorInfo && 'componentStack' in errorInfo
-					? {
-						error: error.name,
-						stack: error.stack,
-						componentStack: errorInfo.componentStack,
-						action: "manual_error_handling",
-					}
-					: {
-						...errorInfo,
-						error: error.name,
-						stack: error.stack,
-						action: "manual_error_handling",
-					};
-				
+				const meta: FrontendLogMeta =
+					errorInfo && "componentStack" in errorInfo
+						? {
+								error: error.name,
+								stack: error.stack,
+								componentStack: errorInfo.componentStack,
+								action: "manual_error_handling",
+							}
+						: {
+								...errorInfo,
+								error: error.name,
+								stack: error.stack,
+								action: "manual_error_handling",
+							};
+
 				logger.error("Manual error handling", meta);
 			}
 

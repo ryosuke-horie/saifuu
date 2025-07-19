@@ -360,7 +360,7 @@ export function usePerformanceLogger(
 	useEffect(() => {
 		if (trackRenders) {
 			renderCountRef.current++;
-			
+
 			// 初回レンダリング以降のみパフォーマンスを記録
 			if (renderStartRef.current !== undefined) {
 				const renderTime = performance.now() - renderStartRef.current;
@@ -369,7 +369,7 @@ export function usePerformanceLogger(
 					renderCount: renderCountRef.current,
 				});
 			}
-			
+
 			// 次回レンダリング用に開始時間を記録
 			renderStartRef.current = performance.now();
 		}

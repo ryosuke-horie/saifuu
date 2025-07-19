@@ -2,7 +2,7 @@ import { render, renderHook, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LoggerProvider, useLoggerContext } from "../context";
-import { LoggedErrorBoundary, useErrorHandler } from "../error-boundary";
+import { useErrorHandler } from "../error-boundary";
 import {
 	useComponentLogger,
 	useLoggedCallback,
@@ -178,9 +178,11 @@ describe("React Logger Integration", () => {
 
 			// 再レンダリングを強制して、renderCountが更新されることを確認
 			rerender();
-			
+
 			// getRenderCountメソッドがあれば使用、なければrenderCountを直接確認
-			const renderCount = result.current.getRenderCount ? result.current.getRenderCount() : result.current.renderCount;
+			const renderCount = result.current.getRenderCount
+				? result.current.getRenderCount()
+				: result.current.renderCount;
 			expect(renderCount).toBeGreaterThanOrEqual(1);
 		});
 	});
