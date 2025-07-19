@@ -356,21 +356,22 @@ export function usePerformanceLogger(
 	const renderStartRef = useRef<number | undefined>(undefined);
 	const renderCountRef = useRef(0);
 
-	// レンダリング開始時間の記録
-	if (trackRenders) {
-		renderStartRef.current = performance.now();
-	}
-
 	// レンダリング完了時の処理
 	useEffect(() => {
-		if (trackRenders && renderStartRef.current) {
-			const renderTime = performance.now() - renderStartRef.current;
+		if (trackRenders) {
 			renderCountRef.current++;
 
-			logger.performance("render_time", renderTime, {
-				component: componentName,
-				renderCount: renderCountRef.current,
-			});
+			// 初回レンダリング以降のみパフォーマンスを記録
+			if (renderStartRef.current !== undefined) {
+				const renderTime = performance.now() - renderStartRef.current;
+				logger.performance("render_time", renderTime, {
+					component: componentName,
+					renderCount: renderCountRef.current,
+				});
+			}
+
+			// 次回レンダリング用に開始時間を記録
+			renderStartRef.current = performance.now();
 		}
 	});
 
@@ -388,22 +389,42 @@ export function usePerformanceLogger(
 
 	// カスタムパフォーマンス測定
 	const measureCustom = useCallback(
-		(name: string, _fn: () => void | Promise<void>) => {
-			return logger.performance(name, 0, {
-				component: componentName,
-				customMeasurement: name,
-			});
+		async (name: string, fn: () => void | Promise<void>) => {
+			const startTime = performance.now();
+			try {
+				await fn();
+				const endTime = performance.now();
+				const duration = endTime - startTime;
+				logger.performance(name, duration, {
+					component: componentName,
+					customMeasurement: name,
+				});
+			} catch (error) {
+				const endTime = performance.now();
+				const duration = endTime - startTime;
+				logger.error(`Performance measurement failed: ${name}`, {
+					component: componentName,
+					customMeasurement: name,
+					duration,
+					error: error instanceof Error ? error.message : String(error),
+				});
+				throw error;
+			}
 		},
 		[logger, componentName],
 	);
+
+	// 現在のrenderCountを取得するgetterを追加
+	const getRenderCount = useCallback(() => renderCountRef.current, []);
 
 	return useMemo(
 		() => ({
 			measureMemory,
 			measureCustom,
 			renderCount: renderCountRef.current,
+			getRenderCount,
 		}),
-		[measureMemory, measureCustom],
+		[measureMemory, measureCustom, getRenderCount],
 	);
 }
 

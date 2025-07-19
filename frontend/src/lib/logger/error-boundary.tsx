@@ -414,19 +414,32 @@ export function useErrorHandler() {
 	const loggerContext = useOptionalLoggerContext();
 
 	return React.useCallback(
-		(error: Error, additionalMeta?: FrontendLogMeta) => {
+		(error: Error, errorInfo?: ErrorInfo | FrontendLogMeta) => {
 			if (loggerContext) {
 				const { logger } = loggerContext;
-				logger.error("Manual error handling", {
-					...additionalMeta,
-					error: error.name,
-					stack: error.stack,
-					action: "manual_error_handling",
-				});
+
+				// errorInfoがErrorInfoかFrontendLogMetaかを判定
+				const meta: FrontendLogMeta =
+					errorInfo && "componentStack" in errorInfo
+						? {
+								error: error.name,
+								stack: error.stack,
+								componentStack: errorInfo.componentStack,
+								action: "manual_error_handling",
+							}
+						: {
+								...errorInfo,
+								error: error.name,
+								stack: error.stack,
+								action: "manual_error_handling",
+							};
+
+				logger.error("Manual error handling", meta);
 			}
 
-			// 開発環境では再スロー
-			if (process.env.NODE_ENV === "development") {
+			// 開発環境では再スロー（ただしテスト時は除く）
+			// テスト環境の判定は別の環境変数や設定で行う必要がある
+			if (process.env.NODE_ENV === "development" && !globalThis.IS_TEST_ENV) {
 				throw error;
 			}
 		},
