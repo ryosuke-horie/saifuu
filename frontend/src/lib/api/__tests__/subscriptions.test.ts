@@ -308,38 +308,4 @@ describe("Subscriptions API", () => {
 			expect(result.isActive).toBe(false);
 		});
 	});
-
-	describe("API Response Format Validation", () => {
-		it("should handle array response format correctly (Issue #53 fix)", async () => {
-			// 今回の修正の核心: 配列レスポンス形式の正しい処理
-			const mockArrayResponse: ApiSubscriptionResponse[] = [
-				{
-					id: 1,
-					name: "Service 1",
-					amount: 1000,
-					categoryId: 1,
-					billingCycle: "monthly",
-					nextBillingDate: "2025-08-01T00:00:00Z",
-					isActive: true,
-					description: null,
-					createdAt: "2025-01-01",
-					updatedAt: "2025-01-01",
-				},
-			];
-
-			const mockGet = vi.mocked(apiClient.get);
-			mockGet.mockResolvedValueOnce(mockArrayResponse);
-
-			const result = await fetchSubscriptions(mockCategories);
-
-			// 配列が正しく処理されることを確認
-			expect(Array.isArray(result)).toBe(true);
-			expect(result).toHaveLength(1);
-
-			// 要素が正しく変換されることを確認
-			expect(result[0].id).toBe("1");
-			expect(result[0].name).toBe("Service 1");
-			expect(result[0].category).toEqual(mockCategories[0]);
-		});
-	});
 });

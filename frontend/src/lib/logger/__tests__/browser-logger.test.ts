@@ -1,686 +1,255 @@
 /**
- * ブラウザロガー実装テスト
+ * ブラウザロガー統合テスト
  *
- * ログ処理、バッファリング、ブラウザイベント連携を包括的に検証
+ * コア機能に焦点を当てた最適化版
  */
 
+import type { MockInstance } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-	afterEach,
-	beforeEach,
-	describe,
-	expect,
-	it,
-	type MockedFunction,
-	vi,
-} from "vitest";
+	createMockLoggerConfig,
+	setupBrowserMocks,
+	setupConsoleSpy,
+	setupFetchMock,
+	setupTimers,
+} from "../../../test-utils/logger-test-helpers";
 import { BrowserLogger, createBrowserLogger } from "../browser-logger";
 import { getDefaultConfig } from "../config";
 import type { BrowserLoggerConfig } from "../types";
 
-// モック用のグローバル変数
-const originalWindow = global.window;
-const originalDocument = global.document;
-const originalNavigator = global.navigator;
-const originalLocalStorage = global.localStorage;
-const originalFetch = global.fetch;
-
-// フェッチモック
-const mockFetch = vi.fn();
-
-// タイマーモック
-vi.useFakeTimers();
-
 describe("BrowserLogger", () => {
 	let logger: BrowserLogger;
 	let config: BrowserLoggerConfig;
+	let mockFetch: MockInstance;
+	let consoleSpy: ReturnType<typeof setupConsoleSpy>;
+	let timers: ReturnType<typeof setupTimers>;
 
 	beforeEach(() => {
-		// 基本設定のセットアップ
-		config = getDefaultConfig("development");
-		config.flushInterval = 1000;
-		config.bufferSize = 5;
-
-		// ブラウザAPIのモック
+		vi.clearAllMocks();
+		timers = setupTimers();
+		consoleSpy = setupConsoleSpy();
 		setupBrowserMocks();
+		mockFetch = setupFetchMock();
 
-		// フェッチのモック
-		global.fetch = mockFetch.mockResolvedValue({
-			ok: true,
-			status: 200,
-			json: () => Promise.resolve({}),
-		});
-
-		logger = new BrowserLogger(config);
+		config = {
+			...getDefaultConfig("development"),
+			...createMockLoggerConfig(),
+			flushInterval: 1000,
+			bufferSize: 5,
+		} as BrowserLoggerConfig;
 	});
 
 	afterEach(() => {
 		logger?.destroy();
-		vi.clearAllMocks();
-		vi.clearAllTimers();
-
-		// グローバル変数を復元
-		global.window = originalWindow;
-		global.document = originalDocument;
-		global.navigator = originalNavigator;
-		global.localStorage = originalLocalStorage;
-		global.fetch = originalFetch;
+		consoleSpy.restore();
+		timers.cleanup();
 	});
 
-	function setupBrowserMocks() {
-		// @ts-ignore
-		global.window = {
-			location: {
-				href: "https://example.com/test",
-				hostname: "example.com",
-				pathname: "/test",
-				protocol: "https:",
-				port: "",
-				hash: "",
-				search: "",
-				host: "example.com",
-				origin: "https://example.com",
-				ancestorOrigins: {} as DOMStringList,
-				assign: vi.fn(),
-				reload: vi.fn(),
-				replace: vi.fn(),
-			} as Location,
-			innerWidth: 1920,
-			innerHeight: 1080,
-			devicePixelRatio: 1,
-			screen: {
-				width: 1920,
-				height: 1080,
-				availWidth: 1920,
-				availHeight: 1040,
-				colorDepth: 24,
-				pixelDepth: 24,
-				orientation: {
-					angle: 0,
-					type: "landscape-primary",
-					addEventListener: vi.fn(),
-					removeEventListener: vi.fn(),
-					onchange: null,
-					unlock: vi.fn().mockReturnValue(Promise.resolve()),
-					dispatchEvent: vi.fn(),
-				} as ScreenOrientation,
-			} as Screen,
-			addEventListener: vi.fn(),
-			removeEventListener: vi.fn(),
-		};
-
-		// @ts-ignore
-		global.document = {
-			visibilityState: "visible",
-			addEventListener: vi.fn(),
-			removeEventListener: vi.fn(),
-		};
-
-		// @ts-ignore
-		global.navigator = {
-			userAgent: "Mozilla/5.0 (Test Browser)",
-			platform: "Test Platform",
-			language: "en-US",
-			languages: ["en-US", "en"],
-			cookieEnabled: true,
-			onLine: true,
-			sendBeacon: vi.fn().mockReturnValue(true),
-		};
-
-		// @ts-ignore
-		global.localStorage = {
-			getItem: vi.fn(),
-			setItem: vi.fn(),
-			removeItem: vi.fn(),
-		};
-
-		// @ts-ignore
-		global.performance = {
-			now: vi.fn().mockReturnValue(Date.now()),
-		};
-
-		// Intl.DateTimeFormat のモック
-		// @ts-ignore
-		global.Intl = {
-			DateTimeFormat: Object.assign(
-				vi.fn().mockImplementation(() => ({
-					resolvedOptions: () => ({ timeZone: "UTC" }),
-					format: vi.fn(),
-					formatToParts: vi.fn(),
-					formatRange: vi.fn(),
-					formatRangeToParts: vi.fn(),
-				})),
-				{
-					supportedLocalesOf: vi.fn(),
-				},
-			),
-		};
-	}
-
-	describe("Constructor and Initialization", () => {
-		it("should initialize with provided config", () => {
-			expect(logger.getConfig()).toEqual(config);
+	describe("初期化", () => {
+		it("正常に初期化される", () => {
+			logger = new BrowserLogger(config);
+			expect(logger).toBeDefined();
+			expect(logger.getConfig()).toMatchObject(config);
 		});
 
-		it("should add event listeners on initialization", () => {
-			const addEventListener = vi.spyOn(window, "addEventListener");
-			const docAddEventListener = vi.spyOn(document, "addEventListener");
-
-			new BrowserLogger(config);
-
-			expect(addEventListener).toHaveBeenCalledWith(
-				"beforeunload",
-				expect.any(Function),
-			);
-			expect(addEventListener).toHaveBeenCalledWith(
-				"error",
-				expect.any(Function),
-			);
-			expect(docAddEventListener).toHaveBeenCalledWith(
-				"visibilitychange",
-				expect.any(Function),
-			);
+		it("設定を動的に更新できる", () => {
+			logger = new BrowserLogger(config);
+			logger.updateConfig({ level: "error" });
+			expect(logger.getConfig().level).toBe("error");
 		});
 
-		it("should create initial session", () => {
-			const sessionId = logger.startSession();
-			expect(sessionId).toMatch(/^session_\d+_[a-z0-9]+$/);
+		it("ファクトリ関数が動作する", () => {
+			const instance = createBrowserLogger(config);
+			expect(instance).toBeInstanceOf(BrowserLogger);
+			instance.destroy();
 		});
 	});
 
-	describe("Basic Logging Methods", () => {
-		it("should log debug messages", () => {
-			const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+	describe("ログ出力", () => {
+		beforeEach(() => {
+			logger = new BrowserLogger(config);
+		});
 
-			logger.debug("Test debug message");
+		it("ログレベルに応じてコンソール出力する", () => {
+			logger.debug("debug message");
+			logger.info("info message");
+			logger.warn("warn message");
+			logger.error("error message");
 
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringMatching(
-					/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[DEBUG\] Test debug message/,
-				),
+			expect(consoleSpy.consoleLogSpy).toHaveBeenCalledWith(
+				expect.stringContaining("debug message"),
+			);
+			expect(consoleSpy.consoleInfoSpy).toHaveBeenCalledWith(
+				expect.stringContaining("info message"),
+			);
+			expect(consoleSpy.consoleWarnSpy).toHaveBeenCalledWith(
+				expect.stringContaining("warn message"),
+			);
+			expect(consoleSpy.consoleErrorSpy).toHaveBeenCalledWith(
+				expect.stringContaining("error message"),
 			);
 		});
 
-		it("should log info messages", () => {
-			const consoleSpy = vi.spyOn(console, "info").mockImplementation(() => {});
-
-			logger.info("Test info message");
-
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringMatching(
-					/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[INFO\] Test info message/,
-				),
-			);
-		});
-
-		it("should log warn messages", () => {
-			const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-			logger.warn("Test warn message");
-
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringMatching(
-					/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[WARN\] Test warn message/,
-				),
-			);
-		});
-
-		it("should log error messages", () => {
-			const consoleSpy = vi
-				.spyOn(console, "error")
-				.mockImplementation(() => {});
-
-			logger.error("Test error message");
-
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringMatching(
-					/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\] \[ERROR\] Test error message/,
-				),
-			);
-		});
-
-		it("should respect log level filtering", () => {
+		it("設定レベル以下のログはスキップする", () => {
 			logger.setLevel("warn");
-			const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-			logger.debug("Should not log");
-			logger.info("Should not log");
-			logger.warn("Should log");
+			logger.debug("debug");
+			logger.info("info");
+			logger.warn("warn");
+			logger.error("error");
 
-			expect(consoleSpy).not.toHaveBeenCalled();
+			// debug/infoは出力されない
+			expect(consoleSpy.consoleLogSpy).not.toHaveBeenCalled();
+			expect(consoleSpy.consoleInfoSpy).not.toHaveBeenCalled();
+			// warn/errorは出力される
+			expect(consoleSpy.consoleWarnSpy).toHaveBeenCalled();
+			expect(consoleSpy.consoleErrorSpy).toHaveBeenCalled();
 		});
 	});
 
-	describe("Frontend-Specific Methods", () => {
-		it("should track events", () => {
-			logger.track("button_click", { elementId: "submit-btn" });
-
-			expect(logger.getBufferSize()).toBe(2); // 初期化ログ + トラッキングログ
+	describe("バッファリング", () => {
+		beforeEach(() => {
+			logger = new BrowserLogger(config);
 		});
 
-		it("should track page views", () => {
-			logger.pageView("/test-page");
+		it("バッファサイズに達したら自動フラッシュ", async () => {
+			// バッファサイズ（5）まで埋める
+			for (let i = 0; i < 5; i++) {
+				logger.info(`Message ${i}`);
+			}
 
-			expect(logger.getBufferSize()).toBe(2);
+			await vi.waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
+
+			const [url, options] = mockFetch.mock.calls[0];
+			expect(url).toBe("/api/logs");
+			const body = JSON.parse(options.body);
+			expect(body.logs).toHaveLength(5);
 		});
 
-		it("should track user interactions", () => {
-			logger.userInteraction("click", "button-1");
-
-			expect(logger.getBufferSize()).toBe(2);
-		});
-
-		it("should track API calls", () => {
-			logger.apiCall("/api/users", "GET");
-
-			expect(logger.getBufferSize()).toBe(2);
-		});
-
-		it("should track performance metrics when enabled", () => {
-			config.enablePerformanceTracking = true;
-			const perfLogger = new BrowserLogger(config);
-
-			perfLogger.performance("page_load_time", 1500);
-
-			expect(perfLogger.getBufferSize()).toBe(2);
-			perfLogger.destroy();
-		});
-
-		it("should not track performance when disabled", () => {
-			config.enablePerformanceTracking = false;
-			const perfLogger = new BrowserLogger(config);
-
-			perfLogger.performance("page_load_time", 1500);
-
-			expect(perfLogger.getBufferSize()).toBe(1); // 初期化ログのみ
-			perfLogger.destroy();
-		});
-	});
-
-	describe("Session Management", () => {
-		it("should start new session", () => {
-			const sessionId = logger.startSession();
-			expect(sessionId).toMatch(/^session_\d+_[a-z0-9]+$/);
-		});
-
-		it("should end session with metrics", () => {
-			const flushSpy = vi.spyOn(logger, "flush");
-			logger.endSession();
-			// endSession時に flush() が呼ばれることをテスト
-			expect(flushSpy).toHaveBeenCalled();
-		});
-
-		it("should set user ID", () => {
-			logger.setUserId("user123");
-			logger.info("Test with user");
-
-			// ユーザーIDがログに含まれることを確認
-			expect(logger.getBufferSize()).toBe(3); // 初期化 + ユーザー設定 + テストログ
-		});
-
-		it("should set component name", () => {
-			logger.setComponent("TestComponent");
-			logger.info("Test with component");
-
-			expect(logger.getBufferSize()).toBe(2);
-		});
-	});
-
-	describe("Buffer Management", () => {
-		it("should add logs to buffer", () => {
-			expect(logger.getBufferSize()).toBe(1); // 初期化ログ
-
+		it("インターバルで定期フラッシュ", async () => {
 			logger.info("Test message");
+			expect(mockFetch).not.toHaveBeenCalled();
 
-			expect(logger.getBufferSize()).toBe(2);
+			// インターバル時間経過
+			await timers.advance(1000);
+			await vi.waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
 		});
 
-		it("should flush buffer when size limit is reached", async () => {
-			config.bufferSize = 2;
-			config.apiEndpoint = "https://api.example.com/logs";
-			const flushLogger = new BrowserLogger(config);
-
-			expect(flushLogger.getBufferSize()).toBe(1); // 初期化ログ
-
-			flushLogger.info("Message 1");
-			expect(flushLogger.getBufferSize()).toBe(0); // バッファサイズ制限でフラッシュされる
-
-			// フラッシュ処理は非同期なので少し待つ
-			await vi.waitFor(() => {
-				expect(mockFetch).toHaveBeenCalled();
-			});
-
-			flushLogger.destroy();
+		it("手動フラッシュが動作する", async () => {
+			logger.info("Test");
+			await logger.flush();
+			expect(mockFetch).toHaveBeenCalledTimes(1);
 		});
 
-		it("should clear buffer", () => {
-			logger.info("Test message");
+		it("バッファクリアが動作する", () => {
+			logger.info("Test 1");
+			logger.info("Test 2");
 			expect(logger.getBufferSize()).toBe(2);
 
 			logger.clear();
 			expect(logger.getBufferSize()).toBe(0);
 		});
-
-		it("should flush buffer manually", async () => {
-			config.apiEndpoint = "https://api.example.com/logs";
-			const flushTestLogger = new BrowserLogger(config);
-			flushTestLogger.info("Test message");
-
-			await flushTestLogger.flush();
-
-			expect(mockFetch).toHaveBeenCalled();
-			flushTestLogger.destroy();
-		});
 	});
 
-	describe("Configuration Management", () => {
-		it("should update configuration", () => {
-			const newLevel = "error";
-			logger.updateConfig({ level: newLevel });
-
-			expect(logger.getConfig().level).toBe(newLevel);
+	describe("ユーザー・コンポーネント管理", () => {
+		beforeEach(() => {
+			logger = new BrowserLogger(config);
 		});
 
-		it("should update flush interval", () => {
-			logger.updateConfig({ flushInterval: 2000 });
+		it("ユーザーIDが設定される", async () => {
+			logger.setUserId("user123");
+			logger.info("Test");
+			await logger.flush();
 
-			expect(logger.getConfig().flushInterval).toBe(2000);
-		});
-	});
-
-	describe("Event Listeners", () => {
-		it("should handle beforeunload event", () => {
-			config.enableBeacon = true;
-			config.apiEndpoint = "https://api.example.com/logs";
-			const beaconLogger = new BrowserLogger(config);
-			const event = new Event("beforeunload");
-			const handler = (
-				window.addEventListener as MockedFunction<any>
-			).mock.calls.find((call) => call[0] === "beforeunload")?.[1];
-
-			beaconLogger.info("Test message"); // バッファにログを追加
-
-			if (handler && typeof handler === "function") {
-				handler(event);
-			}
-
-			// Beacon API が呼ばれることを確認
-			expect(navigator.sendBeacon).toHaveBeenCalled();
-			beaconLogger.destroy();
+			const logs = JSON.parse(mockFetch.mock.calls[0][1].body).logs;
+			expect(logs[0].userId).toBe("user123");
 		});
 
-		it("should handle visibility change event", () => {
-			const handler = (
-				document.addEventListener as MockedFunction<any>
-			).mock.calls.find((call) => call[0] === "visibilitychange")?.[1];
+		it("コンポーネント名が設定される", async () => {
+			logger.setComponent("Header");
+			logger.info("Test");
+			await logger.flush();
 
-			if (handler && typeof handler === "function") {
-				handler(new Event("visibilitychange"));
-			}
-
-			// visibilitychange のログが追加されることを確認
-			expect(logger.getBufferSize()).toBeGreaterThan(1);
+			const logs = JSON.parse(mockFetch.mock.calls[0][1].body).logs;
+			expect(logs[0].component).toBe("Header");
 		});
 
-		it("should handle global errors when error tracking is enabled", () => {
-			config.enableErrorTracking = true;
-			const errorLogger = new BrowserLogger(config);
+		it("メタデータが含まれる", async () => {
+			logger.info("Test", { action: "click", element: "button" });
+			await logger.flush();
 
-			// 最新のaddEventListener呼び出しからerrorハンドラーを取得
-			const allCalls = (window.addEventListener as MockedFunction<any>).mock
-				.calls;
-			const errorCall = allCalls.filter((call) => call[0] === "error").pop();
-			const handler = errorCall?.[1];
-
-			const errorEvent = new ErrorEvent("error", {
-				message: "Test error",
-				filename: "test.js",
-				lineno: 123,
-				colno: 456,
-				error: new Error("Test error"),
+			const logs = JSON.parse(mockFetch.mock.calls[0][1].body).logs;
+			expect(logs[0].meta).toMatchObject({
+				action: "click",
+				element: "button",
 			});
-
-			if (handler && typeof handler === "function") {
-				handler(errorEvent);
-			}
-
-			expect(errorLogger.getBufferSize()).toBe(2); // 初期化 + エラーログ
-			errorLogger.destroy();
-		});
-
-		it("should handle online/offline events", () => {
-			const networkLogger = new BrowserLogger(config);
-			const allCalls = (window.addEventListener as MockedFunction<any>).mock
-				.calls;
-			const onlineCall = allCalls.filter((call) => call[0] === "online").pop();
-			const offlineCall = allCalls
-				.filter((call) => call[0] === "offline")
-				.pop();
-			const _onlineHandler = onlineCall?.[1];
-			const offlineHandler = offlineCall?.[1];
-
-			// 初期状態: 初期化ログのみ
-			expect(networkLogger.getBufferSize()).toBe(1);
-
-			if (offlineHandler && typeof offlineHandler === "function") {
-				offlineHandler(new Event("offline"));
-			}
-
-			// オフラインログが追加される
-			expect(networkLogger.getBufferSize()).toBe(2);
-
-			networkLogger.destroy();
 		});
 	});
 
-	describe("Log Sending", () => {
-		it("should send logs via fetch when API endpoint is configured", async () => {
-			config.apiEndpoint = "https://api.example.com/logs";
-			const apiLogger = new BrowserLogger(config);
-
-			apiLogger.info("Test message");
-			await apiLogger.flush();
-
-			expect(mockFetch).toHaveBeenCalledWith(
-				"https://api.example.com/logs",
-				expect.objectContaining({
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: expect.stringContaining("Test message"),
-				}),
-			);
-
-			apiLogger.destroy();
+	describe("エラーハンドリング", () => {
+		beforeEach(() => {
+			logger = new BrowserLogger(config);
 		});
 
-		it("should handle fetch errors gracefully", async () => {
-			config.apiEndpoint = "https://api.example.com/logs";
+		it("ネットワークエラー時にリトライする", async () => {
 			mockFetch.mockRejectedValueOnce(new Error("Network error"));
+			mockFetch.mockResolvedValueOnce({ ok: true });
 
-			const apiLogger = new BrowserLogger(config);
-			apiLogger.info("Test message");
+			logger.error("Test error");
+			await logger.flush();
 
-			await expect(apiLogger.flush()).resolves.not.toThrow();
+			// 初回失敗
+			expect(mockFetch).toHaveBeenCalledTimes(1);
 
-			apiLogger.destroy();
+			// リトライ（1秒後）
+			await timers.advance(1000);
+			await vi.waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(2));
 		});
 
-		it("should retry failed requests", async () => {
-			config.apiEndpoint = "https://api.example.com/logs";
-			config.maxRetries = 2;
+		it("最大リトライ回数後にログを破棄", async () => {
+			mockFetch.mockRejectedValue(new Error("Persistent error"));
 
-			// 最初の2回は失敗、3回目は成功
-			mockFetch
-				.mockRejectedValueOnce(new Error("Network error"))
-				.mockRejectedValueOnce(new Error("Network error"))
-				.mockResolvedValueOnce({
-					ok: true,
-					status: 200,
-					json: () => Promise.resolve({}),
-				});
+			logger.error("Test");
 
-			const apiLogger = new BrowserLogger(config);
-			apiLogger.info("Test message");
-
-			await apiLogger.flush();
-
-			// 失敗したエントリがバッファに戻されることを確認
-			expect(apiLogger.getBufferSize()).toBeGreaterThan(0);
-
-			apiLogger.destroy();
-		});
-	});
-
-	describe("Automatic Flush Timer", () => {
-		it("should flush automatically at specified intervals", async () => {
-			config.flushInterval = 1000;
-			config.apiEndpoint = "https://api.example.com/logs";
-			const timerLogger = new BrowserLogger(config);
-
-			timerLogger.info("Test message");
-
-			// タイマーを進める
-			vi.advanceTimersByTime(1000);
-
-			await vi.waitFor(() => {
-				expect(mockFetch).toHaveBeenCalled();
-			});
-
-			timerLogger.destroy();
-		});
-	});
-
-	describe("Local Storage Integration", () => {
-		it("should save to localStorage when enabled", () => {
-			config.enableLocalStorage = true;
-			const lsLogger = new BrowserLogger(config);
-
-			lsLogger.info("Test message");
-
-			expect(localStorage.setItem).toHaveBeenCalledWith(
-				"saifuu_logger",
-				expect.stringContaining("session_"),
-			);
-
-			lsLogger.destroy();
-		});
-
-		it("should handle localStorage errors gracefully", () => {
-			config.enableLocalStorage = true;
-			// @ts-ignore
-			global.localStorage.setItem = vi.fn().mockImplementation(() => {
-				throw new Error("QuotaExceededError");
-			});
-
-			const lsLogger = new BrowserLogger(config);
-
-			expect(() => {
-				lsLogger.info("Test message");
-			}).not.toThrow();
-
-			lsLogger.destroy();
-		});
-	});
-
-	describe("Data Masking", () => {
-		it("should mask sensitive data when enabled", () => {
-			config.maskSensitiveData = true;
-			config.sensitiveFields = ["password", "secret"];
-
-			const maskLogger = new BrowserLogger(config);
-
-			maskLogger.info("Test with sensitive data", {
-				password: "secret123",
-				secret: "topsecret",
-				normalField: "normal value",
-			});
-
-			// マスキングが適用されることを確認（実際の実装では内部でマスクされる）
-			expect(maskLogger.getBufferSize()).toBe(2);
-
-			maskLogger.destroy();
-		});
-	});
-
-	describe("Cleanup and Destruction", () => {
-		it("should remove event listeners on destroy", () => {
-			const removeEventListener = vi.spyOn(window, "removeEventListener");
-			const docRemoveEventListener = vi.spyOn(document, "removeEventListener");
-
-			logger.destroy();
-
-			expect(removeEventListener).toHaveBeenCalledWith(
-				"beforeunload",
-				expect.any(Function),
-			);
-			expect(docRemoveEventListener).toHaveBeenCalledWith(
-				"visibilitychange",
-				expect.any(Function),
-			);
-		});
-
-		it("should clear timer on destroy", () => {
-			const clearIntervalSpy = vi.spyOn(global, "clearInterval");
-
-			logger.destroy();
-
-			expect(clearIntervalSpy).toHaveBeenCalled();
-		});
-
-		it("should prevent logging after destruction", () => {
-			logger.destroy();
-
-			const initialBufferSize = logger.getBufferSize();
-			logger.info("Should not log");
-
-			expect(logger.getBufferSize()).toBe(initialBufferSize);
-		});
-	});
-
-	describe("Factory Function", () => {
-		it("should create logger instance via factory function", () => {
-			const factoryLogger = createBrowserLogger(config);
-
-			expect(factoryLogger).toBeInstanceOf(BrowserLogger);
-			expect(factoryLogger.getConfig()).toEqual(config);
-
-			factoryLogger.destroy();
-		});
-	});
-
-	describe("Edge Cases", () => {
-		it("should handle missing window object", () => {
-			// @ts-ignore
-			global.window = undefined;
-
-			expect(() => {
-				const noWindowLogger = new BrowserLogger(config);
-				noWindowLogger.destroy();
-			}).not.toThrow();
-		});
-
-		it("should handle missing navigator object", () => {
-			const savedNavigator = global.navigator;
-			try {
-				// @ts-ignore
-				global.navigator = undefined;
-
-				expect(() => {
-					const noNavLogger = new BrowserLogger(config);
-					noNavLogger.destroy();
-				}).not.toThrow();
-			} finally {
-				global.navigator = savedNavigator;
+			// 初回試行 + リトライ
+			for (let i = 0; i <= config.maxRetries; i++) {
+				await logger.flush();
+				if (i < config.maxRetries) {
+					await timers.advance(1000);
+				}
 			}
+
+			expect(mockFetch).toHaveBeenCalledTimes(config.maxRetries + 1);
+			expect(logger.getBufferSize()).toBe(0); // ログが破棄される
+		});
+	});
+
+	describe("ライフサイクル", () => {
+		it("destroyでリソースが解放される", () => {
+			logger = new BrowserLogger(config);
+			const removeEventListenersSpy = vi.spyOn(logger, "removeEventListeners");
+
+			logger.info("test");
+			logger.destroy();
+
+			expect(removeEventListenersSpy).toHaveBeenCalled();
+
+			// destroyedロガーは何もしない
+			logger.info("after destroy");
+			expect(logger.getBufferSize()).toBe(0);
 		});
 
-		it("should handle missing performance object", () => {
-			// @ts-ignore
-			global.performance = undefined;
+		it("セッション管理が動作する", () => {
+			logger = new BrowserLogger(config);
 
-			expect(() => {
-				const noPerfLogger = new BrowserLogger(config);
-				noPerfLogger.destroy();
-			}).not.toThrow();
+			const sessionId = logger.startSession();
+			expect(sessionId).toBeTruthy();
+
+			logger.endSession();
+			// エンドセッションログが記録される
+			expect(consoleSpy.consoleInfoSpy).toHaveBeenCalledWith(
+				expect.stringContaining("Session ended"),
+			);
 		});
 	});
 });

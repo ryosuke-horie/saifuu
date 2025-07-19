@@ -1,108 +1,130 @@
+/**
+ * useCategoriesフックのテスト（最適化版）
+ *
+ * 基本機能に焦点を当てた簡素化版
+ */
 import { renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import * as categoriesApi from "../lib/api/categories";
-import type { Category } from "../types/category";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	type Mock,
+	vi,
+} from "vitest";
+import type { Category } from "../lib/api/types";
 import { useCategories } from "./useCategories";
 
-// APIモック
-vi.mock("../lib/api/categories");
+// APIクライアントのモック
+vi.mock("../lib/api/client", () => ({
+	apiClient: {
+		get: vi.fn(),
+	},
+}));
 
-// モックデータ
-const mockCategories: Category[] = [
-	{
-		id: "1",
-		name: "食費",
-		type: "expense" as const,
-		color: "#FF6B6B",
-		createdAt: "2024-01-01T00:00:00Z",
-		updatedAt: "2024-01-01T00:00:00Z",
-	},
-	{
-		id: "2",
-		name: "交通費",
-		type: "expense" as const,
-		color: "#4ECDC4",
-		createdAt: "2024-01-01T00:00:00Z",
-		updatedAt: "2024-01-01T00:00:00Z",
-	},
-	{
-		id: "3",
-		name: "娯楽",
-		type: "expense" as const,
-		color: "#45B7D1",
-		createdAt: "2024-01-01T00:00:00Z",
-		updatedAt: "2024-01-01T00:00:00Z",
-	},
-];
+import { apiClient } from "../lib/api/client";
 
-// 簡素化されたテスト: 重複と過剰なエッジケースを削除
-describe("useCategories (Simplified)", () => {
+describe("useCategories", () => {
+	const mockCategories: Category[] = [
+		{
+			id: "1",
+			name: "食費",
+			type: "expense" as const,
+			color: "#ff0000",
+			createdAt: "2025-01-01T00:00:00Z",
+			updatedAt: "2025-01-01T00:00:00Z",
+		},
+		{
+			id: "2",
+			name: "交通費",
+			type: "expense" as const,
+			color: "#00ff00",
+			createdAt: "2025-01-01T00:00:00Z",
+			updatedAt: "2025-01-01T00:00:00Z",
+		},
+	];
+
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// デフォルトで成功レスポンスを返す
-		vi.mocked(categoriesApi.fetchCategories).mockResolvedValue(mockCategories);
 	});
 
-	describe("基本機能", () => {
-		it("初期状態が正しく設定される", () => {
-			const { result } = renderHook(() => useCategories());
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
+	describe("基本動作とエラーハンドリング", () => {
+		it("初期状態、データ取得、エラー処理が正しく動作する", async () => {
+			const mockGet = apiClient.get as Mock;
+
+			// 初回: 成功
+			mockGet.mockResolvedValueOnce(mockCategories);
+			const { result, rerender } = renderHook(() => useCategories());
 
 			// 初期状態の確認
 			expect(result.current.categories).toEqual([]);
 			expect(result.current.loading).toBe(true);
 			expect(result.current.error).toBeNull();
-			expect(result.current.refetch).toBeInstanceOf(Function);
-		});
 
-		it("カテゴリデータを正常に取得できる", async () => {
-			const { result } = renderHook(() => useCategories());
-
-			// データ取得を待つ
+			// データ取得成功後
 			await waitFor(() => {
 				expect(result.current.loading).toBe(false);
 			});
 
-			// 結果の確認
 			expect(result.current.categories).toEqual(mockCategories);
 			expect(result.current.error).toBeNull();
-			expect(categoriesApi.fetchCategories).toHaveBeenCalledTimes(1);
-		});
+			expect(mockGet).toHaveBeenCalledWith("/categories");
 
-		it("APIエラーを適切にハンドリングする", async () => {
-			const errorMessage = "ネットワークエラー";
-			vi.mocked(categoriesApi.fetchCategories).mockRejectedValue(
-				new Error(errorMessage),
-			);
+			// エラーケースをテスト
+			const mockError = new Error("Network Error");
+			mockGet.mockRejectedValueOnce(mockError);
 
-			const { result } = renderHook(() => useCategories());
+			// コンポーネントを再マウント
+			rerender();
+			const newHook = renderHook(() => useCategories());
 
-			// エラーが設定されるまで待つ
 			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+				expect(newHook.result.current.loading).toBe(false);
 			});
 
-			// エラー状態の確認
-			expect(result.current.categories).toEqual([]);
-			expect(result.current.error).toContain(errorMessage);
+			expect(newHook.result.current.error).toBe("Network Error");
+			expect(newHook.result.current.categories).toEqual([]);
 		});
+	});
 
-		it("refetch でデータを再取得できる", async () => {
+	describe("refetch機能", () => {
+		it("手動でデータを再取得できる", async () => {
+			const mockGet = apiClient.get as Mock;
+
+			// 初回取得
+			mockGet.mockResolvedValueOnce(mockCategories);
 			const { result } = renderHook(() => useCategories());
 
-			// 初回取得を待つ
 			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+				expect(result.current.categories).toEqual(mockCategories);
 			});
 
-			// API呼び出しをクリア
-			vi.clearAllMocks();
+			// 新しいデータで再取得
+			const updatedCategories = [
+				...mockCategories,
+				{
+					id: "3",
+					name: "娯楽費",
+					type: "expense" as const,
+					color: "#0000ff",
+					createdAt: "2025-01-01T00:00:00Z",
+					updatedAt: "2025-01-01T00:00:00Z",
+				},
+			];
+			mockGet.mockResolvedValueOnce(updatedCategories);
 
-			// refetchを実行
 			await result.current.refetch();
 
-			// 再度APIが呼ばれる
-			expect(categoriesApi.fetchCategories).toHaveBeenCalledTimes(1);
-			expect(result.current.categories).toEqual(mockCategories);
+			await waitFor(() => {
+				expect(result.current.categories).toEqual(updatedCategories);
+			});
+
+			expect(mockGet).toHaveBeenCalledTimes(2);
 		});
 	});
 });

@@ -1,238 +1,296 @@
-import { render, renderHook, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
+/**
+ * React統合テスト（最適化版）
+ *
+ * Provider、Hooks、ErrorBoundaryの基本動作を検証
+ */
+
+import { render, renderHook, screen, waitFor } from "@testing-library/react";
+import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { LoggerProvider, useLoggerContext } from "../context";
-import { useErrorHandler } from "../error-boundary";
 import {
-	useComponentLogger,
-	useLoggedCallback,
-	useLogger,
-	usePerformanceLogger,
-} from "../hooks";
+	createMockLoggerConfig,
+	setupBrowserMocks,
+	setupFetchMock,
+} from "../../../test-utils/logger-test-helpers";
+import { LoggerProvider } from "../context";
+import { LoggedErrorBoundary } from "../error-boundary";
+import { useComponentLogger, useLoggedCallback, useLogger } from "../hooks";
 import type { BrowserLoggerConfig } from "../types";
 
-// テスト環境を示すグローバルフラグを設定
-globalThis.IS_TEST_ENV = true;
+describe("React Logger 統合テスト", () => {
+	let mockFetch: ReturnType<typeof setupFetchMock>;
+	let config: BrowserLoggerConfig;
 
-// モック設定
-const mockConfig: Partial<BrowserLoggerConfig> = {
-	environment: "development",
-	level: "debug",
-	enableConsole: false,
-	bufferSize: 5,
-	flushInterval: 100,
-};
-
-// テスト用ラッパー
-const createWrapper =
-	(config = mockConfig) =>
-	({ children }: { children: ReactNode }) => (
-		<LoggerProvider config={config}>{children}</LoggerProvider>
-	);
-
-// 統合テスト: context.test.tsx, hooks.test.tsx, error-boundary.test.tsx の重要な部分を統合
-describe("React Logger Integration", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		setupBrowserMocks();
+		mockFetch = setupFetchMock();
+		config = createMockLoggerConfig() as BrowserLoggerConfig;
 	});
 
-	describe("Context と Provider", () => {
-		it("LoggerProvider が正しくロガーインスタンスを提供する", () => {
+	describe("LoggerProvider", () => {
+		it("子コンポーネントにロガーを提供する", () => {
 			const TestComponent = () => {
-				const { config, logger, isInitialized } = useLoggerContext();
+				const logger = useLogger();
+				return <div>{logger ? "Logger available" : "No logger"}</div>;
+			};
+
+			render(
+				<LoggerProvider config={config}>
+					<TestComponent />
+				</LoggerProvider>,
+			);
+
+			expect(screen.getByText("Logger available")).toBeInTheDocument();
+		});
+
+		it("ProviderなしでuseLoggerがnullを返す", () => {
+			const { result } = renderHook(() => useLogger());
+			expect(result.current).toBeNull();
+		});
+
+		it("unmount時にロガーが破棄される", () => {
+			const { unmount } = render(
+				<LoggerProvider config={config}>
+					<div>Test</div>
+				</LoggerProvider>,
+			);
+
+			const destroySpy = vi.spyOn(console, "log");
+			unmount();
+
+			// destroy時のログが出力されているか確認
+			expect(destroySpy).toHaveBeenCalled();
+			destroySpy.mockRestore();
+		});
+	});
+
+	describe("Hooks", () => {
+		const wrapper = ({ children }: { children: React.ReactNode }) => (
+			<LoggerProvider config={config}>{children}</LoggerProvider>
+		);
+
+		it("useComponentLogger - コンポーネント専用ロガーを提供", () => {
+			const { result } = renderHook(() => useComponentLogger("TestComponent"), {
+				wrapper,
+			});
+
+			expect(result.current).toBeDefined();
+			expect(result.current.info).toBeInstanceOf(Function);
+		});
+
+		it("useLoggedCallback - コールバックをログ付きでラップ", async () => {
+			const callback = vi.fn().mockResolvedValue("success");
+
+			const { result } = renderHook(
+				() => useLoggedCallback(callback, [], { name: "test-action" }),
+				{ wrapper },
+			);
+
+			await result.current();
+
+			expect(callback).toHaveBeenCalled();
+			await waitFor(() => {
+				expect(mockFetch).toHaveBeenCalled();
+				const logs = JSON.parse(mockFetch.mock.calls[0][1].body).logs;
+				expect(
+					logs.some((log: any) => log.message.includes("test-action")),
+				).toBe(true);
+			});
+		});
+
+		it("useLoggedCallback - エラーをログに記録", async () => {
+			const error = new Error("Test error");
+			const callback = vi.fn().mockRejectedValue(error);
+
+			const { result } = renderHook(
+				() => useLoggedCallback(callback, [], { name: "failing-action" }),
+				{ wrapper },
+			);
+
+			await expect(result.current()).rejects.toThrow("Test error");
+
+			await waitFor(() => {
+				expect(mockFetch).toHaveBeenCalled();
+				const logs = JSON.parse(mockFetch.mock.calls[0][1].body).logs;
+				expect(
+					logs.some(
+						(log: any) =>
+							log.level === "error" && log.message.includes("failing-action"),
+					),
+				).toBe(true);
+			});
+		});
+	});
+
+	describe("ErrorBoundary", () => {
+		const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
+			if (shouldThrow) {
+				throw new Error("Test error");
+			}
+			return <div>No error</div>;
+		};
+
+		it("エラーをキャッチしてログに記録", async () => {
+			const onError = vi.fn();
+
+			render(
+				<LoggerProvider config={config}>
+					<LoggedErrorBoundary onError={onError}>
+						<ThrowError shouldThrow={true} />
+					</LoggedErrorBoundary>
+				</LoggerProvider>,
+			);
+
+			expect(screen.getByText(/Something went wrong/)).toBeInTheDocument();
+			expect(onError).toHaveBeenCalledWith(
+				expect.any(Error),
+				expect.any(Object),
+			);
+
+			await waitFor(() => {
+				expect(mockFetch).toHaveBeenCalled();
+				const logs = JSON.parse(mockFetch.mock.calls[0][1].body).logs;
+				expect(
+					logs.some(
+						(log: any) =>
+							log.level === "error" &&
+							log.message.includes("Error boundary caught error"),
+					),
+				).toBe(true);
+			});
+		});
+
+		it("カスタムフォールバックUIを表示", () => {
+			const FallbackComponent = () => <div>Custom error UI</div>;
+
+			render(
+				<LoggerProvider config={config}>
+					<LoggedErrorBoundary fallback={FallbackComponent}>
+						<ThrowError shouldThrow={true} />
+					</LoggedErrorBoundary>
+				</LoggerProvider>,
+			);
+
+			expect(screen.getByText("Custom error UI")).toBeInTheDocument();
+		});
+
+		it("リセット機能が動作する", () => {
+			let _resetFn: (() => void) | undefined;
+
+			const CustomFallback = ({ resetErrorBoundary }: any) => {
+				_resetFn = resetErrorBoundary;
+				return <div>Error occurred</div>;
+			};
+
+			const { rerender } = render(
+				<LoggerProvider config={config}>
+					<LoggedErrorBoundary fallback={CustomFallback}>
+						<ThrowError shouldThrow={true} />
+					</LoggedErrorBoundary>
+				</LoggerProvider>,
+			);
+
+			expect(screen.getByText("Error occurred")).toBeInTheDocument();
+
+			// エラーをクリア
+			rerender(
+				<LoggerProvider config={config}>
+					<LoggedErrorBoundary fallback={CustomFallback}>
+						<ThrowError shouldThrow={false} />
+					</LoggedErrorBoundary>
+				</LoggerProvider>,
+			);
+
+			expect(screen.getByText("No error")).toBeInTheDocument();
+		});
+	});
+
+	describe("統合シナリオ", () => {
+		it("Provider + Hooks + ErrorBoundary の連携", async () => {
+			const TestApp = () => {
+				const logger = useComponentLogger("TestApp");
+				const [count, setCount] = React.useState(0);
+
+				const increment = useLoggedCallback(
+					async () => {
+						const newCount = count + 1;
+						setCount(newCount);
+						if (newCount > 2) {
+							throw new Error("Count too high!");
+						}
+					},
+					[count],
+					{ name: "increment-count" },
+				);
+
+				React.useEffect(() => {
+					logger.info("Count changed", { count });
+				}, [count, logger]);
+
 				return (
 					<div>
-						<span data-testid="environment">{config.environment}</span>
-						<span data-testid="level">{config.level}</span>
-						<span data-testid="initialized">
-							{isInitialized ? "true" : "false"}
-						</span>
-						<button type="button" onClick={() => logger.info("Test log")}>
-							Log
+						<span>Count: {count}</span>
+						<button type="button" onClick={increment}>
+							Increment
 						</button>
 					</div>
 				);
 			};
 
 			render(
-				<LoggerProvider config={mockConfig}>
-					<TestComponent />
+				<LoggerProvider config={config}>
+					<LoggedErrorBoundary>
+						<TestApp />
+					</LoggedErrorBoundary>
 				</LoggerProvider>,
 			);
 
-			expect(screen.getByTestId("environment")).toHaveTextContent(
-				"development",
+			// 初期状態の確認
+			expect(screen.getByText("Count: 0")).toBeInTheDocument();
+
+			// カウントを増やしてエラーを発生させる
+			const button = screen.getByText("Increment");
+
+			// count = 1
+			button.click();
+			await waitFor(() =>
+				expect(screen.getByText("Count: 1")).toBeInTheDocument(),
 			);
-			expect(screen.getByTestId("level")).toHaveTextContent("debug");
-			expect(screen.getByTestId("initialized")).toHaveTextContent("true");
-		});
 
-		it("ネストされた Provider で設定が継承される", () => {
-			const outerConfig: Partial<BrowserLoggerConfig> = {
-				...mockConfig,
-				level: "info",
-			};
+			// count = 2
+			button.click();
+			await waitFor(() =>
+				expect(screen.getByText("Count: 2")).toBeInTheDocument(),
+			);
 
-			const innerConfig: Partial<BrowserLoggerConfig> = {
-				level: "debug",
-			};
+			// count = 3, throws error
+			button.click();
 
-			const TestComponent = () => {
-				const { config } = useLoggerContext();
-				return (
-					<div>
-						<span data-testid="level">{config.level}</span>
-						<span data-testid="level-inner">{config.level}</span>
-					</div>
+			await waitFor(() => {
+				expect(screen.getByText(/Something went wrong/)).toBeInTheDocument();
+			});
+
+			// ログが記録されていることを確認
+			await waitFor(() => {
+				const calls = mockFetch.mock.calls;
+				const allLogs = calls.flatMap(
+					(call: any) => JSON.parse(call[1].body).logs,
 				);
-			};
 
-			render(
-				<LoggerProvider config={outerConfig}>
-					<LoggerProvider config={innerConfig}>
-						<TestComponent />
-					</LoggerProvider>
-				</LoggerProvider>,
-			);
+				// カウント変更ログ
+				expect(
+					allLogs.some((log: any) => log.message.includes("Count changed")),
+				).toBe(true);
 
-			// 内側の設定が優先される
-			expect(screen.getByTestId("level-inner")).toHaveTextContent("debug");
-		});
-	});
-
-	describe("React Hooks", () => {
-		it("useLogger が基本的なログメソッドを提供する", () => {
-			const { result } = renderHook(() => useLogger(), {
-				wrapper: createWrapper(),
+				// エラーログ
+				expect(
+					allLogs.some(
+						(log: any) =>
+							log.level === "error" && log.message.includes("Count too high"),
+					),
+				).toBe(true);
 			});
-
-			// 基本ログメソッド
-			expect(result.current.debug).toBeInstanceOf(Function);
-			expect(result.current.info).toBeInstanceOf(Function);
-			expect(result.current.warn).toBeInstanceOf(Function);
-			expect(result.current.error).toBeInstanceOf(Function);
-
-			// 高度なログメソッド
-			expect(result.current.track).toBeInstanceOf(Function);
-			expect(result.current.pageView).toBeInstanceOf(Function);
-			expect(result.current.userInteraction).toBeInstanceOf(Function);
-
-			// ユーティリティメソッド
-			expect(result.current.setUserId).toBeInstanceOf(Function);
-			expect(result.current.setComponent).toBeInstanceOf(Function);
-			expect(result.current.flush).toBeInstanceOf(Function);
-
-			// 動作確認
-			expect(() => {
-				result.current.info("Test log", { data: { message: "test" } });
-			}).not.toThrow();
-		});
-
-		it("useComponentLogger がコンポーネント名を自動的に付与する", () => {
-			const componentName = "TestComponent";
-
-			const { result } = renderHook(() => useComponentLogger(componentName), {
-				wrapper: createWrapper(),
-			});
-
-			// ログメソッドが使用可能
-			expect(result.current).toHaveProperty("debug");
-			expect(result.current).toHaveProperty("info");
-			expect(result.current).toHaveProperty("warn");
-			expect(result.current).toHaveProperty("error");
-
-			// コンポーネント名が設定されるか確認（内部実装に依存）
-		});
-
-		it("useLoggedCallback がコールバックの実行をログに記録する", async () => {
-			const mockCallback = vi.fn().mockResolvedValue("result");
-
-			const { result } = renderHook(
-				() => useLoggedCallback(mockCallback, ["TestCallback"]),
-				{ wrapper: createWrapper() },
-			);
-
-			// コールバックを実行
-			const response = await result.current("arg1", "arg2");
-
-			// コールバックが呼ばれた
-			expect(mockCallback).toHaveBeenCalledWith("arg1", "arg2");
-			expect(response).toBe("result");
-		});
-
-		it("usePerformanceLogger がパフォーマンスを計測する", async () => {
-			const { result, rerender } = renderHook(
-				() => usePerformanceLogger("TestOperation"),
-				{ wrapper: createWrapper() },
-			);
-
-			// 計測用メソッドが存在することを確認
-			expect(result.current.measureMemory).toBeInstanceOf(Function);
-			expect(result.current.measureCustom).toBeInstanceOf(Function);
-			expect(typeof result.current.renderCount).toBe("number");
-
-			// カスタム計測を実行
-			await result.current.measureCustom("TestMetric", async () => {
-				await new Promise((resolve) => setTimeout(resolve, 50));
-			});
-
-			// 再レンダリングを強制して、renderCountが更新されることを確認
-			rerender();
-
-			// getRenderCountメソッドがあれば使用、なければrenderCountを直接確認
-			const renderCount = result.current.getRenderCount
-				? result.current.getRenderCount()
-				: result.current.renderCount;
-			expect(renderCount).toBeGreaterThanOrEqual(1);
-		});
-	});
-
-	describe("エラーバウンダリ", () => {
-		// エラーバウンダリのテストは、React Testing Libraryの制限により
-		// 正常に動作しない場合があるため、スキップする
-		it.skip("LoggedErrorBoundary がエラーをキャッチしてログに記録する", () => {
-			// エラーバウンダリのテストは、実際のアプリケーションでは正常に機能しますが、
-			// テスト環境では React の制限により期待通りに動作しません。
-			// 実装は正しいことが手動テストで確認されています。
-		});
-
-		it("useErrorHandler でエラーを手動でログに記録できる", () => {
-			const { result } = renderHook(() => useErrorHandler(), {
-				wrapper: createWrapper(),
-			});
-
-			const testError = new Error("Manual error");
-			const errorInfo = { componentStack: "TestComponent" };
-
-			// エラーハンドラーが関数であることを確認
-			expect(result.current).toBeInstanceOf(Function);
-
-			// エラーをハンドルしてもエラーがスローされない
-			expect(() => {
-				result.current(testError, errorInfo);
-			}).not.toThrow();
-		});
-	});
-
-	describe("パフォーマンス最適化", () => {
-		it("ロガーインスタンスがメモ化される", () => {
-			const { result, rerender } = renderHook(() => useLogger(), {
-				wrapper: createWrapper(),
-			});
-
-			const firstInstance = result.current;
-
-			// 再レンダリング
-			rerender();
-
-			const secondInstance = result.current;
-
-			// 同じインスタンスが返される（メモ化されている）
-			expect(firstInstance).toBe(secondInstance);
-
-			// メソッドも同じ参照
-			expect(firstInstance.info).toBe(secondInstance.info);
-			expect(firstInstance.debug).toBe(secondInstance.debug);
 		});
 	});
 });

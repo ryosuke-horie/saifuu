@@ -1,247 +1,228 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import * as transactionsApi from "../lib/api/services/transactions";
-import type { Transaction } from "../lib/api/types";
+/**
+ * useExpensesフックのテスト（最適化版）
+ *
+ * 基本機能とエラーハンドリングに焦点を当てた簡素化版
+ */
+import { renderHook, waitFor } from "@testing-library/react";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	type Mock,
+	vi,
+} from "vitest";
+import type { Category, Transaction } from "../lib/api/types";
 import { useExpenses } from "./useExpenses";
 
-// APIモック
-vi.mock("../lib/api/services/transactions");
+// APIクライアントのモック
+vi.mock("../lib/api/client", () => ({
+	apiClient: {
+		get: vi.fn(),
+		post: vi.fn(),
+		put: vi.fn(),
+		delete: vi.fn(),
+	},
+}));
 
-// モックデータ
-const mockExpenses: Transaction[] = [
-	{
-		id: "1",
-		amount: 1000,
-		description: "ランチ",
-		date: "2024-01-01",
-		category: {
+import { apiClient } from "../lib/api/client";
+
+describe("useExpenses", () => {
+	const mockCategories: Category[] = [
+		{
 			id: "1",
 			name: "食費",
-			type: "expense",
+			type: "expense" as const,
 			color: "#ff0000",
-			createdAt: "2024-01-01T00:00:00Z",
-			updatedAt: "2024-01-01T00:00:00Z",
+			createdAt: "2025-01-01T00:00:00Z",
+			updatedAt: "2025-01-01T00:00:00Z",
 		},
-		type: "expense",
-		createdAt: "2024-01-01T00:00:00Z",
-		updatedAt: "2024-01-01T00:00:00Z",
-	},
-	{
-		id: "2",
-		amount: 500,
-		description: "コーヒー",
-		date: "2024-01-02",
-		category: {
-			id: "1",
-			name: "食費",
-			type: "expense",
-			color: "#ff0000",
-			createdAt: "2024-01-02T00:00:00Z",
-			updatedAt: "2024-01-02T00:00:00Z",
+		{
+			id: "2",
+			name: "交通費",
+			type: "expense" as const,
+			color: "#00ff00",
+			createdAt: "2025-01-01T00:00:00Z",
+			updatedAt: "2025-01-01T00:00:00Z",
 		},
-		type: "expense",
-		createdAt: "2024-01-02T00:00:00Z",
-		updatedAt: "2024-01-02T00:00:00Z",
-	},
-];
+	];
 
-// 簡素化されたテスト: 重複を削除し、主要機能のみテスト
-describe("useExpenses (Simplified)", () => {
+	const mockExpenses: Transaction[] = [
+		{
+			id: "1",
+			amount: 1500,
+			type: "expense" as const,
+			description: "ランチ",
+			date: "2025-01-15",
+			category: mockCategories[0],
+			createdAt: "2025-01-15T00:00:00Z",
+			updatedAt: "2025-01-15T00:00:00Z",
+		},
+		{
+			id: "2",
+			amount: 1000,
+			type: "expense" as const,
+			description: "電車",
+			date: "2025-01-15",
+			category: mockCategories[1],
+			createdAt: "2025-01-15T00:00:00Z",
+			updatedAt: "2025-01-15T00:00:00Z",
+		},
+	];
+
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// デフォルトで成功レスポンスを返す
-		vi.mocked(transactionsApi.getExpenseTransactions).mockResolvedValue(
-			mockExpenses,
-		);
 	});
 
-	describe("基本機能", () => {
-		it("初期状態が正しく設定される", () => {
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
+	describe("基本動作", () => {
+		it("初期状態とデータ取得が正しく動作する", async () => {
+			const mockGet = apiClient.get as Mock;
+			mockGet.mockResolvedValueOnce(mockExpenses);
+
 			const { result } = renderHook(() => useExpenses());
 
-			// 初期状態の確認
+			// 初期状態
 			expect(result.current.expenses).toEqual([]);
 			expect(result.current.loading).toBe(true);
 			expect(result.current.error).toBeNull();
-			expect(result.current.operationLoading).toBe(false);
-			expect(result.current.refetch).toBeInstanceOf(Function);
-			expect(result.current.createExpenseMutation).toBeInstanceOf(Function);
-			expect(result.current.updateExpenseMutation).toBeInstanceOf(Function);
-			expect(result.current.deleteExpenseMutation).toBeInstanceOf(Function);
-		});
 
-		it("支出データを正常に取得できる", async () => {
-			const { result } = renderHook(() => useExpenses());
-
-			// データ取得を待つ
+			// データ取得後
 			await waitFor(() => {
 				expect(result.current.loading).toBe(false);
 			});
 
-			// 結果の確認
 			expect(result.current.expenses).toEqual(mockExpenses);
 			expect(result.current.error).toBeNull();
-			expect(transactionsApi.getExpenseTransactions).toHaveBeenCalledTimes(1);
+			expect(mockGet).toHaveBeenCalledWith("/expenses");
+		});
+
+		it("APIエラーを適切にハンドリングする", async () => {
+			const mockError = new Error("API Error");
+			const mockGet = apiClient.get as Mock;
+			mockGet.mockRejectedValueOnce(mockError);
+
+			const { result } = renderHook(() => useExpenses());
+
+			await waitFor(() => {
+				expect(result.current.loading).toBe(false);
+			});
+
+			expect(result.current.error).toBe("API Error");
+			expect(result.current.expenses).toEqual([]);
 		});
 	});
 
 	describe("CRUD操作", () => {
-		it("新規支出を作成できる", async () => {
-			const newExpense: Transaction = {
-				id: "3",
-				amount: 2000,
-				description: "夕食",
-				date: "2024-01-03",
-				category: {
-					id: "1",
-					name: "食費",
-					type: "expense",
-					color: "#ff0000",
-					createdAt: "2024-01-03T00:00:00Z",
-					updatedAt: "2024-01-03T00:00:00Z",
-				},
-				type: "expense",
-				createdAt: "2024-01-03T00:00:00Z",
-				updatedAt: "2024-01-03T00:00:00Z",
-			};
+		it("支出の作成・更新・削除が正しく動作する", async () => {
+			const mockGet = apiClient.get as Mock;
+			const mockPost = apiClient.post as Mock;
+			const mockPut = apiClient.put as Mock;
+			const mockDelete = apiClient.delete as Mock;
 
-			vi.mocked(transactionsApi.createTransaction).mockResolvedValue(
-				newExpense,
-			);
-
+			// 初期データ取得
+			mockGet.mockResolvedValueOnce(mockExpenses);
 			const { result } = renderHook(() => useExpenses());
 
-			// 初期データ取得を待つ
 			await waitFor(() => {
 				expect(result.current.loading).toBe(false);
 			});
 
-			// 新規作成を実行
-			await act(async () => {
-				await result.current.createExpenseMutation({
-					amount: 2000,
-					description: "夕食",
-					date: "2024-01-03",
-					categoryId: "1",
-				});
-			});
-
-			// APIが呼ばれたことを確認
-			expect(transactionsApi.createTransaction).toHaveBeenCalledWith({
+			// 1. 作成
+			const newExpense = {
 				amount: 2000,
-				description: "夕食",
-				date: "2024-01-03",
+				type: "expense" as const,
 				categoryId: "1",
-				type: "expense",
-			});
-
-			// データが再取得されることはない（ローカルステートを更新）
-			expect(transactionsApi.getExpenseTransactions).toHaveBeenCalledTimes(1);
-		});
-
-		it("既存支出を更新できる", async () => {
-			const updatedExpense: Transaction = {
-				...mockExpenses[0],
-				amount: 1500,
-				description: "ランチ（更新）",
+				description: "夕食",
+				date: "2025-01-16",
+			};
+			const createdExpense = {
+				...newExpense,
+				id: "3",
+				category: mockCategories[0],
+				createdAt: "2025-01-16T00:00:00Z",
+				updatedAt: "2025-01-16T00:00:00Z",
 			};
 
-			vi.mocked(transactionsApi.updateTransaction).mockResolvedValue(
+			mockPost.mockResolvedValueOnce(createdExpense);
+			mockGet.mockResolvedValueOnce([...mockExpenses, createdExpense]);
+
+			await result.current.createExpenseMutation(newExpense);
+
+			await waitFor(() => {
+				expect(result.current.expenses).toHaveLength(3);
+			});
+
+			// 2. 更新
+			const updateData = { amount: 2500, description: "豪華な夕食" };
+			const updatedExpense = { ...createdExpense, ...updateData };
+
+			mockPut.mockResolvedValueOnce(updatedExpense);
+			mockGet.mockResolvedValueOnce([
+				mockExpenses[0],
+				mockExpenses[1],
 				updatedExpense,
-			);
+			]);
 
-			const { result } = renderHook(() => useExpenses());
+			await result.current.updateExpenseMutation("3", updateData);
 
-			// 初期データ取得を待つ
 			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+				const updated = result.current.expenses.find((e) => e.id === "3");
+				expect(updated?.amount).toBe(2500);
+				expect(updated?.description).toBe("豪華な夕食");
 			});
 
-			// 更新を実行
-			await act(async () => {
-				await result.current.updateExpenseMutation("1", {
-					amount: 1500,
-					description: "ランチ（更新）",
-				});
-			});
+			// 3. 削除
+			mockDelete.mockResolvedValueOnce({});
+			mockGet.mockResolvedValueOnce(mockExpenses);
 
-			// APIが呼ばれたことを確認
-			expect(transactionsApi.updateTransaction).toHaveBeenCalledWith("1", {
-				amount: 1500,
-				description: "ランチ（更新）",
-				type: "expense",
-			});
+			await result.current.deleteExpenseMutation("3");
 
-			// データが再取得されることはない（ローカルステートを更新）
-			expect(transactionsApi.getExpenseTransactions).toHaveBeenCalledTimes(1);
-		});
-
-		it("支出を削除できる", async () => {
-			vi.mocked(transactionsApi.deleteTransaction).mockResolvedValue({
-				message: "Deleted successfully",
-				deletedId: "1",
-			});
-
-			const { result } = renderHook(() => useExpenses());
-
-			// 初期データ取得を待つ
 			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+				expect(result.current.expenses).toHaveLength(2);
+				expect(
+					result.current.expenses.find((e) => e.id === "3"),
+				).toBeUndefined();
 			});
-
-			// 削除を実行
-			await act(async () => {
-				await result.current.deleteExpenseMutation("1");
-			});
-
-			// APIが呼ばれたことを確認
-			expect(transactionsApi.deleteTransaction).toHaveBeenCalledWith("1");
-
-			// データが再取得されることはない（ローカルステートを更新）
-			expect(transactionsApi.getExpenseTransactions).toHaveBeenCalledTimes(1);
-		});
-	});
-
-	describe("エラーハンドリング", () => {
-		it("API エラーを適切にハンドリングする", async () => {
-			const errorMessage = "サーバーエラー";
-			vi.mocked(transactionsApi.getExpenseTransactions).mockRejectedValue(
-				new Error(errorMessage),
-			);
-
-			const { result } = renderHook(() => useExpenses());
-
-			// エラーが設定されるまで待つ
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
-			});
-
-			// エラー状態の確認
-			expect(result.current.expenses).toEqual([]);
-			expect(result.current.error).toBe(errorMessage);
 		});
 	});
 
 	describe("その他の機能", () => {
-		it("refetch でデータを再取得できる", async () => {
+		it("refetch機能が動作する", async () => {
+			const mockGet = apiClient.get as Mock;
+			mockGet.mockResolvedValueOnce(mockExpenses).mockResolvedValueOnce([
+				...mockExpenses,
+				{
+					id: "3",
+					amount: 3000,
+					categoryId: "1",
+					category: mockCategories[0],
+					type: "expense" as const,
+					description: "追加の支出",
+					date: "2025-01-16",
+					createdAt: "2025-01-16T00:00:00Z",
+					updatedAt: "2025-01-16T00:00:00Z",
+				},
+			]);
+
 			const { result } = renderHook(() => useExpenses());
 
-			// 初回取得を待つ
 			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
+				expect(result.current.expenses).toHaveLength(2);
 			});
 
-			// API呼び出しをクリア
-			vi.clearAllMocks();
+			// refetch実行
+			await result.current.refetch();
 
-			// refetchを実行
-			await act(async () => {
-				await result.current.refetch();
+			await waitFor(() => {
+				expect(result.current.expenses).toHaveLength(3);
 			});
 
-			// 再度APIが呼ばれる
-			expect(transactionsApi.getExpenseTransactions).toHaveBeenCalledTimes(1);
-			expect(result.current.expenses).toEqual(mockExpenses);
+			expect(mockGet).toHaveBeenCalledTimes(2);
 		});
 	});
 });
