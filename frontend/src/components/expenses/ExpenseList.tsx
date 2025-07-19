@@ -21,6 +21,7 @@ import {
 	formatCurrency,
 	formatDate,
 } from "../../utils/format";
+import { LoadingState } from "../ui";
 
 /**
  * 単一の取引行コンポーネント
@@ -76,23 +77,6 @@ const TransactionRow: FC<{
 		</tr>
 	);
 };
-
-/**
- * ローディング状態の表示コンポーネント
- */
-const LoadingState: FC = () => (
-	<tr>
-		<td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-			<div className="flex items-center justify-center space-x-2">
-				<div
-					className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"
-					data-testid="loading-spinner"
-				/>
-				<span>読み込み中...</span>
-			</div>
-		</td>
-	</tr>
-);
 
 /**
  * エラー状態の表示コンポーネント
@@ -190,7 +174,13 @@ export const ExpenseList: FC<ExpenseListProps> = ({
 						</tr>
 					</thead>
 					<tbody className="bg-white divide-y divide-gray-200">
-						{isLoading && <LoadingState />}
+						{isLoading && (
+							<tr>
+								<td colSpan={5} className="px-4 py-8">
+									<LoadingState />
+								</td>
+							</tr>
+						)}
 						{error && <ErrorState message={error} />}
 						{!isLoading && !error && sortedTransactions.length === 0 && (
 							<EmptyState />

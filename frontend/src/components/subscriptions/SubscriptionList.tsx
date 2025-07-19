@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import type { Subscription, SubscriptionListProps } from "../../lib/api/types";
+import { LoadingState, Spinner } from "../ui";
 
 /**
  * サブスクリプション一覧コンポーネント
@@ -84,20 +85,6 @@ const SubscriptionRow: FC<{ subscription: Subscription }> = ({
 };
 
 /**
- * ローディング状態の表示コンポーネント
- */
-const LoadingState: FC = () => (
-	<tr>
-		<td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-			<div className="flex items-center justify-center space-x-2">
-				<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
-				<span>読み込み中...</span>
-			</div>
-		</td>
-	</tr>
-);
-
-/**
  * エラー状態の表示コンポーネント
  */
 const ErrorState: FC<{ message: string }> = ({ message }) => (
@@ -159,7 +146,7 @@ export const SubscriptionList: FC<SubscriptionListProps> = ({
 							className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							{isLoading ? (
-								<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2" />
+								<Spinner size="sm" color="secondary" className="mr-2" />
 							) : (
 								<span className="mr-2">🔄</span>
 							)}
@@ -207,7 +194,13 @@ export const SubscriptionList: FC<SubscriptionListProps> = ({
 						</tr>
 					</thead>
 					<tbody className="bg-white divide-y divide-gray-200">
-						{isLoading && <LoadingState />}
+						{isLoading && (
+							<tr>
+								<td colSpan={5} className="px-4 py-8">
+									<LoadingState />
+								</td>
+							</tr>
+						)}
 						{error && <ErrorState message={error} />}
 						{!isLoading && !error && subscriptions.length === 0 && (
 							<EmptyState />
