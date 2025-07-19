@@ -5,7 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docs:search": "node docs/scripts/search.js"
+    "docs:search": "node docs/scripts/search.js",
+    "analyze:tests": "node scripts/test-analysis/test-to-source-ratio.js",
+    "analyze:tests:verbose": "node scripts/test-analysis/test-to-source-ratio.js --verbose",
+    "analyze:storybook": "node scripts/test-analysis/storybook-analysis.js",
+    "analyze:storybook:duplicates": "node scripts/test-analysis/storybook-analysis.js --duplicates",
+    "analyze:performance": "node scripts/test-analysis/test-performance.js",
+    "analyze:report": "node scripts/test-analysis/generate-report.js"
   },
   "private": true
 }
