@@ -84,7 +84,6 @@ const SubscriptionRow: FC<{ subscription: Subscription }> = ({
 	);
 };
 
-
 /**
  * エラー状態の表示コンポーネント
  */

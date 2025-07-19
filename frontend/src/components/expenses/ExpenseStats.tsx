@@ -13,8 +13,8 @@
  */
 
 import React, { type FC } from "react";
-import { LoadingState, Skeleton } from "../ui";
 import { formatCurrency, formatPercentage } from "../../utils/format";
+import { LoadingState, Skeleton } from "../ui";
 
 // 現在のAPI仕様で利用可能な基本統計データ
 export interface BaseStatsData {
@@ -78,15 +78,17 @@ const SkeletonLoader: FC = () => (
 		data-testid="stats-skeleton"
 	>
 		{[1, 2, 3].map((index) => (
-			<div
-				key={index}
-				className="bg-white rounded-lg shadow-sm p-6"
-			>
+			<div key={index} className="bg-white rounded-lg shadow-sm p-6">
 				<Skeleton variant="text" width="75%" height={24} className="mb-4" />
 				<div className="space-y-3">
 					<Skeleton variant="text" width="100%" />
 					<Skeleton variant="text" width="83%" />
-					<Skeleton variant="rectangular" width="50%" height={32} className="mt-4" />
+					<Skeleton
+						variant="rectangular"
+						width="50%"
+						height={32}
+						className="mt-4"
+					/>
 				</div>
 			</div>
 		))}

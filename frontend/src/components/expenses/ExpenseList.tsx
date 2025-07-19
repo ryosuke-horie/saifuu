@@ -16,12 +16,12 @@
 import type { FC } from "react";
 import type { Transaction } from "../../lib/api/types";
 import type { ExpenseListProps } from "../../types/expense";
-import { LoadingState } from "../ui";
 import {
 	formatCategoryName,
 	formatCurrency,
 	formatDate,
 } from "../../utils/format";
+import { LoadingState } from "../ui";
 
 /**
  * 単一の取引行コンポーネント
@@ -77,7 +77,6 @@ const TransactionRow: FC<{
 		</tr>
 	);
 };
-
 
 /**
  * エラー状態の表示コンポーネント
