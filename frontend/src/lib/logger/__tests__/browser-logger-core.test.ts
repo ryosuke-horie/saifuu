@@ -77,19 +77,19 @@ describe("Browser Logger Core", () => {
 		});
 
 		it("ログレベルが正しく制御される", () => {
-			// shouldLog(currentLevel, targetLevel) 
+			// shouldLog(currentLevel, targetLevel)
 			// targetLevel >= currentLevel の場合にtrueを返す
 			const testCases: Array<[LogLevel, LogLevel, boolean]> = [
-				["debug", "debug", true],  // debug >= debug (0 >= 0) = true
-				["debug", "info", true],   // info >= debug (1 >= 0) = true
-				["info", "debug", false],  // debug >= info (0 >= 1) = false
-				["info", "info", true],    // info >= info (1 >= 1) = true
-				["info", "warn", true],    // warn >= info (2 >= 1) = true
-				["warn", "info", false],   // info >= warn (1 >= 2) = false
-				["warn", "warn", true],    // warn >= warn (2 >= 2) = true
-				["warn", "error", true],   // error >= warn (3 >= 2) = true
-				["error", "warn", false],  // warn >= error (2 >= 3) = false
-				["error", "error", true],  // error >= error (3 >= 3) = true
+				["debug", "debug", true], // debug >= debug (0 >= 0) = true
+				["debug", "info", true], // info >= debug (1 >= 0) = true
+				["info", "debug", false], // debug >= info (0 >= 1) = false
+				["info", "info", true], // info >= info (1 >= 1) = true
+				["info", "warn", true], // warn >= info (2 >= 1) = true
+				["warn", "info", false], // info >= warn (1 >= 2) = false
+				["warn", "warn", true], // warn >= warn (2 >= 2) = true
+				["warn", "error", true], // error >= warn (3 >= 2) = true
+				["error", "warn", false], // warn >= error (2 >= 3) = false
+				["error", "error", true], // error >= error (3 >= 3) = true
 			];
 
 			testCases.forEach(([currentLevel, targetLevel, expected]) => {
