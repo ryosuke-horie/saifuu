@@ -108,6 +108,43 @@ export interface NewExpenseDialogProps {
 }
 
 /**
+ * 取引編集ダイアログのプロパティ
+ */
+export interface EditExpenseDialogProps {
+	/**
+	 * ダイアログの表示状態
+	 */
+	isOpen: boolean;
+
+	/**
+	 * ダイアログを閉じる際のコールバック関数
+	 */
+	onClose: () => void;
+
+	/**
+	 * フォーム送信時のコールバック
+	 * IDと更新データを受け取る
+	 */
+	onSubmit: (id: string, data: ExpenseFormData) => void;
+
+	/**
+	 * 送信中の状態
+	 */
+	isSubmitting?: boolean;
+
+	/**
+	 * 編集対象の取引データ
+	 */
+	transaction: Transaction | null;
+
+	/**
+	 * カテゴリ一覧（フォームで選択肢として表示）
+	 * 未指定の場合はグローバル設定から取得
+	 */
+	categories?: Category[];
+}
+
+/**
  * 支出・収入一覧表示用のプロパティ
  */
 export interface ExpenseListProps {

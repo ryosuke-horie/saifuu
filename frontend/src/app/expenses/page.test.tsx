@@ -54,7 +54,35 @@ vi.mock("../../components/expenses", () => ({
 			);
 		},
 	),
-	ExpenseList: vi.fn(({ transactions, isLoading, onDelete }) => (
+	EditExpenseDialog: vi.fn(
+		({ isOpen, onClose, onSubmit, isSubmitting, transaction }) => {
+			if (!isOpen) return null;
+			return (
+				<div data-testid="edit-expense-dialog">
+					<p>取引編集: {transaction?.description}</p>
+					<button type="button" onClick={onClose}>
+						閉じる
+					</button>
+					<button
+						type="button"
+						onClick={() =>
+							onSubmit(transaction.id, {
+								amount: 2000,
+								type: "expense",
+								description: "編集済み",
+								date: "2024-01-02",
+								categoryId: "category-1",
+							})
+						}
+						disabled={isSubmitting}
+					>
+						{isSubmitting ? "更新中..." : "更新"}
+					</button>
+				</div>
+			);
+		},
+	),
+	ExpenseList: vi.fn(({ transactions, isLoading, onEdit, onDelete }) => (
 		<div data-testid="expense-list">
 			{isLoading ? (
 				<p>読み込み中...</p>
@@ -64,6 +92,9 @@ vi.mock("../../components/expenses", () => ({
 						<div key={t.id} data-testid={`transaction-${t.id}`}>
 							<span>{t.description}</span>
 							<span>{t.amount}</span>
+							<button type="button" onClick={() => onEdit(t)}>
+								編集
+							</button>
 							<button type="button" onClick={() => onDelete(t.id)}>
 								削除
 							</button>
@@ -142,6 +173,7 @@ const mockExpenses = [
 describe("ExpensesPage", () => {
 	const mockRefetch = vi.fn();
 	const mockCreateExpenseMutation = vi.fn();
+	const mockUpdateExpenseMutation = vi.fn();
 	const mockDeleteExpenseMutation = vi.fn();
 
 	const defaultMockReturn = {
@@ -151,7 +183,7 @@ describe("ExpensesPage", () => {
 		operationLoading: false,
 		refetch: mockRefetch,
 		createExpenseMutation: mockCreateExpenseMutation,
-		updateExpenseMutation: vi.fn(),
+		updateExpenseMutation: mockUpdateExpenseMutation,
 		deleteExpenseMutation: mockDeleteExpenseMutation,
 		getExpenseById: vi.fn(),
 	};
@@ -303,6 +335,71 @@ describe("ExpensesPage", () => {
 
 			const submitButton = screen.getByText("送信中...");
 			expect(submitButton).toBeDisabled();
+		});
+	});
+
+	describe("編集", () => {
+		it("編集ボタンをクリックすると編集ダイアログが表示される", () => {
+			render(<ExpensesPage />);
+
+			const editButton = screen.getAllByText("編集")[0];
+			fireEvent.click(editButton);
+
+			expect(screen.getByTestId("edit-expense-dialog")).toBeInTheDocument();
+			expect(screen.getByText("取引編集: コーヒー")).toBeInTheDocument();
+		});
+
+		it("編集ダイアログで更新するとupdateExpenseMutationが呼ばれる", async () => {
+			render(<ExpensesPage />);
+
+			// 編集ボタンをクリック
+			const editButton = screen.getAllByText("編集")[0];
+			fireEvent.click(editButton);
+
+			// 更新ボタンをクリック
+			const updateButton = screen.getByText("更新");
+			fireEvent.click(updateButton);
+
+			await waitFor(() => {
+				expect(mockUpdateExpenseMutation).toHaveBeenCalledWith("1", {
+					amount: 2000,
+					type: "expense",
+					description: "編集済み",
+					date: "2024-01-02",
+					categoryId: "category-1",
+				});
+			});
+		});
+
+		it("編集ダイアログを閉じるとダイアログが非表示になる", () => {
+			render(<ExpensesPage />);
+
+			// 編集ボタンをクリック
+			const editButton = screen.getAllByText("編集")[0];
+			fireEvent.click(editButton);
+
+			// 閉じるボタンをクリック
+			const closeButton = screen.getByText("閉じる");
+			fireEvent.click(closeButton);
+
+			expect(
+				screen.queryByTestId("edit-expense-dialog"),
+			).not.toBeInTheDocument();
+		});
+
+		it("操作中は更新ボタンが無効化される", () => {
+			mockUseExpenses.mockReturnValue({
+				...defaultMockReturn,
+				operationLoading: true,
+			});
+			render(<ExpensesPage />);
+
+			// 編集ボタンをクリック
+			const editButton = screen.getAllByText("編集")[0];
+			fireEvent.click(editButton);
+
+			const updateButton = screen.getByText("更新中...");
+			expect(updateButton).toBeDisabled();
 		});
 	});
 
