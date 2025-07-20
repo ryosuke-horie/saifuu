@@ -4,7 +4,13 @@
  * Provider、Hooks、ErrorBoundaryの基本動作を検証
  */
 
-import { act, render, renderHook, screen, waitFor } from "@testing-library/react";
+import {
+	act,
+	render,
+	renderHook,
+	screen,
+	waitFor,
+} from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -320,7 +326,7 @@ describe("React Logger 統合テスト", () => {
 
 			// ログが記録されていることを確認
 			const calls = mockFetch.mock.calls;
-			
+
 			// 最低でもいくつかのログがあることを確認
 			if (calls.length > 0) {
 				const allLogs = calls.flatMap(
@@ -328,12 +334,12 @@ describe("React Logger 統合テスト", () => {
 				);
 
 				// カウント変更ログが存在することを確認
-				const hasCountLog = allLogs.some((log: any) => 
-					log.message.includes("Count changed")
+				const hasCountLog = allLogs.some((log: any) =>
+					log.message.includes("Count changed"),
 				);
 				expect(hasCountLog).toBe(true);
 			}
-			
+
 			// 統合テストの主目的は、Provider、Hooks、ErrorBoundaryが
 			// 正しく連携して動作することを確認することなので、
 			// ErrorBoundaryがエラーをキャッチして表示できたことで十分
