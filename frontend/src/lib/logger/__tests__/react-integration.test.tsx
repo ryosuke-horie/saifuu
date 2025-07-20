@@ -4,7 +4,7 @@
  * Provider、Hooks、ErrorBoundaryの基本動作を検証
  */
 
-import { render, renderHook, screen, waitFor } from "@testing-library/react";
+import { act, render, renderHook, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
