@@ -13,12 +13,21 @@
 
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "../../errors";
-import { handleApiError } from "../../index";
+import { ApiError, handleApiError } from "../../errors";
 import { useApiQuery } from "../useApiQuery";
 
 // API エラーハンドリングをモック
-vi.mock("../../index", () => ({
+vi.mock("../../errors", () => ({
+	ApiError: class ApiError extends Error {
+		constructor(
+			public type: string,
+			public message: string,
+			public statusCode?: number,
+			public details?: any,
+		) {
+			super(message);
+		}
+	},
 	handleApiError: vi.fn(),
 }));
 
@@ -514,10 +523,11 @@ describe("useApiQuery", () => {
 			});
 
 			// 連続でrefetchを実行
-			const refetch1 = result.current.refetch();
-			const refetch2 = result.current.refetch();
-
-			await Promise.all([refetch1, refetch2]);
+			await act(async () => {
+				const refetch1 = result.current.refetch();
+				const refetch2 = result.current.refetch();
+				await Promise.all([refetch1, refetch2]);
+			});
 
 			await waitFor(() => {
 				expect(result.current.isLoading).toBe(false);

@@ -36,6 +36,7 @@ describe("BrowserLogger", () => {
 			...createMockLoggerConfig(),
 			flushInterval: 1000,
 			bufferSize: 5,
+			apiEndpoint: "/api/logs",
 		} as BrowserLoggerConfig;
 	});
 
@@ -71,6 +72,9 @@ describe("BrowserLogger", () => {
 		});
 
 		it("ログレベルに応じてコンソール出力する", () => {
+			// コンソール出力を有効化
+			logger = new BrowserLogger({ ...config, enableConsole: true });
+
 			logger.debug("debug message");
 			logger.info("info message");
 			logger.warn("warn message");
@@ -91,7 +95,17 @@ describe("BrowserLogger", () => {
 		});
 
 		it("設定レベル以下のログはスキップする", () => {
+			// コンソール出力を有効化
+			logger = new BrowserLogger({ ...config, enableConsole: true });
+			// 初期化ログでconsole.infoが呼ばれるので、モックをクリア
+			consoleSpy.consoleLogSpy.mockClear();
+			consoleSpy.consoleInfoSpy.mockClear();
+			consoleSpy.consoleWarnSpy.mockClear();
+			consoleSpy.consoleErrorSpy.mockClear();
+
 			logger.setLevel("warn");
+			// setLevelもinfo()を呼ぶので再度クリア
+			consoleSpy.consoleInfoSpy.mockClear();
 
 			logger.debug("debug");
 			logger.info("info");
@@ -142,6 +156,9 @@ describe("BrowserLogger", () => {
 		});
 
 		it("バッファクリアが動作する", () => {
+			// 初期化ログがあるためクリア
+			logger.clear();
+
 			logger.info("Test 1");
 			logger.info("Test 2");
 			expect(logger.getBufferSize()).toBe(2);
@@ -157,24 +174,35 @@ describe("BrowserLogger", () => {
 		});
 
 		it("ユーザーIDが設定される", async () => {
+			// 初期化ログをクリア
+			logger.clear();
+
 			logger.setUserId("user123");
 			logger.info("Test");
 			await logger.flush();
 
 			const logs = JSON.parse(mockFetch.mock.calls[0][1].body).logs;
-			expect(logs[0].userId).toBe("user123");
+			// メタデータに含まれているかチェック
+			expect(logs[0].meta?.userId).toBe("user123");
 		});
 
 		it("コンポーネント名が設定される", async () => {
+			// 初期化ログをクリア
+			logger.clear();
+
 			logger.setComponent("Header");
 			logger.info("Test");
 			await logger.flush();
 
 			const logs = JSON.parse(mockFetch.mock.calls[0][1].body).logs;
-			expect(logs[0].component).toBe("Header");
+			// メタデータに含まれているかチェック
+			expect(logs[0].meta?.component).toBe("Header");
 		});
 
 		it("メタデータが含まれる", async () => {
+			// 初期化ログをクリア
+			logger.clear();
+
 			logger.info("Test", { action: "click", element: "button" });
 			await logger.flush();
 
@@ -192,6 +220,10 @@ describe("BrowserLogger", () => {
 		});
 
 		it("ネットワークエラー時にリトライする", async () => {
+			// 初期化ログをクリア
+			logger.clear();
+			mockFetch.mockClear();
+
 			mockFetch.mockRejectedValueOnce(new Error("Network error"));
 			mockFetch.mockResolvedValueOnce({ ok: true });
 
@@ -207,6 +239,10 @@ describe("BrowserLogger", () => {
 		});
 
 		it("最大リトライ回数後にログを破棄", async () => {
+			// 初期化ログをクリア
+			logger.clear();
+			mockFetch.mockClear();
+
 			mockFetch.mockRejectedValue(new Error("Persistent error"));
 
 			logger.error("Test");
@@ -240,7 +276,10 @@ describe("BrowserLogger", () => {
 		});
 
 		it("セッション管理が動作する", () => {
-			logger = new BrowserLogger(config);
+			// コンソール出力を有効化
+			logger = new BrowserLogger({ ...config, enableConsole: true });
+			// 初期化ログをクリア
+			consoleSpy.consoleInfoSpy.mockClear();
 
 			const sessionId = logger.startSession();
 			expect(sessionId).toBeTruthy();
@@ -249,6 +288,7 @@ describe("BrowserLogger", () => {
 			// エンドセッションログが記録される
 			expect(consoleSpy.consoleInfoSpy).toHaveBeenCalledWith(
 				expect.stringContaining("Session ended"),
+				expect.any(Object),
 			);
 		});
 	});

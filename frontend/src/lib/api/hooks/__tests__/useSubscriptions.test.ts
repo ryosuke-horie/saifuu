@@ -11,8 +11,8 @@
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "../../errors";
-import { handleApiError, subscriptionService } from "../../index";
+import { ApiError, handleApiError } from "../../errors";
+import { subscriptionService } from "../../services/subscriptions";
 import type {
 	GetSubscriptionsQuery,
 	Subscription,
@@ -26,15 +26,33 @@ import {
 	useSubscriptions,
 } from "../useSubscriptions";
 
-// subscriptionServiceとhandleApiErrorをモック化
-vi.mock("../../index", () => ({
+// subscriptionServiceをモック化
+vi.mock("../../services/subscriptions", () => ({
 	subscriptionService: {
 		getSubscriptions: vi.fn(),
 		getSubscription: vi.fn(),
 		getSubscriptionStats: vi.fn(),
 	},
-	handleApiError: vi.fn(),
 }));
+
+// handleApiErrorをモック化
+vi.mock("../../errors", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("../../errors")>();
+	return {
+		...actual,
+		ApiError: class ApiError extends Error {
+			constructor(
+				public type: string,
+				public message: string,
+				public statusCode?: number,
+				public details?: any,
+			) {
+				super(message);
+			}
+		},
+		handleApiError: vi.fn(),
+	};
+});
 
 const mockSubscriptionService = vi.mocked(subscriptionService);
 const mockHandleApiError = vi.mocked(handleApiError);

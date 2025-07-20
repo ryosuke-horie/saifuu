@@ -3,7 +3,7 @@
  *
  * 基本機能に焦点を当てた簡素化版
  */
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import {
 	afterEach,
 	beforeEach,
@@ -16,14 +16,12 @@ import {
 import type { Category } from "../lib/api/types";
 import { useCategories } from "./useCategories";
 
-// APIクライアントのモック
-vi.mock("../lib/api/client", () => ({
-	apiClient: {
-		get: vi.fn(),
-	},
+// API関数のモック
+vi.mock("../lib/api/categories", () => ({
+	fetchCategories: vi.fn(),
 }));
 
-import { apiClient } from "../lib/api/client";
+import { fetchCategories } from "../lib/api/categories";
 
 describe("useCategories", () => {
 	const mockCategories: Category[] = [
@@ -55,10 +53,10 @@ describe("useCategories", () => {
 
 	describe("基本動作とエラーハンドリング", () => {
 		it("初期状態、データ取得、エラー処理が正しく動作する", async () => {
-			const mockGet = apiClient.get as Mock;
+			const mockFetchCategories = fetchCategories as Mock;
 
 			// 初回: 成功
-			mockGet.mockResolvedValueOnce(mockCategories);
+			mockFetchCategories.mockResolvedValueOnce(mockCategories);
 			const { result, rerender } = renderHook(() => useCategories());
 
 			// 初期状態の確認
@@ -73,11 +71,11 @@ describe("useCategories", () => {
 
 			expect(result.current.categories).toEqual(mockCategories);
 			expect(result.current.error).toBeNull();
-			expect(mockGet).toHaveBeenCalledWith("/categories");
+			expect(mockFetchCategories).toHaveBeenCalled();
 
 			// エラーケースをテスト
 			const mockError = new Error("Network Error");
-			mockGet.mockRejectedValueOnce(mockError);
+			mockFetchCategories.mockRejectedValueOnce(mockError);
 
 			// コンポーネントを再マウント
 			rerender();
@@ -87,17 +85,19 @@ describe("useCategories", () => {
 				expect(newHook.result.current.loading).toBe(false);
 			});
 
-			expect(newHook.result.current.error).toBe("Network Error");
+			expect(newHook.result.current.error).toBe(
+				"ネットワークエラーが発生しました",
+			);
 			expect(newHook.result.current.categories).toEqual([]);
 		});
 	});
 
 	describe("refetch機能", () => {
 		it("手動でデータを再取得できる", async () => {
-			const mockGet = apiClient.get as Mock;
+			const mockFetchCategories = fetchCategories as Mock;
 
 			// 初回取得
-			mockGet.mockResolvedValueOnce(mockCategories);
+			mockFetchCategories.mockResolvedValueOnce(mockCategories);
 			const { result } = renderHook(() => useCategories());
 
 			await waitFor(() => {
@@ -116,15 +116,18 @@ describe("useCategories", () => {
 					updatedAt: "2025-01-01T00:00:00Z",
 				},
 			];
-			mockGet.mockResolvedValueOnce(updatedCategories);
+			mockFetchCategories.mockResolvedValueOnce(updatedCategories);
 
-			await result.current.refetch();
+			// refetchをactでラップ
+			await act(async () => {
+				await result.current.refetch();
+			});
 
 			await waitFor(() => {
 				expect(result.current.categories).toEqual(updatedCategories);
 			});
 
-			expect(mockGet).toHaveBeenCalledTimes(2);
+			expect(mockFetchCategories).toHaveBeenCalledTimes(2);
 		});
 	});
 });
