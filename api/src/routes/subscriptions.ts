@@ -4,6 +4,11 @@ import { ALL_CATEGORIES } from '../../../shared/config/categories'
 import { type AnyDatabase, type Env } from '../db'
 import { type NewSubscription, subscriptions } from '../db/schema'
 import { type LoggingVariables, logWithContext } from '../middleware/logging'
+import {
+	validateId,
+	validateSubscriptionCreate,
+	validateSubscriptionUpdate,
+} from '../validation/schemas'
 
 /**
  * サブスクリプションAPIのファクトリ関数
@@ -86,37 +91,34 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 				},
 			})
 
-			const db = options.testDatabase || c.get('db')
+			// バリデーション実行
+			const validationResult = validateSubscriptionCreate(body)
 
-			// Validate required fields and data
-			if (!body.name || typeof body.name !== 'string') {
-				logWithContext(c, 'warn', 'サブスクリプション作成: バリデーションエラー - 名前が無効', {
-					validationError: 'name_required',
-					providedName: body.name,
+			if (!validationResult.success) {
+				// 構造化ログ: バリデーションエラー詳細
+				logWithContext(c, 'warn', 'サブスクリプション作成: バリデーションエラー', {
+					validationErrors: validationResult.errors,
+					providedData: {
+						name: body.name,
+						amount: body.amount,
+						billingCycle: body.billingCycle,
+						nextBillingDate: body.nextBillingDate,
+					},
 				})
-				return c.json({ error: 'Name is required and must be a string' }, 400)
-			}
 
-			if (typeof body.amount !== 'number' || body.amount < 0) {
-				logWithContext(c, 'warn', 'サブスクリプション作成: バリデーションエラー - 金額が無効', {
-					validationError: 'amount_invalid',
-					providedAmount: body.amount,
-				})
-				return c.json({ error: 'Amount must be a positive number' }, 400)
-			}
-
-			if (!body.billingCycle || !['monthly', 'yearly', 'weekly'].includes(body.billingCycle)) {
-				logWithContext(
-					c,
-					'warn',
-					'サブスクリプション作成: バリデーションエラー - 請求サイクルが無効',
+				// 共通エラーレスポンス形式
+				// 最初のエラーメッセージを主エラーとして使用
+				const mainError = validationResult.errors[0]?.message || 'Validation failed'
+				return c.json(
 					{
-						validationError: 'billing_cycle_invalid',
-						providedBillingCycle: body.billingCycle,
-					}
+						error: mainError,
+						details: validationResult.errors,
+					},
+					400
 				)
-				return c.json({ error: 'Invalid billing cycle' }, 400)
 			}
+
+			const db = options.testDatabase || c.get('db')
 
 			// Convert string dates to ISO string format
 			const nextBillingDate =
@@ -168,21 +170,31 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 	app.get('/:id', async (c) => {
 		try {
 			const idParam = c.req.param('id')
-			const id = Number.parseInt(idParam)
+			const idValidation = validateId(idParam)
 
 			// Check if ID is valid
-			if (Number.isNaN(id)) {
+			if (!idValidation.success) {
 				logWithContext(
 					c,
 					'warn',
 					'サブスクリプション詳細取得: バリデーションエラー - ID形式が無効',
 					{
-						validationError: 'id_format_invalid',
+						validationErrors: idValidation.errors,
 						providedId: idParam,
 					}
 				)
-				return c.json({ error: 'Invalid ID format' }, 400)
+				// 最初のエラーメッセージを主エラーとして使用
+				const mainError = idValidation.errors[0]?.message || 'Invalid ID format'
+				return c.json(
+					{
+						error: mainError,
+						details: idValidation.errors,
+					},
+					400
+				)
 			}
+
+			const id = idValidation.data
 
 			// 構造化ログ: サブスクリプション詳細取得操作の開始
 			logWithContext(c, 'info', 'サブスクリプション詳細取得を開始', {
@@ -254,16 +266,26 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 	app.put('/:id', async (c) => {
 		try {
 			const idParam = c.req.param('id')
-			const id = Number.parseInt(idParam)
+			const idValidation = validateId(idParam)
 
 			// Check if ID is valid
-			if (Number.isNaN(id)) {
+			if (!idValidation.success) {
 				logWithContext(c, 'warn', 'サブスクリプション更新: バリデーションエラー - ID形式が無効', {
-					validationError: 'id_format_invalid',
+					validationErrors: idValidation.errors,
 					providedId: idParam,
 				})
-				return c.json({ error: 'Invalid ID format' }, 400)
+				// 最初のエラーメッセージを主エラーとして使用
+				const mainError = idValidation.errors[0]?.message || 'Invalid ID format'
+				return c.json(
+					{
+						error: mainError,
+						details: idValidation.errors,
+					},
+					400
+				)
 			}
+
+			const id = idValidation.data
 
 			const body = (await c.req.json()) as Partial<NewSubscription>
 
@@ -274,6 +296,29 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 				resource: 'subscriptions',
 				updateFields: Object.keys(body),
 			})
+
+			// 更新データのバリデーション
+			const validationResult = validateSubscriptionUpdate(body)
+
+			if (!validationResult.success) {
+				// 構造化ログ: バリデーションエラー詳細
+				logWithContext(c, 'warn', 'サブスクリプション更新: バリデーションエラー', {
+					subscriptionId: id,
+					validationErrors: validationResult.errors,
+					updateFields: Object.keys(body),
+				})
+
+				// 共通エラーレスポンス形式
+				// 最初のエラーメッセージを主エラーとして使用
+				const mainError = validationResult.errors[0]?.message || 'Validation failed'
+				return c.json(
+					{
+						error: mainError,
+						details: validationResult.errors,
+					},
+					400
+				)
+			}
 
 			const db = options.testDatabase || c.get('db')
 
@@ -325,16 +370,26 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 	app.delete('/:id', async (c) => {
 		try {
 			const idParam = c.req.param('id')
-			const id = Number.parseInt(idParam)
+			const idValidation = validateId(idParam)
 
 			// Check if ID is valid
-			if (Number.isNaN(id)) {
+			if (!idValidation.success) {
 				logWithContext(c, 'warn', 'サブスクリプション削除: バリデーションエラー - ID形式が無効', {
-					validationError: 'id_format_invalid',
+					validationErrors: idValidation.errors,
 					providedId: idParam,
 				})
-				return c.json({ error: 'Invalid ID format' }, 400)
+				// 最初のエラーメッセージを主エラーとして使用
+				const mainError = idValidation.errors[0]?.message || 'Invalid ID format'
+				return c.json(
+					{
+						error: mainError,
+						details: idValidation.errors,
+					},
+					400
+				)
 			}
+
+			const id = idValidation.data
 
 			// 構造化ログ: サブスクリプション削除操作の開始
 			logWithContext(c, 'info', 'サブスクリプション削除を開始', {

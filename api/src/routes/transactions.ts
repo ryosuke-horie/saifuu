@@ -1,37 +1,29 @@
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { ALL_CATEGORIES } from '../../../shared/config/categories'
+import { type ValidationError } from '../../../shared/src/validation/index'
 import { type AnyDatabase, type Env } from '../db'
 import { type NewTransaction, transactions } from '../db/schema'
 import { type LoggingVariables, logWithContext } from '../middleware/logging'
+import {
+	validateId,
+	validateTransactionCreate,
+	validateTransactionUpdate,
+} from '../validation/schemas'
 
 /**
- * 取引データのバリデーション関数
- * 作成時と更新時で共通利用
+ * バリデーションエラーをAPIレスポンス形式に変換
  */
-function validateTransactionData(data: Partial<NewTransaction>): string | null {
-	// 金額のバリデーション
-	if (data.amount !== undefined) {
-		if (typeof data.amount !== 'number' || data.amount <= 0) {
-			return 'Amount must be a positive number'
-		}
-		// 金額の上限チェック（1000万円）
-		if (data.amount > 10000000) {
-			return 'Amount must not exceed 10,000,000'
-		}
+function formatValidationErrors(errors: ValidationError[]): {
+	error: string
+	details?: ValidationError[]
+} {
+	// 最初のエラーメッセージを主エラーとして使用
+	const mainError = errors[0]?.message || 'Validation failed'
+	return {
+		error: mainError,
+		details: errors,
 	}
-
-	// 取引種別のバリデーション（支出のみ許可）
-	if (data.type !== undefined && data.type !== 'expense') {
-		return 'Only expense type is allowed'
-	}
-
-	// 説明文の文字数チェック（最大500文字）
-	if (data.description !== undefined && data.description && data.description.length > 500) {
-		return 'Description must not exceed 500 characters'
-	}
-
-	return null
 }
 
 /**
@@ -245,36 +237,19 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 			const db = options.testDatabase || c.get('db')
 
-			// 必須フィールドチェック
-			if (!body.date) {
-				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 日付が無効', {
-					validationError: 'date_required',
-					providedDate: body.date,
-				})
-				return c.json({ error: 'Date is required' }, 400)
-			}
-
-			if (!body.type) {
-				logWithContext(c, 'warn', '取引作成: バリデーションエラー - 種別が無効', {
-					validationError: 'type_required',
-					providedType: body.type,
-				})
-				return c.json({ error: 'Type is required' }, 400)
-			}
-
-			// 共通バリデーション関数を使用
-			const validationError = validateTransactionData(body)
-			if (validationError) {
+			// バリデーションフレームワークを使用
+			const validationResult = validateTransactionCreate(body)
+			if (!validationResult.success) {
 				logWithContext(c, 'warn', '取引作成: バリデーションエラー', {
 					validationError: 'validation_failed',
-					error: validationError,
+					errors: validationResult.errors,
 					providedData: {
 						amount: body.amount,
 						type: body.type,
 						descriptionLength: body.description?.length,
 					},
 				})
-				return c.json({ error: validationError }, 400)
+				return c.json(formatValidationErrors(validationResult.errors), 400)
 			}
 
 			const newTransaction: NewTransaction = {
@@ -320,16 +295,18 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 	app.get('/:id', async (c) => {
 		try {
 			const idParam = c.req.param('id')
-			const id = Number.parseInt(idParam)
+			const idValidation = validateId(idParam)
 
 			// Check if ID is valid
-			if (Number.isNaN(id)) {
+			if (!idValidation.success) {
 				logWithContext(c, 'warn', '取引詳細取得: バリデーションエラー - ID形式が無効', {
-					validationError: 'id_format_invalid',
+					validationErrors: idValidation.errors,
 					providedId: idParam,
 				})
-				return c.json({ error: 'Invalid ID format' }, 400)
+				return c.json(formatValidationErrors(idValidation.errors), 400)
 			}
+
+			const id = idValidation.data
 
 			// 構造化ログ: 取引詳細取得操作の開始
 			logWithContext(c, 'info', '取引詳細取得を開始', {
@@ -396,16 +373,18 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 	app.put('/:id', async (c) => {
 		try {
 			const idParam = c.req.param('id')
-			const id = Number.parseInt(idParam)
+			const idValidation = validateId(idParam)
 
 			// Check if ID is valid
-			if (Number.isNaN(id)) {
+			if (!idValidation.success) {
 				logWithContext(c, 'warn', '取引更新: バリデーションエラー - ID形式が無効', {
-					validationError: 'id_format_invalid',
+					validationErrors: idValidation.errors,
 					providedId: idParam,
 				})
-				return c.json({ error: 'Invalid ID format' }, 400)
+				return c.json(formatValidationErrors(idValidation.errors), 400)
 			}
+
+			const id = idValidation.data
 
 			const body = (await c.req.json()) as Partial<NewTransaction>
 
@@ -417,20 +396,20 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				updateFields: Object.keys(body),
 			})
 
-			// 更新データのバリデーション
-			const validationError = validateTransactionData(body)
-			if (validationError) {
+			// バリデーションフレームワークを使用
+			const validationResult = validateTransactionUpdate(body)
+			if (!validationResult.success) {
 				logWithContext(c, 'warn', '取引更新: バリデーションエラー', {
 					transactionId: id,
 					validationError: 'validation_failed',
-					error: validationError,
+					errors: validationResult.errors,
 					providedData: {
 						amount: body.amount,
 						type: body.type,
 						descriptionLength: body.description?.length,
 					},
 				})
-				return c.json({ error: validationError }, 400)
+				return c.json(formatValidationErrors(validationResult.errors), 400)
 			}
 
 			const db = options.testDatabase || c.get('db')
@@ -484,16 +463,18 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 	app.delete('/:id', async (c) => {
 		try {
 			const idParam = c.req.param('id')
-			const id = Number.parseInt(idParam)
+			const idValidation = validateId(idParam)
 
 			// Check if ID is valid
-			if (Number.isNaN(id)) {
+			if (!idValidation.success) {
 				logWithContext(c, 'warn', '取引削除: バリデーションエラー - ID形式が無効', {
-					validationError: 'id_format_invalid',
+					validationErrors: idValidation.errors,
 					providedId: idParam,
 				})
-				return c.json({ error: 'Invalid ID format' }, 400)
+				return c.json(formatValidationErrors(idValidation.errors), 400)
 			}
+
+			const id = idValidation.data
 
 			// 構造化ログ: 取引削除操作の開始
 			logWithContext(c, 'info', '取引削除を開始', {

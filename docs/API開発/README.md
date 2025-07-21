@@ -38,6 +38,14 @@ This directory contains comprehensive documentation for the Saifuu API, which is
 - `PUT /api/subscriptions/:id` - Update subscription
 - `DELETE /api/subscriptions/:id` - Delete subscription
 
+### Transactions API
+- `GET /api/transactions` - List all transactions (支出のみ)
+- `POST /api/transactions` - Create new transaction
+- `GET /api/transactions/:id` - Get specific transaction
+- `PUT /api/transactions/:id` - Update transaction
+- `DELETE /api/transactions/:id` - Delete transaction
+- `GET /api/transactions/stats` - Get transaction statistics
+
 ### Health Check
 - `GET /api/health` - Database connectivity check
 
@@ -91,12 +99,14 @@ npm run test:unit:coverage
 ## Key Features
 
 ### ✅ Implemented Features
-- Complete CRUD operations for subscriptions
+- Complete CRUD operations for subscriptions and transactions
 - Category management
 - Database schema with proper relationships
 - Comprehensive error handling
 - TypeScript type safety
 - Test-driven development approach
+- **Unified validation framework** - Shared validation logic between API routes
+- **Japanese error messages** - User-friendly error messages in Japanese
 
 ### 🔄 Migration Achievements
 - Successfully migrated from better-sqlite3 to Cloudflare D1
@@ -112,6 +122,25 @@ npm run test:unit:coverage
 - Test helper files properly excluded from test execution and coverage
 
 ## Technical Details
+
+### Validation Framework
+
+The API uses a centralized validation framework located in `api/src/validation/schemas.ts` that provides:
+
+- **Type-safe validation schemas** for all API endpoints
+- **Reusable validators** for common fields (ID, amount, date, description)
+- **Consistent error messages** in Japanese
+- **Automatic type conversion** (e.g., string to number for category IDs)
+
+Example usage:
+```typescript
+import { validateTransactionCreate } from '../validation/schemas';
+
+const validationResult = validateTransactionCreate(requestBody);
+if (!validationResult.success) {
+  return c.json(formatValidationErrors(validationResult.errors), 400);
+}
+```
 
 ### Database Schema
 ```sql

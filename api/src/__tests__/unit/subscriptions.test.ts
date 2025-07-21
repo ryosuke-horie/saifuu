@@ -133,7 +133,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Name is required and must be a string')
+			expectErrorResponse(data, 'nameは必須です')
 		})
 
 		it('should handle invalid billing cycle', async () => {
@@ -147,7 +147,10 @@ describe('Subscriptions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Invalid billing cycle')
+			expectErrorResponse(
+				data,
+				'請求サイクルはmonthly、yearly、weeklyのいずれかである必要があります'
+			)
 		})
 
 		it('should handle negative amount', async () => {
@@ -161,7 +164,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Amount must be a positive number')
+			expectErrorResponse(data, '金額は正の数値である必要があります')
 		})
 	})
 
@@ -211,7 +214,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Invalid ID format')
+			expectErrorResponse(data, 'IDは数値である必要があります')
 		})
 	})
 
@@ -268,7 +271,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Invalid ID format')
+			expectErrorResponse(data, 'IDは数値である必要があります')
 		})
 	})
 
@@ -310,7 +313,7 @@ describe('Subscriptions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Invalid ID format')
+			expectErrorResponse(data, 'IDは数値である必要があります')
 		})
 	})
 

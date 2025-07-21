@@ -237,3 +237,7 @@ export const validators = {
     date(VALIDATION_LIMITS.MIN_DATE)
   ),
 } as const;
+
+// 各ドメインのバリデーションルールを再エクスポート
+// NOTE: transaction.tsは循環参照を避けるため、使用する側で直接インポートしてください
+// export * from './transaction';
