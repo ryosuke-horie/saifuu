@@ -65,7 +65,7 @@ jobs:
           echo "side-effects-cache=false" >> .npmrc
           pnpm install --frozen-lockfile
           # better-sqlite3を明示的にリビルド
-          cd api && pnpm rebuild better-sqlite3
+          pnpm rebuild better-sqlite3
       
       - name: Type check
         run: pnpm run typecheck
