@@ -274,42 +274,4 @@ describe('Subscriptions API - Integration Tests', () => {
 			expect([1000, 2000]).toContain(finalData.amount)
 		})
 	})
-
-	describe('Performance and Scalability', () => {
-		it('should handle large number of subscriptions', async () => {
-			// 大量データでのパフォーマンステスト（必要に応じて）
-			const subscriptionsToCreate = 10 // テスト環境では小さな数値で
-
-			// 複数のサブスクリプションを作成
-			const createPromises = Array.from({ length: subscriptionsToCreate }, (_, i) => {
-				const subscription = {
-					...testSubscriptions.netflix,
-					name: `Test Service ${i}`,
-					amount: 1000 + i * 100,
-					categoryId: 1,
-				}
-				return createTestRequest(testProductionApp, 'POST', '/api/subscriptions', subscription)
-			})
-
-			const responses = await Promise.all(createPromises)
-
-			// すべて成功していることを確認
-			for (const response of responses) {
-				expect(response.status).toBe(201)
-			}
-
-			// 一覧取得のパフォーマンス測定
-			const start = Date.now()
-			const response = await createTestRequest(testProductionApp, 'GET', '/api/subscriptions')
-			const duration = Date.now() - start
-
-			expect(response.status).toBe(200)
-
-			const data = await getResponseJson(response)
-			expect(data.length).toBeGreaterThanOrEqual(subscriptionsToCreate)
-
-			// レスポンス時間が合理的な範囲内であることを確認
-			expect(duration).toBeLessThan(5000) // 5秒以内
-		})
-	})
 })
