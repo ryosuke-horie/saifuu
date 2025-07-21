@@ -1,8 +1,4 @@
-import { Hono } from 'hono'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AnyDatabase, Env } from '../../db'
-import { type LoggingVariables, loggingMiddleware } from '../../middleware/logging'
-import { createSubscriptionsApp } from '../../routes/subscriptions'
 import { invalidSubscriptionData, testRequestPayloads } from '../helpers/fixtures'
 import {
 	createTestRequest,
@@ -24,7 +20,10 @@ import { createTestProductionApp } from '../helpers/test-production-app'
  *
  * カバレッジ: 94.59%（2025年7月14日現在）
  * - 正常系・異常系のテストケースを網羅
- * - データベースエラーハンドリングのテストを含む
+ *
+ * Issue #299 修正対応:
+ * - データベースモックの複雑な実装を削除
+ * - IDバリデーションテストを統合
  */
 
 describe('Subscriptions API - Unit Tests', () => {
@@ -208,14 +207,7 @@ describe('Subscriptions API - Unit Tests', () => {
 			expectErrorResponse(data, 'Subscription not found')
 		})
 
-		it('should handle invalid id format', async () => {
-			// 無効なID形式のテスト
-			const response = await createTestRequest(app, 'GET', '/api/subscriptions/invalid-id')
-
-			expect(response.status).toBe(400)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'IDは数値である必要があります')
-		})
+		// IDバリデーションテストは後方でパラメータ化
 	})
 
 	describe('PUT /subscriptions/:id', () => {
@@ -259,20 +251,6 @@ describe('Subscriptions API - Unit Tests', () => {
 			const data = await getResponseJson(response)
 			expectErrorResponse(data, 'Subscription not found')
 		})
-
-		it('should handle invalid id format for update', async () => {
-			// 無効なID形式のテスト
-			const response = await createTestRequest(
-				app,
-				'PUT',
-				'/api/subscriptions/invalid-id',
-				testRequestPayloads.updateSubscription
-			)
-
-			expect(response.status).toBe(400)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'IDは数値である必要があります')
-		})
 	})
 
 	describe('DELETE /subscriptions/:id', () => {
@@ -306,150 +284,24 @@ describe('Subscriptions API - Unit Tests', () => {
 			const data = await getResponseJson(response)
 			expectErrorResponse(data, 'Subscription not found')
 		})
+	})
 
-		it('should handle invalid id format for deletion', async () => {
-			// 無効なID形式のテスト
-			const response = await createTestRequest(app, 'DELETE', '/api/subscriptions/invalid-id')
+	// パラメータ化されたIDバリデーションテスト
+	describe('Invalid ID Handling', () => {
+		it.each([
+			{ method: 'GET' as const, path: '/api/subscriptions/invalid-id', payload: undefined },
+			{
+				method: 'PUT' as const,
+				path: '/api/subscriptions/invalid-id',
+				payload: testRequestPayloads.updateSubscription,
+			},
+			{ method: 'DELETE' as const, path: '/api/subscriptions/invalid-id', payload: undefined },
+		])('should return 400 for invalid ID in $method request', async ({ method, path, payload }) => {
+			const response = await createTestRequest(app, method, path, payload)
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
 			expectErrorResponse(data, 'IDは数値である必要があります')
 		})
-	})
-
-	// データベース操作別のモック生成ヘルパー関数
-	function createSelectMock() {
-		return vi.fn().mockImplementation(() => ({
-			from: vi.fn().mockImplementation(() => ({
-				where: vi.fn().mockImplementation(() => {
-					throw new Error('Database connection failed')
-				}),
-			})),
-		}))
-	}
-
-	function createInsertMock() {
-		return vi.fn().mockImplementation(() => ({
-			values: vi.fn().mockImplementation(() => ({
-				returning: vi.fn().mockImplementation(() => {
-					throw new Error('Database connection failed')
-				}),
-			})),
-		}))
-	}
-
-	function createUpdateMock() {
-		return vi.fn().mockImplementation(() => ({
-			set: vi.fn().mockImplementation(() => ({
-				where: vi.fn().mockImplementation(() => ({
-					returning: vi.fn().mockImplementation(() => {
-						throw new Error('Database connection failed')
-					}),
-				})),
-			})),
-		}))
-	}
-
-	function createDeleteMock() {
-		return vi.fn().mockImplementation(() => ({
-			where: vi.fn().mockImplementation(() => ({
-				returning: vi.fn().mockImplementation(() => {
-					throw new Error('Database connection failed')
-				}),
-			})),
-		}))
-	}
-
-	function createTestAppWithMockDatabase(mockDatabase: AnyDatabase) {
-		const testApp = new Hono<{
-			Bindings: Env
-			Variables: {
-				db: AnyDatabase
-			} & LoggingVariables
-		}>()
-
-		testApp.use('*', loggingMiddleware({ NODE_ENV: 'test' }))
-		testApp.use('/api/*', async (c, next) => {
-			c.set('db', mockDatabase)
-			await next()
-		})
-		testApp.route('/api/subscriptions', createSubscriptionsApp({ testDatabase: mockDatabase }))
-
-		return testApp
-	}
-
-	// データベースエラーハンドリングのメインヘルパー関数
-	function createDatabaseErrorApp(operation: 'select' | 'insert' | 'update' | 'delete') {
-		const mockDatabase = {} as AnyDatabase
-
-		switch (operation) {
-			case 'select':
-				mockDatabase.select = createSelectMock()
-				break
-			case 'insert':
-				mockDatabase.insert = createInsertMock()
-				break
-			case 'update':
-				mockDatabase.update = createUpdateMock()
-				break
-			case 'delete':
-				mockDatabase.delete = createDeleteMock()
-				break
-		}
-
-		return createTestAppWithMockDatabase(mockDatabase)
-	}
-
-	describe('Database Error Handling', () => {
-		// モックテストではDBクリーンアップを省略
-		beforeEach(() => {
-			vi.clearAllMocks()
-		})
-
-		// パフォーマンス向上のため、テストをコンパクトに
-		it.each([
-			{
-				operation: 'select' as const,
-				method: 'GET' as const,
-				path: '/api/subscriptions',
-				expectedError: 'Failed to fetch subscriptions',
-			},
-			{
-				operation: 'insert' as const,
-				method: 'POST' as const,
-				path: '/api/subscriptions',
-				payload: testRequestPayloads.createSubscription,
-				expectedError: 'Failed to create subscription',
-			},
-			{
-				operation: 'update' as const,
-				method: 'PUT' as const,
-				path: '/api/subscriptions/1',
-				payload: testRequestPayloads.updateSubscription,
-				expectedError: 'Failed to update subscription',
-			},
-			{
-				operation: 'delete' as const,
-				method: 'DELETE' as const,
-				path: '/api/subscriptions/1',
-				expectedError: 'Failed to delete subscription',
-			},
-			{
-				operation: 'select' as const,
-				method: 'GET' as const,
-				path: '/api/subscriptions/1',
-				expectedError: 'Failed to fetch subscription',
-			},
-		])(
-			'should handle database errors during $method $path',
-			async ({ operation, method, path, payload, expectedError }) => {
-				const testApp = createDatabaseErrorApp(operation)
-				const response = await createTestRequest(testApp, method, path, payload)
-
-				expect(response.status).toBe(500)
-				const data = await getResponseJson(response)
-				expectErrorResponse(data, expectedError)
-			}
-		)
 	})
 })

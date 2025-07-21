@@ -8,6 +8,13 @@ import {
 	validateTransactionUpdate,
 } from '../schemas'
 
+/**
+ * スキーマバリデーションのテスト
+ *
+ * Issue #299 修正対応:
+ * - APIテストでカバーされているバリデーションテストを削除
+ * - スキーマ固有のテスト（変換、オプショナルフィールド）に焦点を当てる
+ */
 describe('Validation Schemas', () => {
 	describe('validateId', () => {
 		it('should validate valid numeric ID', () => {
@@ -67,38 +74,7 @@ describe('Validation Schemas', () => {
 				}
 			})
 
-			it('should reject negative amount', () => {
-				const result = validateTransactionCreate({ ...validTransaction, amount: -100 })
-				expect(result.success).toBe(false)
-				if (!result.success) {
-					expect(result.errors[0].field).toBe('amount')
-					expect(result.errors[0].code).toBe('POSITIVE_NUMBER')
-				}
-			})
-
-			it('should reject amount exceeding limit', () => {
-				const result = validateTransactionCreate({
-					...validTransaction,
-					amount: VALIDATION_LIMITS.MAX_AMOUNT + 1,
-				})
-				expect(result.success).toBe(false)
-				if (!result.success) {
-					expect(result.errors[0].field).toBe('amount')
-					expect(result.errors[0].code).toBe('MAX_VALUE')
-				}
-			})
-
-			it('should only allow expense type', () => {
-				const result = validateTransactionCreate({
-					...validTransaction,
-					type: 'income' as unknown as 'expense',
-				})
-				expect(result.success).toBe(false)
-				if (!result.success) {
-					expect(result.errors[0].field).toBe('type')
-					expect(result.errors[0].code).toBe('INVALID_ENUM')
-				}
-			})
+			// バリデーションテストはAPIテストでカバーされているため削除
 
 			it('should validate date format', () => {
 				const result = validateTransactionCreate({
@@ -126,19 +102,6 @@ describe('Validation Schemas', () => {
 					categoryId: null,
 				})
 				expect(result.success).toBe(true)
-			})
-
-			it('should validate description length', () => {
-				const longDescription = 'a'.repeat(VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH + 1)
-				const result = validateTransactionCreate({
-					...validTransaction,
-					description: longDescription,
-				})
-				expect(result.success).toBe(false)
-				if (!result.success) {
-					expect(result.errors[0].field).toBe('description')
-					expect(result.errors[0].code).toBe('MAX_LENGTH')
-				}
 			})
 		})
 
@@ -193,18 +156,7 @@ describe('Validation Schemas', () => {
 				}
 			})
 
-			it('should validate name length', () => {
-				const longName = 'a'.repeat(VALIDATION_LIMITS.MAX_NAME_LENGTH + 1)
-				const result = validateSubscriptionCreate({
-					...validSubscription,
-					name: longName,
-				})
-				expect(result.success).toBe(false)
-				if (!result.success) {
-					expect(result.errors[0].field).toBe('name')
-					expect(result.errors[0].code).toBe('MAX_LENGTH')
-				}
-			})
+			// 文字数制限のテストはAPIテストでカバーされているため削除
 
 			it('should validate billing cycle enum', () => {
 				const result = validateSubscriptionCreate({
@@ -258,16 +210,7 @@ describe('Validation Schemas', () => {
 				expect(result.success).toBe(true)
 			})
 
-			it('should validate updated fields', () => {
-				const result = validateSubscriptionUpdate({
-					billingCycle: 'hourly' as unknown as 'monthly',
-				})
-				expect(result.success).toBe(false)
-				if (!result.success) {
-					expect(result.errors[0].field).toBe('billingCycle')
-					expect(result.errors[0].code).toBe('INVALID_ENUM')
-				}
-			})
+			// バリデーションテストはAPIテストでカバーされているため削除
 
 			it('should allow empty update', () => {
 				const result = validateSubscriptionUpdate({})

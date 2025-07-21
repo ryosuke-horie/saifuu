@@ -4,6 +4,11 @@
  * Issue #53 修正対応:
  * - Categories Route (0%カバレッジ) のテスト追加
  * - フロントエンドと整合性のある配列レスポンス形式の検証
+ *
+ * Issue #299 修正対応:
+ * - 冗長なテストケースを削減
+ * - カテゴリは読み取り専用のため、データベースエラーテストを削除
+ * - 405エラーテストを統合
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -11,14 +16,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 // カテゴリの型定義（設定ファイルベースのため、個別に定義）
 interface Category {
 	id: number
-	name: string
-	type: 'income' | 'expense'
-	color?: string
-	createdAt: string
-	updatedAt: string
-}
-
-interface NewCategory {
 	name: string
 	type: 'income' | 'expense'
 	color?: string
@@ -101,164 +98,36 @@ describe('Categories API - Unit Tests', () => {
 			// 設定ファイルのカテゴリ数を確認
 			expect(data).toHaveLength(11) // 支出11個のみ（収入カテゴリは削除済み、娯楽カテゴリ追加）
 		})
-
-		it('should handle database errors gracefully', async () => {
-			// データベースエラーをシミュレート（実際の環境では困難だが、構造の確認）
-			const response = await createTestRequest(testProductionApp, 'GET', '/api/categories')
-
-			// 正常な場合のレスポンス検証
-			expect([200, 500]).toContain(response.status)
-
-			if (response.status === 500) {
-				const data = await getResponseJson(response)
-				expect(data).toHaveProperty('error')
-			}
-		})
 	})
 
-	describe('POST /categories', () => {
-		it('should return 405 as categories are fixed', async () => {
-			const newCategory: NewCategory = {
+	describe('Mutation operations (POST, PUT, DELETE)', () => {
+		it('should return 405 for all mutation operations', async () => {
+			// POST テスト
+			const postResponse = await createTestRequest(testProductionApp, 'POST', '/api/categories', {
 				name: '新しいカテゴリ',
 				type: 'expense',
-				color: '#123456',
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
-			}
+			})
+			expect(postResponse.status).toBe(405)
+			const postData = await getResponseJson(postResponse)
+			expect(postData).toHaveProperty('error', 'Categories are fixed and cannot be created')
 
-			const response = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/categories',
-				newCategory
-			)
-
-			expect(response.status).toBe(405) // Method Not Allowed
-
-			const data = await getResponseJson(response)
-			expect(data).toHaveProperty('error', 'Categories are fixed and cannot be created')
-		})
-
-		it('should return 405 even with missing fields', async () => {
-			const invalidCategory = {
-				// name が欠落
-				type: 'expense',
-				color: '#123456',
-			}
-
-			const response = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/categories',
-				invalidCategory
-			)
-
-			expect(response.status).toBe(405) // 設定ファイル固定のため
-			const data = await getResponseJson(response)
-			expect(data).toHaveProperty('error')
-		})
-
-		it('should return 405 even with invalid type values', async () => {
-			const invalidCategory = {
-				name: 'テストカテゴリ',
-				type: 'invalid_type', // 無効なtype
-				color: '#123456',
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
-			}
-
-			const response = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/categories',
-				invalidCategory
-			)
-
-			expect(response.status).toBe(405) // 設定ファイル固定のため
-		})
-	})
-
-	describe('PUT /categories/:id', () => {
-		it('should return 405 as categories are fixed', async () => {
-			const updateData = {
+			// PUT テスト
+			const putResponse = await createTestRequest(testProductionApp, 'PUT', '/api/categories/1', {
 				name: '更新されたカテゴリ',
-				color: '#ABCDEF',
-			}
+			})
+			expect(putResponse.status).toBe(405)
+			const putData = await getResponseJson(putResponse)
+			expect(putData).toHaveProperty('error', 'Categories are fixed and cannot be updated')
 
-			const response = await createTestRequest(
-				testProductionApp,
-				'PUT',
-				'/api/categories/1',
-				updateData
-			)
-
-			expect(response.status).toBe(405) // Method Not Allowed
-
-			const data = await getResponseJson(response)
-			expect(data).toHaveProperty('error', 'Categories are fixed and cannot be updated')
-		})
-
-		it('should return 405 even for non-existent category', async () => {
-			const updateData = {
-				name: '存在しないカテゴリ',
-			}
-
-			const response = await createTestRequest(
-				testProductionApp,
-				'PUT',
-				'/api/categories/9999',
-				updateData
-			)
-
-			expect(response.status).toBe(405) // 設定ファイル固定のため
-			const data = await getResponseJson(response)
-			expect(data).toHaveProperty('error')
-		})
-	})
-
-	describe('DELETE /categories/:id', () => {
-		it('should return 405 as categories are fixed', async () => {
-			// 削除実行
+			// DELETE テスト
 			const deleteResponse = await createTestRequest(
 				testProductionApp,
 				'DELETE',
 				'/api/categories/1'
 			)
-
-			expect(deleteResponse.status).toBe(405) // Method Not Allowed
-			const data = await getResponseJson(deleteResponse)
-			expect(data).toHaveProperty('error', 'Categories are fixed and cannot be deleted')
-		})
-
-		it('should return 405 even for non-existent category deletion', async () => {
-			const response = await createTestRequest(testProductionApp, 'DELETE', '/api/categories/9999')
-
-			expect(response.status).toBe(405) // 設定ファイル固定のため
-			const data = await getResponseJson(response)
-			expect(data).toHaveProperty('error')
-		})
-	})
-
-	describe('Response Format Validation', () => {
-		it('should ensure response format matches frontend expectations', async () => {
-			// フロントエンドの型修正と整合性確認
-			const response = await createTestRequest(testProductionApp, 'GET', '/api/categories')
-			const data = await getResponseJson(response)
-
-			expect(response.status).toBe(200)
-
-			// フロントエンドが期待する配列形式
-			expect(Array.isArray(data)).toBe(true)
-
-			// オブジェクト包装（{categories: [...]}）でないことを確認
-			expect(data).not.toHaveProperty('categories')
-			expect(data).not.toHaveProperty('total')
-
-			// 直接配列であることを確認
-			if (data.length > 0) {
-				expect(data[0]).toHaveProperty('id')
-				expect(data[0]).toHaveProperty('name')
-			}
+			expect(deleteResponse.status).toBe(405)
+			const deleteData = await getResponseJson(deleteResponse)
+			expect(deleteData).toHaveProperty('error', 'Categories are fixed and cannot be deleted')
 		})
 	})
 })

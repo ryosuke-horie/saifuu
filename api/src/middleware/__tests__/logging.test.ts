@@ -1,14 +1,18 @@
-import { type Context, Hono } from 'hono'
+import type { Context } from 'hono'
+import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LoggerFactory } from '../../logger/factory'
-import {
-	getLogger,
-	getLoggerContext,
-	getRequestId,
-	type LoggingVariables,
-	loggingMiddleware,
-	logWithContext,
-} from '../logging'
+import type { LoggingVariables } from '../logging'
+import { loggingMiddleware } from '../logging'
+
+/**
+ * Logging Middleware のテスト
+ *
+ * Issue #299 修正対応:
+ * - 実装詳細のテストを削除
+ * - ヘルパー関数のテストを削除（統合テストでカバー済み）
+ * - 重複したテストを統合
+ */
 
 // LoggerFactoryをモック
 vi.mock('../../logger/factory', () => ({
@@ -125,32 +129,25 @@ describe('Logging Middleware', () => {
 			)
 		})
 
-		it('should use warn level for 4xx status codes', async () => {
+		// ステータスコードによるログレベルのテストをパラメータ化
+		it.each([
+			{ status: 404, level: 'warn', description: '4xx client error' },
+			{ status: 500, level: 'error', description: '5xx server error' },
+		])('should use $level level for $description', async ({ status, level }) => {
 			const app = new Hono()
 			app.use(loggingMiddleware())
-			app.get('/not-found', (c) => c.text('Not Found', 404))
+			app.get('/test', (c) => {
+				c.status(status as Parameters<typeof c.status>[0])
+				return c.text('Response')
+			})
 
-			await app.request('/not-found')
+			await app.request('/test')
 
-			expect(mockLogger.warn).toHaveBeenCalledWith(
-				expect.stringContaining('Request completed: GET /not-found - 404'),
+			const logMethod = mockLogger[level as keyof typeof mockLogger]
+			expect(logMethod).toHaveBeenCalledWith(
+				expect.stringContaining(`GET /test - ${status}`),
 				expect.objectContaining({
-					statusCode: 404,
-				})
-			)
-		})
-
-		it('should use error level for 5xx status codes', async () => {
-			const app = new Hono()
-			app.use(loggingMiddleware())
-			app.get('/server-error', (c) => c.text('Server Error', 500))
-
-			await app.request('/server-error')
-
-			expect(mockLogger.error).toHaveBeenCalledWith(
-				expect.stringContaining('Request failed: GET /server-error - 500'),
-				expect.objectContaining({
-					statusCode: 500,
+					statusCode: status,
 				})
 			)
 		})
@@ -182,145 +179,6 @@ describe('Logging Middleware', () => {
 				expect.anything(),
 				expect.objectContaining({ operationType: 'delete' })
 			)
-		})
-	})
-
-	describe('Helper Functions', () => {
-		// テスト用のモックコンテキスト型定義
-		type MockedContext = {
-			get: ReturnType<typeof vi.fn>
-		}
-
-		let testContext: MockedContext
-
-		beforeEach(() => {
-			testContext = {
-				get: vi.fn(),
-			}
-		})
-
-		describe('getLogger', () => {
-			it('should return logger from context', () => {
-				testContext.get.mockReturnValue(mockLogger)
-
-				const result = getLogger(testContext as unknown as Context<{ Variables: LoggingVariables }>)
-
-				expect(result).toBe(mockLogger)
-				expect(testContext.get).toHaveBeenCalledWith('logger')
-			})
-
-			it('should throw error if logger not found', () => {
-				testContext.get.mockReturnValue(undefined)
-
-				expect(() =>
-					getLogger(testContext as unknown as Context<{ Variables: LoggingVariables }>)
-				).toThrow('Logger not found in context. Ensure loggingMiddleware is applied.')
-			})
-		})
-
-		describe('getRequestId', () => {
-			it('should return request ID from context', () => {
-				testContext.get.mockReturnValue('test-request-id')
-
-				const result = getRequestId(
-					testContext as unknown as Context<{ Variables: LoggingVariables }>
-				)
-
-				expect(result).toBe('test-request-id')
-				expect(testContext.get).toHaveBeenCalledWith('requestId')
-			})
-
-			it('should throw error if request ID not found', () => {
-				testContext.get.mockReturnValue(undefined)
-
-				expect(() =>
-					getRequestId(testContext as unknown as Context<{ Variables: LoggingVariables }>)
-				).toThrow('Request ID not found in context. Ensure loggingMiddleware is applied.')
-			})
-		})
-
-		describe('getLoggerContext', () => {
-			it('should return both logger and request ID', () => {
-				testContext.get.mockImplementation((key: string) => {
-					if (key === 'logger') return mockLogger
-					if (key === 'requestId') return 'test-request-id'
-					return undefined
-				})
-
-				const result = getLoggerContext(
-					testContext as unknown as Context<{ Variables: LoggingVariables }>
-				)
-
-				expect(result).toEqual({
-					logger: mockLogger,
-					requestId: 'test-request-id',
-				})
-			})
-		})
-
-		describe('logWithContext', () => {
-			it('should log with request ID from context', () => {
-				testContext.get.mockImplementation((key: string) => {
-					if (key === 'logger') return mockLogger
-					if (key === 'requestId') return 'test-request-id'
-					return undefined
-				})
-
-				logWithContext(
-					testContext as unknown as Context<{ Variables: LoggingVariables }>,
-					'info',
-					'Test message',
-					{ data: { value: 'test' } }
-				)
-
-				expect(mockLogger.info).toHaveBeenCalledWith('Test message', {
-					requestId: 'test-request-id',
-					data: { value: 'test' },
-				})
-			})
-
-			it('should work with all log levels', () => {
-				testContext.get.mockImplementation((key: string) => {
-					if (key === 'logger') return mockLogger
-					if (key === 'requestId') return 'test-request-id'
-					return undefined
-				})
-
-				const ctx = testContext as unknown as Context<{ Variables: LoggingVariables }>
-				logWithContext(ctx, 'debug', 'Debug message')
-				logWithContext(ctx, 'info', 'Info message')
-				logWithContext(ctx, 'warn', 'Warn message')
-				logWithContext(ctx, 'error', 'Error message')
-
-				expect(mockLogger.debug).toHaveBeenCalledWith('Debug message', {
-					requestId: 'test-request-id',
-				})
-				expect(mockLogger.info).toHaveBeenCalledWith('Info message', {
-					requestId: 'test-request-id',
-				})
-				expect(mockLogger.warn).toHaveBeenCalledWith('Warn message', {
-					requestId: 'test-request-id',
-				})
-				expect(mockLogger.error).toHaveBeenCalledWith('Error message', {
-					requestId: 'test-request-id',
-				})
-			})
-		})
-	})
-
-	describe('Operation Type Detection', () => {
-		it('should correctly identify read operations', () => {
-			const app = new Hono()
-			app.use(loggingMiddleware())
-
-			const readMethods = ['GET', 'HEAD', 'OPTIONS']
-
-			readMethods.forEach((method) => {
-				app.on(method, '/test', (c) => c.text('OK'))
-			})
-
-			// この部分は実際のHTTPメソッドでテストする必要がある
-			// 単体テストでは内部関数を直接テストする方が適切
 		})
 	})
 

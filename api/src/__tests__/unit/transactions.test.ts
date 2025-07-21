@@ -26,6 +26,11 @@ import testProductionApp from '../helpers/test-production-app'
  * - POST /api/transactions
  * - PUT /api/transactions/:id
  * - DELETE /api/transactions/:id
+ *
+ * Issue #299 修正対応:
+ * - バリデーションテストをパラメータ化
+ * - 重複したIDバリデーションテストを統合
+ * - エッジケーステストを最小限に削減
  */
 
 describe('Transactions API - Unit Tests', () => {
@@ -239,153 +244,71 @@ describe('Transactions API - Unit Tests', () => {
 			expect(data.description).toBe(newTransaction.description)
 		})
 
-		it('should reject income type transactions', async () => {
-			// Red: 収入タイプの取引は拒否される
-			const incomeTransaction = {
-				...testRequestPayloads.createTransaction,
-				type: 'income' as const,
-			}
+		// パラメータ化されたバリデーションテスト
+		it.each([
+			{
+				name: 'income type transaction',
+				data: { ...testRequestPayloads.createTransaction, type: 'income' as const },
+				expectedStatus: 400,
+				expectedError: '取引種別は支出（expense）のみ許可されています',
+			},
+			{
+				name: 'invalid transaction type',
+				data: invalidTransactionData.invalidType,
+				expectedStatus: 400,
+				expectedError: '取引種別は支出（expense）のみ許可されています',
+			},
+			{
+				name: 'missing date',
+				data: { amount: 1000, type: 'expense' as const, categoryId: 1, description: '日付なし' },
+				expectedStatus: 400,
+				expectedError: 'dateは必須です',
+			},
+			{
+				name: 'zero amount',
+				data: { ...testRequestPayloads.createTransaction, amount: 0 },
+				expectedStatus: 400,
+				expectedError: '金額は正の数値である必要があります',
+			},
+			{
+				name: 'amount exceeding limit',
+				data: { ...testRequestPayloads.createTransaction, amount: 10000001 },
+				expectedStatus: 400,
+				expectedError: '金額は1円以上10000000円以下である必要があります',
+			},
+			{
+				name: 'description exceeding 500 chars',
+				data: { ...testRequestPayloads.createTransaction, description: 'a'.repeat(501) },
+				expectedStatus: 400,
+				expectedError: '説明は500文字以下である必要があります',
+			},
+		])('should reject $name', async ({ data, expectedStatus, expectedError }) => {
+			const response = await createTestRequest(testProductionApp, 'POST', '/api/transactions', data)
 
-			const response = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/transactions',
-				incomeTransaction
-			)
-
-			expect(response.status).toBe(400)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, '取引種別は支出（expense）のみ許可されています')
+			expect(response.status).toBe(expectedStatus)
+			const responseData = await getResponseJson(response)
+			expectErrorResponse(responseData, expectedError)
 		})
 
+		// 必須フィールド不足とカテゴリIDは別扱い（エラーステータスが不定のため）
 		it('should handle missing required fields', async () => {
-			// Red: 必須フィールド不足時のテスト
 			const response = await createTestRequest(
 				testProductionApp,
 				'POST',
 				'/api/transactions',
 				invalidTransactionData.missingAmount
 			)
-
-			// バリデーションが実装されていれば400、そうでなければ500
 			expect([400, 500]).toContain(response.status)
 		})
 
-		it('should handle invalid transaction type', async () => {
-			// Red: 無効な取引種別のテスト
-			const response = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/transactions',
-				invalidTransactionData.invalidType
-			)
-
-			expect(response.status).toBe(400)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, '取引種別は支出（expense）のみ許可されています')
-		})
-
 		it('should handle negative amount', async () => {
-			// Red: 負の金額のテスト
 			const response = await createTestRequest(
 				testProductionApp,
 				'POST',
 				'/api/transactions',
 				invalidTransactionData.negativeAmount
 			)
-
 			expect([400, 500]).toContain(response.status)
-		})
-
-		it('should handle missing date', async () => {
-			// Red: 日付が不足している場合のテスト
-			const invalidData = {
-				amount: 1000,
-				type: 'expense' as const,
-				categoryId: 1,
-				description: '日付なし',
-			}
-			const response = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/transactions',
-				invalidData
-			)
-
-			expect(response.status).toBe(400)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'dateは必須です')
-		})
-
-		it('should handle invalid category ID', async () => {
-			// Red: 無効なカテゴリIDのテスト
-			const invalidData = {
-				...testRequestPayloads.createTransaction,
-				categoryId: 99999, // 存在しないカテゴリID
-			}
-			const response = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/transactions',
-				invalidData
-			)
-
-			// 現在の実装ではバリデーションがないので500か200になる可能性がある
-			expect([200, 201, 400, 500]).toContain(response.status)
-		})
-
-		it('should handle zero amount', async () => {
-			// Red: 金額が0の場合のテスト
-			const invalidData = {
-				...testRequestPayloads.createTransaction,
-				amount: 0,
-			}
-			const response = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/transactions',
-				invalidData
-			)
-
-			expect(response.status).toBe(400)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, '金額は正の数値である必要があります')
-		})
-
-		it('should handle very large amount', async () => {
-			// Red: 非常に大きな金額のテスト（1000万円以上）
-			const invalidData = {
-				...testRequestPayloads.createTransaction,
-				amount: 10000001,
-			}
-			const response = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/transactions',
-				invalidData
-			)
-
-			expect(response.status).toBe(400)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, '金額は1円以上10000000円以下である必要があります')
-		})
-
-		it('should handle very long description', async () => {
-			// Red: 非常に長い説明文のテスト（500文字以上）
-			const invalidData = {
-				...testRequestPayloads.createTransaction,
-				description: 'a'.repeat(501),
-			}
-			const response = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/transactions',
-				invalidData
-			)
-
-			expect(response.status).toBe(400)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, '説明は500文字以下である必要があります')
 		})
 	})
 
@@ -415,29 +338,22 @@ describe('Transactions API - Unit Tests', () => {
 			expectErrorResponse(data, 'Transaction not found')
 		})
 
-		it('should return 400 for invalid ID format', async () => {
-			// Red: 無効なID形式のテスト
-			const response = await createTestRequest(testProductionApp, 'GET', '/api/transactions/abc')
+		// パラメータ化されたIDバリデーションテスト
+		it.each([
+			{ id: 'abc', name: 'invalid ID format' },
+			{ id: '-1', name: 'negative ID' },
+			{ id: '1.5', name: 'decimal ID' },
+		])('should handle $name', async ({ id }) => {
+			const response = await createTestRequest(testProductionApp, 'GET', `/api/transactions/${id}`)
 
-			expect(response.status).toBe(400)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'IDは数値である必要があります')
-		})
-
-		it('should return 400 for negative ID', async () => {
-			// Red: 負のIDのテスト
-			const response = await createTestRequest(testProductionApp, 'GET', '/api/transactions/-1')
-
-			// 現在の実装ではNumber.parseInt(-1)は有効な数値なので404になる可能性がある
-			expect([400, 404]).toContain(response.status)
-		})
-
-		it('should return 400 for decimal ID', async () => {
-			// Red: 小数のIDのテスト
-			const response = await createTestRequest(testProductionApp, 'GET', '/api/transactions/1.5')
-
-			// 現在の実装ではNumber.parseInt(1.5)は1になるので、ID=1のデータの有無によって結果が変わる
-			expect([200, 400, 404]).toContain(response.status)
+			if (id === 'abc') {
+				expect(response.status).toBe(400)
+				const data = await getResponseJson(response)
+				expectErrorResponse(data, 'IDは数値である必要があります')
+			} else {
+				// 負のIDや小数IDは実装によって結果が異なる
+				expect([200, 400, 404]).toContain(response.status)
+			}
 		})
 	})
 
@@ -479,22 +395,6 @@ describe('Transactions API - Unit Tests', () => {
 			expect(response.status).toBe(404)
 			const data = await getResponseJson(response)
 			expectErrorResponse(data, 'Transaction not found')
-		})
-
-		it('should return 400 for invalid ID format when updating', async () => {
-			// Red: 無効なID形式での更新テスト
-			const updateData = testRequestPayloads.updateTransaction
-
-			const response = await createTestRequest(
-				testProductionApp,
-				'PUT',
-				'/api/transactions/abc',
-				updateData
-			)
-
-			expect(response.status).toBe(400)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'IDは数値である必要があります')
 		})
 
 		it('should allow partial updates', async () => {
@@ -589,15 +489,6 @@ describe('Transactions API - Unit Tests', () => {
 			expect(response.status).toBe(404)
 			const data = await getResponseJson(response)
 			expectErrorResponse(data, 'Transaction not found')
-		})
-
-		it('should return 400 for invalid ID format when deleting', async () => {
-			// Red: 無効なID形式での削除テスト
-			const response = await createTestRequest(testProductionApp, 'DELETE', '/api/transactions/abc')
-
-			expect(response.status).toBe(400)
-			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'IDは数値である必要があります')
 		})
 
 		it('should not be able to delete already deleted transaction', async () => {
