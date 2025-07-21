@@ -21,12 +21,22 @@ export const idValidator: Validator<number> = compose(
 )
 
 // カテゴリIDバリデーター（オプショナル）
-export const categoryIdValidator: Validator<number | null | undefined> = (value, fieldName) => {
+export const categoryIdValidator: Validator<number | string | null | undefined> = (value, fieldName) => {
 	// null/undefinedは許可
 	if (value === null || value === undefined) {
 		return null
 	}
-	return positiveNumber('カテゴリIDは正の整数である必要があります')(value, fieldName)
+	// 文字列の場合は数値に変換
+	const numericValue = typeof value === 'string' ? Number(value) : value
+	// 数値変換できない場合はエラー
+	if (isNaN(numericValue)) {
+		return {
+			field: fieldName,
+			message: 'カテゴリIDは数値である必要があります',
+			code: 'INVALID_TYPE',
+		}
+	}
+	return positiveNumber('カテゴリIDは正の整数である必要があります')(numericValue, fieldName)
 }
 
 // 金額バリデーター（必須）
