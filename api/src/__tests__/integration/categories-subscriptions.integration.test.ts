@@ -10,6 +10,10 @@ import testProductionApp from '../helpers/test-production-app'
  *
  * 設定ファイルベースのカテゴリとサブスクリプションの整合性をテストする
  * カテゴリは設定ファイルで固定のため、参照整合性のみをテスト
+ *
+ * Issue #299 修正対応:
+ * - カテゴリAPIエンドポイントの重複テストを削除
+ * - categories.integration.test.ts でカバーされている405エラーテストを削除
  */
 describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 	beforeEach(async () => {
@@ -142,45 +146,5 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 		})
 	})
 
-	describe('API Category Endpoints', () => {
-		it('should return 405 for category creation attempts', async () => {
-			const response = await createTestRequest(testProductionApp, 'POST', '/api/categories', {
-				name: 'Test Category',
-				type: 'expense',
-				color: '#123456',
-			})
-			expect(response.status).toBe(405) // Method Not Allowed
-		})
-
-		it('should return 405 for category update attempts', async () => {
-			const response = await createTestRequest(testProductionApp, 'PUT', '/api/categories/1', {
-				name: 'Updated Category',
-			})
-			expect(response.status).toBe(405) // Method Not Allowed
-		})
-
-		it('should return 405 for category deletion attempts', async () => {
-			const response = await createTestRequest(testProductionApp, 'DELETE', '/api/categories/1')
-			expect(response.status).toBe(405) // Method Not Allowed
-		})
-
-		it('should return categories from config file', async () => {
-			const response = await createTestRequest(testProductionApp, 'GET', '/api/categories')
-			expect(response.status).toBe(200)
-
-			const data = await getResponseJson(response)
-			expect(Array.isArray(data)).toBe(true)
-			expect(data.length).toBe(ALL_CATEGORIES.length)
-
-			// 設定ファイルと一致することを確認
-			data.forEach((category: unknown, index: number) => {
-				const cat = category as { id: number; name: string; type: string; color: string }
-				const configCat = ALL_CATEGORIES[index]
-				expect(cat.id).toBe(configCat.numericId)
-				expect(cat.name).toBe(configCat.name)
-				expect(cat.type).toBe(configCat.type)
-				expect(cat.color).toBe(configCat.color)
-			})
-		})
-	})
+	// カテゴリAPIエンドポイントのテストは categories.integration.test.ts でカバーされているため削除
 })
