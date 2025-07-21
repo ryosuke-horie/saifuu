@@ -60,7 +60,12 @@ jobs:
           version: 10
       
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # CI環境ではビルドスクリプトを信頼して実行
+          echo "side-effects-cache=false" >> .npmrc
+          pnpm install --frozen-lockfile
+          # better-sqlite3を明示的にリビルド
+          cd api && pnpm rebuild better-sqlite3
       
       - name: Type check
         run: pnpm run typecheck
