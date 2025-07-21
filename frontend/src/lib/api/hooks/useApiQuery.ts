@@ -11,7 +11,7 @@
 
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
-import { handleApiError } from "../index";
+import { handleApiError } from "../errors";
 
 /**
  * useApiQueryフックのオプション

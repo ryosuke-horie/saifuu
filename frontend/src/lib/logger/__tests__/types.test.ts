@@ -25,20 +25,20 @@ describe("Logger Types and Validation", () => {
 		it("shouldLogが正しく判定する", () => {
 			// debug設定では全て出力
 			expect(shouldLog("debug", "debug")).toBe(true);
-			expect(shouldLog("info", "debug")).toBe(true);
-			expect(shouldLog("warn", "debug")).toBe(true);
-			expect(shouldLog("error", "debug")).toBe(true);
+			expect(shouldLog("debug", "info")).toBe(true);
+			expect(shouldLog("debug", "warn")).toBe(true);
+			expect(shouldLog("debug", "error")).toBe(true);
 
 			// info設定ではdebugはスキップ
-			expect(shouldLog("debug", "info")).toBe(false);
+			expect(shouldLog("info", "debug")).toBe(false);
 			expect(shouldLog("info", "info")).toBe(true);
-			expect(shouldLog("warn", "info")).toBe(true);
-			expect(shouldLog("error", "info")).toBe(true);
+			expect(shouldLog("info", "warn")).toBe(true);
+			expect(shouldLog("info", "error")).toBe(true);
 
 			// error設定では他は全てスキップ
-			expect(shouldLog("debug", "error")).toBe(false);
-			expect(shouldLog("info", "error")).toBe(false);
-			expect(shouldLog("warn", "error")).toBe(false);
+			expect(shouldLog("error", "debug")).toBe(false);
+			expect(shouldLog("error", "info")).toBe(false);
+			expect(shouldLog("error", "warn")).toBe(false);
 			expect(shouldLog("error", "error")).toBe(true);
 		});
 	});

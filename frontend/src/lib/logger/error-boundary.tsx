@@ -165,7 +165,7 @@ class LoggedErrorBoundaryClass extends Component<
 	private resetErrorBoundary = () => {
 		// タイムアウトをクリア
 		if (this.resetTimeoutId) {
-			clearTimeout(this.resetTimeoutId);
+			globalThis.clearTimeout(this.resetTimeoutId);
 		}
 
 		this.setState({
@@ -191,11 +191,11 @@ class LoggedErrorBoundaryClass extends Component<
 			}));
 
 			// 自動リセットのタイマー設定（5秒後）
-			this.resetTimeoutId = window.setTimeout(() => {
+			this.resetTimeoutId = globalThis.setTimeout(() => {
 				if (this.state.hasError) {
 					this.resetErrorBoundary();
 				}
-			}, 5000);
+			}, 5000) as unknown as number;
 		}
 	};
 
