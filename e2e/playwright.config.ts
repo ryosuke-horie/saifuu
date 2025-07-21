@@ -27,8 +27,8 @@ export default defineConfig({
 
 	// 共通設定
 	use: {
-		// ベースURL（E2E用開発サーバー）
-		baseURL: "http://localhost:3002",
+		// ベースURL（開発サーバー）
+		baseURL: "http://localhost:3000",
 
 		// 失敗時のスクリーンショット
 		screenshot: "only-on-failure",
@@ -53,23 +53,20 @@ export default defineConfig({
 		},
 	],
 
-	// 開発サーバーの起動設定（テスト実行前に自動起動）
-	// ローカル環境専用: 既存サーバーを再利用して効率化
-	webServer: [
-		{
-			command: "cd ../frontend && NEXT_PUBLIC_API_URL=http://localhost:3003/api npm run dev:e2e",
-			url: "http://localhost:3002",
-			reuseExistingServer: true,
-			timeout: 120 * 1000,
-		},
-		{
-			command: "cd ../api && npm run dev:e2e",
-			url: "http://localhost:3003/api/health",
-			reuseExistingServer: true,
-			timeout: 150 * 1000, // E2Eサーバーはデータベース初期化時間を考慮して延長
-			// カテゴリデータが確実に準備されるまで待機
-			stdout: "pipe", // サーバーログを確認可能にする
-			stderr: "pipe",
-		},
-	],
+	// 開発サーバーは手動で起動することを想定（自動起動は無効）
+	// webServer設定をコメントアウト
+	// webServer: [
+	// 	{
+	// 		command: "cd ../frontend && npm run dev",
+	// 		url: "http://localhost:3000",
+	// 		reuseExistingServer: true,
+	// 		timeout: 120 * 1000,
+	// 	},
+	// 	{
+	// 		command: "cd ../api && npm run dev",
+	// 		url: "http://localhost:5173/api/health",
+	// 		reuseExistingServer: true,
+	// 		timeout: 120 * 1000,
+	// 	},
+	// ],
 });
