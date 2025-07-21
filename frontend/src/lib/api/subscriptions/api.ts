@@ -29,7 +29,8 @@ export async function fetchSubscriptions(
 		);
 	} catch (error) {
 		console.error("Failed to fetch subscriptions:", error);
-		throw new Error("サブスクリプション一覧の取得に失敗しました");
+		// エラーオブジェクトをそのまま再スローして、上位でエラーハンドリングできるようにする
+		throw error;
 	}
 }
 
@@ -51,7 +52,8 @@ export async function fetchSubscriptionById(
 		return transformApiSubscriptionToFrontend(response, categories);
 	} catch (error) {
 		console.error(`Failed to fetch subscription ${id}:`, error);
-		throw new Error("サブスクリプション詳細の取得に失敗しました");
+		// エラーオブジェクトをそのまま再スローして、上位でエラーハンドリングできるようにする
+		throw error;
 	}
 }
 
@@ -75,7 +77,8 @@ export async function createSubscription(
 		return transformApiSubscriptionToFrontend(response, categories);
 	} catch (error) {
 		console.error("Failed to create subscription:", error);
-		throw new Error("サブスクリプションの作成に失敗しました");
+		// エラーオブジェクトをそのまま再スローして、上位でエラーハンドリングできるようにする
+		throw error;
 	}
 }
 
@@ -101,7 +104,8 @@ export async function updateSubscription(
 		return transformApiSubscriptionToFrontend(response, categories);
 	} catch (error) {
 		console.error(`Failed to update subscription ${id}:`, error);
-		throw new Error("サブスクリプションの更新に失敗しました");
+		// エラーオブジェクトをそのまま再スローして、上位でエラーハンドリングできるようにする
+		throw error;
 	}
 }
 
@@ -114,7 +118,8 @@ export async function deleteSubscription(id: string): Promise<void> {
 		await apiClient.delete(`/subscriptions/${id}`);
 	} catch (error) {
 		console.error(`Failed to delete subscription ${id}:`, error);
-		throw new Error("サブスクリプションの削除に失敗しました");
+		// エラーオブジェクトをそのまま再スローして、上位でエラーハンドリングできるようにする
+		throw error;
 	}
 }
 

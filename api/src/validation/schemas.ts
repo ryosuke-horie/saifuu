@@ -293,7 +293,13 @@ export function validateSubscriptionCreate(
 	const errors: ValidationError[] = []
 
 	// 必須フィールドのチェック
-	const requiredFields = ['name', 'amount', 'billingCycle', 'nextBillingDate'] as const
+	const requiredFields = [
+		'name',
+		'amount',
+		'categoryId',
+		'billingCycle',
+		'nextBillingDate',
+	] as const
 	for (const field of requiredFields) {
 		if (data[field] === undefined || data[field] === null) {
 			errors.push({

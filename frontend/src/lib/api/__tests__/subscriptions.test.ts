@@ -153,7 +153,7 @@ describe("Subscriptions API", () => {
 
 			// 存在しないカテゴリの場合、エラーが投げられることを確認
 			await expect(fetchSubscriptions(mockCategories)).rejects.toThrow(
-				"サブスクリプション一覧の取得に失敗しました",
+				"Category with ID 999 not found",
 			);
 		});
 
@@ -162,7 +162,7 @@ describe("Subscriptions API", () => {
 			mockGet.mockRejectedValueOnce(new Error("Network Error"));
 
 			await expect(fetchSubscriptions(mockCategories)).rejects.toThrow(
-				"サブスクリプション一覧の取得に失敗しました",
+				"Network Error",
 			);
 		});
 	});

@@ -46,7 +46,7 @@ describe('Validation Framework', () => {
     });
 
     it('有効な値を受け入れる', () => {
-      const validator = required<string>();
+      const validator = required();
       expect(validator('value', 'field')).toBeNull();
       expect(validator(0, 'field')).toBeNull();
       expect(validator(false, 'field')).toBeNull();
