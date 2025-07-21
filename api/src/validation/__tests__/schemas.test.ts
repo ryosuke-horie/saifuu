@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { VALIDATION_LIMITS } from '../../../../shared/src/validation'
 import {
 	validateId,
 	validateSubscriptionCreate,

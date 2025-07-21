@@ -290,25 +290,29 @@ describe('Transactions API - Unit Tests', () => {
 			expectErrorResponse(responseData, expectedError)
 		})
 
-		// 必須フィールド不足とカテゴリIDは別扱い（エラーステータスが不定のため）
-		it('should handle missing required fields', async () => {
+		// 必須フィールド不足の明確なバリデーションエラー
+		it('should return 400 for missing required fields', async () => {
 			const response = await createTestRequest(
 				testProductionApp,
 				'POST',
 				'/api/transactions',
 				invalidTransactionData.missingAmount
 			)
-			expect([400, 500]).toContain(response.status)
+			expect(response.status).toBe(400)
+			const data = await getResponseJson(response)
+			expectErrorResponse(data, 'amountは必須です')
 		})
 
-		it('should handle negative amount', async () => {
+		it('should return 400 for negative amount', async () => {
 			const response = await createTestRequest(
 				testProductionApp,
 				'POST',
 				'/api/transactions',
 				invalidTransactionData.negativeAmount
 			)
-			expect([400, 500]).toContain(response.status)
+			expect(response.status).toBe(400)
+			const data = await getResponseJson(response)
+			expectErrorResponse(data, '金額は正の数値である必要があります')
 		})
 	})
 
