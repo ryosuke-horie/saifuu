@@ -60,7 +60,7 @@ jobs:
           version: 10
       
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        run: pnpm install --frozen-lockfile
       
       - name: Type check
         run: pnpm run typecheck
