@@ -71,6 +71,15 @@ export const setupBrowserMocks = () => {
 		setItem: vi.fn(),
 		removeItem: vi.fn(),
 	};
+
+	// @ts-ignore - navigator.clipboardのモック
+	global.navigator = {
+		clipboard: {
+			writeText: vi.fn().mockResolvedValue(undefined),
+			readText: vi.fn().mockResolvedValue(''),
+		},
+		userAgent: 'Mozilla/5.0 (Test Browser)',
+	};
 };
 
 /**
