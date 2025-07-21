@@ -230,6 +230,47 @@ type Validator<T> = (value: T, fieldName: string) => ValidationError | null;
 4. **型安全性の維持**: ジェネリクスを適切に使用してタイプセーフティを確保
 5. **組み合わせて使用**: `compose`を使って複雑なバリデーションルールを構築
 
+## APIルートでの実装例
+
+### 2025年1月の実装
+
+APIルートにて共通バリデーションフレームワークを適用し、以下の改善を実現しました：
+
+#### 実装内容
+- `api/src/validation/schemas.ts` に共通バリデーションスキーマを集約
+- トランザクションAPIとサブスクリプションAPIで統一されたバリデーションを実装
+- カテゴリIDバリデーターで文字列から数値への自動変換を追加
+
+#### 改善効果
+- **コード削減**: 約80-100行の重複コードを削除
+- **一貫性向上**: すべてのAPIで同じバリデーションルールを適用
+- **エラーメッセージ統一**: 日本語の統一されたエラーメッセージ
+- **型安全性**: TypeScriptの型システムを活用
+
+#### 実装例
+```typescript
+// api/src/validation/schemas.ts
+export const categoryIdValidator: Validator<number | string | null | undefined> = (
+  value,
+  fieldName
+) => {
+  if (value === null || value === undefined) return null;
+  
+  // 文字列の場合は数値に変換
+  const numericValue = typeof value === 'string' ? Number(value) : value;
+  
+  if (isNaN(numericValue)) {
+    return {
+      field: fieldName,
+      message: 'カテゴリIDは数値である必要があります',
+      code: 'INVALID_TYPE',
+    };
+  }
+  
+  return positiveNumber('カテゴリIDは正の整数である必要があります')(numericValue, fieldName);
+};
+```
+
 ## 今後の拡張
 
 このフレームワークは、今後以下の機能で拡張可能です：
