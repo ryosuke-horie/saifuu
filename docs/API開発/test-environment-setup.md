@@ -16,14 +16,19 @@ The test environment for the API package has been successfully set up following 
 ```
 api/src/__tests__/
 ├── unit/                           # Unit tests
-│   └── subscriptions.test.ts       # Subscription API unit tests
+│   ├── subscriptions.test.ts       # Subscription API unit tests
+│   ├── transactions.test.ts        # Transaction API unit tests
+│   ├── categories.test.ts          # Category API unit tests
+│   └── fixtures-exclusion.test.ts  # Test helper exclusion verification
 ├── integration/                    # Integration tests  
 │   └── subscriptions.integration.test.ts  # Full database integration tests
-└── helpers/                        # Test utilities
+└── helpers/                        # Test utilities (excluded from test execution)
     ├── test-db.ts                  # Database mocking and setup
     ├── test-app.ts                 # Hono app testing utilities
     └── fixtures.ts                 # Test data fixtures
 ```
+
+**Note**: The `helpers/` directory contains test utilities and fixtures that are automatically excluded from test execution and coverage reporting.
 
 ### 4. Test Scripts Available
 - `npm run test`: Run all tests in watch mode
@@ -91,3 +96,13 @@ api/src/__tests__/
 - Clear test structure
 - Descriptive test names
 - Both positive and negative test cases
+- Test helper files excluded from test execution
+- Automated verification of test configuration
+
+### 11. Test Helper Files Exclusion
+
+As of 2025年1月, test helper files in the `__tests__/helpers/` directory are automatically excluded from:
+- Test execution (they are not run as tests)
+- Coverage reporting (they don't affect coverage metrics)
+
+This is configured in `vitest.config.ts` with the pattern `**/__tests__/helpers/**` and is verified by the `fixtures-exclusion.test.ts` test file.
