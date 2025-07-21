@@ -21,7 +21,10 @@ export const idValidator: Validator<number> = compose(
 )
 
 // カテゴリIDバリデーター（オプショナル）
-export const categoryIdValidator: Validator<number | string | null | undefined> = (value, fieldName) => {
+export const categoryIdValidator: Validator<number | string | null | undefined> = (
+	value,
+	fieldName
+) => {
 	// null/undefinedは許可
 	if (value === null || value === undefined) {
 		return null

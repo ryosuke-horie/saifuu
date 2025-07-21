@@ -26,16 +26,6 @@ test.describe('支出管理機能', () => {
     // 登録ボタンをクリック
     await page.getByRole('button', { name: '登録', exact: true }).click();
     
-    // APIレスポンスを待つ（エラーが表示される場合があるため）
-    await page.waitForTimeout(1000);
-    
-    // エラーメッセージが表示されているか確認
-    const errorMessage = page.locator('text=/登録に失敗しました/');
-    if (await errorMessage.isVisible()) {
-      const errorText = await page.locator('.text-red-700').textContent();
-      console.error('API Error:', errorText);
-    }
-    
     // フォームが閉じることを確認（モーダルやフォームが消えるのを待つ）
     await expect(page.getByRole('button', { name: '登録', exact: true })).not.toBeVisible();
     
