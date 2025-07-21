@@ -255,7 +255,7 @@ describe('Transactions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Only expense type is allowed')
+			expectErrorResponse(data, '取引種別は支出（expense）のみ許可されています')
 		})
 
 		it('should handle missing required fields', async () => {
@@ -282,7 +282,7 @@ describe('Transactions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Only expense type is allowed')
+			expectErrorResponse(data, '取引種別は支出（expense）のみ許可されています')
 		})
 
 		it('should handle negative amount', async () => {
@@ -314,7 +314,7 @@ describe('Transactions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Date is required')
+			expectErrorResponse(data, 'dateは必須です')
 		})
 
 		it('should handle invalid category ID', async () => {
@@ -349,7 +349,7 @@ describe('Transactions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Amount must be a positive number')
+			expectErrorResponse(data, '金額は正の数値である必要があります')
 		})
 
 		it('should handle very large amount', async () => {
@@ -367,7 +367,7 @@ describe('Transactions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Amount must not exceed 10,000,000')
+			expectErrorResponse(data, '金額は1円以上10000000円以下である必要があります')
 		})
 
 		it('should handle very long description', async () => {
@@ -385,7 +385,7 @@ describe('Transactions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Description must not exceed 500 characters')
+			expectErrorResponse(data, '説明は500文字以下である必要があります')
 		})
 	})
 
@@ -421,7 +421,7 @@ describe('Transactions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Invalid ID format')
+			expectErrorResponse(data, 'IDは数値である必要があります')
 		})
 
 		it('should return 400 for negative ID', async () => {
@@ -494,7 +494,7 @@ describe('Transactions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Invalid ID format')
+			expectErrorResponse(data, 'IDは数値である必要があります')
 		})
 
 		it('should allow partial updates', async () => {
@@ -597,7 +597,7 @@ describe('Transactions API - Unit Tests', () => {
 
 			expect(response.status).toBe(400)
 			const data = await getResponseJson(response)
-			expectErrorResponse(data, 'Invalid ID format')
+			expectErrorResponse(data, 'IDは数値である必要があります')
 		})
 
 		it('should not be able to delete already deleted transaction', async () => {
