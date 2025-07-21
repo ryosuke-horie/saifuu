@@ -61,11 +61,15 @@ jobs:
       
       - name: Install dependencies
         run: |
-          # CI環境ではビルドスクリプトを信頼して実行
-          echo "side-effects-cache=false" >> .npmrc
+          # better-sqlite3のビルドスクリプトを許可
+          echo "side-effects-cache=false" > ../.npmrc
+          echo "onlyBuiltDependencies[]=better-sqlite3" >> ../.npmrc
           pnpm install --frozen-lockfile
-          # better-sqlite3を明示的にリビルド
-          pnpm rebuild better-sqlite3
+          # ビルドが失敗した場合の追加対策
+          if [ ! -f ../node_modules/better-sqlite3/build/Release/better_sqlite3.node ]; then
+            echo "Rebuilding better-sqlite3..."
+            pnpm rebuild better-sqlite3 --store-dir ~/.pnpm-store
+          fi
       
       - name: Type check
         run: pnpm run typecheck
