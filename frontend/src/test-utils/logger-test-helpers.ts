@@ -77,7 +77,12 @@ export const setupBrowserMocks = () => {
 		clipboard: {
 			writeText: vi.fn().mockResolvedValue(undefined),
 			readText: vi.fn().mockResolvedValue(''),
-		},
+			read: vi.fn().mockResolvedValue(undefined),
+			write: vi.fn().mockResolvedValue(undefined),
+			addEventListener: vi.fn(),
+			dispatchEvent: vi.fn(),
+			removeEventListener: vi.fn(),
+		} as any,
 		userAgent: 'Mozilla/5.0 (Test Browser)',
 	};
 };
