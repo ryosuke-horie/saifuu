@@ -32,7 +32,7 @@ export const categoryIdValidator: Validator<number | string | null | undefined> 
 	// 文字列の場合は数値に変換
 	const numericValue = typeof value === 'string' ? Number(value) : value
 	// 数値変換できない場合はエラー
-	if (isNaN(numericValue)) {
+	if (Number.isNaN(numericValue)) {
 		return {
 			field: fieldName,
 			message: 'カテゴリIDは数値である必要があります',
