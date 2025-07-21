@@ -81,7 +81,7 @@ jobs:
           echo "" >> frontend_test_time.md
           
           # 依存関係のインストール
-          pnpm install --frozen-lockfile
+          pnpm install --frozen-lockfile --ignore-scripts
           
           # テスト実行時間を計測
           START_TIME=$(date +%s)
@@ -113,7 +113,7 @@ jobs:
           echo "" >> api_test_time.md
           
           # 依存関係のインストール
-          pnpm install --frozen-lockfile
+          pnpm install --frozen-lockfile --ignore-scripts
           
           # ユニットテスト実行時間を計測
           START_TIME=$(date +%s)
