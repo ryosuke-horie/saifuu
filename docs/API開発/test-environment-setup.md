@@ -31,12 +31,12 @@ api/src/__tests__/
 **Note**: The `helpers/` directory contains test utilities and fixtures that are automatically excluded from test execution and coverage reporting.
 
 ### 4. Test Scripts Available
-- `npm run test`: Run all tests in watch mode
-- `npm run test:unit`: Run unit tests once
-- `npm run test:unit:coverage`: Run unit tests with coverage report
-- `npm run test:integration`: Run integration tests
-- `npm run test:all`: Run all tests (unit + integration)
-- `npm run test:watch`: Run tests in watch mode
+- `pnpm run test`: Run all tests in watch mode
+- `pnpm run test:unit`: Run unit tests once
+- `pnpm run test:unit:coverage`: Run unit tests with coverage report
+- `pnpm run test:integration`: Run integration tests
+- `pnpm run test:all`: Run all tests (unit + integration)
+- `pnpm run test:watch`: Run tests in watch mode
 
 ### 5. TDD Red-Green-Refactor Status
 
@@ -57,7 +57,7 @@ api/src/__tests__/
 
 ### 6. Current Test Results
 ```
-❯ npm run test:unit
+❯ pnpm run test:unit
 7 failed | 8 passed (15 total)
 ```
 

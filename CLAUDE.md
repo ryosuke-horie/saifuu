@@ -54,8 +54,8 @@
 ```
 
 ### 2. 型チェック・リント
-- 何か追加・修正する前や修正後、Commit前に適宜ローカルで `npm run check:fix` を実行し型エラーやフォーマットを検証する
-- 必ず `npm run check:fix` を実行してから作業を終える
+- 何か追加・修正する前や修正後、Commit前に適宜ローカルで `pnpm run check:fix` を実行し型エラーやフォーマットを検証する
+- 必ず `pnpm run check:fix` を実行してから作業を終える
 - 型エラーとリントエラーを放置しない
 - Biomeの設定に従う
 
@@ -121,7 +121,7 @@ VRT(Visual Regression Testing)システムを削除し、以下の3層構造に�
    - API: 90秒以上で警告
 
 **実行方法**:
-- ローカル: `npm run test:ratio`
+- ローカル: `pnpm run test:ratio`
 - CI/CD: 自動実行（PR時、定期実行）
 - 結果: PRコメントに自動投稿
 
@@ -246,11 +246,11 @@ docs/
 **重要**: 開発サーバの起動などセッションを占有するプロセスは、`ghost` ツールを使用してバックグラウンドで実行すること
 
 - **使用場面**: 開発サーバーの起動やその他の長時間実行されるプロセスを実行する場合
-- **禁止事項**: `npm run dev &` のような形式でのバックグラウンド実行は使用しない
+- **禁止事項**: `pnpm run dev &` のような形式でのバックグラウンド実行は使用しない
 - **基本的な使い方**:
   ```bash
   # 開発サーバーをバックグラウンドで起動
-  ghost run npm run dev
+  ghost run pnpm run dev
   
   # プロセスの一覧確認
   ghost list
@@ -267,7 +267,7 @@ docs/
 
 ### 前提条件
 - **mise** - Node.jsバージョン管理（Node.js 22固定）
-- **npm** - パッケージマネージャー
+- **pnpm** - パッケージマネージャー
 
 ### クイックスタート
 ```bash
@@ -275,16 +275,16 @@ docs/
 mise install
 
 # 依存関係のインストール
-npm install
-cd api && npm install
-cd frontend && npm install
+pnpm install
+cd api && pnpm install
+cd frontend && pnpm install
 
 # 環境変数ファイルの作成
 cp api/.env.example api/.env
 cp frontend/.env.example frontend/.env
 
 # データベースのセットアップ
-cd api && npm run db:setup:dev
+cd api && pnpm run db:setup:dev
 ```
 
 **詳細**: [環境変数設定ガイド](./docs/開発環境/環境変数設定ガイド.md)
@@ -294,40 +294,40 @@ cd api && npm run db:setup:dev
 ### 開発サーバー
 ```bash
 # フロントエンド（別ターミナル）
-npm run dev  # http://localhost:3000
+pnpm run dev  # http://localhost:3000
 
 # API（別ターミナル）
-cd api && npm run dev  # http://localhost:5173
+cd api && pnpm run dev  # http://localhost:5173
 
 # バックグラウンド実行（Ghost使用）
-ghost run npm run dev
-ghost run npm run storybook
+ghost run pnpm run dev
+ghost run pnpm run storybook
 ```
 
 ### コード品質チェック
 ```bash
 # 型チェック・リント・テスト実行
-npm run check:fix
-cd api && npm run check:fix
+pnpm run check:fix
+cd api && pnpm run check:fix
 ```
 
 ### テスト実行
 ```bash
 # ユニットテスト
-npm run test:unit
+pnpm run test:unit
 
 # E2Eテスト（ローカルのみ）
-npm run test:e2e
-npm run test:e2e:ui  # UIモード
+pnpm run test:e2e
+pnpm run test:e2e:ui  # UIモード
 ```
 
 ### データベース操作
 ```bash
 # 開発環境マイグレーション
-cd api && npm run db:migrate:dev
+cd api && pnpm run db:migrate:dev
 
 # Drizzle Studio起動
-cd api && npm run db:studio:dev
+cd api && pnpm run db:studio:dev
 ```
 
 **全コマンド一覧**: [コマンドリファレンス](./docs/コマンドリファレンス.md)
@@ -564,9 +564,9 @@ GitHub Actions無料枠を効率的に使用するため、E2Eテストは最小
 ### E2E実行環境
 - **場所**: プロジェクトルート `e2e/` ディレクトリ
 - **実行コマンド**: 
-  - `npm run test:e2e` - 通常実行
-  - `npm run test:e2e:ui` - UI付き実行（デバッグ時）
-  - `npm run test:e2e:report` - 結果レポート表示
+  - `pnpm run test:e2e` - 通常実行
+  - `pnpm run test:e2e:ui` - UI付き実行（デバッグ時）
+  - `pnpm run test:e2e:report` - 結果レポート表示
 - **自動サーバー起動**: フロントエンド・API両方を自動起動
 - **テストデータ**: E2E専用データベースで独立実行
 
@@ -580,9 +580,9 @@ GitHub Actions無料枠を効率的に使用するため、E2Eテストは最小
 
 1. 新機能開発時は、まず設計意図をコメントで記載
 2. **Storybookでコンポーネント分離開発**
-3. 小さな単位で実装し、都度 `npm run check:fix` を実行
+3. 小さな単位で実装し、都度 `pnpm run check:fix` を実行
 4. テストを書く（Storybook・ユニット・E2E）
-5. **実装完了時のE2E確認**: 機能実装が完了したら `npm run test:e2e` で動作確認
+5. **実装完了時のE2E確認**: 機能実装が完了したら `pnpm run test:e2e` で動作確認
 6. **シナリオ変更時の確認**: E2Eテストシナリオを変更した場合は必ずユーザーに確認を取る
 7. 機能の完成度に応じて頻繁にコミット
 8. **PR作成前のE2E実行**: 重要な変更がある場合はPR作成前に再度E2E実行
@@ -595,7 +595,7 @@ GitHub Actions無料枠を効率的に使用するため、E2Eテストは最小
 1. **変更内容の明確化**: 何をどのように変更するかを明確にする
 2. **ユーザーへの確認**: 変更内容をユーザーに説明し、承認を得る
 3. **変更理由の記録**: なぜ変更が必要かをコメントまたはコミットメッセージに記載
-4. **動作確認**: 変更後に必ず `npm run test:e2e` で全シナリオの動作確認を行う
+4. **動作確認**: 変更後に必ず `pnpm run test:e2e` で全シナリオの動作確認を行う
 5. **結果報告**: テスト結果をユーザーに報告する
 
 #### シナリオ変更の例

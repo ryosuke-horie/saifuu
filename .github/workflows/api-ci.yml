@@ -51,26 +51,31 @@ jobs:
         with:
           node-version: '22'
           # セルフホストランナーの制約によりキャッシュは無効
-          # cache: 'npm'
-          # cache-dependency-path: api/package-lock.json
+          # cache: 'pnpm'
+          # cache-dependency-path: api/pnpm-lock.yaml
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
       
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
       
       - name: Type check
-        run: npm run typecheck
+        run: pnpm run typecheck
       
       - name: Biome check
-        run: npm run check
+        run: pnpm run check
       
       - name: Build check
-        run: npm run build
+        run: pnpm run build
       
       - name: Unit tests with coverage
-        run: npm run test:unit:coverage
+        run: pnpm run test:unit:coverage
         
       - name: Integration tests
-        run: npm run test:integration
+        run: pnpm run test:integration
         
       - name: Coverage report
         if: github.event_name == 'pull_request'

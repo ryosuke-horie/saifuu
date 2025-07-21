@@ -38,6 +38,11 @@ jobs:
         with:
           node-version: '22'
       
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
       # テストコード比率の監視
       - name: Check test code ratio
         id: test_ratio
@@ -76,11 +81,11 @@ jobs:
           echo "" >> frontend_test_time.md
           
           # 依存関係のインストール
-          npm ci
+          pnpm install --frozen-lockfile
           
           # テスト実行時間を計測
           START_TIME=$(date +%s)
-          npm run test:unit -- --reporter=json > test_results.json 2>&1 || true
+          pnpm run test:unit -- --reporter=json > test_results.json 2>&1 || true
           END_TIME=$(date +%s)
           DURATION=$((END_TIME - START_TIME))
           
@@ -108,11 +113,11 @@ jobs:
           echo "" >> api_test_time.md
           
           # 依存関係のインストール
-          npm ci
+          pnpm install --frozen-lockfile
           
           # ユニットテスト実行時間を計測
           START_TIME=$(date +%s)
-          npm run test:unit -- --reporter=json > unit_test_results.json 2>&1 || true
+          pnpm run test:unit -- --reporter=json > unit_test_results.json 2>&1 || true
           END_TIME=$(date +%s)
           UNIT_DURATION=$((END_TIME - START_TIME))
           
@@ -121,7 +126,7 @@ jobs:
           
           # 統合テスト実行時間を計測
           START_TIME=$(date +%s)
-          npm run test:integration -- --reporter=json > integration_test_results.json 2>&1 || true
+          pnpm run test:integration -- --reporter=json > integration_test_results.json 2>&1 || true
           END_TIME=$(date +%s)
           INTEGRATION_DURATION=$((END_TIME - START_TIME))
           

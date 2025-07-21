@@ -32,15 +32,15 @@ e2e/
 1. 開発サーバーが起動していること
    ```bash
    # フロントエンド（別ターミナル）
-   cd frontend && npm run dev
+   cd frontend && pnpm run dev
    
    # API（別ターミナル）
-   cd api && npm run dev
+   cd api && pnpm run dev
    ```
 
 2. データベースが初期化されていること
    ```bash
-   cd api && npm run db:setup:dev
+   cd api && pnpm run db:setup:dev
    ```
 
 ### テスト実行コマンド
@@ -49,19 +49,19 @@ e2e/
 cd e2e
 
 # 全テスト実行
-npm run test
+pnpm run test
 
 # 特定のテストファイルを実行
-npm run test -- expense.spec.ts
+pnpm run test -- expense.spec.ts
 
 # UIモードで実行（デバッグ時に便利）
-npm run test:ui
+pnpm run test:ui
 
 # ヘッドフルモード（ブラウザを表示）
-npm run test -- --headed
+pnpm run test -- --headed
 
 # テスト結果レポートを表示
-npm run test:report
+pnpm run test:report
 ```
 
 ### テストコード生成（Codegen）
@@ -72,10 +72,10 @@ Playwrightのコードジェネレーターを使用して、ブラウザ操作�
 cd e2e
 
 # 任意のURLで操作を記録
-npm run codegen
+pnpm run codegen
 
 # localhost:3000で操作を記録（開発環境用）
-npm run codegen:localhost
+pnpm run codegen:localhost
 ```
 
 ## テスト実装のベストプラクティス

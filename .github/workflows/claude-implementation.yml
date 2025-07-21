@@ -29,9 +29,14 @@ jobs:
         with:
           node-version: '22'
           
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          
       - name: Install dependencies
         run: |
-          npm ci
+          pnpm install --frozen-lockfile
           
       - name: Run Claude Code Implementation
         id: claude-implementation
@@ -77,9 +82,9 @@ jobs:
             
             ## 5. 品質確認
             - 以下のコマンドを順次実行して品質を確認してください：
-              - npm run check:fix (型チェック・リント・フォーマット)
-              - npm run test:unit (ユニットテスト)
-              - npm run build (ビルド確認)
+              - pnpm run check:fix (型チェック・リント・フォーマット)
+              - pnpm run test:unit (ユニットテスト)
+              - pnpm run build (ビルド確認)
             - エラーが発生した場合は修正してください
             
             ## 6. プルリクエスト作成
@@ -107,7 +112,7 @@ jobs:
             それでは、Issue #${{ github.event.issue.number }} の実装を開始してください。
           
           # 許可するツールを指定
-          allowed_tools: "Bash(npm install),Bash(npm run *),Bash(git *),Bash(find *),Bash(ls *),Bash(cat *),Bash(grep *),Bash(rg *)"
+          allowed_tools: "Bash(pnpm install),Bash(pnpm run *),Bash(git *),Bash(find *),Bash(ls *),Bash(cat *),Bash(grep *),Bash(rg *)"
           
           # カスタムインストラクション
           custom_instructions: |

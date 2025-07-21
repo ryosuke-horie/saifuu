@@ -54,46 +54,46 @@ This directory contains comprehensive documentation for the Saifuu API, which is
 ### Setup Commands
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm run dev
 
 # Deploy to production
-npm run deploy
+pnpm run deploy
 ```
 
 ### Database Commands
 ```bash
 # Open Drizzle Studio
-npm run db:studio
+pnpm run db:studio
 
 # Run migrations (local)
-npm run db:migrate:local
+pnpm run db:migrate:local
 
 # Run migrations (production)
-npm run db:migrate:remote
+pnpm run db:migrate:remote
 
 # Generate migration files
-npm run db:generate
+pnpm run db:generate
 
 # Seed database
-npm run db:seed
+pnpm run db:seed
 ```
 
 ### Testing Commands
 ```bash
 # Run all tests
-npm run test
+pnpm run test
 
 # Run unit tests
-npm run test:unit
+pnpm run test:unit
 
 # Run integration tests
-npm run test:integration
+pnpm run test:integration
 
 # Run tests with coverage
-npm run test:unit:coverage
+pnpm run test:unit:coverage
 ```
 
 ## Key Features
