@@ -11,7 +11,6 @@ import {
 	screen,
 	waitFor,
 } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -155,11 +154,11 @@ describe("React Logger 統合テスト", () => {
 		beforeEach(() => {
 			console.error = vi.fn((...args) => {
 				// Error Boundaryによってキャッチされるエラーはテストで期待されているのでスキップ
-				const errorString = args[0]?.toString() || '';
+				const errorString = args[0]?.toString() || "";
 				if (
-					errorString.includes('Error: Test error') ||
-					errorString.includes('The above error occurred in') ||
-					errorString.includes('React will try to recreate')
+					errorString.includes("Error: Test error") ||
+					errorString.includes("The above error occurred in") ||
+					errorString.includes("React will try to recreate")
 				) {
 					return; // 期待されるエラーなのでログ出力をスキップ
 				}
@@ -173,15 +172,17 @@ describe("React Logger 統合テスト", () => {
 
 		const ThrowError = () => {
 			const [shouldThrow, setShouldThrow] = React.useState(false);
-			
+
 			if (shouldThrow) {
 				throw new Error("Test error");
 			}
-			
+
 			return (
 				<div>
 					<div>No error</div>
-					<button onClick={() => setShouldThrow(true)}>Throw Error</button>
+					<button type="button" onClick={() => setShouldThrow(true)}>
+						Throw Error
+					</button>
 				</div>
 			);
 		};
@@ -199,7 +200,7 @@ describe("React Logger 統合テスト", () => {
 
 			// ボタンをクリックしてエラーをスロー
 			const throwButton = screen.getByText("Throw Error");
-			
+
 			// userEventを使わずに直接クリックイベントを発火
 			await act(async () => {
 				throwButton.click();
@@ -229,7 +230,7 @@ describe("React Logger 統合テスト", () => {
 
 			// ボタンをクリックしてエラーをスロー
 			const throwButton = screen.getByText("Throw Error");
-			
+
 			// userEventを使わずに直接クリックイベントを発火
 			await act(async () => {
 				throwButton.click();
@@ -246,7 +247,9 @@ describe("React Logger 統合テスト", () => {
 				return (
 					<div>
 						<div>Error occurred</div>
-						<button onClick={retry}>Retry</button>
+						<button type="button" onClick={retry}>
+							Retry
+						</button>
 					</div>
 				);
 			};
