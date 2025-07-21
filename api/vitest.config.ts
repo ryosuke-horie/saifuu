@@ -12,6 +12,7 @@ export default defineConfig({
 			"dist/**",
 			"public/**",
 			"**/*.integration.{test,spec}.{js,mjs,cjs,ts,mts,cts}",
+			"**/__tests__/helpers/**",
 		],
 		
 		// グローバル設定
@@ -33,6 +34,7 @@ export default defineConfig({
 				"drizzle/**",
 				"src/index.tsx", // エントリーポイント
 				"src/renderer.tsx", // レンダラー
+				"**/__tests__/helpers/**", // テストヘルパーファイル
 			],
 			include: ["src/**/*.{js,mjs,cjs,ts,mts,cts}"],
 			thresholds: {
