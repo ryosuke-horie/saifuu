@@ -5,6 +5,18 @@ import { mockCategories } from "../../../.storybook/mocks/data/categories";
 import type { NewSubscriptionDialogProps } from "../../lib/api/types";
 import { NewSubscriptionDialog } from "./NewSubscriptionDialog";
 
+/**
+ * NewSubscriptionDialogコンポーネントのテスト
+ *
+ * テスト内容:
+ * - 送信処理とエラーハンドリング（重点）
+ * - 送信中の状態管理
+ * - ダイアログの開閉ロジック
+ * - バリデーションとのインテグレーション
+ *
+ * 注: UI表示・インタラクションテストはStorybookに移行済み
+ */
+
 // createPortalのモック
 vi.mock("react-dom", async () => {
 	const actual = await vi.importActual("react-dom");
@@ -13,50 +25,6 @@ vi.mock("react-dom", async () => {
 		createPortal: (children: React.ReactNode) => children,
 	};
 });
-
-// グローバルカテゴリ設定をモック
-vi.mock("@shared/config/categories", () => ({
-	EXPENSE_CATEGORIES: [
-		{
-			id: "food",
-			numericId: 3,
-			name: "食費",
-			type: "expense",
-			color: "#FF6B6B",
-			description: "食材、外食、飲食代",
-		},
-		{
-			id: "system",
-			numericId: 6,
-			name: "システム関係費",
-			type: "expense",
-			color: "#27AE60",
-			description: "システム利用料、サブスクリプション費用",
-		},
-	],
-	ALL_CATEGORIES: [
-		{
-			id: "food",
-			numericId: 3,
-			name: "食費",
-			type: "expense",
-			color: "#FF6B6B",
-			description: "食材、外食、飲食代",
-		},
-		{
-			id: "system",
-			numericId: 6,
-			name: "システム関係費",
-			type: "expense",
-			color: "#27AE60",
-			description: "システム利用料、サブスクリプション費用",
-		},
-	],
-	getCategoriesByType: vi.fn(() => [
-		{ id: "food", name: "食費", type: "expense", color: "#FF6B6B" },
-		{ id: "system", name: "システム関係費", type: "expense", color: "#27AE60" },
-	]),
-}));
 
 describe("NewSubscriptionDialog", () => {
 	const defaultProps: NewSubscriptionDialogProps = {
@@ -71,88 +39,12 @@ describe("NewSubscriptionDialog", () => {
 		vi.clearAllMocks();
 	});
 
-	describe("基本的な表示", () => {
-		it("ダイアログが開いている場合、適切に表示される", () => {
-			render(<NewSubscriptionDialog {...defaultProps} />);
-
-			// ダイアログが表示されていることを確認
-			expect(screen.getByRole("dialog")).toBeInTheDocument();
-			expect(
-				screen.getByText("新規サブスクリプション登録"),
-			).toBeInTheDocument();
-		});
-
-		it("ダイアログが閉じている場合、何も表示されない", () => {
-			render(<NewSubscriptionDialog {...defaultProps} isOpen={false} />);
-
-			// ダイアログが表示されていないことを確認
-			expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-		});
-
-		it("フォームの各要素が正しく表示される", () => {
-			render(<NewSubscriptionDialog {...defaultProps} />);
-
-			// フォーム要素の存在確認
-			expect(screen.getByLabelText(/サービス名/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/料金/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/請求サイクル/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/次回請求日/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/カテゴリ/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/説明/)).toBeInTheDocument();
-
-			// ボタンの存在確認
-			expect(
-				screen.getByRole("button", { name: "キャンセル" }),
-			).toBeInTheDocument();
-			expect(screen.getByRole("button", { name: "登録" })).toBeInTheDocument();
-			expect(
-				screen.getByRole("button", { name: "閉じる" }),
-			).toBeInTheDocument();
-		});
-	});
-
 	describe("送信状態の処理", () => {
-		it("isSubmitting=trueの場合、送信中の状態が表示される", () => {
+		it("送信中はダイアログクローズが無効化される", () => {
 			render(<NewSubscriptionDialog {...defaultProps} isSubmitting={true} />);
 
-			// 送信ボタンが無効化されていることを確認
-			const submitButton = screen.getByRole("button", { name: "登録" });
-			expect(submitButton).toBeDisabled();
-
-			// ローディングアイコンが表示されることを確認
-			expect(submitButton.querySelector(".animate-spin")).toBeInTheDocument();
-		});
-
-		it("isSubmitting=falseの場合、通常の状態が表示される", () => {
-			render(<NewSubscriptionDialog {...defaultProps} isSubmitting={false} />);
-
-			// 送信ボタンが有効化されていることを確認
-			const submitButton = screen.getByRole("button", { name: "登録" });
-			expect(submitButton).not.toBeDisabled();
-
-			// ローディングアイコンが表示されないことを確認
-			expect(
-				submitButton.querySelector(".animate-spin"),
-			).not.toBeInTheDocument();
-		});
-	});
-
-	describe("ダイアログのクローズ処理", () => {
-		it("キャンセルボタンをクリックした場合、onCloseが呼ばれる", async () => {
-			const user = userEvent.setup();
-			render(<NewSubscriptionDialog {...defaultProps} />);
-
-			const cancelButton = screen.getByRole("button", { name: "キャンセル" });
-			await user.click(cancelButton);
-
-			expect(defaultProps.onClose).toHaveBeenCalledOnce();
-		});
-
-		it("送信中の場合、ESCキーでクローズできない", async () => {
-			render(<NewSubscriptionDialog {...defaultProps} isSubmitting={true} />);
-
+			// ESCキーでクローズできないことを確認
 			fireEvent.keyDown(document, { key: "Escape" });
-
 			expect(defaultProps.onClose).not.toHaveBeenCalled();
 		});
 	});
@@ -213,42 +105,28 @@ describe("NewSubscriptionDialog", () => {
 		});
 	});
 
-	describe("フォームの入力バリデーション", () => {
-		it("サービス名が空の場合、エラーが表示される", async () => {
-			const user = userEvent.setup();
-			render(<NewSubscriptionDialog {...defaultProps} />);
-
-			const nameInput = screen.getByLabelText(/サービス名/);
-			await user.click(nameInput);
-			await user.tab(); // フィールドからフォーカスを外す
-
-			await waitFor(() => {
-				expect(screen.getByText("サービス名は必須です")).toBeInTheDocument();
-			});
+	describe("エッジケース処理", () => {
+		it("カテゴリが空の場合でも正常に動作する", () => {
+			render(<NewSubscriptionDialog {...defaultProps} categories={[]} />);
+			expect(screen.getByRole("dialog")).toBeInTheDocument();
 		});
 
-		it("料金が0以下の場合、エラーが表示される", async () => {
-			const user = userEvent.setup();
-			render(<NewSubscriptionDialog {...defaultProps} />);
+		it("ダイアログが閉じている状態でのプロパティ変更が安全", () => {
+			const { rerender } = render(
+				<NewSubscriptionDialog {...defaultProps} isOpen={false} />,
+			);
 
-			const amountInput = screen.getByLabelText(/料金/);
-			await user.type(amountInput, "0");
-			await user.tab(); // フィールドからフォーカスを外す
+			// 閉じた状態でsubmitting状態を変更
+			rerender(
+				<NewSubscriptionDialog
+					{...defaultProps}
+					isOpen={false}
+					isSubmitting={true}
+				/>,
+			);
 
-			await waitFor(() => {
-				expect(
-					screen.getByText("料金は1円以上で入力してください"),
-				).toBeInTheDocument();
-			});
-		});
-	});
-
-	describe("アクセシビリティ", () => {
-		it("ダイアログに適切なARIA属性が設定されている", () => {
-			render(<NewSubscriptionDialog {...defaultProps} />);
-
-			const dialog = screen.getByRole("dialog");
-			expect(dialog).toHaveAttribute("aria-modal", "true");
+			// エラーが発生しないことを確認
+			expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 		});
 	});
 });
