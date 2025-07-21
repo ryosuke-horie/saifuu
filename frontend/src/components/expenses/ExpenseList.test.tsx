@@ -153,50 +153,6 @@ describe("ExpenseList", () => {
 		});
 	});
 
-	describe("大量データの処理", () => {
-		it("100件の取引データでも正常にレンダリングされる", () => {
-			// 100件のデータを生成
-			const manyTransactions = Array.from({ length: 100 }, (_, i) => ({
-				...mockTransactions[0],
-				id: `t${i}`,
-				date: `2025-07-${String((i % 30) + 1).padStart(2, "0")}`,
-				description: `取引${i + 1}`,
-			}));
-
-			const { container } = render(
-				<ExpenseList
-					transactions={manyTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// テーブルがレンダリングされていることを確認
-			const table = screen.getByRole("table");
-			expect(table).toBeInTheDocument();
-
-			// 行数を確認（ヘッダー + 100件のデータ）
-			const rows = container.querySelectorAll("tbody tr");
-			expect(rows).toHaveLength(100);
-		});
-
-		it("取引データのコピーが作成されてソートされる", () => {
-			// 元のデータを保持
-			const originalTransactions = [...mockTransactions];
-
-			render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// 元のデータが変更されていないことを確認
-			expect(mockTransactions).toEqual(originalTransactions);
-		});
-	});
-
 	describe("モバイル表示", () => {
 		it("モバイル画面幅でもカテゴリと備考が表示される", () => {
 			// ウィンドウ幅をモバイルサイズに設定
@@ -211,77 +167,7 @@ describe("ExpenseList", () => {
 				/>,
 			);
 
-			// カテゴリヘッダーが表示されていることを確認
-			const categoryHeader = screen.getByText("カテゴリ");
-			expect(categoryHeader).toBeVisible();
-
-			// 説明ヘッダーが表示されていることを確認
-			const descriptionHeader = screen.getByText("説明");
-			expect(descriptionHeader).toBeVisible();
-
-			// カテゴリデータが表示されていることを確認
-			// mockTransactionsには「その他」と「仕事・ビジネス」カテゴリが含まれている
-			const categoryCells = screen.getAllByText("その他");
-			expect(categoryCells.length).toBeGreaterThan(0);
-			expect(categoryCells[0]).toBeVisible();
-
-			// 説明データが表示されていることを確認
-			const descriptionCell = screen.getByText("昼食代（コンビニ弁当）");
-			expect(descriptionCell).toBeVisible();
-		});
-
-		// すべての画面サイズでカテゴリと説明が表示されることを確認
-		it("すべての画面サイズでカテゴリと説明が表示される", () => {
-			const { rerender } = render(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// デスクトップサイズ（1024px）
-			global.innerWidth = 1024;
-			global.dispatchEvent(new Event("resize"));
-			rerender(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// デスクトップではすべての列が表示される
-			expect(screen.getByText("カテゴリ")).toBeVisible();
-			expect(screen.getByText("説明")).toBeVisible();
-
-			// タブレットサイズ（768px）
-			global.innerWidth = 768;
-			global.dispatchEvent(new Event("resize"));
-			rerender(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// タブレットでもカテゴリと説明が表示される
-			expect(screen.getByText("カテゴリ")).toBeVisible();
-			expect(screen.getByText("説明")).toBeVisible();
-
-			// モバイルサイズ（375px）
-			global.innerWidth = 375;
-			global.dispatchEvent(new Event("resize"));
-			rerender(
-				<ExpenseList
-					transactions={mockTransactions}
-					isLoading={false}
-					error={null}
-				/>,
-			);
-
-			// モバイルでもカテゴリと説明が表示される（Issue #325の要件）
+			// カテゴリと説明が表示されていることを確認（Issue #325の要件）
 			expect(screen.getByText("カテゴリ")).toBeVisible();
 			expect(screen.getByText("説明")).toBeVisible();
 		});

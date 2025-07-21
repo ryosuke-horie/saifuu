@@ -26,6 +26,7 @@ describe("Header", () => {
 			expect(
 				screen.getByRole("heading", { level: 1, name: customTitle }),
 			).toBeInTheDocument();
+			// デフォルト値が使用されることを確認
 			expect(screen.queryByText("Saifuu")).not.toBeInTheDocument();
 		});
 
