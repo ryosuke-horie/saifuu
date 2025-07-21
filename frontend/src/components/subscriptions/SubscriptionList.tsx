@@ -53,14 +53,19 @@ const SubscriptionRow: FC<{ subscription: Subscription }> = ({
 		return "未分類";
 	};
 
-	// 次回請求日をフォーマット
+	// 次回請求日をフォーマット（ハイドレーションエラー対策済み）
+	// ISO文字列からYYYY/MM/DD形式に変換（タイムゾーンに依存しない）
 	const formatDate = (dateString: string): string => {
-		const date = new Date(dateString);
-		return new Intl.DateTimeFormat("ja-JP", {
-			year: "numeric",
-			month: "2-digit",
-			day: "2-digit",
-		}).format(date);
+		// ISO形式の日付文字列から日付部分のみを抽出
+		// 例: "2024-01-15T00:00:00.000Z" -> "2024-01-15"
+		const datePart = dateString.split("T")[0];
+		if (!datePart) return "---";
+
+		// YYYY-MM-DD を YYYY/MM/DD に変換
+		const [year, month, day] = datePart.split("-");
+		if (!year || !month || !day) return "---";
+
+		return `${year}/${month}/${day}`;
 	};
 
 	return (

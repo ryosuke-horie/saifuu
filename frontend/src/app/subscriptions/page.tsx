@@ -149,7 +149,7 @@ const SubscriptionsPage: FC = () => {
 															: sub.amount;
 													return sum + monthlyAmount;
 												}, 0)
-												.toLocaleString()}`}
+												.toLocaleString("ja-JP")}`}
 								</p>
 							</div>
 						</div>
@@ -167,20 +167,28 @@ const SubscriptionsPage: FC = () => {
 								<p className="text-lg font-semibold text-gray-900">
 									{subscriptionsLoading
 										? "読み込み中..."
-										: subscriptions.filter((s) => s.isActive).length > 0
-											? new Date(
-													Math.min(
-														...subscriptions
-															.filter((s) => s.isActive)
-															.map((s) =>
-																new Date(s.nextBillingDate).getTime(),
-															),
-													),
-												).toLocaleDateString("ja-JP", {
-													month: "short",
-													day: "numeric",
-												})
-											: "---"}
+										: (() => {
+												const activeSubscriptions = subscriptions.filter(
+													(s) => s.isActive,
+												);
+												if (activeSubscriptions.length === 0) return "---";
+
+												// 最も早い次回請求日を見つける（タイムゾーンに依存しない方法）
+												const nextBillingDates = activeSubscriptions.map(
+													(s) => s.nextBillingDate,
+												);
+												const earliestDate = nextBillingDates.sort()[0];
+
+												// ISO文字列から月日を抽出
+												const datePart = earliestDate.split("T")[0];
+												if (!datePart) return "---";
+
+												const [, month, day] = datePart.split("-");
+												if (!month || !day) return "---";
+
+												// 月日を表示（例: "1月15日"）
+												return `${Number.parseInt(month, 10)}月${Number.parseInt(day, 10)}日`;
+											})()}
 								</p>
 							</div>
 						</div>
