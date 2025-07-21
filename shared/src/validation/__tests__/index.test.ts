@@ -11,6 +11,7 @@ import {
   validators,
   VALIDATION_LIMITS,
   type ValidationError,
+  type Validator,
 } from '../index';
 
 describe('Validation Framework', () => {
@@ -46,7 +47,7 @@ describe('Validation Framework', () => {
     });
 
     it('有効な値を受け入れる', () => {
-      const validator = required();
+      const validator = required<string | number | boolean>();
       expect(validator('value', 'field')).toBeNull();
       expect(validator(0, 'field')).toBeNull();
       expect(validator(false, 'field')).toBeNull();
