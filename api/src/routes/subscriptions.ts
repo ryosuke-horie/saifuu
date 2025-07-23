@@ -9,6 +9,13 @@ import {
 	validateSubscriptionCreate,
 	validateSubscriptionUpdate,
 } from '../validation/schemas'
+// Zod バリデーション（段階的移行用）
+import {
+	validateSubscriptionCreateLegacy,
+	validateSubscriptionUpdateLegacy,
+	validateIdLegacy,
+	formatZodValidationErrors,
+} from '../validation/zod-validation'
 
 /**
  * サブスクリプションAPIのファクトリ関数

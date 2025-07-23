@@ -10,6 +10,13 @@ import {
 	validateTransactionCreate,
 	validateTransactionUpdate,
 } from '../validation/schemas'
+// Zod バリデーション（段階的移行用）
+import {
+	validateTransactionCreateLegacy,
+	validateTransactionUpdateLegacy,
+	validateIdLegacy,
+	formatZodValidationErrors,
+} from '../validation/zod-validation'
 
 /**
  * バリデーションエラーをAPIレスポンス形式に変換
@@ -237,19 +244,43 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 			const db = options.testDatabase || c.get('db')
 
-			// バリデーションフレームワークを使用
-			const validationResult = validateTransactionCreate(body)
-			if (!validationResult.success) {
+			// 段階的移行: 既存バリデーションとZodバリデーションを並行実行
+			const legacyValidationResult = validateTransactionCreate(body)
+			const zodValidationResult = validateTransactionCreateLegacy(body)
+
+			// 両方のバリデーション結果をログに記録（移行期間中の検証用）
+			logWithContext(c, 'debug', '取引作成: バリデーション結果比較', {
+				legacyValidation: {
+					success: legacyValidationResult.success,
+					errorCount: legacyValidationResult.errors?.length || 0,
+				},
+				zodValidation: {
+					success: zodValidationResult.success,
+					errorCount: zodValidationResult.errors?.length || 0,
+				},
+				validationFramework: 'parallel_migration',
+			})
+
+			// 現在は既存バリデーションの結果を使用（段階的移行のため）
+			if (!legacyValidationResult.success) {
 				logWithContext(c, 'warn', '取引作成: バリデーションエラー', {
 					validationError: 'validation_failed',
-					errors: validationResult.errors,
+					errors: legacyValidationResult.errors,
 					providedData: {
 						amount: body.amount,
 						type: body.type,
 						descriptionLength: body.description?.length,
 					},
 				})
-				return c.json(formatValidationErrors(validationResult.errors), 400)
+				return c.json(formatValidationErrors(legacyValidationResult.errors), 400)
+			}
+
+			// Zodバリデーションが失敗した場合も警告ログを出力（移行検証用）
+			if (!zodValidationResult.success) {
+				logWithContext(c, 'warn', '取引作成: Zodバリデーションが失敗（検証用）', {
+					zodValidationErrors: zodValidationResult.errors,
+					validationFramework: 'zod_migration_check',
+				})
 			}
 
 			const newTransaction: NewTransaction = {
