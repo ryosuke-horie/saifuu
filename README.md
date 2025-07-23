@@ -6,7 +6,7 @@
 
 ### 前提条件
 - Node.js 22（miseで管理）
-- npm
+- pnpm
 
 ### 初回セットアップ
 ```bash
@@ -14,44 +14,44 @@
 mise install
 
 # 依存関係のインストール
-npm install
-cd api && npm install
-cd frontend && npm install
+pnpm install
+cd api && pnpm install
+cd frontend && pnpm install
 
 # 環境変数ファイルの作成
 cp api/.env.example api/.env
 cp frontend/.env.example frontend/.env
 
 # データベースのセットアップ
-cd api && npm run db:setup:dev
+cd api && pnpm run db:setup:dev
 ```
 
 ## 開発サーバーの起動
 
 ```bash
 # フロントエンド（別ターミナル）
-npm run dev  # http://localhost:3000
+pnpm run dev  # http://localhost:3000
 
 # API（別ターミナル）
-cd api && npm run dev  # http://localhost:5173
+cd api && pnpm run dev  # http://localhost:5173
 ```
 
 ## 基本的なコマンド
 
 ```bash
 # コード品質チェック
-npm run check:fix
+pnpm run check:fix
 
 # テスト実行
-npm run test:unit          # ユニットテスト
-npm run test:e2e          # E2Eテスト（ローカルのみ）
+pnpm run test:unit          # ユニットテスト
+pnpm run test:e2e          # E2Eテスト（ローカルのみ）
 
 # ビルド
-npm run build             # フロントエンド
-cd api && npm run build   # API
+pnpm run build             # フロントエンド
+cd api && pnpm run build   # API
 
 # Storybook
-npm run storybook         # コンポーネント開発環境
+pnpm run storybook         # コンポーネント開発環境
 ```
 
 ## 詳細ドキュメント

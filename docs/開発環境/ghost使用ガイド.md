@@ -42,7 +42,7 @@ sudo cp target/release/ghost /usr/local/bin/
 
 ```bash
 # フロントエンドの開発サーバーをバックグラウンドで起動
-ghost run npm run dev
+ghost run pnpm run dev
 
 # タスクIDとログファイルの場所が表示される
 Started background process:
@@ -65,7 +65,7 @@ ghost list --status running
 ```
 Task ID                              PID      Status     Started              Command                        Directory
 --------------------------------------------------------------------------------------------------------------------------------------
-e56ed5f8-44c8-4905-97aa-651164afd37e 8969     running    2025-07-01 15:36     npm run dev                    /home/user/saifuu
+e56ed5f8-44c8-4905-97aa-651164afd37e 8969     running    2025-07-01 15:36     pnpm run dev                    /home/user/saifuu
 ```
 
 ### ログの確認
@@ -90,7 +90,7 @@ ghost status e56ed5f8-44c8-4905-97aa-651164afd37e
 Task: e56ed5f8-44c8-4905-97aa-651164afd37e
 PID: 8969
 Status: running
-Command: npm run dev
+Command: pnpm run dev
 Working directory: /home/user/saifuu
 Started: 2025-07-01 15:36:23
 Log file: /Users/user/Library/Application Support/ghost/logs/e56ed5f8-44c8-4905-97aa-651164afd37e.log
@@ -178,7 +178,7 @@ ghost
 
 ```bash
 # 1. 開発サーバーをバックグラウンドで起動
-ghost run npm run dev
+ghost run pnpm run dev
 
 # 2. タスクIDを確認
 ghost list --status running
@@ -197,13 +197,13 @@ ghost cleanup --days 7
 
 ```bash
 # フロントエンドサーバーを起動
-ghost run --cwd /path/to/frontend npm run dev
+ghost run --cwd /path/to/frontend pnpm run dev
 
 # APIサーバーを起動
-ghost run --cwd /path/to/api npm run dev
+ghost run --cwd /path/to/api pnpm run dev
 
 # Storybookを起動
-ghost run npm run storybook
+ghost run pnpm run storybook
 
 # すべてのサービスを確認
 ghost list --status running
@@ -211,6 +211,6 @@ ghost list --status running
 
 ## 注意事項
 
-- `npm run dev &` のような形式でのバックグラウンド実行は使用しないこと
+- `pnpm run dev &` のような形式でのバックグラウンド実行は使用しないこと
 - ghostを使用することで、プロセスの管理が一元化され、ログの確認や停止が容易になる
 - 開発セッションが終了してもプロセスは継続して実行されるため、必要に応じて手動で停止すること

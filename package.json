@@ -7,7 +7,15 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "docs:search": "node docs/scripts/search.js",
     "test:ratio": "node scripts/monitor-test-ratio-simple.js",
-    "test:ratio:detailed": "node scripts/monitor-test-ratio.js"
+    "test:ratio:detailed": "node scripts/monitor-test-ratio.js",
+    "dev": "pnpm --parallel --filter './frontend' --filter './api' run dev",
+    "build": "pnpm --filter './frontend' --filter './api' run build",
+    "test:unit": "pnpm --filter './frontend' --filter './api' run test:unit",
+    "test:e2e": "cd e2e && pnpm run test",
+    "test:e2e:ui": "cd e2e && pnpm run test:ui",
+    "test:e2e:report": "cd e2e && pnpm run test:report",
+    "check:fix": "pnpm --filter './frontend' --filter './api' run check:fix",
+    "install:all": "pnpm install --recursive"
   },
   "private": true
 }

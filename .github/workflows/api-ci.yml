@@ -46,31 +46,50 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       
+      
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           # セルフホストランナーの制約によりキャッシュは無効
-          # cache: 'npm'
-          # cache-dependency-path: api/package-lock.json
+          # cache: 'pnpm'
+          # cache-dependency-path: api/pnpm-lock.yaml
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
       
       - name: Install dependencies
-        run: npm ci
+        run: |
+          # セルフホストランナーではキャッシュを使用しない
+          pnpm config set store-dir /tmp/pnpm-store-${{ github.run_id }}
+          pnpm install --frozen-lockfile --prefer-offline false
+      
+      - name: Rebuild better-sqlite3
+        working-directory: .
+        run: |
+          # better-sqlite3のネイティブバインディングを確実にビルド
+          cd node_modules/better-sqlite3
+          npm run install --verbose || npm run build-release || node-gyp rebuild
+          # ビルド結果を確認
+          ls -la build/ || true
+          ls -la build/Release/ || true
       
       - name: Type check
-        run: npm run typecheck
+        run: pnpm run typecheck
       
       - name: Biome check
-        run: npm run check
+        run: pnpm run check
       
       - name: Build check
-        run: npm run build
+        run: pnpm run build
       
       - name: Unit tests with coverage
-        run: npm run test:unit:coverage
+        run: pnpm run test:unit:coverage
         
       - name: Integration tests
-        run: npm run test:integration
+        run: pnpm run test:integration
         
       - name: Coverage report
         if: github.event_name == 'pull_request'

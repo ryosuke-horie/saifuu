@@ -189,7 +189,9 @@ export const compose = <T>(...validators: Validator<T>[]): Validator<T> => {
 // オブジェクトバリデーション関数
 export const validateObject = <T extends Record<string, unknown>>(
   data: T,
-  rules: Partial<Record<keyof T, Validator<T[keyof T]> | Validator<T[keyof T]>[]>>
+  rules: {
+    [K in keyof T]?: Validator<T[K]> | Validator<T[K]>[]
+  }
 ): ValidationResult<T> => {
   const errors: ValidationError[] = [];
   

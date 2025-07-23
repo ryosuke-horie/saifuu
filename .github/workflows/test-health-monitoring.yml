@@ -33,10 +33,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       
+      
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
       
       # テストコード比率の監視
       - name: Check test code ratio
@@ -76,11 +82,20 @@ jobs:
           echo "" >> frontend_test_time.md
           
           # 依存関係のインストール
-          npm ci
+          # セルフホストランナー用に一時的なストアディレクトリを使用
+          export PNPM_STORE_DIR="/tmp/pnpm-store-${{ github.run_id }}-frontend"
+          # キャッシュを使用しない設定
+          echo "store-dir=$PNPM_STORE_DIR" > ~/.npmrc
+          echo "prefer-offline=false" >> ~/.npmrc
+          # 依存関係のインストール
+          pnpm install --frozen-lockfile --prefer-offline false
+          # インストール後にストアをクリーンアップ
+          rm -rf "$PNPM_STORE_DIR" || true
+          rm -f ~/.npmrc || true
           
           # テスト実行時間を計測
           START_TIME=$(date +%s)
-          npm run test:unit -- --reporter=json > test_results.json 2>&1 || true
+          pnpm run test:unit -- --reporter=json > test_results.json 2>&1 || true
           END_TIME=$(date +%s)
           DURATION=$((END_TIME - START_TIME))
           
@@ -108,11 +123,20 @@ jobs:
           echo "" >> api_test_time.md
           
           # 依存関係のインストール
-          npm ci
+          # セルフホストランナー用に一時的なストアディレクトリを使用
+          export PNPM_STORE_DIR="/tmp/pnpm-store-${{ github.run_id }}-api"
+          # キャッシュを使用しない設定
+          echo "store-dir=$PNPM_STORE_DIR" > ~/.npmrc
+          echo "prefer-offline=false" >> ~/.npmrc
+          # 依存関係のインストール
+          pnpm install --frozen-lockfile --prefer-offline false
+          # インストール後にストアをクリーンアップ
+          rm -rf "$PNPM_STORE_DIR" || true
+          rm -f ~/.npmrc || true
           
           # ユニットテスト実行時間を計測
           START_TIME=$(date +%s)
-          npm run test:unit -- --reporter=json > unit_test_results.json 2>&1 || true
+          pnpm run test:unit -- --reporter=json > unit_test_results.json 2>&1 || true
           END_TIME=$(date +%s)
           UNIT_DURATION=$((END_TIME - START_TIME))
           
@@ -121,7 +145,7 @@ jobs:
           
           # 統合テスト実行時間を計測
           START_TIME=$(date +%s)
-          npm run test:integration -- --reporter=json > integration_test_results.json 2>&1 || true
+          pnpm run test:integration -- --reporter=json > integration_test_results.json 2>&1 || true
           END_TIME=$(date +%s)
           INTEGRATION_DURATION=$((END_TIME - START_TIME))
           

@@ -38,10 +38,10 @@ e2e/
 **実行方法**:
 ```bash
 # 本番環境テスト実行
-npm run test:e2e:production
+pnpm run test:e2e:production
 
 # UI付き実行
-npm run test:e2e:production:ui
+pnpm run test:e2e:production:ui
 ```
 
 ### 開発環境テスト (`development/`)
@@ -56,10 +56,10 @@ npm run test:e2e:production:ui
 **実行方法**:
 ```bash
 # 開発環境テスト実行
-npm run test:e2e:development
+pnpm run test:e2e:development
 
 # UI付き実行
-npm run test:e2e:development:ui
+pnpm run test:e2e:development:ui
 ```
 
 ## 設定ファイル
