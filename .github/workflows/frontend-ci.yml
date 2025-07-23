@@ -46,16 +46,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       
-      # セルフホストランナーでのキャッシュ競合を防ぐため、開始時にクリーンアップ
-      - name: Clean pnpm cache
-        run: |
-          # pnpmキャッシュとnode_modulesをクリーンアップ
-          rm -rf ~/.pnpm-store || true
-          rm -rf node_modules || true
-          rm -rf ../node_modules || true
-          rm -rf ../api/node_modules || true
-          rm -rf ../e2e/node_modules || true
-          rm -rf ../shared/node_modules || true
       
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -72,11 +62,16 @@ jobs:
       
       - name: Install dependencies
         run: |
-          # セルフホストランナー用に独立したストアディレクトリを使用
-          export PNPM_STORE_DIR="$HOME/.pnpm-store-frontend-ci-${{ github.run_id }}"
-          pnpm install --frozen-lockfile
+          # セルフホストランナー用に一時的なストアディレクトリを使用
+          export PNPM_STORE_DIR="/tmp/pnpm-store-${{ github.run_id }}"
+          # キャッシュを使用しない設定
+          echo "store-dir=$PNPM_STORE_DIR" > ~/.npmrc
+          echo "prefer-offline=false" >> ~/.npmrc
+          # 依存関係のインストール
+          pnpm install --frozen-lockfile --prefer-offline false
           # インストール後にストアをクリーンアップ
           rm -rf "$PNPM_STORE_DIR" || true
+          rm -f ~/.npmrc || true
       
       - name: Type check
         run: pnpm run typecheck
