@@ -46,6 +46,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       
+      - name: Clean pnpm cache (セルフホストランナー対応)
+        run: |
+          # 複数ランナー同時実行時の競合を避ける
+          rm -rf ~/.pnpm-store || true
+          rm -rf ~/setup-pnpm || true
+          rm -rf ../.pnpm-store || true
+      
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -64,11 +71,13 @@ jobs:
           # better-sqlite3のビルドスクリプトを許可
           echo "side-effects-cache=false" > ../.npmrc
           echo "onlyBuiltDependencies[]=better-sqlite3" >> ../.npmrc
+          # セルフホストランナー用に個別のストアディレクトリを使用
+          echo "store-dir=$HOME/.pnpm-store-${{ github.run_id }}" >> ../.npmrc
           pnpm install --frozen-lockfile
           # ビルドが失敗した場合の追加対策
           if [ ! -f ../node_modules/better-sqlite3/build/Release/better_sqlite3.node ]; then
             echo "Rebuilding better-sqlite3..."
-            pnpm rebuild better-sqlite3 --store-dir ~/.pnpm-store
+            pnpm rebuild better-sqlite3
           fi
       
       - name: Type check
