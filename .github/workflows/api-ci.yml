@@ -65,8 +65,16 @@ jobs:
           # セルフホストランナーではキャッシュを使用しない
           pnpm config set store-dir /tmp/pnpm-store-${{ github.run_id }}
           pnpm install --frozen-lockfile --prefer-offline false
-          # better-sqlite3を明示的にリビルド
-          pnpm rebuild better-sqlite3
+      
+      - name: Rebuild better-sqlite3
+        working-directory: .
+        run: |
+          # better-sqlite3のネイティブバインディングを確実にビルド
+          cd node_modules/better-sqlite3
+          npm run install --verbose || npm run build-release || node-gyp rebuild
+          # ビルド結果を確認
+          ls -la build/ || true
+          ls -la build/Release/ || true
       
       - name: Type check
         run: pnpm run typecheck
