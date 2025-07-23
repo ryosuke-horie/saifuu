@@ -70,6 +70,9 @@ const SubscriptionsPage: FC = () => {
 				// 成功時にダイアログを閉じる
 				handleCloseDialog();
 
+				// サブスクリプション一覧を再取得
+				await refetchSubscriptions();
+
 				// 成功フィードバック（将来的にはトーストやスナックバーなどを使用）
 				console.log("新しいサブスクリプションを登録しました");
 			} catch (error) {
@@ -77,7 +80,7 @@ const SubscriptionsPage: FC = () => {
 				// エラーはフォーム内で表示されるため、ここでは特別な処理不要
 			}
 		},
-		[createSubscriptionMutation, handleCloseDialog],
+		[createSubscriptionMutation, handleCloseDialog, refetchSubscriptions],
 	);
 
 	return (

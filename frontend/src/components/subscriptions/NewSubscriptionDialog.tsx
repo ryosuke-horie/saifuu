@@ -48,7 +48,7 @@ export const NewSubscriptionDialog: FC<NewSubscriptionDialogProps> = ({
 		// グローバル設定から支出カテゴリを取得してCategory型に変換
 		const globalExpenseCategories = getCategoriesByType("expense");
 		return globalExpenseCategories.map((config) => ({
-			id: config.id,
+			id: config.numericId.toString(), // numericIdを文字列に変換してidとして使用
 			name: config.name,
 			type: config.type,
 			color: config.color,
