@@ -17,5 +17,8 @@
     "check:fix": "pnpm --filter './frontend' --filter './api' run check:fix",
     "install:all": "pnpm install --recursive"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
 }

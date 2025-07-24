@@ -1,15 +1,15 @@
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { ALL_CATEGORIES } from '../../../shared/config/categories'
-import { type ValidationError } from '../../../shared/src/validation/index'
 import { type AnyDatabase, type Env } from '../db'
 import { type NewTransaction, transactions } from '../db/schema'
 import { type LoggingVariables, logWithContext } from '../middleware/logging'
 import {
-	validateId,
-	validateTransactionCreate,
-	validateTransactionUpdate,
-} from '../validation/schemas'
+	type ValidationError,
+	validateIdWithZod,
+	validateTransactionCreateWithZod,
+	validateTransactionUpdateWithZod,
+} from '../validation/zod-validators'
 
 /**
  * バリデーションエラーをAPIレスポンス形式に変換
@@ -27,7 +27,7 @@ function formatValidationErrors(errors: ValidationError[]): {
 }
 
 /**
- * 取引APIのファクトリ関数
+ * 取引APIのファクトリ関数（Zodバリデーション版）
  * テスト時にはテスト用データベースを注入可能にする
  * @param options.testDatabase - テスト用データベースインスタンス（オプション）
  */
@@ -237,8 +237,8 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 			const db = options.testDatabase || c.get('db')
 
-			// バリデーションフレームワークを使用
-			const validationResult = validateTransactionCreate(body)
+			// Zodバリデーションを使用
+			const validationResult = validateTransactionCreateWithZod(body)
 			if (!validationResult.success) {
 				logWithContext(c, 'warn', '取引作成: バリデーションエラー', {
 					validationError: 'validation_failed',
@@ -295,7 +295,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 	app.get('/:id', async (c) => {
 		try {
 			const idParam = c.req.param('id')
-			const idValidation = validateId(idParam)
+			const idValidation = validateIdWithZod(idParam)
 
 			// Check if ID is valid
 			if (!idValidation.success) {
@@ -373,7 +373,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 	app.put('/:id', async (c) => {
 		try {
 			const idParam = c.req.param('id')
-			const idValidation = validateId(idParam)
+			const idValidation = validateIdWithZod(idParam)
 
 			// Check if ID is valid
 			if (!idValidation.success) {
@@ -396,8 +396,8 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				updateFields: Object.keys(body),
 			})
 
-			// バリデーションフレームワークを使用
-			const validationResult = validateTransactionUpdate(body)
+			// Zodバリデーションを使用
+			const validationResult = validateTransactionUpdateWithZod(body)
 			if (!validationResult.success) {
 				logWithContext(c, 'warn', '取引更新: バリデーションエラー', {
 					transactionId: id,
@@ -463,7 +463,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 	app.delete('/:id', async (c) => {
 		try {
 			const idParam = c.req.param('id')
-			const idValidation = validateId(idParam)
+			const idValidation = validateIdWithZod(idParam)
 
 			// Check if ID is valid
 			if (!idValidation.success) {

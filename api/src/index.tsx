@@ -107,7 +107,7 @@ app.get('/api/health', async (c) => {
 			timestamp: new Date().toISOString(),
 			debug: {
 				categoriesCount: result.length,
-				branch: 'issue-53',
+				branch: 'fix/issue-364',
 				schemaFixed: true,
 			},
 		})
@@ -128,7 +128,7 @@ app.get('/api/health', async (c) => {
 				stack: error instanceof Error ? error.stack : undefined,
 				timestamp: new Date().toISOString(),
 				debug: {
-					branch: 'issue-53',
+					branch: 'fix/issue-364',
 					schemaFixed: true,
 				},
 			},

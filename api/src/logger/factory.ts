@@ -66,3 +66,13 @@ export class LoggerFactory {
 export const createLogger = (env?: EnvironmentVariables): Logger => {
 	return LoggerFactory.getInstance(env)
 }
+
+/**
+ * テスト用のロガーインスタンス
+ */
+export const testLogger: Logger = {
+	debug: () => {},
+	info: () => {},
+	warn: () => {},
+	error: () => {},
+}

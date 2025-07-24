@@ -1,281 +1,240 @@
-# バリデーションフレームワーク
+# バリデーションフレームワーク (Zod版)
 
 ## 概要
 
-`shared/src/validation/index.ts` で定義される共通バリデーションフレームワークは、API/Frontend間で一貫性のあるバリデーションロジックを提供します。
+2025年1月の更新により、カスタムバリデーションフレームワークからZodライブラリへ移行しました。Zodは型安全性とDXを大幅に向上させる、モダンなTypeScriptファーストのバリデーションライブラリです。
 
-## 主な特徴
+## 移行の背景
 
-- **型安全性**: TypeScriptの型システムを活用した型安全なバリデーション
-- **コンポーザブル**: 複数のバリデーターを組み合わせて複雑なルールを構築可能
-- **統一された制限値**: API/Frontend間で同じ制限値を使用
-- **標準化されたエラーメッセージ**: 一貫性のあるユーザーフレンドリーなエラーメッセージ
+### 既存の課題
+- カスタム実装のため、メンテナンスコストが高い
+- エコシステムとの統合が困難
+- 型推論が限定的
+
+### Zodの利点
+- **型推論**: スキーマから自動的に型を生成
+- **エコシステム**: React Hook Form、tRPCなどとの統合が容易
+- **メンテナンス**: 活発なコミュニティによる継続的な改善
+- **パフォーマンス**: 最適化されたバリデーション処理
 
 ## 基本的な使い方
 
-### 1. 単一フィールドのバリデーション
+### 1. スキーマ定義
 
 ```typescript
-import { required, numeric, positiveNumber } from 'shared/src/validation';
+import { z } from 'zod/v3'
 
-// 必須チェック
-const nameValidator = required<string>();
-const error = nameValidator('', 'name'); // { field: 'name', message: 'nameは必須です', code: 'REQUIRED' }
+// 基本的なスキーマ
+const userSchema = z.object({
+  name: z.string().min(1, '名前は必須です'),
+  age: z.number().min(0).max(120),
+  email: z.string().email('有効なメールアドレスを入力してください')
+})
 
-// 数値範囲チェック
-const ageValidator = numeric(0, 120);
-const error = ageValidator(150, 'age'); // { field: 'age', message: 'ageは120以下である必要があります', code: 'MAX_VALUE' }
-
-// 正の数チェック
-const amountValidator = positiveNumber();
-const error = amountValidator(-100, 'amount'); // エラー
+// 型の自動生成
+type User = z.infer<typeof userSchema>
 ```
 
-### 2. 複数のバリデーターの組み合わせ
+### 2. バリデーション実行
 
 ```typescript
-import { compose, required, numeric, VALIDATION_LIMITS } from 'shared/src/validation';
-
-// 金額バリデーター: 必須 + 正の数 + 上限チェック
-const amountValidator = compose(
-  required<number>(),
-  positiveNumber(),
-  numeric(VALIDATION_LIMITS.MIN_AMOUNT, VALIDATION_LIMITS.MAX_AMOUNT)
-);
-
-const error = amountValidator(null, 'amount'); // 必須エラー
-const error2 = amountValidator(-100, 'amount'); // 正の数エラー
-const error3 = amountValidator(20000000, 'amount'); // 上限エラー
-```
-
-### 3. オブジェクト全体のバリデーション
-
-```typescript
-import { validateObject, validators } from 'shared/src/validation';
-
-const transactionData = {
-  name: '昼食',
-  amount: 1000,
-  date: '2024-01-01',
-  description: 'ランチ代'
-};
-
-const result = validateObject(transactionData, {
-  name: validators.name,
-  amount: validators.amount,
-  date: validators.date,
-  description: validators.description
-});
+// 安全なパース（エラーをthrowしない）
+const result = userSchema.safeParse(data)
 
 if (result.success) {
-  // バリデーション成功
-  console.log(result.data); // 型安全なデータ
+  console.log(result.data) // 型安全なデータ
 } else {
-  // バリデーション失敗
-  console.log(result.errors); // エラーの配列
+  console.log(result.error.issues) // エラー詳細
+}
+
+// 通常のパース（エラーをthrow）
+try {
+  const user = userSchema.parse(data)
+} catch (error) {
+  if (error instanceof z.ZodError) {
+    console.log(error.issues)
+  }
 }
 ```
 
-## 利用可能なバリデーター
+## Saifuuでの実装
 
-### 基本バリデーター
-
-| バリデーター | 説明 | 使用例 |
-|------------|------|-------|
-| `required()` | 必須フィールドチェック | `required<string>()` |
-| `numeric(min?, max?)` | 数値範囲チェック | `numeric(0, 100)` |
-| `positiveNumber()` | 正の数チェック | `positiveNumber()` |
-| `string(maxLength?)` | 文字列長チェック | `string(100)` |
-| `date(minDate?)` | 日付チェック | `date(new Date('2000-01-01'))` |
-| `enumValidator(values)` | 列挙値チェック | `enumValidator(['A', 'B', 'C'])` |
-
-### プリセットバリデーター
+### 共通スキーマ（shared/src/validation/zod-schemas.ts）
 
 ```typescript
-import { validators } from 'shared/src/validation';
+// 金額スキーマ
+export const amountSchema = z
+  .number({
+    required_error: '金額は必須です',
+    invalid_type_error: '金額は数値である必要があります',
+  })
+  .min(1, '金額は1円以上である必要があります')
+  .max(10000000, '金額は10000000円以下である必要があります')
 
-// 金額: 必須 + 正の数 + ¥1〜¥10,000,000
-validators.amount
-
-// 名前: 必須 + 最大100文字
-validators.name
-
-// 説明: オプショナル + 最大500文字
-validators.description
-
-// 日付: 必須 + 2000年1月1日以降
-validators.date
+// 取引作成スキーマ
+export const transactionCreateSchema = z.object({
+  amount: amountSchema,
+  type: z.enum(['income', 'expense'], {
+    required_error: 'typeは必須です',
+    invalid_type_error: 'typeはincomeまたはexpenseのいずれかである必要があります',
+  }),
+  date: dateSchema,
+  categoryId: z.number().int().positive().optional(),
+  description: z.string().max(200).optional(),
+})
 ```
 
-## 共通制限値
+### 日本語エラーメッセージ
 
 ```typescript
-import { VALIDATION_LIMITS } from 'shared/src/validation';
-
-// 金額の制限
-VALIDATION_LIMITS.MAX_AMOUNT // ¥10,000,000
-VALIDATION_LIMITS.MIN_AMOUNT // ¥1
-
-// 文字列長の制限
-VALIDATION_LIMITS.MAX_NAME_LENGTH // 100文字
-VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH // 500文字
-
-// 日付の制限
-VALIDATION_LIMITS.MIN_DATE // 2000-01-01
-```
-
-## API/Frontendでの使用例
-
-### Frontendでの使用
-
-```typescript
-// frontend/src/components/ExpenseForm.tsx
-import { validateObject, validators } from 'shared/src/validation';
-
-const handleSubmit = (formData: FormData) => {
-  const result = validateObject(formData, {
-    name: validators.name,
-    amount: validators.amount,
-    date: validators.date,
-    description: validators.description
-  });
-
-  if (!result.success) {
-    // エラー表示
-    result.errors.forEach(error => {
-      showError(error.field, error.message);
-    });
-    return;
-  }
-
-  // バリデーション成功、APIへ送信
-  submitToAPI(result.data);
-};
-```
-
-### APIでの使用
-
-```typescript
-// api/src/routes/transactions.ts
-import { validateObject, validators } from 'shared/src/validation';
-
-app.post('/api/transactions', async (c) => {
-  const body = await c.req.json();
+// カスタムエラーマップで日本語化
+const zodErrorMap: z.ZodErrorMap = (issue, ctx) => {
+  const fieldName = issue.path && issue.path.length > 0 ? issue.path.join('.') : 'フィールド'
   
-  const result = validateObject(body, {
-    name: validators.name,
-    amount: validators.amount,
-    date: validators.date,
-    categoryId: compose(required<number>(), numeric(1))
-  });
-
-  if (!result.success) {
-    return c.json({ errors: result.errors }, 400);
+  if (issue.code === z.ZodIssueCode.invalid_type) {
+    if (issue.expected === 'string' && issue.received === 'undefined') {
+      return { message: `${fieldName}は必須です` }
+    }
+    // ... 他のエラータイプ
   }
-
-  // バリデーション成功、データベースへ保存
-  const transaction = await createTransaction(result.data);
-  return c.json(transaction);
-});
-```
-
-## カスタムバリデーターの作成
-
-```typescript
-import { type Validator, ERROR_MESSAGES } from 'shared/src/validation';
-
-// カタカナのみを許可するバリデーター
-const katakanaOnly: Validator<string> = (value: string, fieldName: string) => {
-  if (!/^[ァ-ヶー]*$/.test(value)) {
-    return {
-      field: fieldName,
-      message: `${fieldName}はカタカナのみ入力可能です`,
-      code: 'KATAKANA_ONLY'
-    };
-  }
-  return null;
-};
-
-// 使用例
-const nameValidator = compose(
-  required<string>(),
-  katakanaOnly
-);
-```
-
-## 型定義
-
-```typescript
-// バリデーション結果の型
-type ValidationResult<T> = 
-  | { success: true; data: T }
-  | { success: false; errors: ValidationError[] };
-
-// エラーの型
-interface ValidationError {
-  field: string;      // エラーが発生したフィールド名
-  message: string;    // エラーメッセージ
-  code?: string;      // エラーコード（オプション）
+  
+  return { message: ctx?.defaultError || 'バリデーションエラー' }
 }
 
-// バリデーター関数の型
-type Validator<T> = (value: T, fieldName: string) => ValidationError | null;
+z.setErrorMap(zodErrorMap)
+```
+
+### API実装例
+
+```typescript
+// api/src/routes/transactions-with-zod.ts
+app.post('/', async (c) => {
+  const body = await c.req.json()
+  
+  // Zodバリデーション
+  const validationResult = validateTransactionCreateWithZod(body)
+  
+  if (!validationResult.success) {
+    return c.json({
+      error: validationResult.errors[0]?.message || 'Validation failed',
+      details: validationResult.errors
+    }, 400)
+  }
+  
+  // バリデーション成功、DBに保存
+  const transaction = await db.insert(transactions).values(validationResult.data)
+  return c.json(transaction, 201)
+})
+```
+
+### フロントエンド実装例
+
+```typescript
+// frontend/src/lib/validation/zod-validation.ts
+export function validateExpenseFormWithZod(data: ExpenseFormData): {
+  success: boolean
+  errors: Record<string, string>
+} {
+  const apiData = toApiTransactionFormat(data)
+  const result = transactionCreateSchema.safeParse(apiData)
+  
+  if (!result.success) {
+    const errors: Record<string, string> = {}
+    result.error.issues.forEach(issue => {
+      const field = issue.path[0]?.toString() || 'unknown'
+      errors[field] = issue.message
+    })
+    return { success: false, errors }
+  }
+  
+  return { success: true, errors: {} }
+}
+```
+
+## 利用可能なスキーマ
+
+### 基本スキーマ
+
+| スキーマ | 説明 | 制限 |
+|---------|------|------|
+| `amountSchema` | 金額 | 1円〜10,000,000円 |
+| `dateSchema` | 日付 | 2000-01-01以降、ISO形式 |
+| `nameSchema` | 名前 | 必須、最大100文字 |
+| `descriptionSchema` | 説明 | オプション、最大200文字 |
+| `idSchema` | ID | 正の整数、文字列からの変換対応 |
+
+### 複合スキーマ
+
+| スキーマ | 用途 |
+|---------|------|
+| `transactionCreateSchema` | 取引作成 |
+| `transactionUpdateSchema` | 取引更新 |
+| `subscriptionCreateSchema` | サブスク作成 |
+| `subscriptionUpdateSchema` | サブスク更新 |
+
+## 型の活用
+
+```typescript
+// スキーマから型を推論
+type Transaction = z.infer<typeof transactionCreateSchema>
+
+// 部分的な型
+type PartialTransaction = z.infer<typeof transactionUpdateSchema>
+
+// 単一フィールドの型
+type Amount = z.infer<typeof amountSchema>
+```
+
+## 移行ガイド
+
+### 既存コードからの移行
+
+```typescript
+// 既存（カスタムバリデーション）
+import { validateAmount } from '@/lib/validation/form-validation'
+const error = validateAmount(1000, 'amount')
+
+// Zod版
+import { amountSchema } from '@/shared/validation/zod-schemas'
+const result = amountSchema.safeParse(1000)
+if (!result.success) {
+  const error = result.error.issues[0].message
+}
+```
+
+### APIルートの移行
+
+```typescript
+// 既存
+import { validateTransactionCreate } from '../validation/schemas'
+
+// Zod版
+import { validateTransactionCreateWithZod } from '../validation/zod-validators'
 ```
 
 ## ベストプラクティス
 
-1. **共通の制限値を使用**: ハードコードせず、`VALIDATION_LIMITS`を使用
-2. **プリセットバリデーターを活用**: 一般的なケースには`validators`オブジェクトを使用
-3. **エラーメッセージの一貫性**: カスタムメッセージは本当に必要な場合のみ使用
-4. **型安全性の維持**: ジェネリクスを適切に使用してタイプセーフティを確保
-5. **組み合わせて使用**: `compose`を使って複雑なバリデーションルールを構築
+1. **スキーマの再利用**: 共通スキーマを定義して再利用
+2. **型推論の活用**: `z.infer`で型を自動生成
+3. **エラーメッセージの一貫性**: カスタムエラーマップで統一
+4. **段階的な移行**: 並行実装で安全に移行
+5. **テストの充実**: スキーマ変更時は必ずテスト更新
 
-## APIルートでの実装例
+## パフォーマンス考慮事項
 
-### 2025年1月の実装
-
-APIルートにて共通バリデーションフレームワークを適用し、以下の改善を実現しました：
-
-#### 実装内容
-- `api/src/validation/schemas.ts` に共通バリデーションスキーマを集約
-- トランザクションAPIとサブスクリプションAPIで統一されたバリデーションを実装
-- カテゴリIDバリデーターで文字列から数値への自動変換を追加
-
-#### 改善効果
-- **コード削減**: 約80-100行の重複コードを削除
-- **一貫性向上**: すべてのAPIで同じバリデーションルールを適用
-- **エラーメッセージ統一**: 日本語の統一されたエラーメッセージ
-- **型安全性**: TypeScriptの型システムを活用
-
-#### 実装例
-```typescript
-// api/src/validation/schemas.ts
-export const categoryIdValidator: Validator<number | string | null | undefined> = (
-  value,
-  fieldName
-) => {
-  if (value === null || value === undefined) return null;
-  
-  // 文字列の場合は数値に変換
-  const numericValue = typeof value === 'string' ? Number(value) : value;
-  
-  if (isNaN(numericValue)) {
-    return {
-      field: fieldName,
-      message: 'カテゴリIDは数値である必要があります',
-      code: 'INVALID_TYPE',
-    };
-  }
-  
-  return positiveNumber('カテゴリIDは正の整数である必要があります')(numericValue, fieldName);
-};
-```
+- **パースの最適化**: 大量データの場合は`parseAsync`を使用
+- **スキーマのメモ化**: 頻繁に使用するスキーマはメモ化
+- **部分的なバリデーション**: 必要なフィールドのみ検証
 
 ## 今後の拡張
 
-このフレームワークは、今後以下の機能で拡張可能です：
+- **条件付きバリデーション**: `z.discriminatedUnion`や`z.union`の活用
+- **非同期バリデーション**: DBチェックなどの統合
+- **カスタム型**: ドメイン固有の型定義
+- **国際化**: 多言語対応のエラーメッセージ
 
-- 非同期バリデーション（データベースチェックなど）
-- 条件付きバリデーション（他のフィールドに依存）
-- 国際化対応（多言語エラーメッセージ）
-- より高度なバリデーター（メールアドレス、URL、電話番号など）
+## 関連ドキュメント
+
+- [Zodバリデーション移行ガイド](./移行ガイド/Zodバリデーション移行ガイド.md)
+- [削除ファイルリスト](./移行ガイド/削除ファイルリスト.md)
+- [Zod公式ドキュメント](https://zod.dev)

@@ -1,21 +1,21 @@
 "use client";
 
-import { type FC, useCallback, useEffect, useMemo, useState } from "react";
-import {
-	validateExpenseFieldWithZod,
-	validateExpenseFormWithZod,
-} from "../../lib/validation/validation";
+import { type FC, useCallback, useEffect, useState } from "react";
 import type {
-	ExpenseFormData,
-	ExpenseFormProps,
-	TransactionType,
-} from "../../types/expense";
+	BillingCycle,
+	SubscriptionFormData,
+	SubscriptionFormProps,
+} from "../../lib/api/types";
+import {
+	validateSubscriptionFieldWithZod,
+	validateSubscriptionFormWithZod,
+} from "../../lib/validation/validation";
 
 /**
- * 支出フォームコンポーネント
+ * サブスクリプションフォームコンポーネント（Zodバリデーション版）
  *
- * 支出の新規作成・編集を行うフォームコンポーネント
- * Zodバリデーション機能付きの制御されたコンポーネントとして実装
+ * Zodスキーマを使用したバリデーションを実装したサブスクリプションフォーム
+ * 既存のSubscriptionFormと同じインターフェースを持ち、段階的な移行が可能
  *
  * 設計方針:
  * - Zodスキーマによる型安全なバリデーション
@@ -25,23 +25,34 @@ import type {
 
 // フォームエラーの型定義
 interface FormErrors {
+	name?: string;
 	amount?: string;
-	type?: string;
-	description?: string;
-	date?: string;
+	billingCycle?: string;
+	nextBillingDate?: string;
 	categoryId?: string;
+	isActive?: string;
+	description?: string;
 }
 
 // デフォルトフォームデータ
-const defaultFormData: ExpenseFormData = {
+const defaultFormData: SubscriptionFormData = {
+	name: "",
 	amount: 0,
-	type: "expense" as TransactionType,
-	date: "",
-	description: "",
+	billingCycle: "monthly",
+	nextBillingDate: "",
 	categoryId: "",
+	isActive: true,
+	description: "",
 };
 
-export const ExpenseForm: FC<ExpenseFormProps> = ({
+// 請求サイクルマッピング（日本語表示用）
+const billingCycleLabels: Record<BillingCycle, string> = {
+	monthly: "月額",
+	yearly: "年額",
+	weekly: "週額",
+};
+
+export const SubscriptionFormWithZod: FC<SubscriptionFormProps> = ({
 	onSubmit,
 	onCancel,
 	isSubmitting = false,
@@ -50,18 +61,20 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 	className = "",
 }) => {
 	// フォームデータの状態管理
-	const [formData, setFormData] = useState<ExpenseFormData>(
+	const [formData, setFormData] = useState<SubscriptionFormData>(
 		initialData || defaultFormData,
 	);
 	const [errors, setErrors] = useState<FormErrors>({});
 	const [touched, setTouched] = useState<
-		Record<keyof ExpenseFormData, boolean>
+		Record<keyof SubscriptionFormData, boolean>
 	>({
+		name: false,
 		amount: false,
-		type: false,
-		description: false,
-		date: false,
+		billingCycle: false,
+		nextBillingDate: false,
 		categoryId: false,
+		isActive: false,
+		description: false,
 	});
 
 	// 初期データが変更された場合の処理
@@ -73,13 +86,13 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 
 	// 全フィールドのバリデーション
 	const validateForm = useCallback((): FormErrors => {
-		const result = validateExpenseFormWithZod(formData);
+		const result = validateSubscriptionFormWithZod(formData);
 		return result.errors;
 	}, [formData]);
 
 	// フィールド値の変更ハンドラー
 	const handleFieldChange = useCallback(
-		(field: keyof ExpenseFormData, value: unknown) => {
+		(field: keyof SubscriptionFormData, value: unknown) => {
 			setFormData((prev) => ({
 				...prev,
 				[field]: value,
@@ -87,7 +100,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 
 			// リアルタイムバリデーション（フィールドがタッチされている場合のみ）
 			if (touched[field]) {
-				const error = validateExpenseFieldWithZod(field, value, {
+				const error = validateSubscriptionFieldWithZod(field, value, {
 					...formData,
 					[field]: value,
 				});
@@ -102,14 +115,14 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 
 	// フィールドのブラーハンドラー
 	const handleFieldBlur = useCallback(
-		(field: keyof ExpenseFormData) => {
+		(field: keyof SubscriptionFormData) => {
 			setTouched((prev) => ({
 				...prev,
 				[field]: true,
 			}));
 
 			// バリデーション実行
-			const error = validateExpenseFieldWithZod(
+			const error = validateSubscriptionFieldWithZod(
 				field,
 				formData[field],
 				formData,
@@ -122,17 +135,6 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 		[formData],
 	);
 
-	// 全フィールドをタッチ済みに設定
-	const setAllFieldsTouched = useCallback(() => {
-		setTouched((prev) => {
-			const newTouched = {} as typeof prev;
-			(Object.keys(prev) as Array<keyof typeof prev>).forEach((key) => {
-				newTouched[key] = true;
-			});
-			return newTouched;
-		});
-	}, []);
-
 	// フォーム送信ハンドラー
 	const handleSubmit = useCallback(
 		(e: React.FormEvent) => {
@@ -143,24 +145,29 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 			setErrors(newErrors);
 
 			// 全フィールドをタッチ済みに設定
-			setAllFieldsTouched();
+			setTouched({
+				name: true,
+				amount: true,
+				billingCycle: true,
+				nextBillingDate: true,
+				categoryId: true,
+				isActive: true,
+				description: true,
+			});
 
 			// エラーがない場合のみ送信
 			if (Object.keys(newErrors).length === 0) {
 				onSubmit(formData);
 			}
 		},
-		[formData, validateForm, onSubmit, setAllFieldsTouched],
+		[formData, validateForm, onSubmit],
 	);
 
-	// カテゴリフィルタリングの最適化
-	const filteredCategories = useMemo(
-		() =>
-			formData.type
-				? categories.filter((cat) => cat.type === formData.type)
-				: categories,
-		[categories, formData.type],
-	);
+	// 今日の日付をYYYY-MM-DD形式で取得
+	const getTodayString = (): string => {
+		const today = new Date();
+		return today.toISOString().split("T")[0];
+	};
 
 	return (
 		<form
@@ -168,24 +175,59 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 			className={`space-y-6 ${className}`}
 			noValidate
 		>
-			{/* 金額 */}
+			{/* サービス名 */}
 			<div>
 				<label
-					htmlFor="expense-amount"
+					htmlFor="subscription-name"
 					className="block text-sm font-medium text-gray-700 mb-2"
 				>
-					金額（円） <span className="text-red-500">*</span>
+					サービス名 <span className="text-red-500">*</span>
+				</label>
+				<input
+					type="text"
+					id="subscription-name"
+					value={formData.name}
+					onChange={(e) => handleFieldChange("name", e.target.value)}
+					onBlur={() => handleFieldBlur("name")}
+					disabled={isSubmitting}
+					className={`
+						block w-full px-3 py-2 border rounded-md shadow-sm
+						focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+						disabled:bg-gray-100 disabled:cursor-not-allowed
+						${
+							errors.name
+								? "border-red-300 focus:ring-red-500 focus:border-red-500"
+								: "border-gray-300"
+						}
+					`}
+					placeholder="例: Netflix"
+					aria-invalid={!!errors.name}
+					aria-describedby={errors.name ? "name-error" : undefined}
+				/>
+				{errors.name && (
+					<p id="name-error" className="mt-1 text-sm text-red-600" role="alert">
+						{errors.name}
+					</p>
+				)}
+			</div>
+
+			{/* 料金 */}
+			<div>
+				<label
+					htmlFor="subscription-amount"
+					className="block text-sm font-medium text-gray-700 mb-2"
+				>
+					料金（円） <span className="text-red-500">*</span>
 				</label>
 				<input
 					type="number"
-					id="expense-amount"
+					id="subscription-amount"
 					value={formData.amount || ""}
 					onChange={(e) => handleFieldChange("amount", Number(e.target.value))}
 					onBlur={() => handleFieldBlur("amount")}
 					disabled={isSubmitting}
 					min="1"
 					max="10000000"
-					aria-required="true"
 					className={`
 						block w-full px-3 py-2 border rounded-md shadow-sm
 						focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
@@ -196,7 +238,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 								: "border-gray-300"
 						}
 					`}
-					placeholder="1000"
+					placeholder="1480"
 					aria-invalid={!!errors.amount}
 					aria-describedby={errors.amount ? "amount-error" : undefined}
 				/>
@@ -211,38 +253,147 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 				)}
 			</div>
 
-			{/* 日付 */}
+			{/* 請求サイクル */}
 			<div>
 				<label
-					htmlFor="expense-date"
+					htmlFor="subscription-billing-cycle"
 					className="block text-sm font-medium text-gray-700 mb-2"
 				>
-					日付 <span className="text-red-500">*</span>
+					請求サイクル <span className="text-red-500">*</span>
 				</label>
-				<input
-					type="date"
-					id="expense-date"
-					value={formData.date}
-					onChange={(e) => handleFieldChange("date", e.target.value)}
-					onBlur={() => handleFieldBlur("date")}
+				<select
+					id="subscription-billing-cycle"
+					value={formData.billingCycle}
+					onChange={(e) =>
+						handleFieldChange("billingCycle", e.target.value as BillingCycle)
+					}
+					onBlur={() => handleFieldBlur("billingCycle")}
 					disabled={isSubmitting}
-					required={true}
 					className={`
 						block w-full px-3 py-2 border rounded-md shadow-sm
 						focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
 						disabled:bg-gray-100 disabled:cursor-not-allowed
 						${
-							errors.date
+							errors.billingCycle
 								? "border-red-300 focus:ring-red-500 focus:border-red-500"
 								: "border-gray-300"
 						}
 					`}
-					aria-invalid={!!errors.date}
-					aria-describedby={errors.date ? "date-error" : undefined}
+					aria-invalid={!!errors.billingCycle}
+					aria-describedby={
+						errors.billingCycle ? "billing-cycle-error" : undefined
+					}
+				>
+					{(
+						Object.entries(billingCycleLabels) as Array<[BillingCycle, string]>
+					).map(([value, label]) => (
+						<option key={value} value={value}>
+							{label}
+						</option>
+					))}
+				</select>
+				{errors.billingCycle && (
+					<p
+						id="billing-cycle-error"
+						className="mt-1 text-sm text-red-600"
+						role="alert"
+					>
+						{errors.billingCycle}
+					</p>
+				)}
+			</div>
+
+			{/* 次回請求日 */}
+			<div>
+				<label
+					htmlFor="subscription-next-billing-date"
+					className="block text-sm font-medium text-gray-700 mb-2"
+				>
+					次回請求日 <span className="text-red-500">*</span>
+				</label>
+				<input
+					type="date"
+					id="subscription-next-billing-date"
+					value={formData.nextBillingDate}
+					onChange={(e) => handleFieldChange("nextBillingDate", e.target.value)}
+					onBlur={() => handleFieldBlur("nextBillingDate")}
+					disabled={isSubmitting}
+					min={getTodayString()}
+					className={`
+						block w-full px-3 py-2 border rounded-md shadow-sm
+						focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+						disabled:bg-gray-100 disabled:cursor-not-allowed
+						${
+							errors.nextBillingDate
+								? "border-red-300 focus:ring-red-500 focus:border-red-500"
+								: "border-gray-300"
+						}
+					`}
+					aria-invalid={!!errors.nextBillingDate}
+					aria-describedby={
+						errors.nextBillingDate ? "next-billing-date-error" : undefined
+					}
 				/>
-				{errors.date && (
-					<p id="date-error" className="mt-1 text-sm text-red-600" role="alert">
-						{errors.date}
+				{errors.nextBillingDate && (
+					<p
+						id="next-billing-date-error"
+						className="mt-1 text-sm text-red-600"
+						role="alert"
+					>
+						{errors.nextBillingDate}
+					</p>
+				)}
+			</div>
+
+			{/* カテゴリ */}
+			<div>
+				<label
+					htmlFor="subscription-category"
+					className="block text-sm font-medium text-gray-700 mb-2"
+				>
+					カテゴリ <span className="text-red-500">*</span>
+				</label>
+				<select
+					id="subscription-category"
+					value={formData.categoryId}
+					onChange={(e) => handleFieldChange("categoryId", e.target.value)}
+					onBlur={() => handleFieldBlur("categoryId")}
+					disabled={isSubmitting || categories.length === 0}
+					className={`
+						block w-full px-3 py-2 border rounded-md shadow-sm
+						focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+						disabled:bg-gray-100 disabled:cursor-not-allowed
+						${
+							errors.categoryId
+								? "border-red-300 focus:ring-red-500 focus:border-red-500"
+								: "border-gray-300"
+						}
+					`}
+					aria-invalid={!!errors.categoryId}
+					aria-describedby={errors.categoryId ? "category-error" : undefined}
+				>
+					{categories.length === 0 ? (
+						<option value="">カテゴリを読み込み中...</option>
+					) : (
+						<>
+							<option value="">カテゴリを選択してください</option>
+							{categories
+								.filter((cat) => cat.type === "expense") // 支出カテゴリのみ表示
+								.map((category) => (
+									<option key={category.id} value={category.id}>
+										{category.name}
+									</option>
+								))}
+						</>
+					)}
+				</select>
+				{errors.categoryId && (
+					<p
+						id="category-error"
+						className="mt-1 text-sm text-red-600"
+						role="alert"
+					>
+						{errors.categoryId}
 					</p>
 				)}
 			</div>
@@ -250,13 +401,13 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 			{/* 説明 */}
 			<div>
 				<label
-					htmlFor="expense-description"
+					htmlFor="subscription-description"
 					className="block text-sm font-medium text-gray-700 mb-2"
 				>
 					説明（任意）
 				</label>
 				<textarea
-					id="expense-description"
+					id="subscription-description"
 					value={formData.description || ""}
 					onChange={(e) => handleFieldChange("description", e.target.value)}
 					onBlur={() => handleFieldBlur("description")}
@@ -290,57 +441,6 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 				) : (
 					<p id="description-help" className="mt-1 text-sm text-gray-500">
 						{formData.description ? formData.description.length : 0}/500文字
-					</p>
-				)}
-			</div>
-
-			{/* カテゴリ */}
-			<div>
-				<label
-					htmlFor="expense-category"
-					className="block text-sm font-medium text-gray-700 mb-2"
-				>
-					カテゴリ
-				</label>
-				<select
-					id="expense-category"
-					value={formData.categoryId}
-					onChange={(e) => handleFieldChange("categoryId", e.target.value)}
-					onBlur={() => handleFieldBlur("categoryId")}
-					disabled={isSubmitting || categories.length === 0}
-					className={`
-						block w-full px-3 py-2 border rounded-md shadow-sm
-						focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-						disabled:bg-gray-100 disabled:cursor-not-allowed
-						${
-							errors.categoryId
-								? "border-red-300 focus:ring-red-500 focus:border-red-500"
-								: "border-gray-300"
-						}
-					`}
-					aria-invalid={!!errors.categoryId}
-					aria-describedby={errors.categoryId ? "category-error" : undefined}
-				>
-					{categories.length === 0 ? (
-						<option value="">カテゴリを読み込み中...</option>
-					) : (
-						<>
-							<option value="">カテゴリを選択してください</option>
-							{filteredCategories.map((category) => (
-								<option key={category.id} value={category.id}>
-									{category.name}
-								</option>
-							))}
-						</>
-					)}
-				</select>
-				{errors.categoryId && (
-					<p
-						id="category-error"
-						className="mt-1 text-sm text-red-600"
-						role="alert"
-					>
-						{errors.categoryId}
 					</p>
 				)}
 			</div>
