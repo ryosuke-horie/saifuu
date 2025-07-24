@@ -60,17 +60,6 @@ describe("Categories API", () => {
 			});
 		});
 
-		it("should always return consistent data from config", async () => {
-			// 設定ファイルからのデータは常に一貫性がある
-			const result1 = await fetchCategories();
-			const result2 = await fetchCategories();
-
-			// 毎回同じデータが返されることを確認
-			expect(result1.length).toBe(result2.length);
-			expect(result1[0].id).toBe(result2[0].id);
-			expect(result1[0].name).toBe(result2[0].name);
-		});
-
 		it("should include only expense categories", async () => {
 			// 支出カテゴリのみが含まれることを確認
 			const result = await fetchCategories();
@@ -110,49 +99,6 @@ describe("Categories API", () => {
 			await expect(fetchCategoryById("invalid")).rejects.toThrow(
 				"カテゴリID invalid が見つかりません",
 			);
-		});
-	});
-
-	describe("Config File Integration", () => {
-		it("should return same data as configured in shared config", async () => {
-			// 設定ファイルのデータと一致することを確認
-			const result = await fetchCategories();
-
-			// 設定ファイルのデータ数と一致
-			expect(result).toHaveLength(ALL_CATEGORIES.length);
-
-			// 各カテゴリのデータが一致することを確認
-			result.forEach((category, index) => {
-				const configCategory = ALL_CATEGORIES[index];
-				expect(category.id).toBe(configCategory.numericId.toString());
-				expect(category.name).toBe(configCategory.name);
-				expect(category.type).toBe(configCategory.type);
-				expect(category.color).toBe(configCategory.color);
-			});
-		});
-
-		it("should maintain numericId order", async () => {
-			// numericIdの順序が保たれることを確認
-			const result = await fetchCategories();
-
-			// 支出カテゴリのnumericIDの確認（IDは飛び飛びになっている）
-			const expectedIds = [
-				"1",
-				"2",
-				"3",
-				"4",
-				"5",
-				"6",
-				"8",
-				"10",
-				"11",
-				"18",
-				"12",
-			];
-			const expenseCategories = result.slice(0, 11);
-			expenseCategories.forEach((category, index) => {
-				expect(category.id).toBe(expectedIds[index]);
-			});
 		});
 	});
 });

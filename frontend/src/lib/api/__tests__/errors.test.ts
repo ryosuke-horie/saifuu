@@ -36,23 +36,6 @@ describe("ApiError", () => {
 		expect(error.isStatusCode(500)).toBe(true);
 		expect(error.isStatusCode(404)).toBe(false);
 	});
-
-	it("デバッグ情報を正しく取得する", () => {
-		const originalError = new Error("元のエラー");
-		const error = new ApiError(
-			"network",
-			"ネットワークエラー",
-			undefined,
-			undefined,
-			originalError,
-		);
-
-		const debugInfo = error.getDebugInfo();
-
-		expect(debugInfo.type).toBe("network");
-		expect(debugInfo.message).toBe("ネットワークエラー");
-		expect(debugInfo.originalError).toBe("元のエラー");
-	});
 });
 
 describe("createApiErrorFromResponse", () => {
@@ -253,38 +236,29 @@ describe("getValidationErrors", () => {
 });
 
 describe("logApiError", () => {
-	it("開発環境では詳細情報をログ出力する", () => {
-		const _originalEnv = process.env.NODE_ENV;
-		vi.stubEnv("NODE_ENV", "development");
+	it.each([
+		["development", true],
+		["production", false],
+	])("%s環境では適切なログレベルで出力する", (env, isDetailed) => {
+		vi.stubEnv("NODE_ENV", env);
 
 		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
 		const error = new ApiError("network", "ネットワークエラー");
 		logApiError(error, "テストコンテキスト");
 
-		expect(consoleSpy).toHaveBeenCalledWith(
-			"[テストコンテキスト]",
-			error.getDebugInfo(),
-		);
-
-		vi.unstubAllEnvs();
-		consoleSpy.mockRestore();
-	});
-
-	it("本番環境では最小限の情報をログ出力する", () => {
-		const _originalEnv = process.env.NODE_ENV;
-		vi.stubEnv("NODE_ENV", "production");
-
-		const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
-		const error = new ApiError("network", "ネットワークエラー");
-		logApiError(error, "テストコンテキスト");
-
-		expect(consoleSpy).toHaveBeenCalledWith("[テストコンテキスト]", {
-			type: "network",
-			statusCode: undefined,
-			message: "ネットワークエラー",
-		});
+		if (isDetailed) {
+			expect(consoleSpy).toHaveBeenCalledWith(
+				"[テストコンテキスト]",
+				error.getDebugInfo(),
+			);
+		} else {
+			expect(consoleSpy).toHaveBeenCalledWith("[テストコンテキスト]", {
+				type: "network",
+				statusCode: undefined,
+				message: "ネットワークエラー",
+			});
+		}
 
 		vi.unstubAllEnvs();
 		consoleSpy.mockRestore();

@@ -14,7 +14,12 @@ import {
 	setupTimers,
 } from "../../../test-utils/logger-test-helpers";
 import { BrowserLogger, createBrowserLogger } from "../browser-logger";
-import { getDefaultConfig } from "../config";
+import {
+	getDefaultConfig,
+	getLogLevelValue,
+	shouldLog,
+	validateConfig,
+} from "../config";
 import type { BrowserLoggerConfig } from "../types";
 
 describe("BrowserLogger", () => {
@@ -290,6 +295,83 @@ describe("BrowserLogger", () => {
 				expect.stringContaining("Session ended"),
 				expect.any(Object),
 			);
+		});
+	});
+
+	describe("Config Validation and Management", () => {
+		it("各環境で適切なデフォルト設定を返す", () => {
+			const devConfig = getDefaultConfig("development");
+			expect(devConfig.level).toBe("debug");
+			expect(devConfig.enableConsole).toBe(true);
+			expect(devConfig.bufferSize).toBe(10);
+
+			const prodConfig = getDefaultConfig("production");
+			expect(prodConfig.level).toBe("info");
+			expect(prodConfig.enableConsole).toBe(false);
+			expect(prodConfig.bufferSize).toBe(100);
+
+			const storybookConfig = getDefaultConfig("storybook");
+			expect(storybookConfig.level).toBe("warn");
+			expect(storybookConfig.enableConsole).toBe(true);
+		});
+
+		it("設定検証が正しく動作する", () => {
+			const validConfig = getDefaultConfig("production");
+			const result = validateConfig(validConfig);
+			expect(result.valid).toBe(true);
+			expect(result.errors).toHaveLength(0);
+
+			// 無効な値のテスト
+			const invalidResult = validateConfig({
+				...validConfig,
+				bufferSize: 1001, // 最大値を超える
+			});
+			expect(invalidResult.valid).toBe(false);
+			expect(invalidResult.errors).toContain(
+				"bufferSize must be between 1 and 1000",
+			);
+		});
+	});
+
+	describe("Type System and Logging Levels", () => {
+		it("ログレベルの優先順位が正しい", () => {
+			expect(getLogLevelValue("debug")).toBe(0);
+			expect(getLogLevelValue("info")).toBe(1);
+			expect(getLogLevelValue("warn")).toBe(2);
+			expect(getLogLevelValue("error")).toBe(3);
+
+			// shouldLog検証
+			expect(shouldLog("debug", "debug")).toBe(true);
+			expect(shouldLog("debug", "info")).toBe(true);
+			expect(shouldLog("info", "debug")).toBe(false);
+			expect(shouldLog("error", "warn")).toBe(false);
+			expect(shouldLog("error", "error")).toBe(true);
+		});
+
+		it("ログエントリ型が適切な構造を持つ", () => {
+			const entry = {
+				timestamp: new Date().toISOString(),
+				level: "info",
+				message: "Test message",
+				requestId: "req_123",
+				sessionId: "session_456",
+				environment: "development",
+				service: "saifuu-frontend",
+				version: "1.0.0",
+				url: "http://localhost:3000",
+				deviceInfo: {
+					userAgent: "Mozilla/5.0",
+					viewport: { width: 1920, height: 1080 },
+					language: "ja",
+					timezone: "Asia/Tokyo",
+				},
+				meta: { action: "click" },
+			};
+
+			expect(entry.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+			expect(["debug", "info", "warn", "error"]).toContain(entry.level);
+			expect(entry.message).toBeTypeOf("string");
+			expect(entry.meta).toBeTypeOf("object");
 		});
 	});
 });

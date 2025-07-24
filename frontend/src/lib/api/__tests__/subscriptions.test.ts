@@ -49,6 +49,23 @@ describe("Subscriptions API", () => {
 		},
 	];
 
+	// 共通のモックレスポンスを定義
+	const createMockSubscription = (
+		overrides: Partial<ApiSubscriptionResponse> = {},
+	): ApiSubscriptionResponse => ({
+		id: 1,
+		name: "Netflix",
+		amount: 1980,
+		categoryId: 1,
+		billingCycle: "monthly",
+		nextBillingDate: "2025-08-01T00:00:00Z",
+		isActive: true,
+		description: "動画ストリーミング",
+		createdAt: "2025-07-05T07:06:39Z",
+		updatedAt: "2025-07-05T07:06:39Z",
+		...overrides,
+	});
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
@@ -57,30 +74,14 @@ describe("Subscriptions API", () => {
 		it("should fetch subscriptions successfully with array response format", async () => {
 			// 今回の修正: APIが配列を直接返すケース
 			const mockApiResponse: ApiSubscriptionResponse[] = [
-				{
-					id: 1,
-					name: "Netflix",
-					amount: 1980,
-					categoryId: 1,
-					billingCycle: "monthly",
-					nextBillingDate: "2025-08-01T00:00:00Z",
-					isActive: true,
-					description: "動画ストリーミング",
-					createdAt: "2025-07-05T07:06:39Z",
-					updatedAt: "2025-07-05T07:06:39Z",
-				},
-				{
+				createMockSubscription(),
+				createMockSubscription({
 					id: 2,
 					name: "GitHub Pro",
 					amount: 400,
 					categoryId: 2,
-					billingCycle: "monthly",
-					nextBillingDate: "2025-08-01T00:00:00Z",
-					isActive: true,
 					description: null,
-					createdAt: "2025-07-05T07:06:39Z",
-					updatedAt: "2025-07-05T07:06:39Z",
-				},
+				}),
 			];
 
 			const mockGet = vi.mocked(apiClient.get);
@@ -169,18 +170,7 @@ describe("Subscriptions API", () => {
 
 	describe("fetchSubscriptionById", () => {
 		it("should fetch single subscription by id", async () => {
-			const mockApiResponse: ApiSubscriptionResponse = {
-				id: 1,
-				name: "Netflix",
-				amount: 1980,
-				categoryId: 1,
-				billingCycle: "monthly",
-				nextBillingDate: "2025-08-01T00:00:00Z",
-				isActive: true,
-				description: "動画ストリーミング",
-				createdAt: "2025-07-05T07:06:39Z",
-				updatedAt: "2025-07-05T07:06:39Z",
-			};
+			const mockApiResponse = createMockSubscription();
 
 			const mockGet = vi.mocked(apiClient.get);
 			mockGet.mockResolvedValueOnce(mockApiResponse);
@@ -206,18 +196,12 @@ describe("Subscriptions API", () => {
 				description: "音楽ストリーミング",
 			};
 
-			const mockApiResponse: ApiSubscriptionResponse = {
+			const mockApiResponse = createMockSubscription({
 				id: 3,
 				name: "Spotify",
 				amount: 980,
-				categoryId: 1,
-				billingCycle: "monthly",
-				nextBillingDate: "2025-08-01T00:00:00Z",
-				isActive: true,
 				description: "音楽ストリーミング",
-				createdAt: "2025-07-05T07:06:39Z",
-				updatedAt: "2025-07-05T07:06:39Z",
-			};
+			});
 
 			const mockPost = vi.mocked(apiClient.post);
 			mockPost.mockResolvedValueOnce(mockApiResponse);
@@ -240,18 +224,10 @@ describe("Subscriptions API", () => {
 				amount: 1480,
 			};
 
-			const mockApiResponse: ApiSubscriptionResponse = {
-				id: 1,
+			const mockApiResponse = createMockSubscription({
 				name: "Spotify Premium",
 				amount: 1480,
-				categoryId: 1,
-				billingCycle: "monthly",
-				nextBillingDate: "2025-08-01T00:00:00Z",
-				isActive: true,
-				description: "音楽ストリーミング",
-				createdAt: "2025-07-05T07:06:39Z",
-				updatedAt: "2025-07-05T07:06:39Z",
-			};
+			});
 
 			const mockPut = vi.mocked(apiClient.put);
 			mockPut.mockResolvedValueOnce(mockApiResponse);
@@ -284,18 +260,9 @@ describe("Subscriptions API", () => {
 
 	describe("updateSubscriptionStatus", () => {
 		it("should update subscription status successfully", async () => {
-			const mockApiResponse: ApiSubscriptionResponse = {
-				id: 1,
-				name: "Netflix",
-				amount: 1980,
-				categoryId: 1,
-				billingCycle: "monthly",
-				nextBillingDate: "2025-08-01T00:00:00Z",
+			const mockApiResponse = createMockSubscription({
 				isActive: false, // ステータス更新後
-				description: "動画ストリーミング",
-				createdAt: "2025-07-05T07:06:39Z",
-				updatedAt: "2025-07-05T07:06:39Z",
-			};
+			});
 
 			const mockPut = vi.mocked(apiClient.put);
 			mockPut.mockResolvedValueOnce(mockApiResponse);

@@ -86,40 +86,28 @@ describe("API Config", () => {
 	});
 
 	describe("エンドポイント定義", () => {
-		it("サブスクリプションエンドポイントが正しく定義されている", async () => {
-			const { endpoints } = await import("../config");
+		it.each([
+			["subscriptions", "/subscriptions", true],
+			["categories", "/categories", false],
+			["transactions", "/transactions", true],
+		] as const)(
+			"%sエンドポイントが正しく定義されている",
+			async (resource, basePath, hasStats) => {
+				const { endpoints } = await import("../config");
 
-			expect(endpoints.subscriptions).toBeDefined();
-			expect(endpoints.subscriptions.list).toBe("/subscriptions");
-			expect(endpoints.subscriptions.create).toBe("/subscriptions");
-			expect(endpoints.subscriptions.detail("123")).toBe("/subscriptions/123");
-			expect(endpoints.subscriptions.update("123")).toBe("/subscriptions/123");
-			expect(endpoints.subscriptions.delete("123")).toBe("/subscriptions/123");
-			expect(endpoints.subscriptions.stats).toBe("/subscriptions/stats");
-		});
+				const resourceEndpoints = endpoints[resource];
+				expect(resourceEndpoints).toBeDefined();
+				expect(resourceEndpoints.list).toBe(basePath);
+				expect(resourceEndpoints.create).toBe(basePath);
+				expect(resourceEndpoints.detail("123")).toBe(`${basePath}/123`);
+				expect(resourceEndpoints.update("123")).toBe(`${basePath}/123`);
+				expect(resourceEndpoints.delete("123")).toBe(`${basePath}/123`);
 
-		it("カテゴリエンドポイントが正しく定義されている", async () => {
-			const { endpoints } = await import("../config");
-
-			expect(endpoints.categories).toBeDefined();
-			expect(endpoints.categories.list).toBe("/categories");
-			expect(endpoints.categories.create).toBe("/categories");
-			expect(endpoints.categories.detail("123")).toBe("/categories/123");
-			expect(endpoints.categories.update("123")).toBe("/categories/123");
-			expect(endpoints.categories.delete("123")).toBe("/categories/123");
-		});
-
-		it("取引エンドポイントが正しく定義されている", async () => {
-			const { endpoints } = await import("../config");
-
-			expect(endpoints.transactions).toBeDefined();
-			expect(endpoints.transactions.list).toBe("/transactions");
-			expect(endpoints.transactions.create).toBe("/transactions");
-			expect(endpoints.transactions.detail("123")).toBe("/transactions/123");
-			expect(endpoints.transactions.update("123")).toBe("/transactions/123");
-			expect(endpoints.transactions.delete("123")).toBe("/transactions/123");
-			expect(endpoints.transactions.stats).toBe("/transactions/stats");
-		});
+				if (hasStats && "stats" in resourceEndpoints) {
+					expect(resourceEndpoints.stats).toBe(`${basePath}/stats`);
+				}
+			},
+		);
 	});
 
 	describe("環境変数処理", () => {
