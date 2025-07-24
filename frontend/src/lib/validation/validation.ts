@@ -5,7 +5,6 @@ import {
 	subscriptionUpdateSchema,
 	transactionCreateSchema,
 	transactionUpdateSchema,
-	type ValidationError,
 } from "../../../../shared/src/validation/zod-schemas";
 import type { SubscriptionFormData } from "../../lib/api/types";
 import type { ExpenseFormData } from "../../types/expense";
@@ -33,7 +32,6 @@ function toApiSubscriptionFormat(data: SubscriptionFormData) {
 		description: data.description || undefined,
 	};
 }
-
 
 /**
  * 支出フォームデータのバリデーション（作成時）
