@@ -1,5 +1,5 @@
 // Zodを使用した共通バリデーションスキーマ
-import { z } from 'zod/v3'
+import { z } from 'zod'
 
 // 共通バリデーション定数（既存のものを再利用）
 export const VALIDATION_LIMITS = {
