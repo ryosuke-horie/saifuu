@@ -1,225 +1,286 @@
 import { describe, expect, it } from 'vitest'
 import {
-	validateId,
-	validateSubscriptionCreate,
-	validateSubscriptionUpdate,
-	validateTransactionCreate,
-	validateTransactionUpdate,
-} from '../schemas'
+	amountSchema,
+	billingCycleSchema,
+	categoryIdSchema,
+	dateStringSchema,
+	descriptionSchema,
+	idSchema,
+	nameSchema,
+	subscriptionCreateSchema,
+	transactionCreateSchema,
+	transactionTypeSchema,
+	zodToValidationResult,
+} from '../../../../shared/src/validation/zod-schemas'
 
-/**
- * スキーマバリデーションのテスト
- *
- * Issue #299 修正対応:
- * - APIテストでカバーされているバリデーションテストを削除
- * - スキーマ固有のテスト（変換、オプショナルフィールド）に焦点を当てる
- */
-describe('Validation Schemas', () => {
-	describe('validateId', () => {
-		it('should validate valid numeric ID', () => {
-			const result = validateId(1)
+describe('Zodスキーマのテスト', () => {
+	describe('idSchema', () => {
+		it('正の整数を受け入れる', () => {
+			const result = idSchema.safeParse(1)
 			expect(result.success).toBe(true)
 			if (result.success) {
 				expect(result.data).toBe(1)
 			}
 		})
 
-		it('should validate string ID and convert to number', () => {
-			const result = validateId('123')
+		it('ゼロや負の数を拒否する', () => {
+			expect(idSchema.safeParse(0).success).toBe(false)
+			expect(idSchema.safeParse(-1).success).toBe(false)
+		})
+
+		it('小数を拒否する', () => {
+			const result = idSchema.safeParse(1.5)
+			expect(result.success).toBe(false)
+		})
+	})
+
+	describe('amountSchema', () => {
+		it('有効な金額を受け入れる', () => {
+			expect(amountSchema.safeParse(100).success).toBe(true)
+			expect(amountSchema.safeParse(1).success).toBe(true)
+			expect(amountSchema.safeParse(10_000_000).success).toBe(true)
+		})
+
+		it('無効な金額を拒否する', () => {
+			expect(amountSchema.safeParse(0).success).toBe(false)
+			expect(amountSchema.safeParse(-100).success).toBe(false)
+			expect(amountSchema.safeParse(10_000_001).success).toBe(false)
+		})
+	})
+
+	describe('nameSchema', () => {
+		it('有効な名前を受け入れる', () => {
+			expect(nameSchema.safeParse('テスト').success).toBe(true)
+			expect(nameSchema.safeParse('a'.repeat(100)).success).toBe(true)
+		})
+
+		it('無効な名前を拒否する', () => {
+			expect(nameSchema.safeParse('').success).toBe(false)
+			expect(nameSchema.safeParse('a'.repeat(101)).success).toBe(false)
+		})
+	})
+
+	describe('descriptionSchema', () => {
+		it('有効な説明を受け入れる', () => {
+			expect(descriptionSchema.safeParse('説明文').success).toBe(true)
+			expect(descriptionSchema.safeParse(null).success).toBe(true)
+			expect(descriptionSchema.safeParse(undefined).success).toBe(true)
+			expect(descriptionSchema.safeParse('').success).toBe(true)
+		})
+
+		it('長すぎる説明を拒否する', () => {
+			expect(descriptionSchema.safeParse('a'.repeat(501)).success).toBe(false)
+		})
+	})
+
+	describe('dateStringSchema', () => {
+		it('有効な日付文字列を受け入れる', () => {
+			expect(dateStringSchema.safeParse('2024-01-01').success).toBe(true)
+			expect(dateStringSchema.safeParse('2024-01-01T00:00:00.000Z').success).toBe(true)
+		})
+
+		it('無効な日付文字列を拒否する', () => {
+			expect(dateStringSchema.safeParse('2024/01/01').success).toBe(false)
+			expect(dateStringSchema.safeParse('1999-12-31').success).toBe(false)
+		})
+	})
+
+	describe('categoryIdSchema', () => {
+		it('数値のカテゴリIDを受け入れる', () => {
+			const result = categoryIdSchema.safeParse(1)
 			expect(result.success).toBe(true)
 			if (result.success) {
-				expect(result.data).toBe(123)
+				expect(result.data).toBe(1)
 			}
 		})
 
-		it('should reject non-positive IDs', () => {
-			const result = validateId(0)
-			expect(result.success).toBe(false)
-			if (!result.success) {
-				expect(result.errors[0].code).toBe('POSITIVE_NUMBER')
+		it('文字列のカテゴリIDを数値に変換する', () => {
+			const result = categoryIdSchema.safeParse('5')
+			expect(result.success).toBe(true)
+			if (result.success) {
+				expect(result.data).toBe(5)
 			}
 		})
 
-		it('should reject invalid string IDs', () => {
-			const result = validateId('abc')
-			expect(result.success).toBe(false)
-			if (!result.success) {
-				expect(result.errors[0].code).toBe('INVALID_ID')
-			}
+		it('nullとundefinedを受け入れる', () => {
+			expect(categoryIdSchema.safeParse(null).success).toBe(true)
+			expect(categoryIdSchema.safeParse(undefined).success).toBe(true)
+		})
+
+		it('無効な文字列を拒否する', () => {
+			expect(categoryIdSchema.safeParse('abc').success).toBe(false)
+		})
+
+		it('負の数を拒否する', () => {
+			expect(categoryIdSchema.safeParse(-1).success).toBe(false)
+			expect(categoryIdSchema.safeParse('-1').success).toBe(false)
 		})
 	})
 
-	describe('Transaction Validation', () => {
-		describe('validateTransactionCreate', () => {
-			const validTransaction = {
+	describe('transactionTypeSchema', () => {
+		it('expenseを受け入れる', () => {
+			expect(transactionTypeSchema.safeParse('expense').success).toBe(true)
+		})
+
+		it('expense以外を拒否する', () => {
+			expect(transactionTypeSchema.safeParse('income').success).toBe(false)
+		})
+	})
+
+	describe('billingCycleSchema', () => {
+		it('有効な請求サイクルを受け入れる', () => {
+			expect(billingCycleSchema.safeParse('monthly').success).toBe(true)
+			expect(billingCycleSchema.safeParse('yearly').success).toBe(true)
+			expect(billingCycleSchema.safeParse('weekly').success).toBe(true)
+		})
+
+		it('無効な請求サイクルを拒否する', () => {
+			expect(billingCycleSchema.safeParse('daily').success).toBe(false)
+		})
+	})
+
+	describe('transactionCreateSchema', () => {
+		it('有効なトランザクションデータを受け入れる', () => {
+			const data = {
 				amount: 1000,
-				type: 'expense' as const,
-				date: '2024-01-01',
+				type: 'expense',
 				categoryId: 1,
-				description: 'テスト取引',
+				description: 'テスト',
+				date: '2024-01-01',
 			}
-
-			it('should validate valid transaction', () => {
-				const result = validateTransactionCreate(validTransaction)
-				expect(result.success).toBe(true)
-			})
-
-			it('should require amount', () => {
-				const result = validateTransactionCreate({ ...validTransaction, amount: undefined })
-				expect(result.success).toBe(false)
-				if (!result.success) {
-					expect(result.errors[0].field).toBe('amount')
-					expect(result.errors[0].code).toBe('REQUIRED')
-				}
-			})
-
-			// バリデーションテストはAPIテストでカバーされているため削除
-
-			it('should validate date format', () => {
-				const result = validateTransactionCreate({
-					...validTransaction,
-					date: '2024/01/01', // 不正な形式
-				})
-				expect(result.success).toBe(false)
-				if (!result.success) {
-					expect(result.errors[0].field).toBe('date')
-					expect(result.errors[0].code).toBe('INVALID_DATE_FORMAT')
-				}
-			})
-
-			it('should accept ISO 8601 datetime format', () => {
-				const result = validateTransactionCreate({
-					...validTransaction,
-					date: '2024-01-01T12:00:00.000Z',
-				})
-				expect(result.success).toBe(true)
-			})
-
-			it('should allow null categoryId', () => {
-				const result = validateTransactionCreate({
-					...validTransaction,
-					categoryId: null,
-				})
-				expect(result.success).toBe(true)
-			})
+			const result = transactionCreateSchema.safeParse(data)
+			expect(result.success).toBe(true)
 		})
 
-		describe('validateTransactionUpdate', () => {
-			it('should allow partial updates', () => {
-				const result = validateTransactionUpdate({ amount: 2000 })
-				expect(result.success).toBe(true)
-			})
+		it('必須フィールドがない場合エラーになる', () => {
+			const data = {
+				amount: 1000,
+				type: 'expense',
+			}
+			const result = transactionCreateSchema.safeParse(data)
+			expect(result.success).toBe(false)
+		})
 
-			it('should validate updated fields', () => {
-				const result = validateTransactionUpdate({ amount: -100 })
-				expect(result.success).toBe(false)
-				if (!result.success) {
-					expect(result.errors[0].field).toBe('amount')
-					expect(result.errors[0].code).toBe('POSITIVE_NUMBER')
-				}
-			})
-
-			it('should allow empty update', () => {
-				const result = validateTransactionUpdate({})
-				expect(result.success).toBe(true)
-			})
+		it('カテゴリIDとdescriptionはオプショナル', () => {
+			const data = {
+				amount: 1000,
+				type: 'expense',
+				date: '2024-01-01',
+			}
+			const result = transactionCreateSchema.safeParse(data)
+			expect(result.success).toBe(true)
 		})
 	})
 
-	describe('Subscription Validation', () => {
-		describe('validateSubscriptionCreate', () => {
-			const validSubscription = {
+	describe('subscriptionCreateSchema', () => {
+		it('有効なサブスクリプションデータを受け入れる', () => {
+			const data = {
 				name: 'Netflix',
 				amount: 1500,
-				billingCycle: 'monthly' as const,
+				billingCycle: 'monthly',
 				nextBillingDate: '2024-02-01',
 				categoryId: 1,
-				description: '動画配信サービス',
-				isActive: true,
+				description: 'エンタメ',
 			}
-
-			it('should validate valid subscription', () => {
-				const result = validateSubscriptionCreate(validSubscription)
-				expect(result.success).toBe(true)
-			})
-
-			it('should require name', () => {
-				const result = validateSubscriptionCreate({
-					...validSubscription,
-					name: undefined,
-				})
-				expect(result.success).toBe(false)
-				if (!result.success) {
-					expect(result.errors[0].field).toBe('name')
-					expect(result.errors[0].code).toBe('REQUIRED')
-				}
-			})
-
-			// 文字数制限のテストはAPIテストでカバーされているため削除
-
-			it('should validate billing cycle enum', () => {
-				const result = validateSubscriptionCreate({
-					...validSubscription,
-					billingCycle: 'daily' as unknown as 'monthly',
-				})
-				expect(result.success).toBe(false)
-				if (!result.success) {
-					expect(result.errors[0].field).toBe('billingCycle')
-					expect(result.errors[0].code).toBe('INVALID_ENUM')
-				}
-			})
-
-			it('should accept all valid billing cycles', () => {
-				const cycles = ['monthly', 'yearly', 'weekly'] as const
-				for (const cycle of cycles) {
-					const result = validateSubscriptionCreate({
-						...validSubscription,
-						billingCycle: cycle,
-					})
-					expect(result.success).toBe(true)
-				}
-			})
-
-			it('should validate boolean isActive', () => {
-				const result = validateSubscriptionCreate({
-					...validSubscription,
-					isActive: 'true' as unknown as boolean,
-				})
-				expect(result.success).toBe(false)
-				if (!result.success) {
-					expect(result.errors[0].field).toBe('isActive')
-					expect(result.errors[0].code).toBe('INVALID_BOOLEAN')
-				}
-			})
-
-			it('should allow undefined isActive (defaults to true)', () => {
-				// biome-ignore lint/correctness/noUnusedVariables: isActive is explicitly removed for testing
-				const { isActive, ...subscriptionWithoutIsActive } = validSubscription
-				const result = validateSubscriptionCreate(subscriptionWithoutIsActive)
-				expect(result.success).toBe(true)
-			})
+			const result = subscriptionCreateSchema.safeParse(data)
+			expect(result.success).toBe(true)
+			if (result.success) {
+				expect(result.data.isActive).toBe(true) // デフォルト値
+			}
 		})
 
-		describe('validateSubscriptionUpdate', () => {
-			it('should allow partial updates', () => {
-				const result = validateSubscriptionUpdate({
-					name: 'Netflix Premium',
-					amount: 1800,
-				})
-				expect(result.success).toBe(true)
-			})
+		it('isActiveを指定できる', () => {
+			const data = {
+				name: 'Netflix',
+				amount: 1500,
+				billingCycle: 'monthly',
+				nextBillingDate: '2024-02-01',
+				categoryId: 1,
+				isActive: false,
+			}
+			const result = subscriptionCreateSchema.safeParse(data)
+			expect(result.success).toBe(true)
+			if (result.success) {
+				expect(result.data.isActive).toBe(false)
+			}
+		})
+	})
 
-			// バリデーションテストはAPIテストでカバーされているため削除
+	describe('zodToValidationResult', () => {
+		it('成功時のレスポンスを正しく変換する', () => {
+			const zodResult = amountSchema.safeParse(100)
+			const validationResult = zodToValidationResult(zodResult, 100)
 
-			it('should allow empty update', () => {
-				const result = validateSubscriptionUpdate({})
-				expect(result.success).toBe(true)
-			})
+			expect(validationResult.success).toBe(true)
+			if (validationResult.success) {
+				expect(validationResult.data).toBe(100)
+			}
+		})
 
-			it('should allow updating isActive', () => {
-				const result = validateSubscriptionUpdate({ isActive: false })
-				expect(result.success).toBe(true)
+		it('エラー時のレスポンスを正しく変換する', () => {
+			const zodResult = transactionCreateSchema.safeParse({
+				amount: -100,
+				type: 'invalid',
 			})
+			console.log('Zod result:', zodResult)
+			const validationResult = zodToValidationResult(zodResult, {})
+			console.log('Validation result:', validationResult)
+
+			expect(validationResult.success).toBe(false)
+			if (!validationResult.success) {
+				expect(validationResult.errors).toBeInstanceOf(Array)
+				expect(validationResult.errors.length).toBeGreaterThan(0)
+				if (validationResult.errors.length > 0) {
+					expect(validationResult.errors[0]).toHaveProperty('field')
+					expect(validationResult.errors[0]).toHaveProperty('message')
+				}
+			}
+		})
+	})
+
+	describe('エラーメッセージの日本語化', () => {
+		it('必須フィールドのエラーメッセージが日本語になる', () => {
+			const result = transactionCreateSchema.safeParse({})
+			expect(result.success).toBe(false)
+
+			if (!result.success) {
+				console.log('Error:', result.error)
+				if (result.error?.errors) {
+					const errors = result.error.errors
+					const amountError = errors.find((e) => e.path && e.path[0] === 'amount')
+					expect(amountError?.message).toContain('必須')
+				} else {
+					throw new Error('Expected error to have errors property')
+				}
+			}
+		})
+
+		it('範囲エラーのメッセージが日本語になる', () => {
+			const result = amountSchema.safeParse(10_000_001)
+			expect(result.success).toBe(false)
+
+			if (!result.success) {
+				console.log('Range Error:', result.error)
+				if (result.error?.errors && result.error.errors.length > 0) {
+					expect(result.error.errors[0].message).toContain('10000000円以下である必要があります')
+				} else {
+					throw new Error('Expected error to have errors array')
+				}
+			}
+		})
+
+		it('enum型のエラーメッセージが日本語になる', () => {
+			const result = billingCycleSchema.safeParse('invalid')
+			expect(result.success).toBe(false)
+
+			if (!result.success) {
+				console.log('Enum Error:', result.error)
+				if (result.error?.errors && result.error.errors.length > 0) {
+					expect(result.error.errors[0].message).toContain('のいずれかである必要があります')
+				} else {
+					throw new Error('Expected error to have errors array')
+				}
+			}
 		})
 	})
 })

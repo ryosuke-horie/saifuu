@@ -12,11 +12,12 @@ import { getTestSqliteInstance } from './test-db'
  * テスト用の本番APIアプリインスタンス作成ヘルパー
  * 本番のindex.tsxと同様の構成でテスト用データベースを注入する
  * better-sqlite3版: テスト環境ではbetter-sqlite3のdrizzleアダプターを使用
+ * Zodバリデーションを使用
+ * @param db - オプショナル: 既存のデータベースインスタンスを使用する場合
  */
-export function createTestProductionApp() {
-	const sqliteInstance = getTestSqliteInstance()
-	// テスト環境ではbetter-sqlite3版のdrizzleを使用
-	const testDatabase = drizzle(sqliteInstance, { schema }) as unknown as AnyDatabase
+export function createTestProductionApp(db?: AnyDatabase) {
+	const testDatabase =
+		db || (drizzle(getTestSqliteInstance(), { schema }) as unknown as AnyDatabase)
 
 	// メインアプリと同じ構成のテストアプリを作成
 	const app = new Hono<{

@@ -7,7 +7,6 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { ALL_CATEGORIES } from "../../../../../shared/config/categories";
 import { fetchCategories, fetchCategoryById } from "../categories/api";
 
 describe("Categories API", () => {

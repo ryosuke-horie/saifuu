@@ -36,7 +36,8 @@
     "db:reset:dev": "rm -f dev.db && pnpm run db:migrate:dev && pnpm run db:seed:dev && echo '✅ 開発環境リセット完了'"
   },
   "dependencies": {
-    "hono": "^4.8.3"
+    "hono": "^4.8.3",
+    "zod": "^4.0.7"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.6",
