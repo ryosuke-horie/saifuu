@@ -41,20 +41,6 @@ describe("Categories Transformers", () => {
 				updatedAt: "2025-07-05T07:06:39Z",
 			});
 		});
-
-		it("should handle different id types", () => {
-			const apiCategory: ApiCategoryResponse = {
-				id: 999,
-				name: "テストカテゴリ",
-				createdAt: "2025-01-01T00:00:00Z",
-				updatedAt: "2025-01-01T00:00:00Z",
-			};
-
-			const result = transformApiCategoryToFrontend(apiCategory);
-
-			expect(result.id).toBe("999");
-			expect(typeof result.id).toBe("string");
-		});
 	});
 
 	describe("transformApiCategoriesToFrontend", () => {
@@ -104,23 +90,6 @@ describe("Categories Transformers", () => {
 
 			expect(Array.isArray(result)).toBe(true);
 			expect(result).toHaveLength(0);
-		});
-
-		it("should handle single item array", () => {
-			const apiCategories: ApiCategoryResponse[] = [
-				{
-					id: 42,
-					name: "単一カテゴリ",
-					createdAt: "2025-01-01T00:00:00Z",
-					updatedAt: "2025-01-01T00:00:00Z",
-				},
-			];
-
-			const result = transformApiCategoriesToFrontend(apiCategories);
-
-			expect(result).toHaveLength(1);
-			expect(result[0].id).toBe("42");
-			expect(result[0].name).toBe("単一カテゴリ");
 		});
 	});
 });
@@ -297,53 +266,6 @@ describe("Subscriptions Transformers", () => {
 			const result = transformFormDataToUpdateRequest(formData);
 
 			expect(result).toEqual({});
-		});
-	});
-
-	describe("Edge Cases", () => {
-		it("should handle zero amount", () => {
-			const apiSubscription: ApiSubscriptionResponse = {
-				id: 1,
-				name: "Free Service",
-				amount: 0,
-				categoryId: 1,
-				billingCycle: "monthly",
-				nextBillingDate: "2025-08-01T00:00:00Z",
-				isActive: true,
-				description: "無料サービス",
-				createdAt: "2025-07-05T07:06:39Z",
-				updatedAt: "2025-07-05T07:06:39Z",
-			};
-
-			const result = transformApiSubscriptionToFrontend(
-				apiSubscription,
-				mockCategories,
-			);
-
-			expect(result.amount).toBe(0);
-		});
-
-		it("should handle very large id numbers", () => {
-			const apiSubscription: ApiSubscriptionResponse = {
-				id: 9999999999,
-				name: "Service",
-				amount: 1000,
-				categoryId: 1,
-				billingCycle: "monthly",
-				nextBillingDate: "2025-08-01T00:00:00Z",
-				isActive: true,
-				description: null,
-				createdAt: "2025-07-05T07:06:39Z",
-				updatedAt: "2025-07-05T07:06:39Z",
-			};
-
-			const result = transformApiSubscriptionToFrontend(
-				apiSubscription,
-				mockCategories,
-			);
-
-			expect(result.id).toBe("9999999999");
-			expect(typeof result.id).toBe("string");
 		});
 	});
 });

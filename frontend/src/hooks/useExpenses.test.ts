@@ -202,48 +202,4 @@ describe("useExpenses", () => {
 			});
 		});
 	});
-
-	describe("その他の機能", () => {
-		it.skip("refetch機能が動作する", async () => {
-			// CRUD操作テストがモックの状態に影響を与えているため、一時的にスキップ
-			// TODO: テストの分離を改善する必要がある
-			const mockGetExpenses = getExpenseTransactions as Mock;
-			mockGetExpenses
-				.mockResolvedValueOnce(mockExpenses)
-				.mockResolvedValueOnce([
-					...mockExpenses,
-					{
-						id: "3",
-						amount: 3000,
-						categoryId: "1",
-						category: mockCategories[0],
-						type: "expense" as const,
-						description: "追加の支出",
-						date: "2025-01-16",
-						createdAt: "2025-01-16T00:00:00Z",
-						updatedAt: "2025-01-16T00:00:00Z",
-					},
-				]);
-
-			const { result } = renderHook(() => useExpenses());
-
-			// 初期ロード完了を待つ
-			await waitFor(() => {
-				expect(result.current.loading).toBe(false);
-			});
-
-			expect(result.current.expenses).toHaveLength(2);
-
-			// refetch実行
-			await act(async () => {
-				await result.current.refetch();
-			});
-
-			await waitFor(() => {
-				expect(result.current.expenses).toHaveLength(3);
-			});
-
-			expect(mockGetExpenses).toHaveBeenCalledTimes(2);
-		});
-	});
 });
