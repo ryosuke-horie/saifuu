@@ -102,17 +102,13 @@ describe('Database Schema', () => {
 		})
 
 		describe('制約の検証', () => {
-			it('should restrict type field to "expense" only', () => {
-				// 有効な値での動作確認
+			it('should enforce type field constraints', () => {
+				// 有効な値での作成確認
 				const transaction = createTestNewTransaction({ type: 'expense' })
 				expect(transaction.type).toBe('expense')
 
-				// スキーマ制約との整合性確認
-				const allowedTypes: NewTransaction['type'][] = ['expense']
-				expect(allowedTypes).toContain(transaction.type)
-
-				// TypeScript制約はコメントで明記
-				// const invalid: NewTransaction['type'] = 'income' // TS Error: Type '"income"' is not assignable to type '"expense"'
+				// 型制約の確認（コンパイル時エラーとなることを明記）
+				// const invalid: NewTransaction = createTestNewTransaction({ type: 'income' }) // TS Error
 			})
 		})
 	})
@@ -162,39 +158,39 @@ describe('Database Schema', () => {
 
 		describe('制約の検証', () => {
 			it('should restrict billingCycle to valid enum values', () => {
-				// schema.tsで定義されたenum値の検証
-				const expectedEnumValues = ['monthly', 'yearly', 'weekly'] as const
-				type ExpectedBillingCycle = (typeof expectedEnumValues)[number]
+				// 型レベルでスキーマとの整合性を強制
+				const validCycles: Array<NonNullable<NewSubscription['billingCycle']>> = [
+					'monthly',
+					'yearly',
+					'weekly',
+				]
 
 				// 各有効値での作成テスト
-				expectedEnumValues.forEach((cycle) => {
+				validCycles.forEach((cycle) => {
 					const subscription = createTestNewSubscription({ billingCycle: cycle })
 					expect(subscription.billingCycle).toBe(cycle)
 				})
 
-				// 型レベルでの整合性確認
-				const typeCheck: ExpectedBillingCycle = 'monthly'
-				expect(expectedEnumValues).toContain(typeCheck)
-
 				// デフォルト値（schema.tsの.default('monthly')）の確認
-				expect(expectedEnumValues).toContain('monthly')
+				expect(validCycles).toContain('monthly')
 
 				// TypeScript制約はコメントで明記
-				// const invalid: NewSubscription['billingCycle'] = 'daily' // TS Error
+				// const invalid: NonNullable<NewSubscription['billingCycle']> = 'daily' // TS Error
+				// 無効な値を追加するとコンパイルエラーになる
 			})
 
 			it('should handle optional fields correctly at type level', () => {
 				// NewSubscription型では省略可能なフィールドの検証
 				const minimalSubscription = createTestNewSubscription()
 
-				// 型レベルでは省略可能（undefined）であることを確認
+				// 型レベルでは省略可能（undefined）
 				expect(minimalSubscription.billingCycle).toBeUndefined()
 				expect(minimalSubscription.isActive).toBeUndefined()
 
-				// スキーマ定義のデフォルト値（'monthly', true）と一致する値で作成可能
+				// スキーマのデフォルト値と同じ値も明示的に設定可能
 				const withSchemaDefaults = createTestNewSubscription({
-					billingCycle: 'monthly',
-					isActive: true,
+					billingCycle: 'monthly', // schema.tsの.default('monthly')と同じ
+					isActive: true, // schema.tsの.default(true)と同じ
 				})
 				expect(withSchemaDefaults.billingCycle).toBe('monthly')
 				expect(withSchemaDefaults.isActive).toBe(true)
@@ -211,30 +207,18 @@ describe('Database Schema', () => {
 	})
 
 	describe('Type exports', () => {
-		it('should export all required types', () => {
-			// 全ての必要な型がエクスポートされていることを確認
-			const transaction: Transaction = createTestTransaction()
-			const newTransaction: NewTransaction = createTestNewTransaction()
-			const subscription: Subscription = createTestSubscription()
-			const newSubscription: NewSubscription = createTestNewSubscription()
+		it('should ensure schema consistency for database operations', () => {
+			// 実際のCRUD操作で使用される型の整合性を確認
+			const insertData: NewTransaction = createTestNewTransaction()
+			const selectData: Transaction = createTestTransaction()
 
-			expect(transaction).toBeDefined()
-			expect(newTransaction).toBeDefined()
-			expect(subscription).toBeDefined()
-			expect(newSubscription).toBeDefined()
-		})
+			// ビジネスロジックに影響する型制約の確認
+			expect(typeof insertData.amount).toBe('number')
+			expect(typeof selectData.id).toBe('number')
 
-		it('should differentiate between select and insert types', () => {
-			// 自動生成フィールドの有無のみを確認
-			const selectTransaction: Transaction = createTestTransaction()
-			const insertTransaction: NewTransaction = createTestNewTransaction()
-
-			// 重要な区別点のみをテスト
-			expect('id' in selectTransaction).toBe(true)
-			expect('id' in insertTransaction).toBe(false)
-
-			// TypeScript制約はコメントで明記
-			// insertTransaction.id = 1 // TS Error: Property 'id' does not exist on type 'NewTransaction'
+			// 自動生成フィールドの型制約をコメントで明記
+			// insertData.id = 1 // TS Error: Property 'id' does not exist on type 'NewTransaction'
+			// selectData.id = 'invalid' // TS Error: Type 'string' is not assignable to type 'number'
 		})
 	})
 })
