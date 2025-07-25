@@ -129,7 +129,7 @@ export function handleError<T extends { Variables: LoggingVariables }>(
 			error: error.message,
 			details: error.errors,
 		}
-		return c.json(response, error.statusCode as any)
+		return c.json(response, error.statusCode as 400)
 	}
 
 	// NotFoundErrorの場合
@@ -140,7 +140,7 @@ export function handleError<T extends { Variables: LoggingVariables }>(
 		const response: ErrorResponse = {
 			error: error.message,
 		}
-		return c.json(response, error.statusCode as any)
+		return c.json(response, error.statusCode as 404)
 	}
 
 	// DatabaseErrorの場合
@@ -153,7 +153,7 @@ export function handleError<T extends { Variables: LoggingVariables }>(
 		const response: ErrorResponse = {
 			error: error.message,
 		}
-		return c.json(response, error.statusCode as any)
+		return c.json(response, error.statusCode as 500)
 	}
 
 	// その他のApiErrorの場合
@@ -166,7 +166,7 @@ export function handleError<T extends { Variables: LoggingVariables }>(
 		const response: ErrorResponse = {
 			error: error.message,
 		}
-		return c.json(response, error.statusCode as any)
+		return c.json(response, error.statusCode as 400 | 401 | 403 | 404 | 500 | 502 | 503)
 	}
 
 	// 予期しないエラーの場合
@@ -192,7 +192,8 @@ export function handleError<T extends { Variables: LoggingVariables }>(
  * 使用方法:
  * app.use(errorHandler())
  *
- * 注意: このミドルウェアは他のルートハンドラーより前に登録する必要がある
+ * 注意: このミドルウェアは他のルートハンドラーより前に登録する
+ * （ミドルウェアは登録順に実行され、エラーハンドリングは全体をラップする必要があるため）
  */
 export function errorHandler(): MiddlewareHandler<{
 	Bindings: Env
@@ -204,7 +205,7 @@ export function errorHandler(): MiddlewareHandler<{
 		} catch (error) {
 			// エラーレスポンスを返すが、エラーは再スローしない
 			// （ミドルウェアチェーンを適切に終了させるため）
-			handleError(c, error)
+			return handleError(c, error)
 		}
 	}
 }
