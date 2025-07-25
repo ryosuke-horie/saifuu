@@ -22,7 +22,7 @@ import {
  */
 describe('Database Schema', () => {
 	// テストヘルパー関数
-	const createTestTransaction = (overrides?: Partial<Transaction>): Transaction => ({
+	const createTestTransaction = (overrides: Partial<Transaction> = {}): Transaction => ({
 		id: 1,
 		amount: 1000,
 		type: 'expense',
@@ -34,14 +34,14 @@ describe('Database Schema', () => {
 		...overrides,
 	})
 
-	const createTestNewTransaction = (overrides?: Partial<NewTransaction>): NewTransaction => ({
+	const createTestNewTransaction = (overrides: Partial<NewTransaction> = {}): NewTransaction => ({
 		amount: 1000,
 		type: 'expense',
 		date: '2024-01-01',
 		...overrides,
 	})
 
-	const createTestSubscription = (overrides?: Partial<Subscription>): Subscription => ({
+	const createTestSubscription = (overrides: Partial<Subscription> = {}): Subscription => ({
 		id: 1,
 		name: 'Netflix',
 		amount: 1500,
@@ -103,24 +103,16 @@ describe('Database Schema', () => {
 
 		describe('制約の検証', () => {
 			it('should restrict type field to "expense" only', () => {
-				// 1. 有効な値での動作確認
-				const validTransaction: NewTransaction = createTestNewTransaction({ type: 'expense' })
-				expect(validTransaction.type).toBe('expense')
+				// 有効な値での動作確認
+				const transaction = createTestNewTransaction({ type: 'expense' })
+				expect(transaction.type).toBe('expense')
 
-				// 2. 型定義レベルでの制約確認
-				const transactionType: NewTransaction['type'] = 'expense' // OK
-				expect(transactionType).toBe('expense')
+				// スキーマ制約との整合性確認
+				const allowedTypes: NewTransaction['type'][] = ['expense']
+				expect(allowedTypes).toContain(transaction.type)
 
-				// 3. スキーマ定義との整合性確認（コメントでドキュメント化）
-				// schema.tsでは text('type', { enum: ['expense'] }) と定義されている
-				// 以下はTypeScriptコンパイル時にエラーとなる：
+				// TypeScript制約はコメントで明記
 				// const invalid: NewTransaction['type'] = 'income' // TS Error: Type '"income"' is not assignable to type '"expense"'
-				// const invalid2: NewTransaction['type'] = 'other' // TS Error: Type '"other"' is not assignable to type '"expense"'
-
-				// 4. 許可される値の明示的な検証
-				const allowedValues: readonly NewTransaction['type'][] = ['expense'] as const
-				expect(allowedValues).toContain(validTransaction.type)
-				expect(allowedValues.length).toBe(1) // 'expense'のみが許可されることを確認
 			})
 		})
 	})
@@ -170,49 +162,44 @@ describe('Database Schema', () => {
 
 		describe('制約の検証', () => {
 			it('should restrict billingCycle to valid enum values', () => {
-				// schema.tsの定義と一致する値のテスト
-				const validCycles: Array<NonNullable<NewSubscription['billingCycle']>> = [
-					'monthly',
-					'yearly',
-					'weekly',
-				]
+				// schema.tsで定義されたenum値の検証
+				const expectedEnumValues = ['monthly', 'yearly', 'weekly'] as const
+				type ExpectedBillingCycle = (typeof expectedEnumValues)[number]
 
 				// 各有効値での作成テスト
-				validCycles.forEach((cycle) => {
+				expectedEnumValues.forEach((cycle) => {
 					const subscription = createTestNewSubscription({ billingCycle: cycle })
 					expect(subscription.billingCycle).toBe(cycle)
-					expect(validCycles).toContain(subscription.billingCycle)
 				})
 
-				// 型制約のドキュメント化（コンパイル時エラー）
-				// const invalid: NewSubscription['billingCycle'] = 'daily' // TS Error: Type '"daily"' is not assignable
-				// const invalid2: NewSubscription['billingCycle'] = 'annually' // TS Error: Type '"annually"' is not assignable
+				// 型レベルでの整合性確認
+				const typeCheck: ExpectedBillingCycle = 'monthly'
+				expect(expectedEnumValues).toContain(typeCheck)
 
-				// デフォルト値の確認
-				expect(validCycles).toContain('monthly') // schema.tsのdefault値
+				// デフォルト値（schema.tsの.default('monthly')）の確認
+				expect(expectedEnumValues).toContain('monthly')
 
-				// 許可される値の数を確認
-				expect(validCycles.length).toBe(3) // monthly, yearly, weeklyの3つのみ
+				// TypeScript制約はコメントで明記
+				// const invalid: NewSubscription['billingCycle'] = 'daily' // TS Error
 			})
 
-			it('should handle optional fields and default values correctly', () => {
+			it('should handle optional fields correctly at type level', () => {
 				// NewSubscription型では省略可能なフィールドの検証
 				const minimalSubscription = createTestNewSubscription()
 
-				// 型レベルでは省略可能として定義されていることを確認
-				// （実際のDB挿入時にはデフォルト値が設定されるが、型定義上は省略可能）
+				// 型レベルでは省略可能（undefined）であることを確認
 				expect(minimalSubscription.billingCycle).toBeUndefined()
 				expect(minimalSubscription.isActive).toBeUndefined()
 
-				// スキーマ定義のデフォルト値と一致する値で作成可能なことを確認
-				const withDefaults = createTestNewSubscription({
-					billingCycle: 'monthly', // schema.tsの.default('monthly')と一致
-					isActive: true, // schema.tsの.default(true)と一致
+				// スキーマ定義のデフォルト値（'monthly', true）と一致する値で作成可能
+				const withSchemaDefaults = createTestNewSubscription({
+					billingCycle: 'monthly',
+					isActive: true,
 				})
-				expect(withDefaults.billingCycle).toBe('monthly')
-				expect(withDefaults.isActive).toBe(true)
+				expect(withSchemaDefaults.billingCycle).toBe('monthly')
+				expect(withSchemaDefaults.isActive).toBe(true)
 
-				// 明示的にデフォルト値以外も設定可能なことを確認
+				// 異なる値も設定可能
 				const withCustomValues = createTestNewSubscription({
 					billingCycle: 'yearly',
 					isActive: false,
@@ -238,25 +225,16 @@ describe('Database Schema', () => {
 		})
 
 		it('should differentiate between select and insert types', () => {
-			// Select型（DB取得時）とInsert型（DB挿入時）の違いを確認
-			// Transaction型にはid, createdAt, updatedAtが必須
+			// 自動生成フィールドの有無のみを確認
 			const selectTransaction: Transaction = createTestTransaction()
-			expect(selectTransaction.id).toBeDefined()
-			expect(selectTransaction.createdAt).toBeDefined()
-			expect(selectTransaction.updatedAt).toBeDefined()
-
-			// NewTransaction型では自動生成フィールドは型定義に含まれない
 			const insertTransaction: NewTransaction = createTestNewTransaction()
 
-			// 必要なフィールドのみが含まれることを確認
-			expect(insertTransaction).toHaveProperty('amount')
-			expect(insertTransaction).toHaveProperty('type')
-			expect(insertTransaction).toHaveProperty('date')
+			// 重要な区別点のみをテスト
+			expect('id' in selectTransaction).toBe(true)
+			expect('id' in insertTransaction).toBe(false)
 
-			// 自動生成フィールドは型定義に含まれないことをコメントで明記
+			// TypeScript制約はコメントで明記
 			// insertTransaction.id = 1 // TS Error: Property 'id' does not exist on type 'NewTransaction'
-			// insertTransaction.createdAt = 'date' // TS Error: Property 'createdAt' does not exist on type 'NewTransaction'
-			// insertTransaction.updatedAt = 'date' // TS Error: Property 'updatedAt' does not exist on type 'NewTransaction'
 		})
 	})
 })
