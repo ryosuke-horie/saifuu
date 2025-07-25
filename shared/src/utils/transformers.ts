@@ -13,8 +13,8 @@
 
 // 定数定義
 const LOCALE_JP = 'ja-JP' as const
-const CURRENCY_JPY = 'JPY' as const
 const DATE_SEPARATORS = /[/.\s]/g
+const TIMEZONE_JP = 'Asia/Tokyo' as const
 
 /**
  * 金額を日本円形式でフォーマット
@@ -44,6 +44,7 @@ export function formatDate(dateString: string): string {
 		year: 'numeric',
 		month: '2-digit',
 		day: '2-digit',
+		timeZone: TIMEZONE_JP, // 明示的にJSTを指定
 	})
 }
 
@@ -97,10 +98,23 @@ export function normalizeDate(dateString: string): string {
 	const parts = normalized.split('-')
 	if (parts.length === 3) {
 		const [year, month, day] = parts
+
+		// 基本的なバリデーション
+		if (
+			!year ||
+			!month ||
+			!day ||
+			Number.isNaN(Number(year)) ||
+			Number.isNaN(Number(month)) ||
+			Number.isNaN(Number(day))
+		) {
+			throw new Error(`Invalid date format: ${dateString}`)
+		}
+
 		return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
 	}
 
-	return normalized
+	throw new Error(`Invalid date format: ${dateString}`)
 }
 
 /**

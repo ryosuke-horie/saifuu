@@ -231,7 +231,7 @@ export const subscriptionUpdateSchema = z.object({
 // ZodスキーマをValidationResult形式に変換
 export function zodToValidationResult<T>(
 	result: z.SafeParseReturnType<unknown, T>,
-	data: unknown,
+	_data: unknown,
 ):
 	| { success: true; data: T }
 	| {

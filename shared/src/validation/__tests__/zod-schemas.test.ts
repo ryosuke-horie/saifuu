@@ -8,10 +8,8 @@ import {
 	idSchema,
 	nameSchema,
 	subscriptionCreateSchema,
-	subscriptionUpdateSchema,
 	transactionCreateSchema,
 	transactionTypeSchema,
-	transactionUpdateSchema,
 	zodToValidationResult,
 } from '../zod-schemas'
 

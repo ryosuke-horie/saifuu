@@ -147,7 +147,7 @@ export const ALL_CATEGORIES: CategoryConfig[] = [
 /**
  * カテゴリタイプ別の設定取得
  */
-export function getCategoriesByType(type: CategoryType): CategoryConfig[] {
+export function getCategoriesByType(_type: CategoryType): CategoryConfig[] {
 	return EXPENSE_CATEGORIES
 }
 
@@ -185,7 +185,7 @@ export function getCategoryOptions(type?: CategoryType): Array<{
 /**
  * デフォルトカテゴリの取得
  */
-export function getDefaultCategory(type: CategoryType): CategoryConfig {
+export function getDefaultCategory(_type: CategoryType): CategoryConfig {
 	return EXPENSE_CATEGORIES[0]
 }
 

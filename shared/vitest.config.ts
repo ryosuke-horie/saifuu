@@ -8,5 +8,9 @@ export default defineConfig({
 			provider: 'v8',
 			reporter: ['text', 'json', 'html'],
 		},
+		// テスト環境でタイムゾーンを固定
+		env: {
+			TZ: 'Asia/Tokyo',
+		},
 	},
 })

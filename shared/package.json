@@ -3,6 +3,7 @@
 	"version": "1.0.0",
 	"description": "Shared utilities for Saifuu",
 	"type": "module",
+	"comment": "このパッケージは内部で直接TypeScriptファイルを参照する想定のため、buildスクリプトは意図的に省略しています",
 	"scripts": {
 		"test": "vitest",
 		"test:run": "vitest run",
