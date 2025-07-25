@@ -1,6 +1,8 @@
 import { eq } from 'drizzle-orm'
+import type { Context } from 'hono'
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { AnyDatabase } from '../../db'
 import { createCrudHandlers } from '../../lib/route-factory'
 import { type LoggingVariables } from '../../middleware/logging'
 
@@ -27,12 +29,33 @@ type TestEntity = {
 	updatedAt: string
 }
 
-type NewTestEntity = Omit<TestEntity, 'id'>
+// モックデータベースの型定義
+type MockDatabase = {
+	select: ReturnType<typeof vi.fn>
+	from: ReturnType<typeof vi.fn>
+	where: ReturnType<typeof vi.fn>
+	insert: ReturnType<typeof vi.fn>
+	into: ReturnType<typeof vi.fn>
+	values: ReturnType<typeof vi.fn>
+	returning: ReturnType<typeof vi.fn>
+	update: ReturnType<typeof vi.fn>
+	set: ReturnType<typeof vi.fn>
+	delete: ReturnType<typeof vi.fn>
+}
+
+// モックコンテキストの型定義
+type MockContext = {
+	req: {
+		param: ReturnType<typeof vi.fn>
+		json: ReturnType<typeof vi.fn>
+	}
+	json: ReturnType<typeof vi.fn>
+	get: ReturnType<typeof vi.fn>
+}
 
 describe('route-factory', () => {
-	let mockDb: any
-	let testApp: any
-	let mockContext: any
+	let mockDb: MockDatabase
+	let mockContext: MockContext
 
 	beforeEach(() => {
 		// データベースモックの初期化
@@ -41,19 +64,13 @@ describe('route-factory', () => {
 			from: vi.fn().mockReturnThis(),
 			where: vi.fn().mockReturnThis(),
 			insert: vi.fn().mockReturnThis(),
+			into: vi.fn().mockReturnThis(),
 			values: vi.fn().mockReturnThis(),
 			returning: vi.fn(),
 			update: vi.fn().mockReturnThis(),
 			set: vi.fn().mockReturnThis(),
 			delete: vi.fn().mockReturnThis(),
 		}
-
-		// Honoアプリケーションの初期化
-		testApp = new Hono<{
-			Variables: {
-				db: typeof mockDb
-			} & LoggingVariables
-		}>()
 
 		// コンテキストモックの初期化
 		mockContext = {
@@ -95,11 +112,11 @@ describe('route-factory', () => {
 				// select().from()が呼び出されたときにtestDataを返すように設定
 				mockDb.from.mockResolvedValueOnce(testData)
 
-				const handlers = createCrudHandlers({
+				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 					table: testTable,
 					resourceName: 'test',
-					validateCreate: (data: any) => ({ success: true, data }),
-					validateUpdate: (data: any) => ({ success: true, data }),
+					validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+					validateUpdate: (data: unknown) => ({ success: true, data: data as Partial<TestEntity> }),
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
@@ -138,11 +155,11 @@ describe('route-factory', () => {
 			it('エラー発生時に500エラーを返す', async () => {
 				mockDb.from.mockRejectedValueOnce(new Error('Database error'))
 
-				const handlers = createCrudHandlers({
+				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 					table: testTable,
 					resourceName: 'test',
-					validateCreate: (data: any) => ({ success: true, data }),
-					validateUpdate: (data: any) => ({ success: true, data }),
+					validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+					validateUpdate: (data: unknown) => ({ success: true, data: data as Partial<TestEntity> }),
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
@@ -160,11 +177,11 @@ describe('route-factory', () => {
 				mockDb.where.mockResolvedValueOnce(testData)
 				mockContext.req.param.mockReturnValueOnce('1')
 
-				const handlers = createCrudHandlers({
+				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 					table: testTable,
 					resourceName: 'test',
-					validateCreate: (data: any) => ({ success: true, data }),
-					validateUpdate: (data: any) => ({ success: true, data }),
+					validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+					validateUpdate: (data: unknown) => ({ success: true, data: data as Partial<TestEntity> }),
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
@@ -178,11 +195,11 @@ describe('route-factory', () => {
 				mockDb.where.mockResolvedValueOnce([])
 				mockContext.req.param.mockReturnValueOnce('999')
 
-				const handlers = createCrudHandlers({
+				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 					table: testTable,
 					resourceName: 'test',
-					validateCreate: (data: any) => ({ success: true, data }),
-					validateUpdate: (data: any) => ({ success: true, data }),
+					validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+					validateUpdate: (data: unknown) => ({ success: true, data: data as Partial<TestEntity> }),
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
@@ -194,12 +211,12 @@ describe('route-factory', () => {
 			it('無効なIDの場合400エラーを返す', async () => {
 				mockContext.req.param.mockReturnValueOnce('invalid')
 
-				const handlers = createCrudHandlers({
+				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 					table: testTable,
 					resourceName: 'test',
-					validateCreate: (data: any) => ({ success: true, data }),
-					validateUpdate: (data: any) => ({ success: true, data }),
-					validateId: (id: string) => ({
+					validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+					validateUpdate: (data: unknown) => ({ success: true, data: data as Partial<TestEntity> }),
+					validateId: (_id: string) => ({
 						success: false,
 						errors: [{ message: 'Invalid ID format' }],
 					}),
@@ -226,11 +243,11 @@ describe('route-factory', () => {
 				mockContext.req.json.mockResolvedValueOnce(newData)
 				mockDb.returning.mockResolvedValueOnce([createdData])
 
-				const handlers = createCrudHandlers({
+				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 					table: testTable,
 					resourceName: 'test',
-					validateCreate: (data: any) => ({ success: true, data }),
-					validateUpdate: (data: any) => ({ success: true, data }),
+					validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+					validateUpdate: (data: unknown) => ({ success: true, data: data as Partial<TestEntity> }),
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
@@ -245,14 +262,14 @@ describe('route-factory', () => {
 				const invalidData = { name: '' }
 				mockContext.req.json.mockResolvedValueOnce(invalidData)
 
-				const handlers = createCrudHandlers({
+				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 					table: testTable,
 					resourceName: 'test',
-					validateCreate: (data: any) => ({
+					validateCreate: (_data: unknown) => ({
 						success: false,
 						errors: [{ message: 'Name is required' }],
 					}),
-					validateUpdate: (data: any) => ({ success: true, data }),
+					validateUpdate: (data: unknown) => ({ success: true, data: data as Partial<TestEntity> }),
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
@@ -279,11 +296,11 @@ describe('route-factory', () => {
 				mockContext.req.json.mockResolvedValueOnce(updateData)
 				mockDb.returning.mockResolvedValueOnce([updatedData])
 
-				const handlers = createCrudHandlers({
+				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 					table: testTable,
 					resourceName: 'test',
-					validateCreate: (data: any) => ({ success: true, data }),
-					validateUpdate: (data: any) => ({ success: true, data }),
+					validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+					validateUpdate: (data: unknown) => ({ success: true, data: data as Partial<TestEntity> }),
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
@@ -300,11 +317,11 @@ describe('route-factory', () => {
 				mockContext.req.json.mockResolvedValueOnce({ name: 'Updated' })
 				mockDb.returning.mockResolvedValueOnce([])
 
-				const handlers = createCrudHandlers({
+				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 					table: testTable,
 					resourceName: 'test',
-					validateCreate: (data: any) => ({ success: true, data }),
-					validateUpdate: (data: any) => ({ success: true, data }),
+					validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+					validateUpdate: (data: unknown) => ({ success: true, data: data as Partial<TestEntity> }),
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
@@ -320,11 +337,11 @@ describe('route-factory', () => {
 				mockContext.req.param.mockReturnValueOnce('1')
 				mockDb.returning.mockResolvedValueOnce([deletedData])
 
-				const handlers = createCrudHandlers({
+				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 					table: testTable,
 					resourceName: 'test',
-					validateCreate: (data: any) => ({ success: true, data }),
-					validateUpdate: (data: any) => ({ success: true, data }),
+					validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+					validateUpdate: (data: unknown) => ({ success: true, data: data as Partial<TestEntity> }),
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
@@ -341,11 +358,11 @@ describe('route-factory', () => {
 				mockContext.req.param.mockReturnValueOnce('999')
 				mockDb.returning.mockResolvedValueOnce([])
 
-				const handlers = createCrudHandlers({
+				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 					table: testTable,
 					resourceName: 'test',
-					validateCreate: (data: any) => ({ success: true, data }),
-					validateUpdate: (data: any) => ({ success: true, data }),
+					validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+					validateUpdate: (data: unknown) => ({ success: true, data: data as Partial<TestEntity> }),
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 

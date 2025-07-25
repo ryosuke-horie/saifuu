@@ -66,34 +66,6 @@ function formatValidationErrors(errors: ValidationError[]): {
 }
 
 /**
- * エラーレスポンスを生成するヘルパー関数
- */
-function createErrorResponse(
-	c: Context,
-	error: unknown,
-	resourceName: string,
-	operation: string,
-	additionalContext?: Record<string, any>
-): Response {
-	const errorMessage = error instanceof Error ? error.message : String(error)
-	const stack = error instanceof Error ? error.stack : undefined
-
-	logWithContext(c, 'error', `${resourceName}${operation}でエラーが発生`, {
-		error: errorMessage,
-		stack,
-		resource: resourceName,
-		operationType: operation.includes('取得')
-			? 'read'
-			: operation.includes('削除')
-				? 'delete'
-				: 'write',
-		...additionalContext,
-	})
-
-	return c.json({ error: `Failed to ${operation} ${resourceName}` }, 500)
-}
-
-/**
  * CRUD操作のための汎用ハンドラーファクトリ
  * 共通のCRUD操作パターンを抽出し、コードの重複を削減する
  *
