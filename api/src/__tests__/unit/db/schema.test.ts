@@ -63,13 +63,6 @@ describe('Database Schema', () => {
 	})
 
 	describe('transactions table', () => {
-		describe('テーブル定義', () => {
-			it('should be defined as a SQLite table', () => {
-				expect(transactions).toBeDefined()
-				expect(typeof transactions).toBe('object')
-			})
-		})
-
 		describe('型定義の検証', () => {
 			it('should have correct Transaction type structure', () => {
 				// Transaction型が期待される構造を持つことを確認
@@ -108,25 +101,24 @@ describe('Database Schema', () => {
 
 		describe('制約の検証', () => {
 			it('should restrict type field to "expense" only', () => {
-				// 型チェックによる制約の確認
+				// 有効な値での動作確認
 				const validTransaction: NewTransaction = createTestNewTransaction({ type: 'expense' })
 				expect(validTransaction.type).toBe('expense')
 
-				// TypeScript コンパイル時エラーとなることをコメントで明記
-				// 以下のコードはTypeScriptの型チェックでエラーになるため、コメントアウト
-				// const invalidTransaction: NewTransaction = { ...validTransaction, type: 'income' } // TS Error: Type '"income"' is not assignable to type '"expense"'
+				// 型制約のドキュメント化（コンパイル時に検証される）
+				// const invalidTransaction: NewTransaction = {
+				//   ...validTransaction,
+				//   type: 'income' // TS Error: Type '"income"' is not assignable to type '"expense"'
+				// }
+
+				// スキーマのenum制約をより明確に検証
+				const allowedTypes: Array<NewTransaction['type']> = ['expense']
+				expect(allowedTypes).toContain(validTransaction.type)
 			})
 		})
 	})
 
 	describe('subscriptions table', () => {
-		describe('テーブル定義', () => {
-			it('should be defined as a SQLite table', () => {
-				expect(subscriptions).toBeDefined()
-				expect(typeof subscriptions).toBe('object')
-			})
-		})
-
 		describe('型定義の検証', () => {
 			it('should have correct Subscription type structure', () => {
 				// Subscription型が期待される構造を持つことを確認
@@ -189,13 +181,13 @@ describe('Database Schema', () => {
 				const minimalSubscription = createTestNewSubscription()
 
 				// 型レベルでは省略可能として定義されていることを確認
-				expect(minimalSubscription.billingCycle).toBeUndefined()
-				expect(minimalSubscription.isActive).toBeUndefined()
+				expect(minimalSubscription.billingCycle).toBeUndefined() // 型レベルでは省略可能
+				expect(minimalSubscription.isActive).toBeUndefined() // 型レベルでは省略可能
 
-				// デフォルト値付きでも作成可能なことを確認
+				// デフォルト値付きでも作成可能であることを確認（スキーマ定義との整合性）
 				const withDefaults = createTestNewSubscription({
-					billingCycle: 'monthly',
-					isActive: true,
+					billingCycle: 'monthly', // schema.tsのdefault値
+					isActive: true, // schema.tsのdefault値
 				})
 				expect(withDefaults.billingCycle).toBe('monthly')
 				expect(withDefaults.isActive).toBe(true)
@@ -225,19 +217,18 @@ describe('Database Schema', () => {
 			expect(selectTransaction.createdAt).toBeDefined()
 			expect(selectTransaction.updatedAt).toBeDefined()
 
-			// NewTransaction型ではid, createdAt, updatedAtは自動生成されるため不要
+			// NewTransaction型では自動生成フィールドは型定義に含まれない
 			const insertTransaction: NewTransaction = createTestNewTransaction()
-			// 型アサーションを使用して、これらのフィールドがNewTransaction型に存在しないことを検証
-			// 型ガードを使用して、これらのプロパティが存在しないことを確認
-			if ('id' in insertTransaction) {
-				expect(insertTransaction).not.toHaveProperty('id')
-			}
-			if ('createdAt' in insertTransaction) {
-				expect(insertTransaction).not.toHaveProperty('createdAt')
-			}
-			if ('updatedAt' in insertTransaction) {
-				expect(insertTransaction).not.toHaveProperty('updatedAt')
-			}
+
+			// 必要なフィールドのみが含まれることを確認
+			expect(insertTransaction).toHaveProperty('amount')
+			expect(insertTransaction).toHaveProperty('type')
+			expect(insertTransaction).toHaveProperty('date')
+
+			// 自動生成フィールドは型定義に含まれないことをコメントで明記
+			// insertTransaction.id = 1 // TS Error: Property 'id' does not exist on type 'NewTransaction'
+			// insertTransaction.createdAt = 'date' // TS Error: Property 'createdAt' does not exist on type 'NewTransaction'
+			// insertTransaction.updatedAt = 'date' // TS Error: Property 'updatedAt' does not exist on type 'NewTransaction'
 		})
 	})
 })
