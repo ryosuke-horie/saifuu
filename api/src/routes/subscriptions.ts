@@ -44,8 +44,12 @@ interface SubscriptionWithCategory extends Subscription {
 function addCategoryInfo(data: Subscription[]): SubscriptionWithCategory[] {
 	const currentTimestamp = new Date().toISOString()
 
+	// カテゴリをMapに変換して検索を高速化（O(1)）
+	const categoryMap = new Map(ALL_CATEGORIES.map((cat) => [cat.numericId, cat]))
+
 	return data.map((subscription) => {
-		const category = ALL_CATEGORIES.find((cat) => cat.numericId === subscription.categoryId)
+		const category =
+			subscription.categoryId !== null ? categoryMap.get(subscription.categoryId) : undefined
 
 		return {
 			...subscription,
@@ -77,13 +81,18 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 	}>()
 
 	// CRUDハンドラーを作成
-	const handlers = createCrudHandlers<NewSubscription, Partial<NewSubscription>>({
+	const handlers = createCrudHandlers<
+		NewSubscription,
+		Partial<NewSubscription>,
+		Subscription,
+		SubscriptionWithCategory
+	>({
 		table: subscriptions,
 		resourceName: 'subscription',
 		validateCreate: validateSubscriptionCreateWithZod,
 		validateUpdate: validateSubscriptionUpdateWithZod,
 		validateId: validateIdWithZod,
-		transformData: (data: any[]) => addCategoryInfo(data as Subscription[]),
+		transformData: addCategoryInfo,
 		testDatabase: options.testDatabase,
 	})
 
