@@ -58,6 +58,10 @@ jobs:
         with:
           version: 10
       
+      # ルートディレクトリの依存関係をインストール（glob パッケージを含む）
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
+      
       # テストコード比率の監視
       - name: Check test code ratio
         id: test_ratio
@@ -66,7 +70,7 @@ jobs:
           echo "" >> test_ratio_report.md
           
           # テスト比率チェックを実行
-          node scripts/monitor-test-ratio-simple.js >> test_ratio_output.txt 2>&1 || true
+          node scripts/monitor-test-ratio.js >> test_ratio_output.txt 2>&1 || true
           
           # 結果をマークダウンに整形
           if grep -q "❌ 基準違反ファイル" test_ratio_output.txt; then
