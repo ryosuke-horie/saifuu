@@ -139,7 +139,10 @@ export const INCOME_CATEGORIES: CategoryConfig[] = []
 /**
  * 全カテゴリ設定
  */
-export const ALL_CATEGORIES: CategoryConfig[] = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES]
+export const ALL_CATEGORIES: CategoryConfig[] = [
+	...EXPENSE_CATEGORIES,
+	...INCOME_CATEGORIES,
+]
 
 /**
  * カテゴリタイプ別の設定取得
@@ -195,14 +198,17 @@ export function validateCategoryConfig(): boolean {
 
 	// ID重複チェック
 	if (allIds.length !== uniqueIds.length) {
-		const duplicates = allIds.filter((id, index) => allIds.indexOf(id) !== index)
+		const duplicates = allIds.filter(
+			(id, index) => allIds.indexOf(id) !== index,
+		)
 		console.error('Duplicate category IDs found:', duplicates)
 		return false
 	}
 
 	// 必須フィールドチェック
 	const invalidCategories = ALL_CATEGORIES.filter(
-		(category) => !category.id || !category.name || !category.type || !category.color
+		(category) =>
+			!category.id || !category.name || !category.type || !category.color,
 	)
 
 	if (invalidCategories.length > 0) {
@@ -212,7 +218,7 @@ export function validateCategoryConfig(): boolean {
 
 	// 色の形式チェック
 	const invalidColors = ALL_CATEGORIES.filter(
-		(category) => !category.color.match(/^#[0-9A-F]{6}$/i)
+		(category) => !category.color.match(/^#[0-9A-F]{6}$/i),
 	)
 
 	if (invalidColors.length > 0) {
@@ -222,7 +228,7 @@ export function validateCategoryConfig(): boolean {
 
 	// タイプの妥当性チェック
 	const invalidTypes = ALL_CATEGORIES.filter(
-		(category) => category.type !== 'expense'
+		(category) => category.type !== 'expense',
 	)
 
 	if (invalidTypes.length > 0) {
