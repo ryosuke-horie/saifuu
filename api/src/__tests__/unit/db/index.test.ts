@@ -1,15 +1,15 @@
 /**
  * @file データベース接続モジュールのユニットテスト
- * 
+ *
  * 【設計意図】
  * このテストファイルは、Cloudflare D1とDrizzle ORMの統合を検証するために作成されました。
  * 3つの環境（本番、開発、テスト）で同じインターフェースを提供することを保証します。
- * 
+ *
  * 【テスト戦略】
  * 1. モック戦略: drizzle-orm/d1をモックし、D1バインディングとの統合を分離してテスト
  * 2. カバレッジ: すべての公開関数と主要なエラーケースをカバー（100%を目標）
  * 3. 環境別テスト: 各環境の関数が同じ振る舞いをすることを検証
- * 
+ *
  * 【代替案として検討したアプローチ】
  * - 統合テストのみ: 実際のD1インスタンスが必要で、ユニットテストには不適切
  * - E2Eテスト: 環境構築が複雑で、素早いフィードバックが得られない
@@ -58,26 +58,26 @@ describe('データベース接続モジュール', () => {
 
 	// パラメータ化テストで重複を削除
 	describe.each([
-		{ 
-			name: 'createDatabase（本番環境）', 
+		{
+			name: 'createDatabase（本番環境）',
 			fn: createDatabase,
-			description: '本番環境用のデータベース接続'
+			description: '本番環境用のデータベース接続',
 		},
-		{ 
-			name: 'createDevDatabase（開発環境）', 
+		{
+			name: 'createDevDatabase（開発環境）',
 			fn: createDevDatabase,
-			description: '開発環境用のデータベース接続（ローカルD1インスタンス）'
+			description: '開発環境用のデータベース接続（ローカルD1インスタンス）',
 		},
-		{ 
-			name: 'createTestDatabase（テスト環境）', 
+		{
+			name: 'createTestDatabase（テスト環境）',
 			fn: createTestDatabase,
-			description: 'テスト環境用のデータベース接続（テスト専用D1インスタンス）'
-		}
-	])('$name', ({ fn, description }) => {
+			description: 'テスト環境用のデータベース接続（テスト専用D1インスタンス）',
+		},
+	])('$name', ({ fn }) => {
 		it('有効なD1バインディングを渡すとCRUD操作が可能なDrizzleインスタンスを返すべき', () => {
 			// Arrange: テスト用のD1バインディングを準備
 			const mockBinding = createMockD1Database()
-			
+
 			// Act: データベース接続を作成
 			const db = fn(mockBinding)
 
@@ -87,7 +87,7 @@ describe('データベース接続モジュール', () => {
 			expect(db.insert).toBeDefined()
 			expect(db.update).toBeDefined()
 			expect(db.delete).toBeDefined()
-			
+
 			// 各メソッドが関数であることを確認（型の実用性を検証）
 			expect(typeof db.select).toBe('function')
 			expect(typeof db.insert).toBe('function')
@@ -98,7 +98,7 @@ describe('データベース接続モジュール', () => {
 		it('drizzle関数を正しいバインディングとスキーマオプションで呼び出すべき', () => {
 			// Arrange
 			const mockBinding = createMockD1Database()
-			
+
 			// Act
 			fn(mockBinding)
 
@@ -120,14 +120,14 @@ describe('データベース接続モジュール', () => {
 
 			// Act: 3つの環境すべてでデータベースを作成
 			createDatabase(mockBinding)
-			createDevDatabase(mockBinding)  
+			createDevDatabase(mockBinding)
 			createTestDatabase(mockBinding)
 
 			// Assert: すべての呼び出しで同じスキーマ参照が使用されていることを確認
 			// これにより、環境間でのスキーマの一貫性が保証される
 			const calls = mockDrizzle.mock.calls
 			expect(calls.length).toBe(3)
-			
+
 			const firstSchema = calls[0][1].schema
 			expect(calls[1][1].schema).toBe(firstSchema)
 			expect(calls[2][1].schema).toBe(firstSchema)
@@ -151,7 +151,7 @@ describe('データベース接続モジュール', () => {
 		it('D1バインディングがundefinedの場合、TypeErrorが発生すべき', () => {
 			// Cloudflare Workers環境でバインディングが設定されていない場合のシミュレーション
 			mockDrizzle.mockImplementationOnce(() => {
-				throw new TypeError('Cannot read properties of undefined (reading \'prepare\')')
+				throw new TypeError("Cannot read properties of undefined (reading 'prepare')")
 			})
 
 			const undefinedBinding = undefined as unknown as D1Database
@@ -189,11 +189,11 @@ describe('データベース接続モジュール', () => {
 			// モック関数として動作することを確認
 			const mockSelect = db.select as ReturnType<typeof vi.fn>
 			const mockInsert = db.insert as ReturnType<typeof vi.fn>
-			
+
 			// 実際の使用パターンをシミュレート
 			mockSelect()
 			mockInsert()
-			
+
 			expect(mockSelect).toHaveBeenCalled()
 			expect(mockInsert).toHaveBeenCalled()
 		})
@@ -202,7 +202,7 @@ describe('データベース接続モジュール', () => {
 			// 異なる環境のデータベースが独立して動作することを確認
 			const binding1 = createMockD1Database()
 			const binding2 = createMockD1Database()
-			
+
 			// drizzleが毎回新しいインスタンスを返すようにモック
 			let callCount = 0
 			mockDrizzle.mockImplementation(() => ({
@@ -211,10 +211,10 @@ describe('データベース接続モジュール', () => {
 				update: vi.fn(),
 				delete: vi.fn(),
 			}))
-			
+
 			const db1 = createDatabase(binding1)
 			const db2 = createDevDatabase(binding2)
-			
+
 			// 各インスタンスが独立していることを確認
 			expect(db1.select()).toBe('select-1')
 			expect(db2.select()).toBe('select-2')
@@ -226,7 +226,7 @@ describe('データベース接続モジュール', () => {
 			// Drizzle ORMが内部でバリデーションを行うため、
 			// このレイヤーでは型チェックのみを行い、実際の検証はDrizzleに委ねる
 			const malformedBinding = { invalid: 'binding' } as unknown as D1Database
-			
+
 			// エラーをスローせずにdrizzleに渡すことを確認
 			expect(() => createDatabase(malformedBinding)).not.toThrow()
 			expect(mockDrizzle).toHaveBeenCalledWith(malformedBinding, expect.any(Object))
