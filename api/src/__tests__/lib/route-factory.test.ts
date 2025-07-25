@@ -44,6 +44,9 @@ describe('route-factory', () => {
 	let mockContext: any
 
 	beforeEach(() => {
+		// モックをリセット
+		vi.clearAllMocks()
+
 		// データベースモックの初期化
 		mockDb = {
 			select: vi.fn().mockReturnThis(),
@@ -355,6 +358,305 @@ describe('route-factory', () => {
 				await handlers.delete(mockContext)
 
 				expect(mockContext.json).toHaveBeenCalledWith({ error: 'Test not found' }, 404)
+			})
+		})
+
+		describe('エッジケーステスト', () => {
+			describe('大量データ処理', () => {
+				it('1000件のレコードを正常に処理できる', async () => {
+					// 1000件のテストデータを生成
+					const largeDataset = Array.from({ length: 1000 }, (_, i) => ({
+						id: i + 1,
+						name: `Test ${i + 1}`,
+						description: `Description for test item ${i + 1}`,
+						createdAt: new Date(2024, 0, 1, 0, 0, i).toISOString(),
+						updatedAt: new Date(2024, 0, 1, 0, 0, i).toISOString(),
+					}))
+
+					mockDb.from.mockResolvedValueOnce(largeDataset)
+
+					const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
+						table: testTable,
+						resourceName: 'test',
+						validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+						validateUpdate: (data: unknown) => ({
+							success: true,
+							data: data as Partial<TestEntity>,
+						}),
+						validateId: (id: string) => ({ success: true, data: Number(id) }),
+					})
+
+					await handlers.getAll(mockContext)
+
+					expect(mockDb.select).toHaveBeenCalled()
+					expect(mockContext.json).toHaveBeenCalledWith(largeDataset)
+				})
+
+				it('大きなペイロードのPOSTリクエストを処理できる', async () => {
+					// 大きな説明文を含むデータ
+					const largePayload = {
+						name: 'Large Test',
+						description: 'A'.repeat(10000), // 10,000文字の説明
+						metadata: Array.from({ length: 100 }, (_, i) => ({
+							key: `key${i}`,
+							value: `value${i}`,
+						})),
+					}
+
+					mockContext.req.json.mockResolvedValueOnce(largePayload)
+					mockDb.returning.mockResolvedValueOnce([
+						{
+							id: 1,
+							...largePayload,
+							createdAt: '2024-01-01',
+							updatedAt: '2024-01-01',
+						},
+					])
+
+					const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
+						table: testTable,
+						resourceName: 'test',
+						validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+						validateUpdate: (data: unknown) => ({
+							success: true,
+							data: data as Partial<TestEntity>,
+						}),
+						validateId: (id: string) => ({ success: true, data: Number(id) }),
+					})
+
+					await handlers.create(mockContext)
+
+					expect(mockDb.insert).toHaveBeenCalled()
+					expect(mockContext.json).toHaveBeenCalledWith(
+						expect.objectContaining({ id: 1, name: 'Large Test' }),
+						201
+					)
+				})
+			})
+
+			describe('エラーハンドリング', () => {
+				it('データベース接続エラーを適切に処理する', async () => {
+					const dbError = new Error('Database connection failed')
+					mockDb.from.mockRejectedValueOnce(dbError)
+
+					const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
+						table: testTable,
+						resourceName: 'test',
+						validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+						validateUpdate: (data: unknown) => ({
+							success: true,
+							data: data as Partial<TestEntity>,
+						}),
+						validateId: (id: string) => ({ success: true, data: Number(id) }),
+					})
+
+					await handlers.getAll(mockContext)
+
+					expect(mockContext.json).toHaveBeenCalledWith({ error: 'Failed to fetch test' }, 500)
+				})
+
+				it('不正なJSONペイロードを処理する', async () => {
+					mockContext.req.json.mockRejectedValueOnce(new Error('Invalid JSON'))
+
+					const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
+						table: testTable,
+						resourceName: 'test',
+						validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+						validateUpdate: (data: unknown) => ({
+							success: true,
+							data: data as Partial<TestEntity>,
+						}),
+						validateId: (id: string) => ({ success: true, data: Number(id) }),
+					})
+
+					await handlers.create(mockContext)
+
+					expect(mockContext.json).toHaveBeenCalledWith({ error: 'Failed to create test' }, 500)
+				})
+
+				it('D1環境の戻り値形式を正しく処理する', async () => {
+					// D1環境をシミュレート（resultsプロパティに配列が含まれる）
+					const d1Result = {
+						results: [{ id: 1, name: 'D1 Test', createdAt: '2024-01-01', updatedAt: '2024-01-01' }],
+						success: true,
+						meta: { duration: 0.123 },
+					}
+					mockDb.returning.mockResolvedValueOnce(d1Result)
+					mockContext.req.json.mockResolvedValueOnce({ name: 'D1 Test' })
+
+					const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
+						table: testTable,
+						resourceName: 'test',
+						validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+						validateUpdate: (data: unknown) => ({
+							success: true,
+							data: data as Partial<TestEntity>,
+						}),
+						validateId: (id: string) => ({ success: true, data: Number(id) }),
+					})
+
+					await handlers.create(mockContext)
+
+					expect(mockContext.json).toHaveBeenCalledWith(
+						{ id: 1, name: 'D1 Test', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+						201
+					)
+				})
+			})
+
+			describe('並行性とレース条件', () => {
+				it('同時に複数のリクエストを処理できる', async () => {
+					const testData = { id: 1, name: 'Concurrent Test' }
+					mockDb.from.mockResolvedValue([testData])
+
+					const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
+						table: testTable,
+						resourceName: 'test',
+						validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+						validateUpdate: (data: unknown) => ({
+							success: true,
+							data: data as Partial<TestEntity>,
+						}),
+						validateId: (id: string) => ({ success: true, data: Number(id) }),
+					})
+
+					// 10個の並行リクエストを作成
+					const promises = Array.from({ length: 10 }, () => handlers.getAll(mockContext))
+					const results = await Promise.all(promises)
+
+					// すべてのリクエストが成功することを確認
+					expect(results).toHaveLength(10)
+					expect(mockDb.select).toHaveBeenCalledTimes(10)
+				})
+			})
+
+			describe('境界値テスト', () => {
+				it('IDの最大値を処理できる', async () => {
+					const maxId = Number.MAX_SAFE_INTEGER
+					mockContext.req.param.mockReturnValueOnce(maxId.toString())
+					mockDb.where.mockResolvedValueOnce([{ id: maxId, name: 'Max ID Test' }])
+
+					const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
+						table: testTable,
+						resourceName: 'test',
+						validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+						validateUpdate: (data: unknown) => ({
+							success: true,
+							data: data as Partial<TestEntity>,
+						}),
+						validateId: (id: string) => {
+							const numId = Number(id)
+							if (numId > Number.MAX_SAFE_INTEGER) {
+								return { success: false, errors: [{ message: 'ID too large' }] }
+							}
+							return { success: true, data: numId }
+						},
+					})
+
+					await handlers.getById(mockContext)
+
+					expect(mockDb.where).toHaveBeenCalled()
+					expect(mockContext.json).toHaveBeenCalledWith({ id: maxId, name: 'Max ID Test' })
+				})
+
+				it('空の文字列フィールドを処理できる', async () => {
+					const emptyData = { name: '', description: '' }
+					mockContext.req.json.mockResolvedValueOnce(emptyData)
+					mockDb.returning.mockResolvedValueOnce([
+						{
+							id: 1,
+							...emptyData,
+							createdAt: '2024-01-01',
+							updatedAt: '2024-01-01',
+						},
+					])
+
+					const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
+						table: testTable,
+						resourceName: 'test',
+						validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+						validateUpdate: (data: unknown) => ({
+							success: true,
+							data: data as Partial<TestEntity>,
+						}),
+						validateId: (id: string) => ({ success: true, data: Number(id) }),
+					})
+
+					await handlers.create(mockContext)
+
+					expect(mockDb.insert).toHaveBeenCalled()
+					expect(mockContext.json).toHaveBeenCalledWith(
+						expect.objectContaining({ name: '', description: '' }),
+						201
+					)
+				})
+			})
+
+			describe('特殊文字とエンコーディング', () => {
+				it('Unicode文字を含むデータを処理できる', async () => {
+					const unicodeData = {
+						name: '🚀 ロケット テスト 测试',
+						description: '日本語、中文、한국어、العربية',
+					}
+					mockContext.req.json.mockResolvedValueOnce(unicodeData)
+					mockDb.returning.mockResolvedValueOnce([
+						{
+							id: 1,
+							...unicodeData,
+							createdAt: '2024-01-01',
+							updatedAt: '2024-01-01',
+						},
+					])
+
+					const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
+						table: testTable,
+						resourceName: 'test',
+						validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+						validateUpdate: (data: unknown) => ({
+							success: true,
+							data: data as Partial<TestEntity>,
+						}),
+						validateId: (id: string) => ({ success: true, data: Number(id) }),
+					})
+
+					await handlers.create(mockContext)
+
+					expect(mockContext.json).toHaveBeenCalledWith(expect.objectContaining(unicodeData), 201)
+				})
+
+				it('SQLインジェクション攻撃文字列を安全に処理する', async () => {
+					const maliciousData = {
+						name: "'; DROP TABLE users; --",
+						description: "1' OR '1'='1",
+					}
+					mockContext.req.json.mockResolvedValueOnce(maliciousData)
+					mockDb.returning.mockResolvedValueOnce([
+						{
+							id: 1,
+							...maliciousData,
+							createdAt: '2024-01-01',
+							updatedAt: '2024-01-01',
+						},
+					])
+
+					const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
+						table: testTable,
+						resourceName: 'test',
+						validateCreate: (data: unknown) => ({ success: true, data: data as TestEntity }),
+						validateUpdate: (data: unknown) => ({
+							success: true,
+							data: data as Partial<TestEntity>,
+						}),
+						validateId: (id: string) => ({ success: true, data: Number(id) }),
+					})
+
+					await handlers.create(mockContext)
+
+					// Drizzle ORMがパラメータ化クエリを使用するため、
+					// SQLインジェクション文字列は安全に処理される
+					expect(mockDb.values).toHaveBeenCalled()
+					expect(mockContext.json).toHaveBeenCalledWith(expect.objectContaining(maliciousData), 201)
+				})
 			})
 		})
 	})

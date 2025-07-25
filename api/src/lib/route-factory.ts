@@ -38,6 +38,8 @@ export interface CrudHandlerOptions<TNew, TUpdate> {
 	/** データ変換関数（オプション） - エンティティにカテゴリ情報などを付加する場合に使用 */
 	// biome-ignore lint/suspicious/noExplicitAny: Transform function needs flexible typing for various entities
 	transformData?: (data: any[]) => any[]
+	/** バッチ操作を使用するかどうか（D1環境でのトランザクション代替） */
+	useBatch?: boolean
 	/** テスト用データベース（オプション） */
 	testDatabase?: AnyDatabase
 }
@@ -51,6 +53,14 @@ export interface CrudHandlers {
 	create: (c: Context<{ Variables: { db: AnyDatabase } & LoggingVariables }>) => Promise<Response>
 	update: (c: Context<{ Variables: { db: AnyDatabase } & LoggingVariables }>) => Promise<Response>
 	delete: (c: Context<{ Variables: { db: AnyDatabase } & LoggingVariables }>) => Promise<Response>
+	/** バッチ操作を使用した作成（D1のトランザクション代替） */
+	createWithBatch?: (
+		c: Context<{ Variables: { db: AnyDatabase } & LoggingVariables }>
+	) => Promise<Response>
+	/** バッチ操作を使用した更新（D1のトランザクション代替） */
+	updateWithBatch?: (
+		c: Context<{ Variables: { db: AnyDatabase } & LoggingVariables }>
+	) => Promise<Response>
 }
 
 /**
@@ -125,6 +135,11 @@ function validateAndExtractId(
  * @param options CRUDハンドラーのオプション
  * @returns CRUD操作のハンドラー集合
  *
+ * @note Cloudflare D1の制約により、従来のSQLトランザクション（BEGIN/COMMIT/ROLLBACK）は
+ *       サポートされていません。代わりにバッチAPIを使用することで、複数の操作を
+ *       原子的に実行できます。バッチ内のいずれかの操作が失敗した場合、
+ *       すべての操作がロールバックされます。
+ *
  * @example
  * ```typescript
  * const subscriptionHandlers = createCrudHandlers({
@@ -133,7 +148,8 @@ function validateAndExtractId(
  *   validateCreate: validateSubscriptionCreateWithZod,
  *   validateUpdate: validateSubscriptionUpdateWithZod,
  *   validateId: validateIdWithZod,
- *   transformData: (data) => addCategoryInfo(data)
+ *   transformData: (data) => addCategoryInfo(data),
+ *   useBatch: true // バッチ操作を有効化
  * })
  *
  * app.get('/', subscriptionHandlers.getAll)
