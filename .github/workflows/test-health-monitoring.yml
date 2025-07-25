@@ -7,12 +7,17 @@ on:
     paths:
       - 'frontend/**'
       - 'api/**'
+      - 'scripts/lib/**'
       - 'scripts/monitor-test-ratio*.js'
       - '.github/workflows/test-health-monitoring.yml'
   # mainブランチへのpushで実行
   push:
     branches:
       - main
+    paths:
+      - 'frontend/**'
+      - 'api/**'
+      - 'scripts/lib/**'
   # 定期実行（毎週月曜日の朝9時）
   schedule:
     - cron: '0 0 * * 1'
