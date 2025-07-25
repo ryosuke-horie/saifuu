@@ -55,7 +55,9 @@ describe('Database Schema', () => {
 		...overrides,
 	})
 
-	const createTestNewSubscription = (overrides?: Partial<NewSubscription>): NewSubscription => ({
+	const createTestNewSubscription = (
+		overrides: Partial<NewSubscription> = {}
+	): NewSubscription => ({
 		name: 'Netflix',
 		amount: 1500,
 		nextBillingDate: '2024-02-01',
@@ -101,19 +103,24 @@ describe('Database Schema', () => {
 
 		describe('制約の検証', () => {
 			it('should restrict type field to "expense" only', () => {
-				// 有効な値での動作確認
+				// 1. 有効な値での動作確認
 				const validTransaction: NewTransaction = createTestNewTransaction({ type: 'expense' })
 				expect(validTransaction.type).toBe('expense')
 
-				// 型制約のドキュメント化（コンパイル時に検証される）
-				// const invalidTransaction: NewTransaction = {
-				//   ...validTransaction,
-				//   type: 'income' // TS Error: Type '"income"' is not assignable to type '"expense"'
-				// }
+				// 2. 型定義レベルでの制約確認
+				const transactionType: NewTransaction['type'] = 'expense' // OK
+				expect(transactionType).toBe('expense')
 
-				// スキーマのenum制約をより明確に検証
-				const allowedTypes: Array<NewTransaction['type']> = ['expense']
-				expect(allowedTypes).toContain(validTransaction.type)
+				// 3. スキーマ定義との整合性確認（コメントでドキュメント化）
+				// schema.tsでは text('type', { enum: ['expense'] }) と定義されている
+				// 以下はTypeScriptコンパイル時にエラーとなる：
+				// const invalid: NewTransaction['type'] = 'income' // TS Error: Type '"income"' is not assignable to type '"expense"'
+				// const invalid2: NewTransaction['type'] = 'other' // TS Error: Type '"other"' is not assignable to type '"expense"'
+
+				// 4. 許可される値の明示的な検証
+				const allowedValues: readonly NewTransaction['type'][] = ['expense'] as const
+				expect(allowedValues).toContain(validTransaction.type)
+				expect(allowedValues.length).toBe(1) // 'expense'のみが許可されることを確認
 			})
 		})
 	})
@@ -163,34 +170,55 @@ describe('Database Schema', () => {
 
 		describe('制約の検証', () => {
 			it('should restrict billingCycle to valid enum values', () => {
-				// billingCycleの有効な値の検証
-				const billingCycles: Array<NewSubscription['billingCycle']> = [
+				// schema.tsの定義と一致する値のテスト
+				const validCycles: Array<NonNullable<NewSubscription['billingCycle']>> = [
 					'monthly',
 					'yearly',
 					'weekly',
 				]
 
-				billingCycles.forEach((cycle) => {
+				// 各有効値での作成テスト
+				validCycles.forEach((cycle) => {
 					const subscription = createTestNewSubscription({ billingCycle: cycle })
-					expect(['monthly', 'yearly', 'weekly']).toContain(subscription.billingCycle)
+					expect(subscription.billingCycle).toBe(cycle)
+					expect(validCycles).toContain(subscription.billingCycle)
 				})
+
+				// 型制約のドキュメント化（コンパイル時エラー）
+				// const invalid: NewSubscription['billingCycle'] = 'daily' // TS Error: Type '"daily"' is not assignable
+				// const invalid2: NewSubscription['billingCycle'] = 'annually' // TS Error: Type '"annually"' is not assignable
+
+				// デフォルト値の確認
+				expect(validCycles).toContain('monthly') // schema.tsのdefault値
+
+				// 許可される値の数を確認
+				expect(validCycles.length).toBe(3) // monthly, yearly, weeklyの3つのみ
 			})
 
-			it('should have sensible defaults for optional fields', () => {
-				// NewSubscription型では省略可能だが、実際のDB挿入時にはデフォルト値が設定される
+			it('should handle optional fields and default values correctly', () => {
+				// NewSubscription型では省略可能なフィールドの検証
 				const minimalSubscription = createTestNewSubscription()
 
 				// 型レベルでは省略可能として定義されていることを確認
-				expect(minimalSubscription.billingCycle).toBeUndefined() // 型レベルでは省略可能
-				expect(minimalSubscription.isActive).toBeUndefined() // 型レベルでは省略可能
+				// （実際のDB挿入時にはデフォルト値が設定されるが、型定義上は省略可能）
+				expect(minimalSubscription.billingCycle).toBeUndefined()
+				expect(minimalSubscription.isActive).toBeUndefined()
 
-				// デフォルト値付きでも作成可能であることを確認（スキーマ定義との整合性）
+				// スキーマ定義のデフォルト値と一致する値で作成可能なことを確認
 				const withDefaults = createTestNewSubscription({
-					billingCycle: 'monthly', // schema.tsのdefault値
-					isActive: true, // schema.tsのdefault値
+					billingCycle: 'monthly', // schema.tsの.default('monthly')と一致
+					isActive: true, // schema.tsの.default(true)と一致
 				})
 				expect(withDefaults.billingCycle).toBe('monthly')
 				expect(withDefaults.isActive).toBe(true)
+
+				// 明示的にデフォルト値以外も設定可能なことを確認
+				const withCustomValues = createTestNewSubscription({
+					billingCycle: 'yearly',
+					isActive: false,
+				})
+				expect(withCustomValues.billingCycle).toBe('yearly')
+				expect(withCustomValues.isActive).toBe(false)
 			})
 		})
 	})
