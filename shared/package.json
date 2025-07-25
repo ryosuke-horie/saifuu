@@ -1,0 +1,28 @@
+{
+	"name": "@saifuu/shared",
+	"version": "1.0.0",
+	"description": "Shared utilities for Saifuu",
+	"type": "module",
+	"comment": "このパッケージは内部で直接TypeScriptファイルを参照する想定のため、buildスクリプトは意図的に省略しています",
+	"scripts": {
+		"test": "vitest",
+		"test:run": "vitest run",
+		"test:watch": "vitest watch",
+		"typecheck": "tsc --noEmit",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"check:fix": "pnpm run lint:fix && pnpm run typecheck && pnpm run test:run"
+	},
+	"dependencies": {
+		"zod": "^3.23.8"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"typescript": "^5.7.3",
+		"vitest": "^3.0.0"
+	},
+	"files": [
+		"src",
+		"!src/**/__tests__"
+	]
+}
