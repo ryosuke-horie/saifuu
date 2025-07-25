@@ -4,10 +4,10 @@ import { type Env } from '../../db'
 import {
 	ApiError,
 	DatabaseError,
-	NotFoundError,
-	ValidationError,
 	errorHandler,
 	handleError,
+	NotFoundError,
+	ValidationError,
 } from '../../lib/error-handler'
 import { type LoggingVariables } from '../../middleware/logging'
 
@@ -129,7 +129,7 @@ describe('Error Handler', () => {
 		it('NotFoundErrorを正しく処理する', () => {
 			const error = new NotFoundError('取引が見つかりません')
 
-			const response = handleError(mockContext, error, 'transactions')
+			const _response = handleError(mockContext, error, 'transactions')
 
 			expect(mockContext.json).toHaveBeenCalledWith(
 				{
@@ -150,7 +150,7 @@ describe('Error Handler', () => {
 			const originalError = new Error('Connection timeout')
 			const error = new DatabaseError('データベース接続エラー', originalError)
 
-			const response = handleError(mockContext, error, 'subscriptions')
+			const _response = handleError(mockContext, error, 'subscriptions')
 
 			expect(mockContext.json).toHaveBeenCalledWith(
 				{
@@ -172,7 +172,7 @@ describe('Error Handler', () => {
 		it('一般的なErrorを正しく処理する', () => {
 			const error = new Error('予期しないエラー')
 
-			const response = handleError(mockContext, error)
+			const _response = handleError(mockContext, error)
 
 			expect(mockContext.json).toHaveBeenCalledWith(
 				{
@@ -194,7 +194,7 @@ describe('Error Handler', () => {
 		it('文字列エラーを正しく処理する', () => {
 			const error = 'エラー文字列'
 
-			const response = handleError(mockContext, error, 'categories')
+			const _response = handleError(mockContext, error, 'categories')
 
 			expect(mockContext.json).toHaveBeenCalledWith(
 				{

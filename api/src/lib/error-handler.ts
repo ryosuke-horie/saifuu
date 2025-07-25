@@ -5,14 +5,14 @@ import { type LoggingVariables, logWithContext } from '../middleware/logging'
 /**
  * APIエラーの基底クラス
  * すべてのカスタムエラーはこのクラスを継承する
- * 
+ *
  * 設計意図: HTTPステータスコードとエラーメッセージを統一的に扱うことで、
  * エラーレスポンスの一貫性を保証する
  */
 export class ApiError extends Error {
 	public readonly statusCode: number
 
-	constructor(message: string, statusCode: number = 500) {
+	constructor(message: string, statusCode = 500) {
 		super(message)
 		this.name = 'ApiError'
 		this.statusCode = statusCode
@@ -24,7 +24,7 @@ export class ApiError extends Error {
 /**
  * バリデーションエラー用のクラス
  * 400エラーとして処理される
- * 
+ *
  * 使用例: フォームの入力値検証失敗時
  */
 export class ValidationError extends ApiError {
@@ -117,7 +117,7 @@ function extractErrorInfo(error: unknown): {
 export function handleError<T extends { Variables: LoggingVariables }>(
 	c: Context<T>,
 	error: unknown,
-	resource: string = 'unknown'
+	resource = 'unknown'
 ): Response {
 	// ValidationErrorの場合
 	if (error instanceof ValidationError) {
@@ -172,13 +172,13 @@ export function handleError<T extends { Variables: LoggingVariables }>(
 	// 予期しないエラーの場合
 	const errorInfo = extractErrorInfo(error)
 	const defaultMessage = '予期しないエラーが発生しました'
-	
+
 	logWithContext(c, 'error', defaultMessage, {
 		resource,
 		error: errorInfo.message,
 		stack: errorInfo.stack,
 	})
-	
+
 	const response: ErrorResponse = {
 		error: defaultMessage,
 	}
@@ -188,10 +188,10 @@ export function handleError<T extends { Variables: LoggingVariables }>(
 /**
  * エラーハンドリングミドルウェア
  * すべてのエラーをキャッチして適切なレスポンスを返す
- * 
+ *
  * 使用方法:
  * app.use(errorHandler())
- * 
+ *
  * 注意: このミドルウェアは他のルートハンドラーより前に登録する必要がある
  */
 export function errorHandler(): MiddlewareHandler<{

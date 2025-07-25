@@ -1,5 +1,5 @@
 // Zodを使用した共通バリデーションスキーマ
-import { z } from 'zod/v3'
+import { z } from 'zod'
 
 // 共通バリデーション定数（既存のものを再利用）
 export const VALIDATION_LIMITS = {
@@ -16,7 +16,7 @@ export const VALIDATION_LIMITS = {
 } as const
 
 // エラーメッセージの日本語化設定
-const zodErrorMap: z.ZodErrorMap = (issue, ctx) => {
+const zodErrorMap: z.ZodErrorMap = (issue: z.ZodIssueOptionalMessage, ctx: z.ErrorMapCtx) => {
   const fieldName = issue.path && issue.path.length > 0 ? issue.path.join('.') : 'フィールド'
   
   // 必須フィールドのエラー
@@ -103,7 +103,7 @@ export const dateStringSchema = z.string()
     /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/,
     '日付はISO 8601形式（YYYY-MM-DD または YYYY-MM-DDTHH:mm:ss.sssZ）である必要があります'
   )
-  .refine((date) => {
+  .refine((date: string) => {
     const d = new Date(date)
     return d >= VALIDATION_LIMITS.MIN_DATE
   }, `日付は${VALIDATION_LIMITS.MIN_DATE.toISOString().split('T')[0]}以降である必要があります`)
@@ -111,7 +111,7 @@ export const dateStringSchema = z.string()
 // カテゴリID（数値または文字列、自動変換）
 export const categoryIdSchema = z.union([
   z.number().positive('カテゴリIDは正の整数である必要があります'),
-  z.string().transform((val, ctx) => {
+  z.string().transform((val: string, ctx: z.RefinementCtx) => {
     const num = Number(val)
     if (Number.isNaN(num)) {
       ctx.addIssue({
@@ -193,7 +193,7 @@ export function zodToValidationResult<T>(
     return { success: true, data: result.data }
   }
   
-  const errors = result.error?.errors?.map(error => ({
+  const errors = result.error?.errors?.map((error: z.ZodIssue) => ({
     field: error.path.length > 0 ? error.path.join('.') : 'unknown',
     message: error.message,
     code: error.code,
