@@ -41,6 +41,27 @@ describe('Database Schema', () => {
 		...overrides,
 	})
 
+	const createTestSubscription = (overrides?: Partial<Subscription>): Subscription => ({
+		id: 1,
+		name: 'Netflix',
+		amount: 1500,
+		billingCycle: 'monthly',
+		nextBillingDate: '2024-02-01',
+		categoryId: null,
+		description: null,
+		isActive: true,
+		createdAt: '2024-01-01T00:00:00.000Z',
+		updatedAt: '2024-01-01T00:00:00.000Z',
+		...overrides,
+	})
+
+	const createTestNewSubscription = (overrides?: Partial<NewSubscription>): NewSubscription => ({
+		name: 'Netflix',
+		amount: 1500,
+		nextBillingDate: '2024-02-01',
+		...overrides,
+	})
+
 	describe('transactions table', () => {
 		describe('テーブル定義', () => {
 			it('should be defined as a SQLite table', () => {
@@ -87,33 +108,15 @@ describe('Database Schema', () => {
 
 		describe('制約の検証', () => {
 			it('should restrict type field to "expense" only', () => {
-				// TypeScriptの型チェックにより'expense'以外の値は使用できない
-				const transaction = createTestNewTransaction()
-				expect(transaction.type).toBe('expense')
+				// 型チェックによる制約の確認
+				const validTransaction: NewTransaction = createTestNewTransaction({ type: 'expense' })
+				expect(validTransaction.type).toBe('expense')
+
+				// TypeScript コンパイル時エラーとなることをコメントで明記
+				// 以下のコードはTypeScriptの型チェックでエラーになるため、コメントアウト
+				// const invalidTransaction: NewTransaction = { ...validTransaction, type: 'income' } // TS Error: Type '"income"' is not assignable to type '"expense"'
 			})
 		})
-	})
-
-	// テストヘルパー関数
-	const createTestSubscription = (overrides?: Partial<Subscription>): Subscription => ({
-		id: 1,
-		name: 'Netflix',
-		amount: 1500,
-		billingCycle: 'monthly',
-		nextBillingDate: '2024-02-01',
-		categoryId: null,
-		description: null,
-		isActive: true,
-		createdAt: '2024-01-01T00:00:00.000Z',
-		updatedAt: '2024-01-01T00:00:00.000Z',
-		...overrides,
-	})
-
-	const createTestNewSubscription = (overrides?: Partial<NewSubscription>): NewSubscription => ({
-		name: 'Netflix',
-		amount: 1500,
-		nextBillingDate: '2024-02-01',
-		...overrides,
 	})
 
 	describe('subscriptions table', () => {
@@ -181,13 +184,21 @@ describe('Database Schema', () => {
 				})
 			})
 
-			it('should have sensible defaults', () => {
-				// デフォルト値を持つフィールドの検証
+			it('should have sensible defaults for optional fields', () => {
+				// NewSubscription型では省略可能だが、実際のDB挿入時にはデフォルト値が設定される
 				const minimalSubscription = createTestNewSubscription()
-				// billingCycleとisActiveはschema.tsでデフォルト値が定義されている
-				// 型レベルでは省略可能として定義されている
+
+				// 型レベルでは省略可能として定義されていることを確認
 				expect(minimalSubscription.billingCycle).toBeUndefined()
 				expect(minimalSubscription.isActive).toBeUndefined()
+
+				// デフォルト値付きでも作成可能なことを確認
+				const withDefaults = createTestNewSubscription({
+					billingCycle: 'monthly',
+					isActive: true,
+				})
+				expect(withDefaults.billingCycle).toBe('monthly')
+				expect(withDefaults.isActive).toBe(true)
 			})
 		})
 	})
@@ -216,9 +227,17 @@ describe('Database Schema', () => {
 
 			// NewTransaction型ではid, createdAt, updatedAtは自動生成されるため不要
 			const insertTransaction: NewTransaction = createTestNewTransaction()
-			expect((insertTransaction as any).id).toBeUndefined()
-			expect((insertTransaction as any).createdAt).toBeUndefined()
-			expect((insertTransaction as any).updatedAt).toBeUndefined()
+			// 型アサーションを使用して、これらのフィールドがNewTransaction型に存在しないことを検証
+			// 型ガードを使用して、これらのプロパティが存在しないことを確認
+			if ('id' in insertTransaction) {
+				expect(insertTransaction).not.toHaveProperty('id')
+			}
+			if ('createdAt' in insertTransaction) {
+				expect(insertTransaction).not.toHaveProperty('createdAt')
+			}
+			if ('updatedAt' in insertTransaction) {
+				expect(insertTransaction).not.toHaveProperty('updatedAt')
+			}
 		})
 	})
 })
