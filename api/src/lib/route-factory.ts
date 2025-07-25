@@ -22,20 +22,20 @@ export type ValidationResult<T> =
 /**
  * CRUDハンドラーのオプション
  * テーブルやエンティティの型は使用時に推論される
- * 
+ *
  * @template TNew - 新規作成時のエンティティ型
  * @template TUpdate - 更新時のエンティティ型（通常はPartial<TNew>）
  */
 export interface CrudHandlerOptions<TNew, TUpdate> {
-	/** 
+	/**
 	 * データベーステーブルスキーマ
-	 * 
+	 *
 	 * Drizzle ORMのsqliteTable()で定義されたテーブルオブジェクトを指定します。
 	 * 実際の型は複雑なジェネリクスを含むため、any型を使用していますが、
 	 * 実行時には以下の要件を満たす必要があります：
 	 * - idカラムが定義されていること
 	 * - Drizzle ORMのテーブルメソッド（select, insert, update, delete等）が使用可能なこと
-	 * 
+	 *
 	 * @example
 	 * import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core'
 	 * const users = sqliteTable('users', {

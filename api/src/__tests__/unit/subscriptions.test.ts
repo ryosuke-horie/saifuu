@@ -1,10 +1,35 @@
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
-import { Hono } from 'hono'
+import { type Context, Hono, type Next } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { AnyDatabase, Env } from '../../db'
 import { testLogger } from '../../logger/factory'
+import type { LoggingVariables } from '../../middleware/logging'
 import { createSubscriptionsApp } from '../../routes/subscriptions'
+
+// APIレスポンスの型定義
+interface SubscriptionResponse {
+	id: number
+	name: string
+	amount: number
+	billingCycle: string
+	nextBillingDate: string
+	categoryId: number
+	description?: string
+	isActive: boolean
+	createdAt: string
+	updatedAt: string
+}
+
+interface ErrorResponse {
+	error: string
+	details?: Array<{
+		field: string
+		message: string
+		code?: string
+	}>
+}
 
 // logWithContextのモック
 vi.mock('../../middleware/logging', () => ({
@@ -14,7 +39,10 @@ vi.mock('../../middleware/logging', () => ({
 describe('Subscriptions API with Zod - Unit Tests', () => {
 	let db: ReturnType<typeof drizzle>
 	let sqlite: Database.Database
-	let app: Hono
+	let app: Hono<{
+		Bindings: Env
+		Variables: { db: AnyDatabase } & LoggingVariables
+	}>
 
 	beforeEach(() => {
 		// In-memory SQLiteデータベースを作成
@@ -25,16 +53,28 @@ describe('Subscriptions API with Zod - Unit Tests', () => {
 		migrate(db, { migrationsFolder: './drizzle/migrations' })
 
 		// テスト用のアプリケーションインスタンスを作成
-		const subscriptionsApp = createSubscriptionsApp({ testDatabase: db as any })
-		app = new Hono()
+		const subscriptionsApp = createSubscriptionsApp({ testDatabase: db as unknown as AnyDatabase })
+		app = new Hono<{
+			Bindings: Env
+			Variables: { db: AnyDatabase } & LoggingVariables
+		}>()
 
 		// ミドルウェアのモック（テストでは必要最小限）
-		app.use('*', async (c: any, next: any) => {
-			c.set('requestId', 'test-request-id')
-			c.set('logger', testLogger)
-			c.set('db', db)
-			await next()
-		})
+		app.use(
+			'*',
+			async (
+				c: Context<{
+					Bindings: Env
+					Variables: { db: AnyDatabase } & LoggingVariables
+				}>,
+				next: Next
+			) => {
+				c.set('requestId', 'test-request-id')
+				c.set('logger', testLogger)
+				c.set('db', db as unknown as AnyDatabase)
+				await next()
+			}
+		)
 
 		app.route('/api/subscriptions', subscriptionsApp)
 	})
@@ -57,7 +97,7 @@ describe('Subscriptions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(201)
-			const result = (await response.json()) as any
+			const result = (await response.json()) as SubscriptionResponse
 			expect(result).toMatchObject({
 				name: 'Netflix',
 				amount: 1500,
@@ -85,21 +125,19 @@ describe('Subscriptions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(400)
-			const result = (await response.json()) as any
+			const result = (await response.json()) as ErrorResponse
 			expect(result.error).toBeDefined()
 			expect(result.details).toBeDefined()
 
 			// エラーメッセージが日本語であることを確認
-			const errors = result.details
-			expect(errors.some((e: any) => e.field === 'name' && e.message.includes('必須'))).toBe(true)
-			expect(errors.some((e: any) => e.field === 'amount' && e.message.includes('1円以上'))).toBe(
+			const errors = result.details!
+			expect(errors.some((e) => e.field === 'name' && e.message.includes('必須'))).toBe(true)
+			expect(errors.some((e) => e.field === 'amount' && e.message.includes('1円以上'))).toBe(true)
+			expect(errors.some((e) => e.field === 'billingCycle' && e.message.includes('いずれか'))).toBe(
 				true
 			)
 			expect(
-				errors.some((e: any) => e.field === 'billingCycle' && e.message.includes('いずれか'))
-			).toBe(true)
-			expect(
-				errors.some((e: any) => e.field === 'nextBillingDate' && e.message.includes('2000-01-01'))
+				errors.some((e) => e.field === 'nextBillingDate' && e.message.includes('2000-01-01'))
 			).toBe(true)
 		})
 
@@ -117,19 +155,19 @@ describe('Subscriptions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(400)
-			const result = (await response.json()) as any
+			const result = (await response.json()) as ErrorResponse
 			expect(result.details).toBeDefined()
-			expect(result.details.length).toBeGreaterThan(0)
+			expect(result.details!.length).toBeGreaterThan(0)
 			// billingCycleは必須フィールドのエラーメッセージを確認
 			expect(
-				result.details.some(
-					(e: any) =>
+				result.details!.some(
+					(e) =>
 						e.field === 'billingCycle' &&
 						(e.message.includes('必須') || e.message.includes('monthly、yearly、weekly'))
 				)
 			).toBe(true)
 			expect(
-				result.details.some((e: any) => e.field === 'nextBillingDate' && e.message.includes('必須'))
+				result.details!.some((e) => e.field === 'nextBillingDate' && e.message.includes('必須'))
 			).toBe(true)
 		})
 	})
@@ -150,7 +188,7 @@ describe('Subscriptions API with Zod - Unit Tests', () => {
 				}),
 			})
 
-			const created = (await createResponse.json()) as any
+			const created = (await createResponse.json()) as SubscriptionResponse
 
 			// 更新
 			const updateData = {
@@ -165,7 +203,7 @@ describe('Subscriptions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(200)
-			const result = (await response.json()) as any
+			const result = (await response.json()) as SubscriptionResponse
 			expect(result.amount).toBe(1200)
 			expect(result.description).toBe('更新後のデータ')
 		})
@@ -183,16 +221,12 @@ describe('Subscriptions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(400)
-			const result = (await response.json()) as any
+			const result = (await response.json()) as ErrorResponse
 			expect(
-				result.details.some(
-					(e: any) => e.field === 'amount' && e.message.includes('10000000円以下')
-				)
+				result.details!.some((e) => e.field === 'amount' && e.message.includes('10000000円以下'))
 			).toBe(true)
 			expect(
-				result.details.some(
-					(e: any) => e.field === 'billingCycle' && e.message.includes('いずれか')
-				)
+				result.details!.some((e) => e.field === 'billingCycle' && e.message.includes('いずれか'))
 			).toBe(true)
 		})
 	})
@@ -204,10 +238,10 @@ describe('Subscriptions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(400)
-			const result = (await response.json()) as any
+			const result = (await response.json()) as ErrorResponse
 			expect(result.error).toBeDefined()
 			expect(result.details).toBeDefined()
-			expect(result.details.length).toBeGreaterThan(0)
+			expect(result.details!.length).toBeGreaterThan(0)
 		})
 
 		it('should accept string IDs that can be converted to numbers', async () => {
@@ -224,7 +258,7 @@ describe('Subscriptions API with Zod - Unit Tests', () => {
 				}),
 			})
 
-			const created = (await createResponse.json()) as any
+			const created = (await createResponse.json()) as SubscriptionResponse
 
 			// 文字列IDでアクセス
 			const response = await app.request(`/api/subscriptions/${created.id}`, {
