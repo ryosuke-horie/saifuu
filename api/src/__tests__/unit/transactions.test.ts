@@ -1,10 +1,34 @@
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
-import { Hono } from 'hono'
+import { type Context, Hono, type Next } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { AnyDatabase, Env } from '../../db'
 import { testLogger } from '../../logger/factory'
+import type { LoggingVariables } from '../../middleware/logging'
 import { createTransactionsApp } from '../../routes/transactions'
+
+// APIレスポンスの型定義
+interface TransactionResponse {
+	id: number
+	amount: number
+	type: string
+	categoryId?: number
+	categoryName?: string
+	description?: string
+	date: string
+	createdAt: string
+	updatedAt: string
+}
+
+interface ErrorResponse {
+	error: string
+	details?: Array<{
+		field: string
+		message: string
+		code?: string
+	}>
+}
 
 // logWithContextのモック
 vi.mock('../../middleware/logging', () => ({
@@ -14,7 +38,10 @@ vi.mock('../../middleware/logging', () => ({
 describe('Transactions API with Zod - Unit Tests', () => {
 	let db: ReturnType<typeof drizzle>
 	let sqlite: Database.Database
-	let app: Hono
+	let app: Hono<{
+		Bindings: Env
+		Variables: { db: AnyDatabase } & LoggingVariables
+	}>
 
 	beforeEach(() => {
 		// In-memory SQLiteデータベースを作成
@@ -25,16 +52,28 @@ describe('Transactions API with Zod - Unit Tests', () => {
 		migrate(db, { migrationsFolder: './drizzle/migrations' })
 
 		// テスト用のアプリケーションインスタンスを作成
-		const transactionsApp = createTransactionsApp({ testDatabase: db as any })
-		app = new Hono()
+		const transactionsApp = createTransactionsApp({ testDatabase: db as unknown as AnyDatabase })
+		app = new Hono<{
+			Bindings: Env
+			Variables: { db: AnyDatabase } & LoggingVariables
+		}>()
 
 		// ミドルウェアのモック（テストでは必要最小限）
-		app.use('*', async (c: any, next: any) => {
-			c.set('requestId', 'test-request-id')
-			c.set('logger', testLogger)
-			c.set('db', db)
-			await next()
-		})
+		app.use(
+			'*',
+			async (
+				c: Context<{
+					Bindings: Env
+					Variables: { db: AnyDatabase } & LoggingVariables
+				}>,
+				next: Next
+			) => {
+				c.set('requestId', 'test-request-id')
+				c.set('logger', testLogger)
+				c.set('db', db as unknown as AnyDatabase)
+				await next()
+			}
+		)
 
 		app.route('/api/transactions', transactionsApp)
 	})
@@ -56,7 +95,7 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(201)
-			const result = (await response.json()) as any
+			const result = (await response.json()) as TransactionResponse
 			expect(result).toMatchObject({
 				amount: 1000,
 				type: 'expense',
@@ -81,21 +120,19 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(400)
-			const result = (await response.json()) as any
+			const result = (await response.json()) as ErrorResponse
 			expect(result.error).toBeDefined()
 			expect(result.details).toBeDefined()
 
 			// エラーメッセージが日本語であることを確認
-			const errors = result.details
-			expect(errors.some((e: any) => e.field === 'amount' && e.message.includes('正の数値'))).toBe(
+			const errors = result.details!
+			expect(errors.some((e) => e.field === 'amount' && e.message.includes('正の数値'))).toBe(true)
+			expect(
+				errors.some((e) => e.field === 'type' && e.message.includes('支出（expense）のみ'))
+			).toBe(true)
+			expect(errors.some((e) => e.field === 'date' && e.message.includes('ISO 8601形式'))).toBe(
 				true
 			)
-			expect(
-				errors.some((e: any) => e.field === 'type' && e.message.includes('支出（expense）のみ'))
-			).toBe(true)
-			expect(
-				errors.some((e: any) => e.field === 'date' && e.message.includes('ISO 8601形式'))
-			).toBe(true)
 		})
 
 		it('should handle missing required fields', async () => {
@@ -112,10 +149,10 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(400)
-			const result = (await response.json()) as any
-			expect(
-				result.details.some((e: any) => e.field === 'date' && e.message.includes('必須'))
-			).toBe(true)
+			const result = (await response.json()) as ErrorResponse
+			expect(result.details!.some((e) => e.field === 'date' && e.message.includes('必須'))).toBe(
+				true
+			)
 		})
 	})
 
@@ -134,7 +171,7 @@ describe('Transactions API with Zod - Unit Tests', () => {
 				}),
 			})
 
-			const created = (await createResponse.json()) as any
+			const created = (await createResponse.json()) as TransactionResponse
 
 			// 更新
 			const updateData = {
@@ -149,7 +186,7 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(200)
-			const result = (await response.json()) as any
+			const result = (await response.json()) as TransactionResponse
 			expect(result.amount).toBe(2000)
 			expect(result.description).toBe('更新後のデータ')
 		})
@@ -166,11 +203,9 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(400)
-			const result = (await response.json()) as any
+			const result = (await response.json()) as ErrorResponse
 			expect(
-				result.details.some(
-					(e: any) => e.field === 'amount' && e.message.includes('10000000円以下')
-				)
+				result.details!.some((e) => e.field === 'amount' && e.message.includes('10000000円以下'))
 			).toBe(true)
 		})
 	})
@@ -182,12 +217,12 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(400)
-			const result = (await response.json()) as any
+			const result = (await response.json()) as ErrorResponse
 			// デバッグ用
 			console.log('Error result:', JSON.stringify(result, null, 2))
 			expect(result.error).toBeDefined()
 			expect(result.details).toBeDefined()
-			expect(result.details.length).toBeGreaterThan(0)
+			expect(result.details!.length).toBeGreaterThan(0)
 		})
 
 		it('should accept string IDs that can be converted to numbers', async () => {
@@ -202,7 +237,7 @@ describe('Transactions API with Zod - Unit Tests', () => {
 				}),
 			})
 
-			const created = (await createResponse.json()) as any
+			const created = (await createResponse.json()) as TransactionResponse
 
 			// 文字列IDでアクセス
 			const response = await app.request(`/api/transactions/${created.id}`, {

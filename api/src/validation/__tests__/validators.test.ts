@@ -32,7 +32,7 @@ describe('Zodバリデーターのテスト', () => {
 			const result = validateTransactionCreateWithZod(data)
 			expect(result.success).toBe(false)
 			if (!result.success) {
-				const dateError = result.errors.find((e: any) => e.field === 'date')
+				const dateError = result.errors.find((e) => e.field === 'date')
 				expect(dateError).toBeDefined()
 				expect(dateError?.message).toContain('必須')
 			}
@@ -47,7 +47,7 @@ describe('Zodバリデーターのテスト', () => {
 			const result = validateTransactionCreateWithZod(data)
 			expect(result.success).toBe(false)
 			if (!result.success) {
-				const amountError = result.errors.find((e: any) => e.field === 'amount')
+				const amountError = result.errors.find((e) => e.field === 'amount')
 				expect(amountError).toBeDefined()
 				expect(amountError?.message).toContain('正の数値')
 			}
@@ -99,7 +99,7 @@ describe('Zodバリデーターのテスト', () => {
 			expect(result.success).toBe(false)
 			if (!result.success) {
 				expect(result.errors.length).toBeGreaterThan(0)
-				const billingCycleError = result.errors.find((e: any) => e.field === 'billingCycle')
+				const billingCycleError = result.errors.find((e) => e.field === 'billingCycle')
 				expect(billingCycleError).toBeDefined()
 			}
 		})
