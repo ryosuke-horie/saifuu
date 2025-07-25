@@ -1,0 +1,593 @@
+{
+  "totalSourceLines": 9394,
+  "totalTestLines": 11585,
+  "violations": [
+    {
+      "source": "src/middleware.ts",
+      "test": "src/middleware.test.ts",
+      "sourceLines": 55,
+      "testLines": 212,
+      "ratio": "3.85",
+      "category": "small",
+      "limit": 1.5,
+      "excess": 129
+    },
+    {
+      "source": "src/utils/expense.ts",
+      "test": "src/utils/expense.test.ts",
+      "sourceLines": 31,
+      "testLines": 128,
+      "ratio": "4.13",
+      "category": "small",
+      "limit": 1.5,
+      "excess": 82
+    },
+    {
+      "source": "src/utils/categories.ts",
+      "test": "src/utils/categories.test.ts",
+      "sourceLines": 30,
+      "testLines": 78,
+      "ratio": "2.60",
+      "category": "small",
+      "limit": 1.5,
+      "excess": 33
+    },
+    {
+      "source": "src/lib/utils/request-id.ts",
+      "test": "src/lib/utils/__tests__/request-id.test.ts",
+      "sourceLines": 41,
+      "testLines": 142,
+      "ratio": "3.46",
+      "category": "small",
+      "limit": 1.5,
+      "excess": 80
+    },
+    {
+      "source": "src/lib/api/services/transactions.ts",
+      "test": "src/lib/api/services/transactions.test.ts",
+      "sourceLines": 247,
+      "testLines": 842,
+      "ratio": "3.41",
+      "category": "medium",
+      "limit": 2,
+      "excess": 348
+    },
+    {
+      "source": "src/lib/api/services/subscriptions.ts",
+      "test": "src/lib/api/services/subscriptions.test.ts",
+      "sourceLines": 135,
+      "testLines": 463,
+      "ratio": "3.43",
+      "category": "medium",
+      "limit": 2,
+      "excess": 193
+    },
+    {
+      "source": "src/lib/api/hooks/useApiQuery.ts",
+      "test": "src/lib/api/hooks/__tests__/useApiQuery.test.ts",
+      "sourceLines": 144,
+      "testLines": 589,
+      "ratio": "4.09",
+      "category": "medium",
+      "limit": 2,
+      "excess": 301
+    },
+    {
+      "source": "src/hooks/useCategories.ts",
+      "test": "src/hooks/useCategories.test.ts",
+      "sourceLines": 43,
+      "testLines": 134,
+      "ratio": "3.12",
+      "category": "small",
+      "limit": 1.5,
+      "excess": 70
+    },
+    {
+      "source": "src/components/ui/Spinner.tsx",
+      "test": "src/components/ui/Spinner.test.tsx",
+      "sourceLines": 37,
+      "testLines": 67,
+      "ratio": "1.81",
+      "category": "small",
+      "limit": 1.5,
+      "excess": 11
+    },
+    {
+      "source": "src/components/ui/LoadingState.tsx",
+      "test": "src/components/ui/LoadingState.test.tsx",
+      "sourceLines": 33,
+      "testLines": 80,
+      "ratio": "2.42",
+      "category": "small",
+      "limit": 1.5,
+      "excess": 30
+    },
+    {
+      "source": "src/app/not-found.tsx",
+      "test": "src/app/not-found.test.tsx",
+      "sourceLines": 47,
+      "testLines": 188,
+      "ratio": "4.00",
+      "category": "small",
+      "limit": 1.5,
+      "excess": 118
+    },
+    {
+      "source": "src/app/global-error.tsx",
+      "test": "src/app/global-error.test.tsx",
+      "sourceLines": 73,
+      "testLines": 253,
+      "ratio": "3.47",
+      "category": "small",
+      "limit": 1.5,
+      "excess": 144
+    },
+    {
+      "source": "src/app/subscriptions/page.tsx",
+      "test": "src/app/subscriptions/page.test.tsx",
+      "sourceLines": 254,
+      "testLines": 741,
+      "ratio": "2.92",
+      "category": "medium",
+      "limit": 2,
+      "excess": 234
+    },
+    {
+      "source": "src/app/expenses/page.tsx",
+      "test": "src/app/expenses/page.test.tsx",
+      "sourceLines": 230,
+      "testLines": 503,
+      "ratio": "2.19",
+      "category": "medium",
+      "limit": 2,
+      "excess": 44
+    },
+    {
+      "source": "src/logger/factory.ts",
+      "test": "src/logger/__tests__/factory.test.ts",
+      "sourceLines": 79,
+      "testLines": 237,
+      "ratio": "3.00",
+      "category": "small",
+      "limit": 1.5,
+      "excess": 119
+    },
+    {
+      "source": "src/logger/cloudflare-logger.ts",
+      "test": "src/logger/__tests__/cloudflare-logger.test.ts",
+      "sourceLines": 124,
+      "testLines": 305,
+      "ratio": "2.46",
+      "category": "medium",
+      "limit": 2,
+      "excess": 57
+    }
+  ],
+  "warnings": [
+    {
+      "source": "src/components/ui/Skeleton.tsx",
+      "test": "src/components/ui/Skeleton.test.tsx",
+      "sourceLines": 66,
+      "testLines": 90,
+      "ratio": "1.36",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/db/index.ts",
+      "test": "src/db/__tests__/index.test.ts",
+      "sourceLines": 47,
+      "testLines": 69,
+      "ratio": "1.47",
+      "category": "small",
+      "limit": 1.5
+    }
+  ],
+  "summary": [
+    {
+      "source": "src/middleware.ts",
+      "test": "src/middleware.test.ts",
+      "sourceLines": 55,
+      "testLines": 212,
+      "ratio": "3.85",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/utils/expense.ts",
+      "test": "src/utils/expense.test.ts",
+      "sourceLines": 31,
+      "testLines": 128,
+      "ratio": "4.13",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/utils/categories.ts",
+      "test": "src/utils/categories.test.ts",
+      "sourceLines": 30,
+      "testLines": 78,
+      "ratio": "2.60",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/lib/validation/validation.ts",
+      "test": "src/lib/validation/__tests__/validation.test.ts",
+      "sourceLines": 189,
+      "testLines": 198,
+      "ratio": "1.05",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/lib/utils/request-id.ts",
+      "test": "src/lib/utils/__tests__/request-id.test.ts",
+      "sourceLines": 41,
+      "testLines": 142,
+      "ratio": "3.46",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/lib/logger/browser-logger.ts",
+      "test": "src/lib/logger/__tests__/browser-logger.test.ts",
+      "sourceLines": 631,
+      "testLines": 378,
+      "ratio": "0.60",
+      "category": "large",
+      "limit": 2.5
+    },
+    {
+      "source": "src/lib/logger/api-integration.ts",
+      "test": "src/lib/logger/__tests__/api-integration.test.ts",
+      "sourceLines": 400,
+      "testLines": 414,
+      "ratio": "1.03",
+      "category": "large",
+      "limit": 2.5
+    },
+    {
+      "source": "src/lib/api/services/transactions.ts",
+      "test": "src/lib/api/services/transactions.test.ts",
+      "sourceLines": 247,
+      "testLines": 842,
+      "ratio": "3.41",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/lib/api/services/subscriptions.ts",
+      "test": "src/lib/api/services/subscriptions.test.ts",
+      "sourceLines": 135,
+      "testLines": 463,
+      "ratio": "3.43",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/lib/api/hooks/useSubscriptions.ts",
+      "test": "src/lib/api/hooks/__tests__/useSubscriptions.test.ts",
+      "sourceLines": 267,
+      "testLines": 398,
+      "ratio": "1.49",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/lib/api/hooks/useApiQuery.ts",
+      "test": "src/lib/api/hooks/__tests__/useApiQuery.test.ts",
+      "sourceLines": 144,
+      "testLines": 589,
+      "ratio": "4.09",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/lib/api/errors.ts",
+      "test": "src/lib/api/__tests__/errors.test.ts",
+      "sourceLines": 294,
+      "testLines": 267,
+      "ratio": "0.91",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/lib/api/config.ts",
+      "test": "src/lib/api/__tests__/config.test.ts",
+      "sourceLines": 219,
+      "testLines": 205,
+      "ratio": "0.94",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/lib/api/client.ts",
+      "test": "src/lib/api/__tests__/client.test.ts",
+      "sourceLines": 413,
+      "testLines": 211,
+      "ratio": "0.51",
+      "category": "large",
+      "limit": 2.5
+    },
+    {
+      "source": "src/hooks/useExpenses.ts",
+      "test": "src/hooks/useExpenses.test.ts",
+      "sourceLines": 215,
+      "testLines": 206,
+      "ratio": "0.96",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/hooks/useCategories.ts",
+      "test": "src/hooks/useCategories.test.ts",
+      "sourceLines": 43,
+      "testLines": 134,
+      "ratio": "3.12",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/components/ui/Spinner.tsx",
+      "test": "src/components/ui/Spinner.test.tsx",
+      "sourceLines": 37,
+      "testLines": 67,
+      "ratio": "1.81",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/components/ui/Skeleton.tsx",
+      "test": "src/components/ui/Skeleton.test.tsx",
+      "sourceLines": 66,
+      "testLines": 90,
+      "ratio": "1.36",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/components/ui/LoadingState.tsx",
+      "test": "src/components/ui/LoadingState.test.tsx",
+      "sourceLines": 33,
+      "testLines": 80,
+      "ratio": "2.42",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/components/ui/Dialog.tsx",
+      "test": "src/components/ui/Dialog.test.tsx",
+      "sourceLines": 276,
+      "testLines": 192,
+      "ratio": "0.70",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/components/subscriptions/SubscriptionList.tsx",
+      "test": "src/components/subscriptions/SubscriptionList.test.tsx",
+      "sourceLines": 227,
+      "testLines": 212,
+      "ratio": "0.93",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/components/subscriptions/SubscriptionForm.tsx",
+      "test": "src/components/subscriptions/SubscriptionForm.test.tsx",
+      "sourceLines": 558,
+      "testLines": 188,
+      "ratio": "0.34",
+      "category": "large",
+      "limit": 2.5
+    },
+    {
+      "source": "src/components/subscriptions/NewSubscriptionDialog.tsx",
+      "test": "src/components/subscriptions/NewSubscriptionDialog.test.tsx",
+      "sourceLines": 134,
+      "testLines": 133,
+      "ratio": "0.99",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/components/subscriptions/NewSubscriptionButton.tsx",
+      "test": "src/components/subscriptions/NewSubscriptionButton.test.tsx",
+      "sourceLines": 65,
+      "testLines": 57,
+      "ratio": "0.88",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/components/subscriptions/SubscriptionFormWithZod.tsx",
+      "test": "src/components/subscriptions/__tests__/SubscriptionFormWithZod.test.tsx",
+      "sourceLines": 485,
+      "testLines": 256,
+      "ratio": "0.53",
+      "category": "large",
+      "limit": 2.5
+    },
+    {
+      "source": "src/components/layout/Header.tsx",
+      "test": "src/components/layout/Header.test.tsx",
+      "sourceLines": 126,
+      "testLines": 130,
+      "ratio": "1.03",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/components/expenses/NewExpenseDialog.tsx",
+      "test": "src/components/expenses/NewExpenseDialog.test.tsx",
+      "sourceLines": 138,
+      "testLines": 177,
+      "ratio": "1.28",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/components/expenses/NewExpenseButton.tsx",
+      "test": "src/components/expenses/NewExpenseButton.test.tsx",
+      "sourceLines": 71,
+      "testLines": 91,
+      "ratio": "1.28",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/components/expenses/ExpenseStats.tsx",
+      "test": "src/components/expenses/ExpenseStats.test.tsx",
+      "sourceLines": 419,
+      "testLines": 198,
+      "ratio": "0.47",
+      "category": "large",
+      "limit": 2.5
+    },
+    {
+      "source": "src/components/expenses/ExpenseList.tsx",
+      "test": "src/components/expenses/ExpenseList.test.tsx",
+      "sourceLines": 204,
+      "testLines": 244,
+      "ratio": "1.20",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/components/expenses/ExpenseFilters.tsx",
+      "test": "src/components/expenses/ExpenseFilters.test.tsx",
+      "sourceLines": 478,
+      "testLines": 258,
+      "ratio": "0.54",
+      "category": "large",
+      "limit": 2.5
+    },
+    {
+      "source": "src/components/expenses/EditExpenseDialog.tsx",
+      "test": "src/components/expenses/EditExpenseDialog.test.tsx",
+      "sourceLines": 154,
+      "testLines": 246,
+      "ratio": "1.60",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/components/expenses/ExpenseForm.tsx",
+      "test": "src/components/expenses/__tests__/ExpenseForm.test.tsx",
+      "sourceLines": 385,
+      "testLines": 240,
+      "ratio": "0.62",
+      "category": "large",
+      "limit": 2.5
+    },
+    {
+      "source": "src/app/not-found.tsx",
+      "test": "src/app/not-found.test.tsx",
+      "sourceLines": 47,
+      "testLines": 188,
+      "ratio": "4.00",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/app/layout.tsx",
+      "test": "src/app/layout.test.tsx",
+      "sourceLines": 129,
+      "testLines": 183,
+      "ratio": "1.42",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/app/global-error.tsx",
+      "test": "src/app/global-error.test.tsx",
+      "sourceLines": 73,
+      "testLines": 253,
+      "ratio": "3.47",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/app/subscriptions/page.tsx",
+      "test": "src/app/subscriptions/page.test.tsx",
+      "sourceLines": 254,
+      "testLines": 741,
+      "ratio": "2.92",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/app/expenses/page.tsx",
+      "test": "src/app/expenses/page.test.tsx",
+      "sourceLines": 230,
+      "testLines": 503,
+      "ratio": "2.19",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/index.tsx",
+      "test": "src/index.test.ts",
+      "sourceLines": 146,
+      "testLines": 96,
+      "ratio": "0.66",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/middleware/logging.ts",
+      "test": "src/middleware/__tests__/logging.test.ts",
+      "sourceLines": 242,
+      "testLines": 198,
+      "ratio": "0.82",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/logger/factory.ts",
+      "test": "src/logger/__tests__/factory.test.ts",
+      "sourceLines": 79,
+      "testLines": 237,
+      "ratio": "3.00",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/logger/cloudflare-logger.ts",
+      "test": "src/logger/__tests__/cloudflare-logger.test.ts",
+      "sourceLines": 124,
+      "testLines": 305,
+      "ratio": "2.46",
+      "category": "medium",
+      "limit": 2
+    },
+    {
+      "source": "src/lib/logger.ts",
+      "test": "src/lib/__tests__/logger.test.ts",
+      "sourceLines": 351,
+      "testLines": 424,
+      "ratio": "1.21",
+      "category": "large",
+      "limit": 2.5
+    },
+    {
+      "source": "src/db/index.ts",
+      "test": "src/db/__tests__/index.test.ts",
+      "sourceLines": 47,
+      "testLines": 69,
+      "ratio": "1.47",
+      "category": "small",
+      "limit": 1.5
+    },
+    {
+      "source": "src/lib/route-factory.ts",
+      "test": "src/__tests__/lib/route-factory.test.ts",
+      "sourceLines": 462,
+      "testLines": 664,
+      "ratio": "1.44",
+      "category": "large",
+      "limit": 2.5
+    }
+  ]
+}
