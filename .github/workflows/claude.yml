@@ -7,16 +7,22 @@ on:
     types: [created]
   issues:
     types: [opened, assigned]
-  pull_request_review:
-    types: [submitted]
+  # 問題: pull_request_reviewイベントは自動レビューツール実行時にも発生し、
+  # @claudeメンションがない場合も毎回ワークフローが起動してスキップされていた
+  # 解決: 明示的な@claudeメンションがあるコメントのみに反応するよう変更
+  # 影響: PRレビュー本文での@claude呼び出しは不可（通常コメントを使用）
+  # pull_request_review:
+  #   types: [submitted]
 
 jobs:
   claude:
     if: |
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      (github.event_name == 'issues' && (
+        contains(github.event.issue.body, '@claude') || 
+        contains(github.event.issue.title, '@claude')
+      ))
     runs-on: self-hosted
     permissions:
       contents: read
