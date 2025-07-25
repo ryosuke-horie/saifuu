@@ -251,8 +251,8 @@ describe('Zodスキーマのテスト', () => {
 			const result = amountSchema.safeParse(10_000_001)
 
 			if (!result.success) {
-				expect(result.error.errors[0].message).toContain(
-					'10000000以下である必要があります',
+				expect(result.error.errors[0].message).toBe(
+					'金額は10000000円以下である必要があります',
 				)
 			}
 		})
@@ -261,8 +261,8 @@ describe('Zodスキーマのテスト', () => {
 			const result = billingCycleSchema.safeParse('invalid')
 
 			if (!result.success) {
-				expect(result.error.errors[0].message).toContain(
-					'monthly, yearly, weeklyのいずれかである必要があります',
+				expect(result.error.errors[0].message).toBe(
+					'請求サイクルはmonthly、yearly、weeklyのいずれかである必要があります',
 				)
 			}
 		})
