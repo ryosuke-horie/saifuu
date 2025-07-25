@@ -10,6 +10,14 @@
 const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
+const {
+  countLines,
+  getComponentCategory,
+  findSourceFile,
+  calculateRatio,
+  formatViolation,
+  RATIO_LIMITS
+} = require('./lib/test-analysis');
 
 // テストファイルパターン
 const TEST_PATTERNS = [
@@ -29,56 +37,6 @@ const EXCLUDE_PATTERNS = [
   '**/.next/**',
   '**/storybook-static/**'
 ];
-
-// コンポーネントサイズ別の比率上限
-const RATIO_LIMITS = {
-  small: { lines: 100, ratio: 1.5 },
-  medium: { lines: 300, ratio: 2.0 },
-  large: { lines: Infinity, ratio: 2.5 }
-};
-
-/**
- * ファイルの行数をカウント
- */
-function countLines(filePath) {
-  try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    return content.split('\n').length;
-  } catch (error) {
-    console.error(`Error reading file ${filePath}:`, error.message);
-    return 0;
-  }
-}
-
-/**
- * コンポーネントのサイズカテゴリを判定
- */
-function getComponentCategory(lines) {
-  if (lines < RATIO_LIMITS.small.lines) return 'small';
-  if (lines < RATIO_LIMITS.medium.lines) return 'medium';
-  return 'large';
-}
-
-/**
- * テストファイルとソースファイルをマッピング
- */
-function mapTestToSource(testFile) {
-  // テストファイル名からソースファイル名を推定
-  const baseName = testFile
-    .replace(/\.(test|spec|stories)\.(ts|tsx)$/, '')
-    .replace('/__tests__/', '/');
-  
-  const possibleExtensions = ['.ts', '.tsx'];
-  
-  for (const ext of possibleExtensions) {
-    const sourcePath = baseName + ext;
-    if (fs.existsSync(sourcePath)) {
-      return sourcePath;
-    }
-  }
-  
-  return null;
-}
 
 /**
  * プロジェクト全体のテスト比率を分析
@@ -105,7 +63,7 @@ function analyzeTestRatios(rootDir) {
   const processedSources = new Set();
 
   testFiles.forEach(testFile => {
-    const sourceFile = mapTestToSource(testFile);
+    const sourceFile = findSourceFile(testFile);
     
     if (!sourceFile || processedSources.has(sourceFile)) {
       return;
@@ -118,7 +76,7 @@ function analyzeTestRatios(rootDir) {
     
     if (sourceLines === 0) return;
     
-    const ratio = testLines / sourceLines;
+    const ratio = calculateRatio(testLines, sourceLines);
     const category = getComponentCategory(sourceLines);
     const limit = RATIO_LIMITS[category].ratio;
     
@@ -136,10 +94,7 @@ function analyzeTestRatios(rootDir) {
     };
     
     if (ratio > limit) {
-      results.violations.push({
-        ...fileInfo,
-        excess: ((ratio - limit) * sourceLines).toFixed(0)
-      });
+      results.violations.push(formatViolation(fileInfo));
     } else if (ratio > limit * 0.9) {
       results.warnings.push(fileInfo);
     }
@@ -169,7 +124,7 @@ function reportResults(results) {
     results.violations.forEach(v => {
       console.log(`  - ${v.source}`);
       console.log(`    サイズ: ${v.category} (${v.sourceLines}行), 比率: ${v.ratio}x (上限: ${v.limit}x)`);
-      console.log(`    超過行数: 約${v.excess}行\n`);
+      console.log(`    超過行数: ${v.excess}行\n`);
     });
   }
   
