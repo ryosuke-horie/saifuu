@@ -65,16 +65,18 @@ const SubscriptionsPage: FC = () => {
 		async (data: CreateSubscriptionRequest) => {
 			try {
 				// API経由でサブスクリプションを作成
-				await createSubscriptionMutation(data);
+				const result = await createSubscriptionMutation(data);
 
-				// 成功時にダイアログを閉じる
-				handleCloseDialog();
+				// 成功時のみダイアログを閉じる
+				if (result) {
+					handleCloseDialog();
 
-				// サブスクリプション一覧を再取得
-				await refetchSubscriptions();
+					// サブスクリプション一覧を再取得
+					await refetchSubscriptions();
 
-				// 成功フィードバック（将来的にはトーストやスナックバーなどを使用）
-				console.log("新しいサブスクリプションを登録しました");
+					// 成功フィードバック（将来的にはトーストやスナックバーなどを使用）
+					console.log("新しいサブスクリプションを登録しました");
+				}
 			} catch (error) {
 				console.error("サブスクリプション登録エラー:", error);
 				// エラーはフォーム内で表示されるため、ここでは特別な処理不要
