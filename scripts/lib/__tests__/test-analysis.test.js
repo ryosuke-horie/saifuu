@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 
-// テスト対象のモジュール（まだ存在しない）
+// テスト対象のモジュール
 const {
   countLines,
   getComponentCategory,
@@ -73,7 +73,6 @@ describe('test-analysis', () => {
         .replace(/__tests__[\/\\]/, '')
         .replace('.test.js', '.js');
       
-      // 実装がまだ存在しないので、このテストは失敗する
       const result = findSourceFile(thisTestFile);
       assert.equal(result, expectedSourceFile);
     });

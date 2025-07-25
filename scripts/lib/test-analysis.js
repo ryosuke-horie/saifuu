@@ -36,7 +36,7 @@ const RATIO_LIMITS = {
  * @returns {number} ファイルの行数（読み取り失敗時は0）
  * @example
  * const lines = countLines('/path/to/file.ts');
- * console.log(lines); // 150
+ * console.log(lines); // 150行
  */
 function countLines(filePath) {
   try {
@@ -53,7 +53,7 @@ function countLines(filePath) {
  * @returns {'small'|'medium'|'large'} サイズカテゴリ
  * @example
  * const category = getComponentCategory(150);
- * console.log(category); // 'medium'
+ * console.log(category); // 'medium'カテゴリ
  */
 function getComponentCategory(lines) {
   if (lines < RATIO_LIMITS.small.lines) return 'small';
@@ -66,11 +66,11 @@ function getComponentCategory(lines) {
  * @param {string} filepath - 判定対象のファイルパス
  * @returns {boolean} テストファイルの場合true
  * @example
- * console.log(isTestFile('component.test.tsx')); // true
- * console.log(isTestFile('component.tsx')); // false
+ * console.log(isTestFile('component.test.tsx')); // テストファイルなのでtrue
+ * console.log(isTestFile('component.tsx')); // 通常ファイルなのでfalse
  */
 function isTestFile(filepath) {
-  return /\.(test|spec|stories)\.(ts|tsx)$/.test(filepath);
+  return /\.(test|spec|stories)\.(ts|tsx|js|jsx)$/.test(filepath);
 }
 
 /**
@@ -79,12 +79,16 @@ function isTestFile(filepath) {
  * @returns {string|null} 対応するソースファイルのパス、見つからない場合はnull
  * @example
  * const sourceFile = findSourceFile('/path/to/component.test.tsx');
- * console.log(sourceFile); // '/path/to/component.tsx'
+ * console.log(sourceFile); // '/path/to/component.tsx'が返される
  */
 function findSourceFile(testFile) {
-  const baseName = testFile
-    .replace(/\.(test|spec|stories)\.(ts|tsx|js)$/, '')
-    .replace(/__tests__[\/\\]/, '');
+  let baseName = testFile
+    .replace(/\.(test|spec|stories)\.(ts|tsx|js|jsx)$/, '');
+  
+  // __tests__ ディレクトリの親ディレクトリに移動
+  if (baseName.includes(path.sep + '__tests__' + path.sep)) {
+    baseName = baseName.replace(path.sep + '__tests__' + path.sep, path.sep);
+  }
   
   const extensions = ['.ts', '.tsx', '.js'];
   
@@ -105,7 +109,7 @@ function findSourceFile(testFile) {
  * @returns {number} 比率（ソースコードが0行の場合は0）
  * @example
  * const ratio = calculateRatio(150, 100);
- * console.log(ratio); // 1.5
+ * console.log(ratio); // 1.5倍
  */
 function calculateRatio(testLines, sourceLines) {
   if (sourceLines === 0) return 0;
@@ -131,11 +135,12 @@ function calculateRatio(testLines, sourceLines) {
  *   category: 'small',
  *   limit: 1.5
  * });
- * console.log(violation.excess); // 50
+ * console.log(violation.excess); // 50行超過
  */
 function formatViolation(fileInfo) {
   const { sourceLines, ratio, limit } = fileInfo;
-  const excess = Math.floor((parseFloat(ratio) - limit) * sourceLines);
+  // 四捨五入を使用してより正確な超過行数を計算
+  const excess = Math.round((parseFloat(ratio) - limit) * sourceLines);
   
   return {
     ...fileInfo,
