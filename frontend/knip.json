@@ -1,0 +1,74 @@
+{
+	"$schema": "https://unpkg.com/knip@5/schema.json",
+	"entry": [
+		"src/app/**/*.{ts,tsx}",
+		"src/middleware.ts",
+		".storybook/main.ts",
+		".storybook/preview.ts",
+		"vitest.config.ts",
+		"vitest.setup.ts",
+		"next.config.ts"
+	],
+	"project": ["src/**/*.{ts,tsx}", ".storybook/**/*.{ts,tsx}"],
+	"ignore": [
+		"**/*.test.{ts,tsx}",
+		"**/*.stories.{ts,tsx}",
+		"src/test-utils/**",
+		"src/tests/**",
+		"src/__tests__/**",
+		"**/__tests__/**",
+		".storybook/mocks/**",
+		"public/mockServiceWorker.js",
+		"storybook-static/**",
+		"e2e-configs/**",
+		"playwright-report/**",
+		"test-results/**",
+		"scripts/**",
+		"*.config.{js,ts,mjs}",
+		"*.d.ts"
+	],
+	"ignoreDependencies": [
+		"@biomejs/biome",
+		"@tailwindcss/postcss",
+		"tailwindcss",
+		"@playwright/test",
+		"@storybook/*",
+		"storybook",
+		"msw-storybook-addon",
+		"@vitest/*",
+		"vitest",
+		"@testing-library/*",
+		"jsdom",
+		"@faker-js/faker",
+		"wrangler",
+		"@opennextjs/cloudflare"
+	],
+	"rules": {
+		"files": "warn",
+		"dependencies": "warn",
+		"devDependencies": "warn",
+		"exports": "warn",
+		"types": "warn",
+		"duplicates": "warn",
+		"unlisted": "warn",
+		"binaries": "warn",
+		"unresolved": "warn"
+	},
+	"next": {
+		"entry": [
+			"src/app/**/page.tsx",
+			"src/app/**/layout.tsx",
+			"src/app/**/error.tsx",
+			"src/app/**/not-found.tsx",
+			"src/app/**/loading.tsx",
+			"src/app/global-error.tsx",
+			"src/app/**/route.ts"
+		]
+	},
+	"vitest": {
+		"entry": ["vitest.config.ts", "vitest.setup.ts"]
+	},
+	"storybook": {
+		"entry": [".storybook/main.ts", ".storybook/preview.ts"]
+	}
+}
