@@ -23,7 +23,7 @@ export type ValidationResult<T> =
  * CRUDハンドラーのオプション
  * テーブルやエンティティの型は使用時に推論される
  */
-export interface CrudHandlerOptions<TNew, TUpdate, TEntity = unknown> {
+export interface CrudHandlerOptions<TNew, TUpdate> {
 	/** データベーステーブルスキーマ */
 	// biome-ignore lint/suspicious/noExplicitAny: Table schema can be any Drizzle table type
 	table: any
@@ -89,25 +89,6 @@ function extractResult<T>(result: unknown): T | undefined {
 }
 
 /**
- * Drizzle ORMのreturning()メソッドの戻り値から配列を取得する
- */
-function extractResults<T>(result: unknown): T[] {
-	if (Array.isArray(result)) {
-		return result as T[]
-	}
-
-	// D1環境の場合
-	if (result && typeof result === 'object' && 'results' in result) {
-		const results = (result as { results: unknown }).results
-		if (Array.isArray(results)) {
-			return results as T[]
-		}
-	}
-
-	return []
-}
-
-/**
  * ID検証とレスポンス処理を共通化
  */
 function validateAndExtractId(
@@ -162,8 +143,8 @@ function validateAndExtractId(
  * app.delete('/:id', subscriptionHandlers.delete)
  * ```
  */
-export function createCrudHandlers<TNew = unknown, TUpdate = unknown, TEntity = unknown>(
-	options: CrudHandlerOptions<TNew, TUpdate, TEntity>
+export function createCrudHandlers<TNew = unknown, TUpdate = unknown>(
+	options: CrudHandlerOptions<TNew, TUpdate>
 ): CrudHandlers {
 	const {
 		table,
