@@ -307,12 +307,47 @@ describe('Subscriptions API with CRUD Factory - Unit Tests', () => {
 				method: 'GET',
 			})
 
-			// ログが呼ばれたことを確認
+			// 一覧取得開始のログが正しい構造で呼ばれることを確認
 			expect(logWithContext).toHaveBeenCalledWith(
 				expect.any(Object),
 				'info',
-				expect.stringContaining('subscription一覧取得'),
-				expect.any(Object)
+				'subscription一覧取得を開始',
+				expect.objectContaining({
+					operationType: 'read',
+					resource: 'subscription',
+				})
+			)
+
+			// 一覧取得完了のログも確認
+			expect(logWithContext).toHaveBeenCalledWith(
+				expect.any(Object),
+				'info',
+				'subscription一覧取得が完了',
+				expect.objectContaining({
+					subscriptionCount: expect.any(Number),
+					resource: 'subscription',
+				})
+			)
+		})
+
+		it('should log errors with proper structure', async () => {
+			// エラー時のログも含めてより包括的なテスト
+			const { logWithContext } = await import('../../middleware/logging')
+
+			// 存在しないIDでの取得を試みる
+			await app.request('/api/subscriptions/99999', {
+				method: 'GET',
+			})
+
+			// 警告ログが正しい構造で呼ばれることを確認
+			expect(logWithContext).toHaveBeenCalledWith(
+				expect.any(Object),
+				'warn',
+				'subscription詳細取得: 対象subscriptionが見つからない',
+				expect.objectContaining({
+					subscriptionId: 99999,
+					resource: 'subscription',
+				})
 			)
 		})
 	})

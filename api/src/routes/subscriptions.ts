@@ -29,6 +29,15 @@ interface SubscriptionWithCategory extends Subscription {
  * カテゴリ情報を付加するデータ変換関数
  * subscriptions配列の各要素にカテゴリマスタから対応するカテゴリ情報を付加する
  *
+ * 設計意図：フロントエンドでのカテゴリ名表示のため、アプリケーション層で結合処理を実装
+ * 代替案：
+ * - DB層でのJOIN処理も検討したが、カテゴリマスタが設定ファイルベースのため現在の方式を採用
+ * - GraphQL等でのリゾルバーでの結合も可能だが、RESTful APIのシンプルさを優先
+ *
+ * パフォーマンス考慮：
+ * - カテゴリ数は少数（10件程度）のため、O(n*m)の計算量でも実用上問題なし
+ * - タイムスタンプは関数実行時に1回だけ生成し、全レコードで共有
+ *
  * @param data - サブスクリプションデータの配列
  * @returns カテゴリ情報が付加されたサブスクリプションデータの配列
  */
@@ -71,12 +80,10 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 	const handlers = createCrudHandlers<NewSubscription, Partial<NewSubscription>>({
 		table: subscriptions,
 		resourceName: 'subscription',
-		validateCreate: (data: unknown) =>
-			validateSubscriptionCreateWithZod(data as Partial<NewSubscription>),
-		validateUpdate: (data: unknown) =>
-			validateSubscriptionUpdateWithZod(data as Partial<NewSubscription>),
+		validateCreate: validateSubscriptionCreateWithZod,
+		validateUpdate: validateSubscriptionUpdateWithZod,
 		validateId: validateIdWithZod,
-		transformData: addCategoryInfo as (data: any[]) => any[],
+		transformData: (data: any[]) => addCategoryInfo(data as Subscription[]),
 		testDatabase: options.testDatabase,
 	})
 
