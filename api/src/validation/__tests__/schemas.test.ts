@@ -247,7 +247,7 @@ describe('Zodスキーマのテスト', () => {
 				console.log('Error:', result.error)
 				if (result.error?.errors) {
 					const errors = result.error.errors
-					const amountError = errors.find((e: any) => e.path && e.path[0] === 'amount')
+					const amountError = errors.find((e) => e.path && e.path[0] === 'amount')
 					expect(amountError?.message).toContain('必須')
 				} else {
 					throw new Error('Expected error to have errors property')

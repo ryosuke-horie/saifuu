@@ -30,6 +30,15 @@ jobs:
       pull-requests: write
       
     steps:
+      - name: Cleanup runner workspace
+        if: runner.name == 'self-hosted'
+        run: |
+          # セルフホストランナー用のクリーンアップ
+          rm -rf /home/runner-user/setup-pnpm || true
+          rm -rf ~/.pnpm-store || true
+          rm -rf node_modules || true
+          rm -f ~/.npmrc || true
+      
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       
@@ -205,3 +214,16 @@ jobs:
             api/unit_test_results.json
             api/integration_test_results.json
           retention-days: 30
+      
+      # セルフホストランナー用の最終クリーンアップ
+      - name: Final cleanup
+        if: always() && runner.name == 'self-hosted'
+        run: |
+          # セルフホストランナー用の最終クリーンアップ
+          rm -rf /home/runner-user/setup-pnpm || true
+          rm -rf ~/.pnpm-store || true
+          rm -rf node_modules || true
+          rm -rf frontend/node_modules || true
+          rm -rf api/node_modules || true
+          rm -f ~/.npmrc || true
+          rm -rf /tmp/pnpm-store-${{ github.run_id }}-* || true
