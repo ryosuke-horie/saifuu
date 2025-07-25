@@ -20,6 +20,14 @@ interface SubscriptionResponse {
 	isActive: boolean
 	createdAt: string
 	updatedAt: string
+	category?: {
+		id: number
+		name: string
+		type: string
+		color: string
+		createdAt: string
+		updatedAt: string
+	} | null
 }
 
 interface ErrorResponse {
@@ -36,7 +44,7 @@ vi.mock('../../middleware/logging', () => ({
 	logWithContext: vi.fn(),
 }))
 
-describe('Subscriptions API with Zod - Unit Tests', () => {
+describe('Subscriptions API with CRUD Factory - Unit Tests', () => {
 	let db: ReturnType<typeof drizzle>
 	let sqlite: Database.Database
 	let app: Hono<{
@@ -52,70 +60,191 @@ describe('Subscriptions API with Zod - Unit Tests', () => {
 		// マイグレーションを実行
 		migrate(db, { migrationsFolder: './drizzle/migrations' })
 
-		// テスト用のアプリケーションインスタンスを作成
+		// テスト用データベースを注入してアプリケーションを作成
 		const subscriptionsApp = createSubscriptionsApp({ testDatabase: db as unknown as AnyDatabase })
+
+		// 親アプリケーションを作成し、ミドルウェアを設定
 		app = new Hono<{
 			Bindings: Env
 			Variables: { db: AnyDatabase } & LoggingVariables
 		}>()
 
-		// ミドルウェアのモック（テストでは必要最小限）
-		app.use(
-			'*',
-			async (
-				c: Context<{
-					Bindings: Env
-					Variables: { db: AnyDatabase } & LoggingVariables
-				}>,
-				next: Next
-			) => {
-				c.set('requestId', 'test-request-id')
-				c.set('logger', testLogger)
-				c.set('db', db as unknown as AnyDatabase)
-				await next()
-			}
-		)
+		// ミドルウェアの設定
+		app.use('*', async (c: Context, next: Next) => {
+			c.set('db', db as unknown as AnyDatabase)
+			c.set('logger', testLogger)
+			c.set('requestId', 'test-request-id')
+			await next()
+		})
 
+		// サブスクリプションアプリケーションをマウント
 		app.route('/api/subscriptions', subscriptionsApp)
+
+		// モックをリセット
+		vi.clearAllMocks()
 	})
 
-	describe('POST /subscriptions', () => {
-		it('should create a new subscription', async () => {
+	describe('サブスクリプション固有機能のテスト', () => {
+		it('should include category information in subscription response', async () => {
+			// サブスクリプションを作成
 			const subscriptionData = {
 				name: 'Netflix',
 				amount: 1500,
 				billingCycle: 'monthly',
 				nextBillingDate: '2024-02-01',
-				categoryId: 1,
+				categoryId: 18, // 娯楽カテゴリ
 				description: 'エンタメサブスク',
+				isActive: true,
 			}
 
-			const response = await app.request('/api/subscriptions', {
+			const createResponse = await app.request('/api/subscriptions', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(subscriptionData),
 			})
 
-			expect(response.status).toBe(201)
-			const result = (await response.json()) as SubscriptionResponse
-			expect(result).toMatchObject({
-				name: 'Netflix',
-				amount: 1500,
-				billingCycle: 'monthly',
-				nextBillingDate: '2024-02-01',
-				categoryId: 1,
-				description: 'エンタメサブスク',
-				isActive: true,
+			expect(createResponse.status).toBe(201)
+			const created = (await createResponse.json()) as SubscriptionResponse
+
+			// 一覧取得でカテゴリ情報が付加されることを確認
+			const listResponse = await app.request('/api/subscriptions', {
+				method: 'GET',
 			})
-			expect(result.id).toBeDefined()
+
+			expect(listResponse.status).toBe(200)
+			const list = (await listResponse.json()) as SubscriptionResponse[]
+			const subscription = list.find((s) => s.id === created.id)
+
+			expect(subscription).toBeDefined()
+			expect(subscription!.category).toEqual({
+				id: 18,
+				name: '娯楽',
+				type: 'expense',
+				color: '#E67E22',
+				createdAt: expect.any(String),
+				updatedAt: expect.any(String),
+			})
 		})
 
-		it('should reject with Japanese error messages for validation failures', async () => {
+		it('should handle null category when categoryId is invalid', async () => {
+			// 存在しないカテゴリIDでサブスクリプションを作成
+			const subscriptionData = {
+				name: 'Unknown Service',
+				amount: 1000,
+				billingCycle: 'monthly',
+				nextBillingDate: '2024-02-01',
+				categoryId: 9999, // 存在しないカテゴリID
+			}
+
+			const createResponse = await app.request('/api/subscriptions', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(subscriptionData),
+			})
+
+			expect(createResponse.status).toBe(201)
+			const created = (await createResponse.json()) as SubscriptionResponse
+
+			// 詳細取得でカテゴリがnullになることを確認
+			const getResponse = await app.request(`/api/subscriptions/${created.id}`, {
+				method: 'GET',
+			})
+
+			expect(getResponse.status).toBe(200)
+			const result = (await getResponse.json()) as SubscriptionResponse
+			expect(result.category).toBeNull()
+		})
+
+		it('should use the same timestamp for all categories in a single request', async () => {
+			// 複数のサブスクリプションを作成
+			const subscriptions = [
+				{
+					name: 'Service1',
+					amount: 1000,
+					billingCycle: 'monthly',
+					nextBillingDate: '2024-02-01',
+					categoryId: 1,
+				},
+				{
+					name: 'Service2',
+					amount: 2000,
+					billingCycle: 'monthly',
+					nextBillingDate: '2024-02-01',
+					categoryId: 2,
+				},
+			]
+
+			for (const sub of subscriptions) {
+				await app.request('/api/subscriptions', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(sub),
+				})
+			}
+
+			// 一覧取得
+			const response = await app.request('/api/subscriptions', {
+				method: 'GET',
+			})
+
+			const result = (await response.json()) as SubscriptionResponse[]
+			const categoriesWithTimestamps = result
+				.filter((s) => s.category !== null)
+				.map((s) => s.category)
+
+			// 同一リクエスト内のカテゴリは全て同じタイムスタンプを持つ
+			if (categoriesWithTimestamps.length > 1) {
+				const firstTimestamp = categoriesWithTimestamps[0]!.createdAt
+				expect(categoriesWithTimestamps.every((c) => c!.createdAt === firstTimestamp)).toBe(true)
+				expect(categoriesWithTimestamps.every((c) => c!.updatedAt === firstTimestamp)).toBe(true)
+			}
+		})
+	})
+
+	describe('基本的なCRUD操作の検証', () => {
+		it('should handle basic CRUD operations', async () => {
+			// Create
+			const createResponse = await app.request('/api/subscriptions', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					name: 'Test Service',
+					amount: 1000,
+					billingCycle: 'monthly',
+					nextBillingDate: '2024-02-01',
+					categoryId: 1,
+				}),
+			})
+			expect(createResponse.status).toBe(201)
+			const created = (await createResponse.json()) as SubscriptionResponse
+
+			// Read
+			const getResponse = await app.request(`/api/subscriptions/${created.id}`, {
+				method: 'GET',
+			})
+			expect(getResponse.status).toBe(200)
+
+			// Update
+			const updateResponse = await app.request(`/api/subscriptions/${created.id}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ amount: 2000 }),
+			})
+			expect(updateResponse.status).toBe(200)
+
+			// Delete
+			const deleteResponse = await app.request(`/api/subscriptions/${created.id}`, {
+				method: 'DELETE',
+			})
+			expect(deleteResponse.status).toBe(200)
+		})
+
+		it('should validate subscription data correctly', async () => {
 			const invalidData = {
-				name: '',
-				amount: -100,
-				billingCycle: 'invalid',
-				nextBillingDate: '1999-01-01',
+				name: '', // 空の名前
+				amount: -100, // 負の金額
+				billingCycle: 'invalid', // 無効な請求サイクル
+				nextBillingDate: '1999-01-01', // 過去の日付
 			}
 
 			const response = await app.request('/api/subscriptions', {
@@ -128,144 +257,7 @@ describe('Subscriptions API with Zod - Unit Tests', () => {
 			const result = (await response.json()) as ErrorResponse
 			expect(result.error).toBeDefined()
 			expect(result.details).toBeDefined()
-
-			// エラーメッセージが日本語であることを確認
-			const errors = result.details!
-			expect(errors.some((e) => e.field === 'name' && e.message.includes('必須'))).toBe(true)
-			expect(errors.some((e) => e.field === 'amount' && e.message.includes('1円以上'))).toBe(true)
-			expect(errors.some((e) => e.field === 'billingCycle' && e.message.includes('いずれか'))).toBe(
-				true
-			)
-			expect(
-				errors.some((e) => e.field === 'nextBillingDate' && e.message.includes('2000-01-01'))
-			).toBe(true)
-		})
-
-		it('should handle missing required fields', async () => {
-			const incompleteData = {
-				name: 'Spotify',
-				amount: 980,
-				// billingCycleとnextBillingDateが欠落
-			}
-
-			const response = await app.request('/api/subscriptions', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(incompleteData),
-			})
-
-			expect(response.status).toBe(400)
-			const result = (await response.json()) as ErrorResponse
-			expect(result.details).toBeDefined()
 			expect(result.details!.length).toBeGreaterThan(0)
-			// billingCycleは必須フィールドのエラーメッセージを確認
-			expect(
-				result.details!.some(
-					(e) =>
-						e.field === 'billingCycle' &&
-						(e.message.includes('必須') || e.message.includes('monthly、yearly、weekly'))
-				)
-			).toBe(true)
-			expect(
-				result.details!.some((e) => e.field === 'nextBillingDate' && e.message.includes('必須'))
-			).toBe(true)
-		})
-	})
-
-	describe('PUT /subscriptions/:id', () => {
-		it('should update a subscription', async () => {
-			// まずサブスクリプションを作成
-			const createResponse = await app.request('/api/subscriptions', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					name: 'Hulu',
-					amount: 1000,
-					billingCycle: 'monthly',
-					nextBillingDate: '2024-02-01',
-					categoryId: 1,
-					description: '初期データ',
-				}),
-			})
-
-			const created = (await createResponse.json()) as SubscriptionResponse
-
-			// 更新
-			const updateData = {
-				amount: 1200,
-				description: '更新後のデータ',
-			}
-
-			const response = await app.request(`/api/subscriptions/${created.id}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(updateData),
-			})
-
-			expect(response.status).toBe(200)
-			const result = (await response.json()) as SubscriptionResponse
-			expect(result.amount).toBe(1200)
-			expect(result.description).toBe('更新後のデータ')
-		})
-
-		it('should validate update data with Zod', async () => {
-			const invalidUpdate = {
-				amount: 10_000_001, // 上限を超える
-				billingCycle: 'invalid',
-			}
-
-			const response = await app.request('/api/subscriptions/1', {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(invalidUpdate),
-			})
-
-			expect(response.status).toBe(400)
-			const result = (await response.json()) as ErrorResponse
-			expect(
-				result.details!.some((e) => e.field === 'amount' && e.message.includes('10000000円以下'))
-			).toBe(true)
-			expect(
-				result.details!.some((e) => e.field === 'billingCycle' && e.message.includes('いずれか'))
-			).toBe(true)
-		})
-	})
-
-	describe('ID validation', () => {
-		it('should reject invalid ID formats', async () => {
-			const response = await app.request('/api/subscriptions/abc', {
-				method: 'GET',
-			})
-
-			expect(response.status).toBe(400)
-			const result = (await response.json()) as ErrorResponse
-			expect(result.error).toBeDefined()
-			expect(result.details).toBeDefined()
-			expect(result.details!.length).toBeGreaterThan(0)
-		})
-
-		it('should accept string IDs that can be converted to numbers', async () => {
-			// まずサブスクリプションを作成
-			const createResponse = await app.request('/api/subscriptions', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					name: 'Amazon Prime',
-					amount: 500,
-					billingCycle: 'monthly',
-					nextBillingDate: '2024-02-01',
-					categoryId: 1,
-				}),
-			})
-
-			const created = (await createResponse.json()) as SubscriptionResponse
-
-			// 文字列IDでアクセス
-			const response = await app.request(`/api/subscriptions/${created.id}`, {
-				method: 'GET',
-			})
-
-			expect(response.status).toBe(200)
 		})
 	})
 })

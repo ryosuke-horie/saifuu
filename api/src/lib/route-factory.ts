@@ -26,7 +26,7 @@ export type ValidationResult<T> =
  * @template TNew - 新規作成時のエンティティ型
  * @template TUpdate - 更新時のエンティティ型（通常はPartial<TNew>）
  */
-export interface CrudHandlerOptions<TNew, TUpdate> {
+export interface CrudHandlerOptions<TNew, TUpdate, TEntity = any, TTransformed = TEntity> {
 	/**
 	 * データベーステーブルスキーマ
 	 *
@@ -54,8 +54,7 @@ export interface CrudHandlerOptions<TNew, TUpdate> {
 	/** ID形式のバリデーション関数 */
 	validateId: (id: string) => ValidationResult<number>
 	/** データ変換関数（オプション） - エンティティにカテゴリ情報などを付加する場合に使用 */
-	// biome-ignore lint/suspicious/noExplicitAny: Transform function needs flexible typing for various entities
-	transformData?: (data: any[]) => any[]
+	transformData?: (data: TEntity[]) => TTransformed[]
 	/** バッチ操作を使用するかどうか（D1環境でのトランザクション代替） */
 	useBatch?: boolean
 	/** テスト用データベース（オプション） */
@@ -177,9 +176,12 @@ function validateAndExtractId(
  * app.delete('/:id', subscriptionHandlers.delete)
  * ```
  */
-export function createCrudHandlers<TNew = unknown, TUpdate = unknown>(
-	options: CrudHandlerOptions<TNew, TUpdate>
-): CrudHandlers {
+export function createCrudHandlers<
+	TNew = unknown,
+	TUpdate = unknown,
+	TEntity = any,
+	TTransformed = TEntity,
+>(options: CrudHandlerOptions<TNew, TUpdate, TEntity, TTransformed>): CrudHandlers {
 	const {
 		table,
 		resourceName,
@@ -207,7 +209,7 @@ export function createCrudHandlers<TNew = unknown, TUpdate = unknown>(
 
 				// データ変換が指定されている場合は適用
 				if (transformData) {
-					result = transformData(result)
+					result = transformData(result) as any[]
 				}
 
 				logWithContext(c, 'info', `${resourceName}一覧取得が完了`, {
@@ -251,7 +253,7 @@ export function createCrudHandlers<TNew = unknown, TUpdate = unknown>(
 
 				// データ変換が指定されている場合は適用
 				if (transformData) {
-					result = transformData(result)
+					result = transformData(result) as any[]
 				}
 
 				if (result.length === 0) {

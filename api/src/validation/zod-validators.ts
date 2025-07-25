@@ -39,7 +39,7 @@ export function validateTransactionUpdateWithZod(
 
 // サブスクリプション作成データのバリデーション（Zodバージョン）
 export function validateSubscriptionCreateWithZod(
-	data: Partial<NewSubscription>
+	data: unknown
 ): ValidationResult<NewSubscription> {
 	const result = subscriptionCreateSchema.safeParse(data)
 	return zodToValidationResult(result, data) as ValidationResult<NewSubscription>
@@ -47,7 +47,7 @@ export function validateSubscriptionCreateWithZod(
 
 // サブスクリプション更新データのバリデーション（Zodバージョン）
 export function validateSubscriptionUpdateWithZod(
-	data: Partial<NewSubscription>
+	data: unknown
 ): ValidationResult<Partial<NewSubscription>> {
 	const result = subscriptionUpdateSchema.safeParse(data)
 	return zodToValidationResult(result, data)
