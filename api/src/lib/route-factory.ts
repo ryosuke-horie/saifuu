@@ -23,7 +23,7 @@ export type ValidationResult<T> =
  * CRUDハンドラーのオプション
  * テーブルやエンティティの型は使用時に推論される
  */
-export interface CrudHandlerOptions<TNew, TUpdate> {
+export interface CrudHandlerOptions<TNew, TUpdate, TEntity = unknown> {
 	/** データベーステーブルスキーマ */
 	table: any
 	/** リソース名（ログやエラーメッセージで使用） */
@@ -66,6 +66,74 @@ function formatValidationErrors(errors: ValidationError[]): {
 }
 
 /**
+ * Drizzle ORMのreturning()メソッドの戻り値を安全に処理する
+ * 環境（D1 vs SQLite）によって異なる戻り値形式に対応
+ */
+function extractResult<T>(result: unknown): T | undefined {
+	if (Array.isArray(result)) {
+		return result[0] as T
+	}
+
+	// D1環境の場合、resultsプロパティにデータが含まれることがある
+	if (result && typeof result === 'object' && 'results' in result) {
+		const results = (result as { results: unknown }).results
+		if (Array.isArray(results)) {
+			return results[0] as T
+		}
+	}
+
+	// その他の場合
+	return result as T
+}
+
+/**
+ * Drizzle ORMのreturning()メソッドの戻り値から配列を取得する
+ */
+function extractResults<T>(result: unknown): T[] {
+	if (Array.isArray(result)) {
+		return result as T[]
+	}
+
+	// D1環境の場合
+	if (result && typeof result === 'object' && 'results' in result) {
+		const results = (result as { results: unknown }).results
+		if (Array.isArray(results)) {
+			return results as T[]
+		}
+	}
+
+	return []
+}
+
+/**
+ * ID検証とレスポンス処理を共通化
+ */
+function validateAndExtractId(
+	c: Context<{ Variables: { db: AnyDatabase } & LoggingVariables }>,
+	resourceName: string,
+	validateId: (id: string) => ValidationResult<number>
+): { valid: false; response: Response } | { valid: true; id: number } {
+	const idParam = c.req.param('id')
+	const idValidation = validateId(idParam)
+
+	if (!idValidation.success) {
+		logWithContext(c, 'warn', `${resourceName}処理: バリデーションエラー - ID形式が無効`, {
+			validationErrors: idValidation.errors,
+			providedId: idParam,
+		})
+		return {
+			valid: false,
+			response: c.json(formatValidationErrors(idValidation.errors), 400),
+		}
+	}
+
+	return {
+		valid: true,
+		id: idValidation.data,
+	}
+}
+
+/**
  * CRUD操作のための汎用ハンドラーファクトリ
  * 共通のCRUD操作パターンを抽出し、コードの重複を削減する
  *
@@ -92,8 +160,8 @@ function formatValidationErrors(errors: ValidationError[]): {
  * app.delete('/:id', subscriptionHandlers.delete)
  * ```
  */
-export function createCrudHandlers<TNew = any, TUpdate = any>(
-	options: CrudHandlerOptions<TNew, TUpdate>
+export function createCrudHandlers<TNew = unknown, TUpdate = unknown, TEntity = unknown>(
+	options: CrudHandlerOptions<TNew, TUpdate, TEntity>
 ): CrudHandlers {
 	const {
 		table,
@@ -148,18 +216,11 @@ export function createCrudHandlers<TNew = any, TUpdate = any>(
 		 * ID指定取得ハンドラー
 		 */
 		getById: async (c: Context<{ Variables: { db: AnyDatabase } & LoggingVariables }>) => {
-			const idParam = c.req.param('id')
-			const idValidation = validateId(idParam)
-
-			if (!idValidation.success) {
-				logWithContext(c, 'warn', `${resourceName}詳細取得: バリデーションエラー - ID形式が無効`, {
-					validationErrors: idValidation.errors,
-					providedId: idParam,
-				})
-				return c.json(formatValidationErrors(idValidation.errors), 400)
+			const idResult = validateAndExtractId(c, resourceName, validateId)
+			if (!idResult.valid) {
+				return idResult.response
 			}
-
-			const id = idValidation.data
+			const id = idResult.id
 
 			logWithContext(c, 'info', `${resourceName}詳細取得を開始`, {
 				[`${resourceName}Id`]: id,
@@ -235,7 +296,11 @@ export function createCrudHandlers<TNew = any, TUpdate = any>(
 				}
 
 				const result = await db.insert(table).values(newData).returning()
-				const createdItem = Array.isArray(result) ? result[0] : result.results[0]
+				const createdItem = extractResult<TNew & { id: number }>(result)
+
+				if (!createdItem) {
+					throw new Error('Failed to create item - no data returned')
+				}
 
 				logWithContext(c, 'info', `${resourceName}作成が完了`, {
 					[`${resourceName}Id`]: createdItem.id,
@@ -261,18 +326,11 @@ export function createCrudHandlers<TNew = any, TUpdate = any>(
 		 * 更新ハンドラー
 		 */
 		update: async (c: Context<{ Variables: { db: AnyDatabase } & LoggingVariables }>) => {
-			const idParam = c.req.param('id')
-			const idValidation = validateId(idParam)
-
-			if (!idValidation.success) {
-				logWithContext(c, 'warn', `${resourceName}更新: バリデーションエラー - ID形式が無効`, {
-					validationErrors: idValidation.errors,
-					providedId: idParam,
-				})
-				return c.json(formatValidationErrors(idValidation.errors), 400)
+			const idResult = validateAndExtractId(c, resourceName, validateId)
+			if (!idResult.valid) {
+				return idResult.response
 			}
-
-			const id = idValidation.data
+			const id = idResult.id
 
 			try {
 				const body = await c.req.json()
@@ -303,8 +361,8 @@ export function createCrudHandlers<TNew = any, TUpdate = any>(
 
 				const result = await db.update(table).set(updateData).where(eq(table.id, id)).returning()
 
-				const results = Array.isArray(result) ? result : result.results
-				if (results.length === 0) {
+				const updatedItem = extractResult<TUpdate & { id: number }>(result)
+				if (!updatedItem) {
 					logWithContext(c, 'warn', `${resourceName}更新: 対象${resourceName}が見つからない`, {
 						[`${resourceName}Id`]: id,
 						resource: resourceName,
@@ -318,7 +376,7 @@ export function createCrudHandlers<TNew = any, TUpdate = any>(
 					operationType: 'write',
 				})
 
-				return c.json(results[0])
+				return c.json(updatedItem)
 			} catch (error) {
 				logWithContext(c, 'error', `${resourceName}更新でエラーが発生`, {
 					[`${resourceName}Id`]: id,
@@ -337,18 +395,11 @@ export function createCrudHandlers<TNew = any, TUpdate = any>(
 		 * 削除ハンドラー
 		 */
 		delete: async (c: Context<{ Variables: { db: AnyDatabase } & LoggingVariables }>) => {
-			const idParam = c.req.param('id')
-			const idValidation = validateId(idParam)
-
-			if (!idValidation.success) {
-				logWithContext(c, 'warn', `${resourceName}削除: バリデーションエラー - ID形式が無効`, {
-					validationErrors: idValidation.errors,
-					providedId: idParam,
-				})
-				return c.json(formatValidationErrors(idValidation.errors), 400)
+			const idResult = validateAndExtractId(c, resourceName, validateId)
+			if (!idResult.valid) {
+				return idResult.response
 			}
-
-			const id = idValidation.data
+			const id = idResult.id
 
 			logWithContext(c, 'info', `${resourceName}削除を開始`, {
 				[`${resourceName}Id`]: id,
@@ -360,8 +411,8 @@ export function createCrudHandlers<TNew = any, TUpdate = any>(
 				const db = testDatabase || c.get('db')
 				const result = await db.delete(table).where(eq(table.id, id)).returning()
 
-				const results = Array.isArray(result) ? result : result.results
-				if (results.length === 0) {
+				const deletedItem = extractResult<{ id: number }>(result)
+				if (!deletedItem) {
 					logWithContext(c, 'warn', `${resourceName}削除: 対象${resourceName}が見つからない`, {
 						[`${resourceName}Id`]: id,
 						resource: resourceName,
