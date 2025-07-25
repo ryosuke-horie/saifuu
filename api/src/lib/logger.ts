@@ -248,6 +248,16 @@ export function createRequestLogger<E extends { Variables: LoggingVariables }>(
 }
 
 /**
+ * 実行時間を計算する
+ * @param startTime 開始時刻（ミリ秒）
+ * @param endTime 終了時刻（ミリ秒）
+ * @returns 実行時間（ミリ秒、整数）
+ */
+function calculateDuration(startTime: number, endTime: number): number {
+	return Math.round(endTime - startTime)
+}
+
+/**
  * データベース操作のロギングラッパー
  * 実行時間の計測とエラーハンドリングを含む
  */
@@ -277,10 +287,10 @@ export async function logDatabaseOperation<T, E extends { Variables: LoggingVari
 
 	try {
 		const result = await dbOperation()
-		// 実行時間を計算（performance.now()の場合はマイクロ秒精度）
+		// 実行時間を計算（ミリ秒単位）
 		const endTime =
 			typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now()
-		const duration = Math.round((endTime - startTime) * 1000) / 1000
+		const duration = calculateDuration(startTime, endTime)
 
 		// 成功ログ
 		logger.info(`データベース操作が完了: ${resource}.${operation}`, {
@@ -297,7 +307,7 @@ export async function logDatabaseOperation<T, E extends { Variables: LoggingVari
 		// エラー時も実行時間を計算
 		const endTime =
 			typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now()
-		const duration = Math.round((endTime - startTime) * 1000) / 1000
+		const duration = calculateDuration(startTime, endTime)
 		const errorDetails = extractErrorDetails(error)
 
 		// エラーログ

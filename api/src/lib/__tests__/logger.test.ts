@@ -225,6 +225,68 @@ describe('logger utilities', () => {
 				})
 			)
 		})
+
+		it('タイミング計測が正確に動作する', async () => {
+			// モックタイマーを使用
+			vi.useFakeTimers()
+			const context = createMockContext()
+
+			// performance.now() をモック
+			const mockPerformanceNow = vi.fn()
+			mockPerformanceNow.mockReturnValueOnce(1000) // 開始時刻
+			mockPerformanceNow.mockReturnValueOnce(1500) // 終了時刻
+			;(global as any).performance = { now: mockPerformanceNow }
+
+			const operation = vi.fn().mockImplementation(async () => {
+				// 実際に時間を進める
+				vi.advanceTimersByTime(500)
+				return { result: 'success' }
+			})
+
+			await logDatabaseOperation(context, 'test', 'operation', operation)
+
+			// duration が正確に計算されているか確認
+			expect(mockLogger.info).toHaveBeenCalledWith(
+				'データベース操作が完了: test.operation',
+				expect.objectContaining({
+					duration: 500, // 1500 - 1000 = 500
+				})
+			)
+
+			vi.useRealTimers()
+			delete (global as any).performance
+		})
+
+		it('performance.now が使用できない場合は Date.now を使用する', async () => {
+			// performance を undefined にする
+			const originalPerformance = (global as any).performance
+			delete (global as any).performance
+
+			// Date.now をモック
+			const originalDateNow = Date.now
+			let currentTime = 1000
+			Date.now = vi.fn(() => currentTime)
+
+			const context = createMockContext()
+			const operation = vi.fn().mockImplementation(async () => {
+				currentTime = 1250 // 250ms経過
+				return { result: 'success' }
+			})
+
+			await logDatabaseOperation(context, 'test', 'operation', operation)
+
+			// duration が Date.now を使用して計算されているか確認
+			expect(mockLogger.info).toHaveBeenCalledWith(
+				'データベース操作が完了: test.operation',
+				expect.objectContaining({
+					duration: 250,
+				})
+			)
+
+			// クリーンアップ
+			Date.now = originalDateNow
+			;(global as any).performance = originalPerformance
+		})
 	})
 
 	describe('logValidationError', () => {
