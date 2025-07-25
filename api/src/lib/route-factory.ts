@@ -25,6 +25,7 @@ export type ValidationResult<T> =
  */
 export interface CrudHandlerOptions<TNew, TUpdate, TEntity = unknown> {
 	/** データベーステーブルスキーマ */
+	// biome-ignore lint/suspicious/noExplicitAny: Table schema can be any Drizzle table type
 	table: any
 	/** リソース名（ログやエラーメッセージで使用） */
 	resourceName: string
@@ -35,6 +36,7 @@ export interface CrudHandlerOptions<TNew, TUpdate, TEntity = unknown> {
 	/** ID形式のバリデーション関数 */
 	validateId: (id: string) => ValidationResult<number>
 	/** データ変換関数（オプション） - エンティティにカテゴリ情報などを付加する場合に使用 */
+	// biome-ignore lint/suspicious/noExplicitAny: Transform function needs flexible typing for various entities
 	transformData?: (data: any[]) => any[]
 	/** テスト用データベース（オプション） */
 	testDatabase?: AnyDatabase

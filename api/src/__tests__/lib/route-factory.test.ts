@@ -1,10 +1,5 @@
-import { eq } from 'drizzle-orm'
-import type { Context } from 'hono'
-import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AnyDatabase } from '../../db'
 import { createCrudHandlers } from '../../lib/route-factory'
-import { type LoggingVariables } from '../../middleware/logging'
 
 // モックの設定
 vi.mock('../../middleware/logging', () => ({
@@ -43,19 +38,10 @@ type MockDatabase = {
 	delete: ReturnType<typeof vi.fn>
 }
 
-// モックコンテキストの型定義
-type MockContext = {
-	req: {
-		param: ReturnType<typeof vi.fn>
-		json: ReturnType<typeof vi.fn>
-	}
-	json: ReturnType<typeof vi.fn>
-	get: ReturnType<typeof vi.fn>
-}
-
 describe('route-factory', () => {
 	let mockDb: MockDatabase
-	let mockContext: MockContext
+	// biome-ignore lint/suspicious/noExplicitAny: Test mock context needs flexible typing
+	let mockContext: any
 
 	beforeEach(() => {
 		// データベースモックの初期化
@@ -91,8 +77,8 @@ describe('route-factory', () => {
 			const handlers = createCrudHandlers({
 				table: testTable,
 				resourceName: 'test',
-				validateCreate: (data: any) => ({ success: true, data }),
-				validateUpdate: (data: any) => ({ success: true, data }),
+				validateCreate: (data: unknown) => ({ success: true, data }),
+				validateUpdate: (data: unknown) => ({ success: true, data }),
 				validateId: (id: string) => ({ success: true, data: Number(id) }),
 			})
 
@@ -120,7 +106,7 @@ describe('route-factory', () => {
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
-				await handlers.getAll(mockContext as any)
+				await handlers.getAll(mockContext)
 
 				expect(mockDb.select).toHaveBeenCalled()
 				expect(mockDb.from).toHaveBeenCalledWith(testTable)
@@ -133,20 +119,20 @@ describe('route-factory', () => {
 				]
 				mockDb.from.mockResolvedValueOnce(testData)
 
-				const transformFn = vi.fn((data) =>
-					data.map((item: any) => ({ ...item, transformed: true }))
+				const transformFn = vi.fn((data: unknown[]) =>
+					(data as TestEntity[]).map((item) => ({ ...item, transformed: true }))
 				)
 
 				const handlers = createCrudHandlers({
 					table: testTable,
 					resourceName: 'test',
-					validateCreate: (data: any) => ({ success: true, data }),
-					validateUpdate: (data: any) => ({ success: true, data }),
+					validateCreate: (data: unknown) => ({ success: true, data }),
+					validateUpdate: (data: unknown) => ({ success: true, data }),
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 					transformData: transformFn,
 				})
 
-				await handlers.getAll(mockContext as any)
+				await handlers.getAll(mockContext)
 
 				expect(transformFn).toHaveBeenCalledWith(testData)
 				expect(mockContext.json).toHaveBeenCalledWith([{ ...testData[0], transformed: true }])
@@ -163,7 +149,7 @@ describe('route-factory', () => {
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
-				await handlers.getAll(mockContext as any)
+				await handlers.getAll(mockContext)
 
 				expect(mockContext.json).toHaveBeenCalledWith({ error: 'Failed to fetch test' }, 500)
 			})
@@ -185,7 +171,7 @@ describe('route-factory', () => {
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
-				await handlers.getById(mockContext as any)
+				await handlers.getById(mockContext)
 
 				expect(mockDb.where).toHaveBeenCalled()
 				expect(mockContext.json).toHaveBeenCalledWith(testData[0])
@@ -203,7 +189,7 @@ describe('route-factory', () => {
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
-				await handlers.getById(mockContext as any)
+				await handlers.getById(mockContext)
 
 				expect(mockContext.json).toHaveBeenCalledWith({ error: 'Test not found' }, 404)
 			})
@@ -222,7 +208,7 @@ describe('route-factory', () => {
 					}),
 				})
 
-				await handlers.getById(mockContext as any)
+				await handlers.getById(mockContext)
 
 				expect(mockContext.json).toHaveBeenCalledWith(
 					{ error: 'Invalid ID format', details: [{ message: 'Invalid ID format' }] },
@@ -251,7 +237,7 @@ describe('route-factory', () => {
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
-				await handlers.create(mockContext as any)
+				await handlers.create(mockContext)
 
 				expect(mockDb.insert).toHaveBeenCalledWith(testTable)
 				expect(mockDb.values).toHaveBeenCalled()
@@ -273,7 +259,7 @@ describe('route-factory', () => {
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
-				await handlers.create(mockContext as any)
+				await handlers.create(mockContext)
 
 				expect(mockContext.json).toHaveBeenCalledWith(
 					{ error: 'Name is required', details: [{ message: 'Name is required' }] },
@@ -304,7 +290,7 @@ describe('route-factory', () => {
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
-				await handlers.update(mockContext as any)
+				await handlers.update(mockContext)
 
 				expect(mockDb.update).toHaveBeenCalledWith(testTable)
 				expect(mockDb.set).toHaveBeenCalled()
@@ -325,7 +311,7 @@ describe('route-factory', () => {
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
-				await handlers.update(mockContext as any)
+				await handlers.update(mockContext)
 
 				expect(mockContext.json).toHaveBeenCalledWith({ error: 'Test not found' }, 404)
 			})
@@ -345,7 +331,7 @@ describe('route-factory', () => {
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
-				await handlers.delete(mockContext as any)
+				await handlers.delete(mockContext)
 
 				expect(mockDb.delete).toHaveBeenCalledWith(testTable)
 				expect(mockDb.where).toHaveBeenCalled()
@@ -366,7 +352,7 @@ describe('route-factory', () => {
 					validateId: (id: string) => ({ success: true, data: Number(id) }),
 				})
 
-				await handlers.delete(mockContext as any)
+				await handlers.delete(mockContext)
 
 				expect(mockContext.json).toHaveBeenCalledWith({ error: 'Test not found' }, 404)
 			})
