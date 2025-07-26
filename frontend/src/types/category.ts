@@ -12,15 +12,6 @@ export type {
 	UpdateCategoryRequest,
 } from "../lib/api/types";
 
-/**
- * カテゴリ選択用の簡易型
- * フォームのselect要素などで使用
- */
-export interface CategoryOption {
-	id: string;
-	name: string;
-}
-
 // 基本的なカテゴリ型をインポート
 import type { Category } from "../lib/api/types";
 

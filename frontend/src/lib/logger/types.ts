@@ -204,20 +204,6 @@ export interface SessionInfo {
 }
 
 /**
- * パフォーマンスメトリクスの型定義
- */
-export interface PerformanceMetrics {
-	navigationTiming?: PerformanceNavigationTiming;
-	resourceTiming?: PerformanceResourceTiming[];
-	paintTiming?: PerformancePaintTiming[];
-	memoryInfo?: {
-		usedJSHeapSize: number;
-		totalJSHeapSize: number;
-		jsHeapSizeLimit: number;
-	};
-}
-
-/**
  * エラー情報の型定義
  */
 export interface ErrorInfo {
