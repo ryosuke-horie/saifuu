@@ -17,7 +17,7 @@
  * - カテゴリを削除する場合でも、IDの再利用は絶対に行わないでください
  */
 
-export type CategoryType = 'expense'
+export type CategoryType = 'expense' | 'income'
 
 export interface CategoryConfig {
 	id: string
@@ -134,7 +134,48 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
  *
  * ⚠️ 注意: numericIdは既存データとの整合性を保つため、絶対に変更しないでください
  */
-export const INCOME_CATEGORIES: CategoryConfig[] = []
+export const INCOME_CATEGORIES: CategoryConfig[] = [
+	{
+		id: 'salary',
+		numericId: 101,
+		name: '給与',
+		type: 'income',
+		color: '#10b981',
+		description: '月給、日給、時給などの給与収入',
+	},
+	{
+		id: 'bonus',
+		numericId: 102,
+		name: 'ボーナス',
+		type: 'income',
+		color: '#059669',
+		description: '賞与、インセンティブなどの臨時収入',
+	},
+	{
+		id: 'side_business',
+		numericId: 103,
+		name: '副業',
+		type: 'income',
+		color: '#34d399',
+		description: 'フリーランス、副業などの収入',
+	},
+	{
+		id: 'investment',
+		numericId: 104,
+		name: '投資収益',
+		type: 'income',
+		color: '#6ee7b7',
+		description: '株式配当、不動産収入などの投資による収益',
+	},
+	{
+		id: 'other_income',
+		numericId: 105,
+		name: 'その他',
+		type: 'income',
+		color: '#a7f3d0',
+		description: 'その他の収入',
+	},
+]
 
 /**
  * 全カテゴリ設定
@@ -147,8 +188,8 @@ export const ALL_CATEGORIES: CategoryConfig[] = [
 /**
  * カテゴリタイプ別の設定取得
  */
-export function getCategoriesByType(_type: CategoryType): CategoryConfig[] {
-	return EXPENSE_CATEGORIES
+export function getCategoriesByType(type: CategoryType): CategoryConfig[] {
+	return type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
 }
 
 /**
@@ -185,8 +226,8 @@ export function getCategoryOptions(type?: CategoryType): Array<{
 /**
  * デフォルトカテゴリの取得
  */
-export function getDefaultCategory(_type: CategoryType): CategoryConfig {
-	return EXPENSE_CATEGORIES[0]
+export function getDefaultCategory(type: CategoryType): CategoryConfig {
+	return type === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0]
 }
 
 /**
@@ -202,6 +243,18 @@ export function validateCategoryConfig(): boolean {
 			(id, index) => allIds.indexOf(id) !== index,
 		)
 		console.error('Duplicate category IDs found:', duplicates)
+		return false
+	}
+
+	// numericId重複チェック
+	const allNumericIds = ALL_CATEGORIES.map((c) => c.numericId)
+	const uniqueNumericIds = [...new Set(allNumericIds)]
+
+	if (allNumericIds.length !== uniqueNumericIds.length) {
+		const duplicates = allNumericIds.filter(
+			(id, index) => allNumericIds.indexOf(id) !== index,
+		)
+		console.error('Duplicate numeric IDs found:', duplicates)
 		return false
 	}
 
@@ -228,7 +281,7 @@ export function validateCategoryConfig(): boolean {
 
 	// タイプの妥当性チェック
 	const invalidTypes = ALL_CATEGORIES.filter(
-		(category) => category.type !== 'expense',
+		(category) => category.type !== 'expense' && category.type !== 'income',
 	)
 
 	if (invalidTypes.length > 0) {

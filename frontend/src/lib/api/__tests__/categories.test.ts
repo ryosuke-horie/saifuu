@@ -15,8 +15,8 @@ describe("Categories API", () => {
 			// 設定ファイルから全カテゴリを取得
 			const result = await fetchCategories();
 
-			// 期待される総カテゴリ数（支出11個のみ、収入カテゴリは削除済み、娯楽カテゴリ追加）
-			expect(result).toHaveLength(11);
+			// 期待される総カテゴリ数（支出11個 + 収入5個）
+			expect(result).toHaveLength(16);
 
 			// 新しく追加されたカテゴリの確認
 			const systemFee = result.find((cat) => cat.id === "6");
@@ -54,20 +54,20 @@ describe("Categories API", () => {
 				// 型の確認
 				expect(typeof category.id).toBe("string");
 				expect(typeof category.name).toBe("string");
-				expect(category.type).toBe("expense");
+				expect(["expense", "income"]).toContain(category.type);
 				expect(typeof category.color).toBe("string");
 			});
 		});
 
-		it("should include only expense categories", async () => {
-			// 支出カテゴリのみが含まれることを確認
+		it("should include both expense and income categories", async () => {
+			// 支出カテゴリと収入カテゴリが含まれることを確認
 			const result = await fetchCategories();
 
 			const expenseCategories = result.filter((cat) => cat.type === "expense");
-			// 収入カテゴリは廃止されました
+			const incomeCategories = result.filter((cat) => cat.type === "income");
 
 			expect(expenseCategories.length).toBe(11); // 支出カテゴリ数（娯楽カテゴリ追加）
-			// 収入カテゴリは削除済み
+			expect(incomeCategories.length).toBe(5); // 収入カテゴリ数
 		});
 	});
 
