@@ -42,7 +42,8 @@
 		"jsdom",
 		"@faker-js/faker",
 		"wrangler",
-		"@opennextjs/cloudflare"
+		"@opennextjs/cloudflare",
+		"zod"
 	],
 	"rules": {
 		"files": "warn",
