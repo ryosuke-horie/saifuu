@@ -119,10 +119,13 @@ const useLoggedCallback: <T extends (...args: any[]) => any>(
 ```typescript
 // パフォーマンスメトリクス機能は将来の実装予定です
 // 現在の実装では利用できません
+// TODO: v2.0でパフォーマンス監視機能を実装予定
+//       - レンダリング時間、メモリ使用量、コンポーネント数の計測
+//       - PerformanceMetricsインターフェースの再定義
 const usePerformanceLogger: () => {
   startMeasure: (name: string) => void;
   endMeasure: (name: string) => void;
-  getMetrics: () => object; // 将来的にPerformanceMetricsインターフェースを定義予定
+  getMetrics: () => Record<string, unknown>; // 型安全性を保つためRecord型を使用
 }
 ```
 
