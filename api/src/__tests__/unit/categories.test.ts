@@ -96,7 +96,7 @@ describe('Categories API - Unit Tests', () => {
 				])
 			)
 			// 設定ファイルのカテゴリ数を確認
-			expect(data).toHaveLength(11) // 支出11個のみ（収入カテゴリは削除済み、娯楽カテゴリ追加）
+			expect(data).toHaveLength(16) // 支出11個 + 収入5個
 		})
 	})
 

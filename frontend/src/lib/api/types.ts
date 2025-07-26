@@ -58,7 +58,7 @@ export interface PaginationQuery {
 /**
  * カテゴリタイプ
  */
-export type CategoryType = "expense";
+export type CategoryType = "expense" | "income";
 
 /**
  * カテゴリ
