@@ -7,7 +7,9 @@
 		".storybook/preview.ts",
 		"vitest.config.ts",
 		"vitest.setup.ts",
-		"next.config.ts"
+		"next.config.ts",
+		"postcss.config.mjs",
+		"open-next.config.ts"
 	],
 	"project": ["src/**/*.{ts,tsx}", ".storybook/**/*.{ts,tsx}"],
 	"ignore": [
@@ -24,7 +26,6 @@
 		"playwright-report/**",
 		"test-results/**",
 		"scripts/**",
-		"*.config.{js,ts,mjs}",
 		"*.d.ts"
 	],
 	"ignoreDependencies": [
