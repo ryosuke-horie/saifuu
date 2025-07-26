@@ -149,8 +149,8 @@ describe('Categories API - Integration Tests', () => {
 			const expenseCategories = data.filter((cat: { type: string }) => cat.type === 'expense')
 			const incomeCategories = data.filter((cat: { type: string }) => cat.type === 'income')
 
-			expect(expenseCategories.length).toBe(11) // 削除・変更済み
-			expect(incomeCategories.length).toBe(0) // 収入カテゴリは削除済み
+			expect(expenseCategories.length).toBe(11) // 支出カテゴリ
+			expect(incomeCategories.length).toBe(5) // 収入カテゴリ
 		})
 
 		it('should maintain consistent order from config', async () => {
