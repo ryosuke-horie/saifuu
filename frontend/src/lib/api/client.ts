@@ -371,11 +371,6 @@ const baseApiClient = new ApiClient();
 export const apiClient = withApiLogging(baseApiClient);
 
 /**
- * デフォルトエクスポート（compat用）
- */
-export default apiClient;
-
-/**
  * クエリパラメーターをURLに追加するユーティリティ
  */
 export function addQueryParams(

@@ -267,9 +267,3 @@ export const Dialog: FC<DialogProps> = ({
 	// React Portalを使用してbody直下にレンダリング
 	return createPortal(dialogContent, document.body);
 };
-
-/**
- * デフォルトエクスポート
- * 他のコンポーネントから簡単にインポートできるように提供
- */
-export default Dialog;
