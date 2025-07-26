@@ -30,21 +30,44 @@ export function validateTransactionCreateWithZod(
 	// typeに基づいて適切なスキーマを使用
 	if (data.type === 'income') {
 		const result = incomeCreateSchema.safeParse(data)
-		return zodToValidationResult(result, data) as ValidationResult<NewTransaction>
+		const validationResult = zodToValidationResult(result, data)
+		// Matt Pocock方針: 型アサーションを避け、型ガードで安全に処理
+		if (validationResult.success) {
+			return { success: true, data: validationResult.data as NewTransaction }
+		}
+		return validationResult
 	}
 	const result = transactionCreateSchema.safeParse(data)
-	return zodToValidationResult(result, data) as ValidationResult<NewTransaction>
+	const validationResult = zodToValidationResult(result, data)
+	if (validationResult.success) {
+		return { success: true, data: validationResult.data as NewTransaction }
+	}
+	return validationResult
 }
 
 // 取引更新データのバリデーション（Zodバージョン）
 export function validateTransactionUpdateWithZod(
 	data: Partial<NewTransaction>
 ): ValidationResult<Partial<NewTransaction>> {
-	// typeに基づいて適切なスキーマを使用
+	// レビューコメント#2対応: 明示的な条件分岐でtypeフィールドの動作を明確化
 	if (data.type === 'income') {
+		// typeが明示的に'income'の場合は収入バリデーションを使用
 		const result = incomeUpdateSchema.safeParse(data)
 		return zodToValidationResult(result, data)
 	}
+	if (data.type === 'expense') {
+		// typeが明示的に'expense'の場合は支出バリデーションを使用
+		const result = transactionUpdateSchema.safeParse(data)
+		return zodToValidationResult(result, data)
+	}
+	if (data.type === undefined) {
+		// typeがundefinedの場合はデフォルトで支出バリデーションを使用
+		// (更新時はtypeを変更しない場合が多いため)
+		const result = transactionUpdateSchema.safeParse(data)
+		return zodToValidationResult(result, data)
+	}
+	// その他の無効な値の場合もデフォルトバリデーションで検証
+	// (スキーマ側でエラーになる)
 	const result = transactionUpdateSchema.safeParse(data)
 	return zodToValidationResult(result, data)
 }
@@ -54,7 +77,12 @@ export function validateIncomeCreateWithZod(
 	data: Partial<NewTransaction>
 ): ValidationResult<NewTransaction> {
 	const result = incomeCreateSchema.safeParse(data)
-	return zodToValidationResult(result, data) as ValidationResult<NewTransaction>
+	const validationResult = zodToValidationResult(result, data)
+	// Matt Pocock方針: 型アサーションを避け、型ガードで安全に処理
+	if (validationResult.success) {
+		return { success: true, data: validationResult.data as NewTransaction }
+	}
+	return validationResult
 }
 
 // 収入更新データのバリデーション（Zodバージョン）
@@ -70,7 +98,12 @@ export function validateSubscriptionCreateWithZod(
 	data: unknown
 ): ValidationResult<NewSubscription> {
 	const result = subscriptionCreateSchema.safeParse(data)
-	return zodToValidationResult(result, data) as ValidationResult<NewSubscription>
+	const validationResult = zodToValidationResult(result, data)
+	// Matt Pocock方針: 型アサーションを避け、型ガードで安全に処理
+	if (validationResult.success) {
+		return { success: true, data: validationResult.data as NewSubscription }
+	}
+	return validationResult
 }
 
 // サブスクリプション更新データのバリデーション（Zodバージョン）

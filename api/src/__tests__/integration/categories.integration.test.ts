@@ -22,20 +22,66 @@ interface CategoryResponse {
 }
 
 // 型ガード関数
+// レビューコメント#8対応: より厳密な型チェックと安全なプロパティアクセス
 function isCategoryResponse(value: unknown): value is CategoryResponse {
-	if (typeof value !== 'object' || value === null) {
+	// nullやundefinedのチェック
+	if (value === null || value === undefined) {
 		return false
 	}
 
-	const obj = value as Record<string, unknown>
-	return (
-		typeof obj.id === 'number' &&
-		typeof obj.name === 'string' &&
-		(obj.type === 'income' || obj.type === 'expense') &&
-		typeof obj.color === 'string' &&
-		typeof obj.createdAt === 'string' &&
-		typeof obj.updatedAt === 'string'
-	)
+	// オブジェクトかどうかのチェック
+	if (typeof value !== 'object') {
+		return false
+	}
+
+	// 安全なプロパティアクセスのため、hasOwnPropertyを使用
+	const hasProperty = (obj: object, prop: string): boolean => {
+		return Object.hasOwn(obj, prop)
+	}
+
+	// 必須プロパティの存在チェック
+	const requiredProps = ['id', 'name', 'type', 'color', 'createdAt', 'updatedAt']
+	for (const prop of requiredProps) {
+		if (!hasProperty(value, prop)) {
+			return false
+		}
+	}
+
+	// 各プロパティの型チェック（安全にアクセス）
+	const obj = value as { [key: string]: unknown }
+
+	// idの型チェック
+	if (typeof obj.id !== 'number' || !Number.isInteger(obj.id) || obj.id <= 0) {
+		return false
+	}
+
+	// nameの型チェック
+	if (typeof obj.name !== 'string' || obj.name.length === 0) {
+		return false
+	}
+
+	// typeの型チェック（厳密な値チェック）
+	if (obj.type !== 'income' && obj.type !== 'expense') {
+		return false
+	}
+
+	// colorの型チェック（16進数カラーコードの形式チェック）
+	if (typeof obj.color !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(obj.color)) {
+		return false
+	}
+
+	// 日時文字列の型チェック（ISO 8601形式）
+	const isISODateString = (str: unknown): boolean => {
+		if (typeof str !== 'string') return false
+		const date = new Date(str)
+		return date instanceof Date && !Number.isNaN(date.getTime()) && date.toISOString() === str
+	}
+
+	if (!isISODateString(obj.createdAt) || !isISODateString(obj.updatedAt)) {
+		return false
+	}
+
+	return true
 }
 
 // カテゴリ名からIDを取得するヘルパー関数

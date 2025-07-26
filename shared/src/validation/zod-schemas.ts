@@ -144,33 +144,67 @@ export const dateStringSchema = z
 		`日付は${VALIDATION_LIMITS.MIN_DATE.toISOString().split('T')[0]}以降である必要があります`,
 	)
 
+// レビューコメント#3対応: カテゴリIDバリデーションのファクトリー関数
+// DRY原則に従い、共通ロジックを抽出
+function createCategoryIdSchema(options?: {
+	min?: number
+	max?: number
+	minMessage?: string
+	maxMessage?: string
+	nullable?: boolean
+}) {
+	// 数値スキーマの定義
+	const numberSchema = 
+		options?.min !== undefined && options?.max !== undefined
+			? z.number()
+					.int()
+					.min(options.min, options.minMessage || `カテゴリIDは${options.min}以上である必要があります`)
+					.max(options.max, options.maxMessage || `カテゴリIDは${options.max}以下である必要があります`)
+			: z.number().positive('カテゴリIDは正の整数である必要があります')
+
+	// 文字列から数値への変換スキーマ
+	const stringSchema = z.string().transform((val: string, ctx: z.RefinementCtx) => {
+		const num = Number(val)
+		if (Number.isNaN(num)) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: 'カテゴリIDは数値である必要があります',
+			})
+			return z.NEVER
+		}
+		
+		// 範囲チェック
+		if (options?.min !== undefined && options?.max !== undefined) {
+			if (num < options.min || num > options.max) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: options.minMessage || `カテゴリIDは${options.min}から${options.max}の範囲である必要があります`,
+				})
+				return z.NEVER
+			}
+		} else if (num <= 0) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: 'カテゴリIDは正の整数である必要があります',
+			})
+			return z.NEVER
+		}
+		
+		return num
+	})
+
+	// nullableオプションに基づいて適切なスキーマを返す
+	if (options?.nullable !== false) {
+		return z
+			.union([numberSchema, stringSchema, z.null(), z.undefined()])
+			.nullable()
+			.optional()
+	}
+	return z.union([numberSchema, stringSchema])
+}
+
 // カテゴリID（数値または文字列、自動変換）
-export const categoryIdSchema = z
-	.union([
-		z.number().positive('カテゴリIDは正の整数である必要があります'),
-		z.string().transform((val: string, ctx: z.RefinementCtx) => {
-			const num = Number(val)
-			if (Number.isNaN(num)) {
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					message: 'カテゴリIDは数値である必要があります',
-				})
-				return z.NEVER
-			}
-			if (num <= 0) {
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					message: 'カテゴリIDは正の整数である必要があります',
-				})
-				return z.NEVER
-			}
-			return num
-		}),
-		z.null(),
-		z.undefined(),
-	])
-	.nullable()
-	.optional()
+export const categoryIdSchema = createCategoryIdSchema({ nullable: true })
 
 // 取引種別
 export const transactionTypeSchema = z.enum(['expense', 'income'], {
@@ -180,39 +214,24 @@ export const transactionTypeSchema = z.enum(['expense', 'income'], {
 })
 
 // 収入カテゴリID（101-105の範囲チェック）
-export const incomeCategoryIdSchema = z
-	.union([
-		z.number()
-			.int()
-			.min(101, '収入カテゴリIDは101から105の範囲である必要があります')
-			.max(105, '収入カテゴリIDは101から105の範囲である必要があります'),
-		z.string().transform((val: string, ctx: z.RefinementCtx) => {
-			const num = Number(val)
-			if (Number.isNaN(num)) {
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					message: 'カテゴリIDは数値である必要があります',
-				})
-				return z.NEVER
-			}
-			if (num < 101 || num > 105) {
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					message: '収入カテゴリIDは101から105の範囲である必要があります',
-				})
-				return z.NEVER
-			}
-			return num
-		}),
-	])
+export const incomeCategoryIdSchema = createCategoryIdSchema({
+	min: 101,
+	max: 105,
+	minMessage: '収入カテゴリIDは101から105の範囲である必要があります',
+	maxMessage: '収入カテゴリIDは101から105の範囲である必要があります',
+	nullable: false,
+})
 
 // 収入金額（正の数のみ）
+// レビューコメント#5対応: positive()とmin()の重複を解消してパフォーマンス改善
 export const incomeAmountSchema = z
 	.number()
-	.positive('収入金額は0より大きい必要があります')
 	.min(
 		VALIDATION_LIMITS.MIN_AMOUNT,
-		`収入金額は${VALIDATION_LIMITS.MIN_AMOUNT}円以上である必要があります`,
+		// MIN_AMOUNTが1以上の場合、positive()チェックは不要
+		VALIDATION_LIMITS.MIN_AMOUNT > 0
+			? `収入金額は${VALIDATION_LIMITS.MIN_AMOUNT}円以上である必要があります`
+			: '収入金額は0より大きい必要があります',
 	)
 	.max(
 		VALIDATION_LIMITS.MAX_AMOUNT,
@@ -267,7 +286,8 @@ export const incomeUpdateSchema = z.object({
 		}),
 	}).optional(),
 	categoryId: incomeCategoryIdSchema.optional(),
-	description: descriptionSchema,
+	// レビューコメント#4対応: 明示的な.optional()を付けて一貫性を改善
+	description: descriptionSchema.optional(),
 	date: dateStringSchema.optional(),
 })
 

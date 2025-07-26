@@ -105,6 +105,50 @@ describe('Zodバリデーターのテスト', () => {
 			const result = validateTransactionUpdateWithZod(data)
 			expect(result.success).toBe(true)
 		})
+
+		// レビューコメント#2対応：typeフィールドの動作テスト
+		it('typeがundefinedの場合は支出バリデーションを使用する', () => {
+			const data = {
+				amount: 2000,
+				categoryId: 1, // 支出カテゴリ
+			}
+			const result = validateTransactionUpdateWithZod(data)
+			expect(result.success).toBe(true)
+		})
+
+		it('typeがincomeの場合は収入バリデーションを使用する', () => {
+			const data = {
+				type: 'income' as const,
+				amount: 5000,
+				categoryId: 103, // 収入カテゴリ
+			}
+			const result = validateTransactionUpdateWithZod(data)
+			expect(result.success).toBe(true)
+		})
+
+		it('typeがincomeで支出カテゴリIDの場合エラーを返す', () => {
+			const data = {
+				type: 'income' as const,
+				categoryId: 1, // 支出カテゴリ
+			}
+			const result = validateTransactionUpdateWithZod(data)
+			expect(result.success).toBe(false)
+			if (!result.success) {
+				const categoryError = result.errors.find((e) => e.field === 'categoryId')
+				expect(categoryError).toBeDefined()
+				expect(categoryError?.message).toContain('101から105の範囲')
+			}
+		})
+
+		it('typeがexpenseの場合は支出バリデーションを使用する', () => {
+			const data = {
+				type: 'expense' as const,
+				amount: 3000,
+				categoryId: 1, // 支出カテゴリ
+			}
+			const result = validateTransactionUpdateWithZod(data)
+			expect(result.success).toBe(true)
+		})
 	})
 
 	describe('validateSubscriptionCreateWithZod', () => {
@@ -216,7 +260,8 @@ describe('Zodバリデーターのテスト', () => {
 			if (!result.success) {
 				const amountError = result.errors.find((e) => e.field === 'amount')
 				expect(amountError).toBeDefined()
-				expect(amountError?.message).toBe('収入金額は0より大きい必要があります')
+				// MIN_AMOUNTが1なので、このメッセージが正しい
+				expect(amountError?.message).toBe('収入金額は1円以上である必要があります')
 			}
 		})
 
@@ -288,6 +333,92 @@ describe('Zodバリデーターのテスト', () => {
 				}
 			})
 		})
+
+		// エッジケーステスト追加（レビューコメント#7対応）
+		it('金額0円でエラーを返す', () => {
+			const data = {
+				amount: 0,
+				type: 'income' as const,
+				categoryId: 103,
+				description: 'ゼロ円テスト',
+				date: '2024-01-01',
+			}
+			const result = validateIncomeCreateWithZod(data)
+			expect(result.success).toBe(false)
+			if (!result.success) {
+				const amountError = result.errors.find((e) => e.field === 'amount')
+				expect(amountError).toBeDefined()
+				// MIN_AMOUNTが1なので、このメッセージが正しい
+				expect(amountError?.message).toBe('収入金額は1円以上である必要があります')
+			}
+		})
+
+		it('金額の極小値（1円）を受け入れる', () => {
+			const data = {
+				amount: 1,
+				type: 'income' as const,
+				categoryId: 103,
+				description: '極小値テスト',
+				date: '2024-01-01',
+			}
+			const result = validateIncomeCreateWithZod(data)
+			expect(result.success).toBe(true)
+			if (result.success) {
+				expect(result.data.amount).toBe(1)
+			}
+		})
+
+		it('金額の下限未満（0.99円）でエラーを返す', () => {
+			const data = {
+				amount: 0.99,
+				type: 'income' as const,
+				categoryId: 103,
+				description: '下限未満テスト',
+				date: '2024-01-01',
+			}
+			const result = validateIncomeCreateWithZod(data)
+			expect(result.success).toBe(false)
+			if (!result.success) {
+				const amountError = result.errors.find((e) => e.field === 'amount')
+				expect(amountError).toBeDefined()
+				// positive()とmin()の両方のエラーメッセージが出る可能性があるため、どちらかを確認
+				expect(amountError?.message).toMatch(
+					/収入金額は1円以上である必要があります|収入金額は0より大きい必要があります/
+				)
+			}
+		})
+
+		it('金額の極大値（1000万円）を受け入れる', () => {
+			const data = {
+				amount: 10_000_000,
+				type: 'income' as const,
+				categoryId: 103,
+				description: '極大値テスト',
+				date: '2024-01-01',
+			}
+			const result = validateIncomeCreateWithZod(data)
+			expect(result.success).toBe(true)
+			if (result.success) {
+				expect(result.data.amount).toBe(10_000_000)
+			}
+		})
+
+		it('金額の上限超過（1000万1円）でエラーを返す', () => {
+			const data = {
+				amount: 10_000_001,
+				type: 'income' as const,
+				categoryId: 103,
+				description: '上限超過テスト',
+				date: '2024-01-01',
+			}
+			const result = validateIncomeCreateWithZod(data)
+			expect(result.success).toBe(false)
+			if (!result.success) {
+				const amountError = result.errors.find((e) => e.field === 'amount')
+				expect(amountError).toBeDefined()
+				expect(amountError?.message).toBe('収入金額は10000000円以下である必要があります')
+			}
+		})
 	})
 
 	describe('validateIncomeUpdateWithZod', () => {
@@ -331,7 +462,8 @@ describe('Zodバリデーターのテスト', () => {
 			if (!result.success) {
 				const amountError = result.errors.find((e) => e.field === 'amount')
 				expect(amountError).toBeDefined()
-				expect(amountError?.message).toBe('収入金額は0より大きい必要があります')
+				// MIN_AMOUNTが1なので、このメッセージが正しい
+				expect(amountError?.message).toBe('収入金額は1円以上である必要があります')
 			}
 		})
 	})
