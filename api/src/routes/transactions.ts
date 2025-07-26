@@ -1,40 +1,17 @@
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { ALL_CATEGORIES } from '../../../shared/config/categories'
 import { type AnyDatabase, type Env } from '../db'
-import { type NewTransaction, transactions } from '../db/schema'
+import { type NewTransaction, type Transaction, transactions } from '../db/schema'
 import { errorHandler, handleError, NotFoundError, ValidationError } from '../lib/error-handler'
 import { createRequestLogger } from '../lib/logger'
 import { createCrudHandlers } from '../lib/route-factory'
 import { type LoggingVariables } from '../middleware/logging'
+import { addCategoryInfo, type TransactionWithCategory } from '../utils/transaction-utils'
 import {
 	validateIdWithZod,
 	validateTransactionCreateWithZod,
 	validateTransactionUpdateWithZod,
 } from '../validation/zod-validators'
-
-/**
- * カテゴリ情報を取引データに追加する変換関数
- * CRUDファクトリのtransformDataオプションで使用
- */
-function addCategoryInfo<T extends { categoryId?: number | null }>(transactionList: T[]) {
-	return transactionList.map((tx) => {
-		const category = ALL_CATEGORIES.find((cat) => cat.numericId === tx.categoryId)
-		return {
-			...tx,
-			category: category
-				? {
-						id: category.numericId,
-						name: category.name,
-						type: category.type,
-						color: category.color,
-						createdAt: new Date().toISOString(),
-						updatedAt: new Date().toISOString(),
-					}
-				: null,
-		}
-	})
-}
 
 /**
  * 取引APIのファクトリ関数
@@ -52,8 +29,13 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 	// エラーハンドリングミドルウェアを適用
 	app.use('*', errorHandler())
 
-	// CRUDハンドラーを作成
-	const crudHandlers = createCrudHandlers({
+	// CRUDハンドラーを作成（型パラメータを明示的に指定）
+	const crudHandlers = createCrudHandlers<
+		NewTransaction,
+		Partial<NewTransaction>,
+		Transaction,
+		TransactionWithCategory<Transaction>
+	>({
 		table: transactions,
 		resourceName: 'transactions',
 		validateCreate: (data: unknown) => validateTransactionCreateWithZod(data as NewTransaction),

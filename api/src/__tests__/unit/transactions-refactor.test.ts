@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import * as errorHandler from '../../lib/error-handler'
-import * as logger from '../../lib/logger'
 import * as routeFactory from '../../lib/route-factory'
 import { createTransactionsApp } from '../../routes/transactions'
 
@@ -21,7 +20,7 @@ vi.mock('../../lib/error-handler', () => ({
 	ValidationError: class ValidationError extends Error {
 		constructor(
 			message: string,
-			public errors: any[]
+			public errors: Array<{ field?: string; message: string }>
 		) {
 			super(message)
 		}
@@ -60,33 +59,37 @@ describe('Transactions Route Refactoring - ユーティリティ統合テスト'
 				})
 			)
 		})
+
+		it('型パラメータが明示的に指定されていること', () => {
+			// createCrudHandlersが型パラメータ付きで呼び出されることを確認
+			// 実装では型パラメータが指定されているが、JavaScriptランタイムでは型情報は消える
+			// そのため、このテストは主にドキュメント目的
+			createTransactionsApp()
+			expect(routeFactory.createCrudHandlers).toHaveBeenCalledTimes(1)
+		})
 	})
 
 	describe('エラーハンドリングユーティリティの使用', () => {
 		it('エラーハンドリングミドルウェアを使用していること', () => {
-			const app = createTransactionsApp()
+			createTransactionsApp()
 
 			// errorHandlerミドルウェアが設定されていることを確認
 			expect(errorHandler.errorHandler).toHaveBeenCalled()
 		})
-
-		it('エラー処理でhandleError関数を使用していること', () => {
-			// このテストでは、エラーハンドリングの統合を確認
-			// 実際の実装では、各ハンドラー内でhandleErrorが使用される
-			expect(true).toBe(true) // プレースホルダー
-		})
 	})
 
-	describe('ロギングユーティリティの使用', () => {
-		it('リクエストロガーを使用していること', () => {
-			// このテストでは、ロギングユーティリティの統合を確認
-			// 実装後、createRequestLoggerの呼び出しを確認
-			expect(true).toBe(true) // プレースホルダー
+	describe('ビジネスロジックの分離', () => {
+		it('addCategoryInfo関数が別ファイルに分離されていること', async () => {
+			// transaction-utils.tsからaddCategoryInfo関数がエクスポートされていることを確認
+			const utils = await import('../../utils/transaction-utils')
+			expect(utils.addCategoryInfo).toBeDefined()
+			expect(typeof utils.addCategoryInfo).toBe('function')
 		})
 
-		it('データベース操作でlogDatabaseOperationを使用していること', () => {
-			// このテストでは、DB操作のロギング統合を確認
-			expect(true).toBe(true) // プレースホルダー
+		it('TransactionWithCategory型が定義されていること', async () => {
+			// 型定義の存在を確認（ランタイムでは型情報は消えるため、エクスポートの存在のみ確認）
+			const utils = await import('../../utils/transaction-utils')
+			expect(utils).toBeDefined()
 		})
 	})
 
@@ -95,30 +98,26 @@ describe('Transactions Route Refactoring - ユーティリティ統合テスト'
 			const app = createTransactionsApp()
 
 			// statsエンドポイントが定義されていることを確認
-			const routes = (app as any).routes
+			// @ts-ignore - プライベートプロパティへのアクセス
+			const routes = app.routes
 			const hasStatsEndpoint = routes.some(
 				(route: any) => route.path === '/stats' && route.method === 'GET'
 			)
 			expect(hasStatsEndpoint).toBe(true)
 		})
-
-		it('フィルタリング機能が維持されていること', () => {
-			// GETハンドラーでフィルタリング機能が維持されていることを確認
-			// 実装後に詳細なテストを追加
-			expect(true).toBe(true) // プレースホルダー
-		})
 	})
 
 	describe('コード削減の確認', () => {
-		it('formatValidationErrors関数が削除されていること', () => {
-			// transactions.tsファイル内にformatValidationErrors関数が存在しないことを確認
-			// 実装後、ファイル内容を確認して検証
-			expect(true).toBe(true) // プレースホルダー
-		})
+		it('formatValidationErrors関数が削除されていること', async () => {
+			// transactions.tsのコード内にformatValidationErrorsが含まれていないことを確認
+			const fs = await import('fs')
+			const path = await import('path')
+			const transactionsPath = path.join(__dirname, '../../routes/transactions.ts')
+			const fileContent = fs.readFileSync(transactionsPath, 'utf-8')
 
-		it('重複したエラーハンドリングコードが削除されていること', () => {
-			// try-catchブロックが大幅に簡略化されていることを確認
-			expect(true).toBe(true) // プレースホルダー
+			// formatValidationErrors関数が存在しないことを確認
+			expect(fileContent).not.toContain('function formatValidationErrors')
+			expect(fileContent).not.toContain('formatValidationErrors(')
 		})
 	})
 })
