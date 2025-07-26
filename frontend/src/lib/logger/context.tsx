@@ -212,29 +212,6 @@ export function LoggerScope({ children, component, config }: LoggerScopeProps) {
 }
 
 /**
- * withLoggerProvider HOC
- * 既存のコンポーネントをLoggerProviderでラップするHOC
- *
- * @param Component ラップするコンポーネント
- * @param providerProps LoggerProviderのプロパティ
- * @returns LoggerProviderでラップされたコンポーネント
- */
-export function withLoggerProvider<P extends object>(
-	Component: React.ComponentType<P>,
-	providerProps?: Omit<LoggerProviderProps, "children">,
-) {
-	const WrappedComponent = (props: P) => (
-		<LoggerProvider {...providerProps}>
-			<Component {...props} />
-		</LoggerProvider>
-	);
-
-	WrappedComponent.displayName = `withLoggerProvider(${Component.displayName || Component.name})`;
-
-	return WrappedComponent;
-}
-
-/**
  * デフォルトロガーProvider
  * アプリケーションルートで使用する最小設定のProvider
  */

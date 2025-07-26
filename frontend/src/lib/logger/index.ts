@@ -40,7 +40,6 @@ export {
 	LoggerScope,
 	useLoggerContext,
 	useOptionalLoggerContext,
-	withLoggerProvider,
 } from "./context";
 export {
 	DefaultErrorFallback,
@@ -138,8 +137,6 @@ export {
 	isStorybookEnvironment,
 	logStorybookAction,
 	type StorybookLoggerConfig,
-	StorybookLoggerDecorator,
-	StorybookLoggerManager,
 	validateStorybookConfig,
 } from "./storybook-integration";
 

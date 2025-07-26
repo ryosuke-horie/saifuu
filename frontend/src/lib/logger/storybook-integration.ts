@@ -67,31 +67,6 @@ export function createStorybookLogger(
 }
 
 /**
- * Storybookデコレーター用のロガープロバイダー
- * 全てのストーリーに自動的にロガー機能を追加
- */
-export function StorybookLoggerDecorator(Story: any, context: any) {
-	// Storybookのコンテキストから情報を取得
-	const { title, name, args } = context;
-
-	// ストーリー固有の設定
-	const storyConfig: Partial<StorybookLoggerConfig> = {
-		storyName: `${title}/${name}`,
-	};
-
-	const logger = createStorybookLogger(storyConfig);
-
-	// ストーリー開始ログ
-	logger.debug(`Storybook story loaded: ${title}/${name}`, {
-		story: `${title}/${name}`,
-		args,
-		storybook: true,
-	});
-
-	return Story();
-}
-
-/**
  * Storybookアクションとの統合
  * Storybookのアクションアドオンと連携してユーザーインタラクションをログ
  */
@@ -112,78 +87,6 @@ export function logStorybookAction(
 		storybook: true,
 		story: context?.title ? `${context.title}/${context.name}` : undefined,
 	});
-}
-
-/**
- * Storybook環境での包括的なログ管理
- */
-export class StorybookLoggerManager {
-	private static instance: StorybookLoggerManager | null = null;
-	private logger: FrontendLogger;
-	private actionHandlers: Map<string, Function> = new Map();
-
-	private constructor(config?: Partial<StorybookLoggerConfig>) {
-		this.logger = createStorybookLogger(config);
-		this.setupActionHandlers();
-	}
-
-	public static getInstance(
-		config?: Partial<StorybookLoggerConfig>,
-	): StorybookLoggerManager {
-		if (!StorybookLoggerManager.instance) {
-			StorybookLoggerManager.instance = new StorybookLoggerManager(config);
-		}
-		return StorybookLoggerManager.instance;
-	}
-
-	private setupActionHandlers() {
-		// Storybookアクションハンドラーの設定
-		this.actionHandlers.set("click", this.handleClick.bind(this));
-		this.actionHandlers.set("change", this.handleChange.bind(this));
-		this.actionHandlers.set("submit", this.handleSubmit.bind(this));
-	}
-
-	private handleClick(event: Event, context?: any) {
-		this.logger.userInteraction("storybook:click", "button", {
-			target: (event.target as Element)?.tagName,
-			storybook: true,
-			story: context?.story,
-		});
-	}
-
-	private handleChange(event: Event, context?: any) {
-		this.logger.userInteraction("storybook:change", "input", {
-			target: (event.target as HTMLInputElement)?.type,
-			value: (event.target as HTMLInputElement)?.value?.substring(0, 50), // 値は最初の50文字のみ
-			storybook: true,
-			story: context?.story,
-		});
-	}
-
-	private handleSubmit(event: Event, context?: any) {
-		this.logger.userInteraction("storybook:submit", "form", {
-			target: (event.target as Element)?.tagName,
-			storybook: true,
-			story: context?.story,
-		});
-	}
-
-	public getLogger(): FrontendLogger {
-		return this.logger;
-	}
-
-	public logStoryInteraction(actionType: string, details: any, context?: any) {
-		const handler = this.actionHandlers.get(actionType);
-		if (handler) {
-			handler(details, context);
-		} else {
-			this.logger.userInteraction(`storybook:${actionType}`, "element", {
-				...details,
-				storybook: true,
-				story: context?.story,
-			});
-		}
-	}
 }
 
 /**
@@ -272,8 +175,6 @@ export function validateStorybookConfig(
  */
 export default {
 	createStorybookLogger,
-	StorybookLoggerDecorator,
-	StorybookLoggerManager,
 	isStorybookEnvironment,
 	createStorybookPerformanceMonitor,
 	handleStorybookError,
