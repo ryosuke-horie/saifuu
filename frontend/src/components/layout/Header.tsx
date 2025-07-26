@@ -117,9 +117,3 @@ export const Header: FC<HeaderProps> = ({
 		</header>
 	);
 };
-
-/**
- * デフォルトエクスポート
- * 他のコンポーネントから簡単にインポートできるように提供
- */
-export default Header;
