@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { ALL_CATEGORIES, getCategoryById, getCategoryByName } from '../../../../shared/config/categories'
+import { ALL_CATEGORIES, getCategoryByName } from '../../../../shared/config/categories'
 import { subscriptions, transactions } from '../../db/schema'
 import { createTestRequest, getResponseJson } from '../helpers/test-app'
 import { cleanupTestDatabase, createTestDatabase, setupTestDatabase } from '../helpers/test-db'
@@ -390,12 +390,11 @@ describe('Categories API - Integration Tests', () => {
 			expect(listResponse.status).toBe(200)
 
 			// 2. 作成を試みる（失敗するはず）
-			const createResponse = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/categories',
-				{ name: 'New Category', type: 'expense', color: '#FF0000' }
-			)
+			const createResponse = await createTestRequest(testProductionApp, 'POST', '/api/categories', {
+				name: 'New Category',
+				type: 'expense',
+				color: '#FF0000',
+			})
 			await expectMethodNotAllowed(createResponse, 'Categories are fixed and cannot be created')
 
 			// 3. 更新を試みる（失敗するはず）
@@ -416,11 +415,7 @@ describe('Categories API - Integration Tests', () => {
 			await expectMethodNotAllowed(deleteResponse, 'Categories are fixed and cannot be deleted')
 
 			// 5. 再度一覧を取得し、変更がないことを確認
-			const finalListResponse = await createTestRequest(
-				testProductionApp,
-				'GET',
-				'/api/categories'
-			)
+			const finalListResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 			expect(finalListResponse.status).toBe(200)
 			const finalData = await getResponseJson(finalListResponse)
 			expect(finalData.length).toBe(ALL_CATEGORIES.length)
