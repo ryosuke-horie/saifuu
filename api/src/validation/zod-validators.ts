@@ -13,6 +13,8 @@ export type ValidationResult<T> =
 
 import {
 	idSchema,
+	incomeCreateSchema,
+	incomeUpdateSchema,
 	subscriptionCreateSchema,
 	subscriptionUpdateSchema,
 	transactionCreateSchema,
@@ -25,6 +27,11 @@ import type { NewSubscription, NewTransaction } from '../db/schema'
 export function validateTransactionCreateWithZod(
 	data: Partial<NewTransaction>
 ): ValidationResult<NewTransaction> {
+	// typeに基づいて適切なスキーマを使用
+	if (data.type === 'income') {
+		const result = incomeCreateSchema.safeParse(data)
+		return zodToValidationResult(result, data) as ValidationResult<NewTransaction>
+	}
 	const result = transactionCreateSchema.safeParse(data)
 	return zodToValidationResult(result, data) as ValidationResult<NewTransaction>
 }
@@ -33,7 +40,28 @@ export function validateTransactionCreateWithZod(
 export function validateTransactionUpdateWithZod(
 	data: Partial<NewTransaction>
 ): ValidationResult<Partial<NewTransaction>> {
+	// typeに基づいて適切なスキーマを使用
+	if (data.type === 'income') {
+		const result = incomeUpdateSchema.safeParse(data)
+		return zodToValidationResult(result, data)
+	}
 	const result = transactionUpdateSchema.safeParse(data)
+	return zodToValidationResult(result, data)
+}
+
+// 収入作成データのバリデーション（Zodバージョン）
+export function validateIncomeCreateWithZod(
+	data: Partial<NewTransaction>
+): ValidationResult<NewTransaction> {
+	const result = incomeCreateSchema.safeParse(data)
+	return zodToValidationResult(result, data) as ValidationResult<NewTransaction>
+}
+
+// 収入更新データのバリデーション（Zodバージョン）
+export function validateIncomeUpdateWithZod(
+	data: Partial<NewTransaction>
+): ValidationResult<Partial<NewTransaction>> {
+	const result = incomeUpdateSchema.safeParse(data)
 	return zodToValidationResult(result, data)
 }
 

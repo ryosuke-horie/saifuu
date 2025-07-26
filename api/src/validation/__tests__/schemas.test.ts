@@ -122,8 +122,13 @@ describe('Zodスキーマのテスト', () => {
 			expect(transactionTypeSchema.safeParse('expense').success).toBe(true)
 		})
 
-		it('expense以外を拒否する', () => {
-			expect(transactionTypeSchema.safeParse('income').success).toBe(false)
+		it('incomeを受け入れる', () => {
+			expect(transactionTypeSchema.safeParse('income').success).toBe(true)
+		})
+
+		it('expense/income以外を拒否する', () => {
+			expect(transactionTypeSchema.safeParse('unknown').success).toBe(false)
+			expect(transactionTypeSchema.safeParse('revenue').success).toBe(false)
 		})
 	})
 

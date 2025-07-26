@@ -128,7 +128,7 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			const errors = result.details!
 			expect(errors.some((e) => e.field === 'amount' && e.message.includes('正の数値'))).toBe(true)
 			expect(
-				errors.some((e) => e.field === 'type' && e.message.includes('支出（expense）のみ'))
+				errors.some((e) => e.field === 'type' && e.message.includes('expenseまたはincome'))
 			).toBe(true)
 			expect(errors.some((e) => e.field === 'date' && e.message.includes('ISO 8601形式'))).toBe(
 				true

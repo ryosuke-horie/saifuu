@@ -173,11 +173,51 @@ export const categoryIdSchema = z
 	.optional()
 
 // 取引種別
-export const transactionTypeSchema = z.literal('expense', {
+export const transactionTypeSchema = z.enum(['expense', 'income'], {
 	errorMap: () => ({
-		message: '取引種別は支出（expense）のみ許可されています',
+		message: '取引種別はexpenseまたはincomeである必要があります',
 	}),
 })
+
+// 収入カテゴリID（101-105の範囲チェック）
+export const incomeCategoryIdSchema = z
+	.union([
+		z.number()
+			.int()
+			.min(101, '収入カテゴリIDは101から105の範囲である必要があります')
+			.max(105, '収入カテゴリIDは101から105の範囲である必要があります'),
+		z.string().transform((val: string, ctx: z.RefinementCtx) => {
+			const num = Number(val)
+			if (Number.isNaN(num)) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'カテゴリIDは数値である必要があります',
+				})
+				return z.NEVER
+			}
+			if (num < 101 || num > 105) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: '収入カテゴリIDは101から105の範囲である必要があります',
+				})
+				return z.NEVER
+			}
+			return num
+		}),
+	])
+
+// 収入金額（正の数のみ）
+export const incomeAmountSchema = z
+	.number()
+	.positive('収入金額は0より大きい必要があります')
+	.min(
+		VALIDATION_LIMITS.MIN_AMOUNT,
+		`収入金額は${VALIDATION_LIMITS.MIN_AMOUNT}円以上である必要があります`,
+	)
+	.max(
+		VALIDATION_LIMITS.MAX_AMOUNT,
+		`収入金額は${VALIDATION_LIMITS.MAX_AMOUNT}円以下である必要があります`,
+	)
 
 // 請求サイクル
 export const billingCycleSchema = z.enum(['monthly', 'yearly', 'weekly'], {
@@ -201,6 +241,32 @@ export const transactionUpdateSchema = z.object({
 	amount: amountSchema.optional(),
 	type: transactionTypeSchema.optional(),
 	categoryId: categoryIdSchema,
+	description: descriptionSchema,
+	date: dateStringSchema.optional(),
+})
+
+// 収入作成スキーマ
+export const incomeCreateSchema = z.object({
+	amount: incomeAmountSchema,
+	type: z.literal('income', {
+		errorMap: () => ({
+			message: '収入の取引種別はincomeである必要があります',
+		}),
+	}),
+	categoryId: incomeCategoryIdSchema,
+	description: descriptionSchema,
+	date: dateStringSchema,
+})
+
+// 収入更新スキーマ（全フィールドオプショナル）
+export const incomeUpdateSchema = z.object({
+	amount: incomeAmountSchema.optional(),
+	type: z.literal('income', {
+		errorMap: () => ({
+			message: '収入の取引種別はincomeである必要があります',
+		}),
+	}).optional(),
+	categoryId: incomeCategoryIdSchema.optional(),
 	description: descriptionSchema,
 	date: dateStringSchema.optional(),
 })
@@ -262,5 +328,7 @@ export interface ValidationError {
 // 型エクスポート（既存コードとの互換性のため）
 export type TransactionCreateInput = z.infer<typeof transactionCreateSchema>
 export type TransactionUpdateInput = z.infer<typeof transactionUpdateSchema>
+export type IncomeCreateInput = z.infer<typeof incomeCreateSchema>
+export type IncomeUpdateInput = z.infer<typeof incomeUpdateSchema>
 export type SubscriptionCreateInput = z.infer<typeof subscriptionCreateSchema>
 export type SubscriptionUpdateInput = z.infer<typeof subscriptionUpdateSchema>
