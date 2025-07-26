@@ -25,15 +25,6 @@ export default defineConfig({
 		environment: "jsdom",
 		setupFiles: ["./vitest.setup.ts"],
 		globals: true,
-		environmentMatchGlobs: [
-			// デッドコード削除テストはNode.js環境で実行
-			["**/__tests__/dead-code-removal.test.ts", "node"],
-		],
-		poolOptions: {
-			threads: {
-				isolate: true,
-			},
-		},
 		// ビジュアルテスト実行時のみブラウザモードを有効化
 		// 通常のユニットテストはjsdom環境で高速実行
 		browser: {
