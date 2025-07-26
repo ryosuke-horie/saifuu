@@ -227,7 +227,13 @@ export function getCategoryOptions(type?: CategoryType): Array<{
  * デフォルトカテゴリの取得
  */
 export function getDefaultCategory(type: CategoryType): CategoryConfig {
-	return type === 'income' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0]
+	const categories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+	
+	if (categories.length === 0) {
+		throw new Error(`No ${type} categories available`)
+	}
+	
+	return categories[0]
 }
 
 /**
@@ -255,6 +261,22 @@ export function validateCategoryConfig(): boolean {
 			(id, index) => allNumericIds.indexOf(id) !== index,
 		)
 		console.error('Duplicate numeric IDs found:', duplicates)
+		return false
+	}
+
+	// numericId範囲の妥当性チェック
+	const invalidRanges = ALL_CATEGORIES.filter((category) => {
+		if (category.type === 'expense' && (category.numericId < 1 || category.numericId > 99)) {
+			return true
+		}
+		if (category.type === 'income' && (category.numericId < 101 || category.numericId > 199)) {
+			return true
+		}
+		return false
+	})
+
+	if (invalidRanges.length > 0) {
+		console.error('Invalid numericId ranges found:', invalidRanges)
 		return false
 	}
 
