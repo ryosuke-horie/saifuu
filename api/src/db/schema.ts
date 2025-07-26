@@ -5,7 +5,7 @@ import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 export const transactions = sqliteTable('transactions', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	amount: real('amount').notNull(), // 金額
-	type: text('type', { enum: ['expense'] }).notNull(),
+	type: text('type', { enum: ['expense', 'income'] }).notNull(),
 	categoryId: integer('category_id'), // 設定ファイルのnumericIdを参照
 	description: text('description'), // 説明・メモ
 	date: text('date').notNull(), // 取引日
