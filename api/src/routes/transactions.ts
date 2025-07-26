@@ -41,9 +41,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 		validateUpdate: (data: unknown) =>
 			validateTransactionUpdateWithZod(data as Partial<NewTransaction>),
 		validateId: validateIdWithZod,
-		transformData: addCategoryInfo as (
-			data: Transaction[]
-		) => TransactionWithCategory<Transaction>[],
+		transformData: (data: Transaction[]) => addCategoryInfo(data),
 		testDatabase: options.testDatabase,
 	})
 
@@ -111,7 +109,9 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 			}
 
 			// カテゴリ情報を設定ファイルから補完
-			const resultWithCategories = addCategoryInfo(result) as TransactionWithCategory<Transaction>[]
+			// 型を明確にしてから変換を行う
+			const typedResult: Transaction[] = result
+			const resultWithCategories = addCategoryInfo(typedResult)
 
 			requestLogger.success({
 				transactionsCount: resultWithCategories.length,

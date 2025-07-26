@@ -55,6 +55,8 @@ export class NotFoundError extends ApiError {
  * 400エラーとして処理される
  *
  * 使用例: クエリパラメータの値制限、APIの使用方法が不正な場合
+ * 代替案: ValidationErrorとの使い分けを明確にするため、RequestValidationErrorという名前も検討した
+ * 設計意図: フォーム入力のバリデーション（ValidationError）と、API使用方法の誤り（BadRequestError）を区別
  */
 export class BadRequestError extends ApiError {
 	constructor(message: string) {

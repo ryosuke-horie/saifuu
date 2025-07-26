@@ -41,6 +41,14 @@ function addCategoryInfoToItem<T extends { categoryId?: number | null }>(
  * CRUDファクトリのtransformDataオプションで使用
  * 単一アイテムと配列の両方に対応
  */
+// オーバーロードシグネチャ
+export function addCategoryInfo<T extends { categoryId?: number | null }>(
+	data: T[]
+): TransactionWithCategory<T>[]
+export function addCategoryInfo<T extends { categoryId?: number | null }>(
+	data: T
+): TransactionWithCategory<T>
+// 実装
 export function addCategoryInfo<T extends { categoryId?: number | null }>(
 	data: T | T[]
 ): TransactionWithCategory<T> | TransactionWithCategory<T>[] {
