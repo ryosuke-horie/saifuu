@@ -117,16 +117,12 @@ const useLoggedCallback: <T extends (...args: any[]) => any>(
 
 #### usePerformanceLogger
 ```typescript
-interface PerformanceMetrics {
-  renderTime: number;
-  memoryUsage: number;
-  componentCount: number;
-}
-
+// パフォーマンスメトリクス機能は将来の実装予定です
+// 現在の実装では利用できません
 const usePerformanceLogger: () => {
   startMeasure: (name: string) => void;
   endMeasure: (name: string) => void;
-  getMetrics: () => PerformanceMetrics;
+  getMetrics: () => object; // 将来的にPerformanceMetricsインターフェースを定義予定
 }
 ```
 
