@@ -39,9 +39,147 @@
 
 **詳細**: [技術スタック](./docs/技術スタック.md)
 
+## Claude Code専門エージェント
+
+このプロジェクトでは、専門的なタスクに特化したエージェントが自動的に選択され、効率的な開発をサポートします。
+
+### 利用可能なエージェント
+
+#### frontend-developer
+- **自動選択条件**: 
+  - UIコンポーネントの実装・修正
+  - Next.js App Routerの開発
+  - Tailwind CSSによるスタイリング
+  - フロントエンドのテスト作成
+- **専門領域**: React 19、TypeScript 5、Tailwind CSS v4
+- **開発原則**: t-wadaのTDD、Matt Pocockの型定義方針、コンポーネント駆動開発
+
+#### backend-developer
+- **自動選択条件**:
+  - Hono APIエンドポイントの開発
+  - Drizzle ORMによるデータベース操作
+  - Cloudflare Workersの設定
+  - バックエンドのテスト作成
+- **専門領域**: Hono、Drizzle ORM、Cloudflare D1、型安全なAPI設計
+- **開発原則**: クリーンアーキテクチャ、TDD、RESTful設計
+
+### エージェントとの連携
+
+1. **自動選択**: 作業内容に基づいて適切なエージェントが自動的に選択されます
+2. **明示的な指定**: 必要に応じて特定のエージェントを指定できます
+   ```
+   "frontend-developerで支出登録フォームを実装して"
+   "backend-developerで収入APIエンドポイントを作成"
+   ```
+
+3. **コンテキスト共有**: エージェントには以下の情報が自動的に渡されます
+   - 作業対象のファイル
+   - 関連するテストケース
+   - プロジェクトの開発ルール
+   - 型定義とインターフェース
+   - エラーログやスタックトレース
+
+### エージェント活用のベストプラクティス
+
+- **タスクの分割**: フロントエンドとバックエンドのタスクを明確に分離
+- **並列作業**: 独立したタスクは複数のエージェントで同時実行
+- **品質保証**: 各エージェントはTDDサイクルに従って実装
+- **型安全性**: 両エージェントは共通の型定義を使用
+
 ## 開発ルール
 
-### 1. コメント規約
+### 1. TypeScript型定義（Matt Pocock方針）
+
+#### 基本原則
+- **型の明示性**: 推論に頼らず、重要な型は明示的に定義
+- **型の再利用**: ユーティリティ型を活用して型の重複を避ける
+- **型の安全性**: `any`の使用を避け、`unknown`を優先
+- **型の単一責任**: 1つの型は1つの目的に特化
+
+#### 型定義のパターン
+
+```typescript
+// ❌ 悪い例: 曖昧な型定義
+type Transaction = {
+  data: any;
+  type: string;
+}
+
+// ✅ 良い例: 明確で再利用可能な型
+type TransactionType = 'income' | 'expense';
+type CategoryType = 'food' | 'transport' | 'entertainment' | 'utilities' | 'other';
+
+type TransactionData = {
+  id: string;
+  amount: number;
+  category: CategoryType;
+  description: string;
+  date: string;
+};
+
+type Transaction = {
+  data: TransactionData;
+  type: TransactionType;
+};
+
+// ✅ ユーティリティ型の活用
+type TransactionResponse = {
+  transaction: Transaction;
+  timestamp: string;
+};
+
+type PartialTransaction = Partial<Transaction>;
+type ReadonlyTransaction = Readonly<Transaction>;
+```
+
+#### 関数の型定義
+
+```typescript
+// ❌ 悪い例: 推論に頼りすぎ
+const fetchTransaction = async (id) => {
+  // ...
+};
+
+// ✅ 良い例: 引数と戻り値の型を明示
+type FetchTransaction = (id: string) => Promise<Transaction>;
+
+const fetchTransaction: FetchTransaction = async (id) => {
+  // ...
+};
+
+// ✅ ジェネリクスの活用
+type ApiResponse<T> = {
+  data: T;
+  error?: string;
+};
+
+const fetchData = async <T>(url: string): Promise<ApiResponse<T>> => {
+  // ...
+};
+```
+
+#### 型ガードとアサーション
+
+```typescript
+// ✅ 型ガードの実装
+const isTransaction = (value: unknown): value is Transaction => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'data' in value &&
+    'type' in value
+  );
+};
+
+// ✅ アサーション関数
+function assertTransaction(value: unknown): asserts value is Transaction {
+  if (!isTransaction(value)) {
+    throw new Error('Value is not a Transaction');
+  }
+}
+```
+
+### 2. コメント規約
 - コメントは必ず日本語で記載する
 - 設計意図を明確に記載する
 - なぜその実装を選択したのか、代替案は何かを記載する
@@ -557,14 +695,26 @@ GitHub Actions無料枠を効率的に使用するため、E2Eテストは最小
 ## 開発の進め方
 
 1. 新機能開発時は、まず設計意図をコメントで記載
-2. **Storybookでコンポーネント分離開発**
-3. 小さな単位で実装し、都度 `pnpm run check:fix` を実行
-4. テストを書く（Storybook・ユニット・E2E）
-5. **実装完了時のE2E確認**: 機能実装が完了したら `pnpm run test:e2e` で動作確認
-6. **シナリオ変更時の確認**: E2Eテストシナリオを変更した場合は必ずユーザーに確認を取る
-7. 機能の完成度に応じて頻繁にコミット
-8. **PR作成前のE2E実行**: 重要な変更がある場合はPR作成前に再度E2E実行
-9. プルリクエストを作成してレビュー
+2. **専門エージェントが自動的に適切なTDDサイクルで実装**
+3. **Storybookでコンポーネント分離開発**（frontend-developerが担当）
+4. 小さな単位で実装し、都度 `pnpm run check:fix` を実行
+5. テストを書く（Storybook・ユニット・E2E）
+6. **実装完了時のE2E確認**: 機能実装が完了したら `pnpm run test:e2e` で動作確認
+7. **シナリオ変更時の確認**: E2Eテストシナリオを変更した場合は必ずユーザーに確認を取る
+8. 機能の完成度に応じて頻繁にコミット
+9. **PR作成前のE2E実行**: 重要な変更がある場合はPR作成前に再度E2E実行
+10. プルリクエストを作成してレビュー
+
+### エージェントによる実装の流れ
+
+1. **要件理解**: Issueやタスクの内容を分析
+2. **エージェント選択**: frontend-developer/backend-developerが自動選択
+3. **TDD実行**:
+   - **Red**: 失敗するテストを作成
+   - **Green**: 最小限の実装（専門エージェントが担当）
+   - **Refactor**: コード品質の改善
+4. **型安全性確保**: Matt Pocockの方針に従った型定義
+5. **検証**: すべてのテストが通ることを確認
 
 ### E2Eシナリオ変更時のルール
 
