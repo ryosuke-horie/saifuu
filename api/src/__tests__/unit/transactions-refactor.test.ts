@@ -97,7 +97,7 @@ describe('Transactions Route Refactoring - ユーティリティ統合テスト'
 
 			vi.mocked(routeFactory.createCrudHandlers).mockReturnValue(mockHandlers)
 
-			const app = createTransactionsApp()
+			const _app = createTransactionsApp()
 
 			// 各CRUD操作が適切に設定されていることを確認
 			// モックが正しくセットアップされているかを検証
@@ -130,12 +130,12 @@ describe('Transactions Route Refactoring - ユーティリティ統合テスト'
 			// statsエンドポイントが正しく定義されていることを確認
 			// Honoのルート構造をテスト
 			// @ts-ignore - プライベートプロパティへのアクセス
-			const routes = app.routes || []
+			const _routes = app.routes || []
 
 			// statsエンドポイントの存在を別の方法で確認
 			// Honoアプリのfetchメソッドをモックして、ルートが存在することを検証
-			const hasStatsRoute = app.routes.some((route: any) => {
-				return route.path && route.path.includes('stats')
+			const _hasStatsRoute = app.routes.some((route: { path?: string }) => {
+				return route.path?.includes('stats')
 			})
 
 			// ルートが定義されていることを期待
@@ -148,8 +148,8 @@ describe('Transactions Route Refactoring - ユーティリティ統合テスト'
 	describe('コード削減の確認', () => {
 		it('formatValidationErrors関数が削除されていること', async () => {
 			// transactions.tsのコード内にformatValidationErrorsが含まれていないことを確認
-			const fs = await import('fs')
-			const path = await import('path')
+			const fs = await import('node:fs')
+			const path = await import('node:path')
 			const transactionsPath = path.join(__dirname, '../../routes/transactions.ts')
 			const fileContent = fs.readFileSync(transactionsPath, 'utf-8')
 
@@ -160,8 +160,8 @@ describe('Transactions Route Refactoring - ユーティリティ統合テスト'
 
 		it('重複したCRUD実装が削除されていること', async () => {
 			// transactions.tsに手動のCRUD実装が含まれていないことを確認
-			const fs = await import('fs')
-			const path = await import('path')
+			const fs = await import('node:fs')
+			const path = await import('node:path')
 			const transactionsPath = path.join(__dirname, '../../routes/transactions.ts')
 			const fileContent = fs.readFileSync(transactionsPath, 'utf-8')
 

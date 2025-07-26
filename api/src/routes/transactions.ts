@@ -1,14 +1,7 @@
-import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { type AnyDatabase, type Env } from '../db'
 import { type NewTransaction, type Transaction, transactions } from '../db/schema'
-import {
-	BadRequestError,
-	errorHandler,
-	handleError,
-	NotFoundError,
-	ValidationError,
-} from '../lib/error-handler'
+import { BadRequestError, errorHandler, handleError } from '../lib/error-handler'
 import { createRequestLogger } from '../lib/logger'
 import { createCrudHandlers } from '../lib/route-factory'
 import { type LoggingVariables } from '../middleware/logging'
@@ -48,7 +41,9 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 		validateUpdate: (data: unknown) =>
 			validateTransactionUpdateWithZod(data as Partial<NewTransaction>),
 		validateId: validateIdWithZod,
-		transformData: addCategoryInfo as (data: any[]) => any[],
+		transformData: addCategoryInfo as (
+			data: Transaction[]
+		) => TransactionWithCategory<Transaction>[],
 		testDatabase: options.testDatabase,
 	})
 

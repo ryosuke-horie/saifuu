@@ -22,7 +22,7 @@ export interface RequestLogOptions extends LogContext {
  * リクエストロガーインターフェース
  */
 export interface RequestLogger {
-	success(result?: any): void
+	success(result?: unknown): void
 	error(error: Error | unknown): void
 	warn(message: string, meta?: LogMeta): void
 }
@@ -85,10 +85,10 @@ function getOperationType(operation: string): 'read' | 'write' | 'delete' {
 	const operationLower = operation.toLowerCase()
 
 	// 完全一致での判定を優先
-	if (READ_OPERATIONS.includes(operationLower as any)) {
+	if (READ_OPERATIONS.some((op) => op === operationLower)) {
 		return 'read'
 	}
-	if (DELETE_OPERATIONS.includes(operationLower as any)) {
+	if (DELETE_OPERATIONS.some((op) => op === operationLower)) {
 		return 'delete'
 	}
 
@@ -210,7 +210,7 @@ export function createRequestLogger<E extends { Variables: LoggingVariables }>(
 	})
 
 	return {
-		success(result?: any): void {
+		success(result?: unknown): void {
 			const completeMessage = generateCompleteMessage(resource, operation)
 			logger.info(completeMessage, {
 				...meta,
@@ -266,7 +266,7 @@ export async function logDatabaseOperation<T, E extends { Variables: LoggingVari
 	resource: string,
 	operation: string,
 	dbOperation: () => Promise<T>,
-	input?: any
+	input?: unknown
 ): Promise<T> {
 	const logger = getLogger(context)
 	const requestId = getRequestId(context)

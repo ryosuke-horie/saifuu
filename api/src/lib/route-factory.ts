@@ -26,7 +26,7 @@ export type ValidationResult<T> =
  * @template TNew - 新規作成時のエンティティ型
  * @template TUpdate - 更新時のエンティティ型（通常はPartial<TNew>）
  */
-export interface CrudHandlerOptions<TNew, TUpdate, TEntity = any, TTransformed = TEntity> {
+export interface CrudHandlerOptions<TNew, TUpdate, TEntity = unknown, TTransformed = TEntity> {
 	/**
 	 * データベーステーブルスキーマ
 	 *
@@ -179,7 +179,7 @@ function validateAndExtractId(
 export function createCrudHandlers<
 	TNew = unknown,
 	TUpdate = unknown,
-	TEntity = any,
+	TEntity = unknown,
 	TTransformed = TEntity,
 >(options: CrudHandlerOptions<TNew, TUpdate, TEntity, TTransformed>): CrudHandlers {
 	const {
@@ -209,7 +209,7 @@ export function createCrudHandlers<
 
 				// データ変換が指定されている場合は適用
 				if (transformData) {
-					result = transformData(result) as any[]
+					result = transformData(result) as unknown as typeof result
 				}
 
 				logWithContext(c, 'info', `${resourceName}一覧取得が完了`, {
@@ -253,7 +253,7 @@ export function createCrudHandlers<
 
 				// データ変換が指定されている場合は適用
 				if (transformData) {
-					result = transformData(result) as any[]
+					result = transformData(result) as unknown as typeof result
 				}
 
 				if (result.length === 0) {

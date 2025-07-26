@@ -1,7 +1,6 @@
-import { type Context, Hono } from 'hono'
+import { type Context } from 'hono'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { type Logger, type LogLevel, type LogMeta } from '../../logger/types'
-import { type LoggingVariables } from '../../middleware/logging'
+import { type Logger } from '../../logger/types'
 import {
 	createRequestLogger,
 	logDatabaseOperation,
@@ -235,7 +234,9 @@ describe('logger utilities', () => {
 			const mockPerformanceNow = vi.fn()
 			mockPerformanceNow.mockReturnValueOnce(1000) // 開始時刻
 			mockPerformanceNow.mockReturnValueOnce(1500) // 終了時刻
-			;(global as any).performance = { now: mockPerformanceNow }
+			;(global as unknown as { performance: { now: () => number } }).performance = {
+				now: mockPerformanceNow,
+			}
 
 			const operation = vi.fn().mockImplementation(async () => {
 				// 実際に時間を進める
@@ -254,13 +255,13 @@ describe('logger utilities', () => {
 			)
 
 			vi.useRealTimers()
-			delete (global as any).performance
+			delete (global as unknown as { performance?: unknown }).performance
 		})
 
 		it('performance.now が使用できない場合は Date.now を使用する', async () => {
 			// performance を undefined にする
-			const originalPerformance = (global as any).performance
-			delete (global as any).performance
+			const originalPerformance = (global as unknown as { performance?: unknown }).performance
+			delete (global as unknown as { performance?: unknown }).performance
 
 			// Date.now をモック
 			const originalDateNow = Date.now
@@ -285,7 +286,7 @@ describe('logger utilities', () => {
 
 			// クリーンアップ
 			Date.now = originalDateNow
-			;(global as any).performance = originalPerformance
+			;(global as unknown as { performance?: unknown }).performance = originalPerformance
 		})
 	})
 
