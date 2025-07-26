@@ -15,8 +15,8 @@ describe("Categories API", () => {
 			// 設定ファイルから全カテゴリを取得
 			const result = await fetchCategories();
 
-			// 期待される総カテゴリ数（支出11個 + 収入5個）
-			expect(result).toHaveLength(16);
+			// 期待される総カテゴリ数（支出11個 + 収入3個）
+			expect(result).toHaveLength(14);
 
 			// 新しく追加されたカテゴリの確認
 			const systemFee = result.find((cat) => cat.id === "6");
@@ -67,7 +67,7 @@ describe("Categories API", () => {
 			const incomeCategories = result.filter((cat) => cat.type === "income");
 
 			expect(expenseCategories.length).toBe(11); // 支出カテゴリ数
-			expect(incomeCategories.length).toBe(5); // 収入カテゴリ数
+			expect(incomeCategories.length).toBe(3); // 収入カテゴリ数
 		});
 	});
 

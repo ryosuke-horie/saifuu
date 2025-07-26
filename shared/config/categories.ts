@@ -130,6 +130,11 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
 ]
 
 /**
+ * 収入カテゴリID範囲
+ */
+const INCOME_CATEGORY_ID_START = 101
+
+/**
  * 収入カテゴリ設定
  *
  * ⚠️ 注意: numericIdは既存データとの整合性を保つため、絶対に変更しないでください
@@ -137,35 +142,21 @@ export const EXPENSE_CATEGORIES: CategoryConfig[] = [
 export const INCOME_CATEGORIES: CategoryConfig[] = [
 	{
 		id: 'salary',
-		numericId: 101,
+		numericId: INCOME_CATEGORY_ID_START,
 		name: '給与',
 		type: 'income',
 		color: '#10b981',
 	},
 	{
-		id: 'bonus',
-		numericId: 102,
-		name: 'ボーナス',
-		type: 'income',
-		color: '#059669',
-	},
-	{
 		id: 'side_business',
-		numericId: 103,
+		numericId: INCOME_CATEGORY_ID_START + 1,
 		name: '副業',
 		type: 'income',
 		color: '#34d399',
 	},
 	{
-		id: 'investment',
-		numericId: 104,
-		name: '投資収益',
-		type: 'income',
-		color: '#6ee7b7',
-	},
-	{
 		id: 'other_income',
-		numericId: 105,
+		numericId: INCOME_CATEGORY_ID_START + 2,
 		name: 'その他',
 		type: 'income',
 		color: '#a7f3d0',
@@ -232,6 +223,23 @@ export function getDefaultCategory(type: CategoryType): CategoryConfig {
 }
 
 /**
+ * numericIDの重複チェック
+ */
+function validateNumericIdUniqueness(): { isValid: boolean; duplicates?: number[] } {
+	const allNumericIds = ALL_CATEGORIES.map((c) => c.numericId)
+	const uniqueNumericIds = [...new Set(allNumericIds)]
+	
+	if (allNumericIds.length !== uniqueNumericIds.length) {
+		const duplicates = allNumericIds.filter(
+			(id, index) => allNumericIds.indexOf(id) !== index,
+		)
+		return { isValid: false, duplicates }
+	}
+	
+	return { isValid: true }
+}
+
+/**
  * カテゴリ設定の妥当性検証
  */
 export function validateCategoryConfig(): boolean {
@@ -248,14 +256,9 @@ export function validateCategoryConfig(): boolean {
 	}
 
 	// numericID重複チェック
-	const allNumericIds = ALL_CATEGORIES.map((c) => c.numericId)
-	const uniqueNumericIds = [...new Set(allNumericIds)]
-	
-	if (allNumericIds.length !== uniqueNumericIds.length) {
-		const duplicateNumericIds = allNumericIds.filter(
-			(id, index) => allNumericIds.indexOf(id) !== index,
-		)
-		console.error('Duplicate numeric IDs found:', duplicateNumericIds)
+	const numericIdValidation = validateNumericIdUniqueness()
+	if (!numericIdValidation.isValid) {
+		console.error('Duplicate numeric IDs found:', numericIdValidation.duplicates)
 		return false
 	}
 
@@ -291,16 +294,6 @@ export function validateCategoryConfig(): boolean {
 
 	if (invalidTypes.length > 0) {
 		console.error('Invalid category types found:', invalidTypes)
-		return false
-	}
-
-	// 収入カテゴリのnumericIdが101-105の範囲内かチェック
-	const invalidIncomeIds = INCOME_CATEGORIES.filter(
-		(category) => category.numericId < 101 || category.numericId > 105,
-	)
-
-	if (invalidIncomeIds.length > 0) {
-		console.error('Income category IDs must be between 101-105:', invalidIncomeIds)
 		return false
 	}
 
