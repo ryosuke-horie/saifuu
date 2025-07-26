@@ -1,3 +1,7 @@
+/**
+ * @vitest-environment node
+ * @vitest-environment-options { "globals": false }
+ */
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -5,6 +9,8 @@ import { describe, expect, it } from "vitest";
 /**
  * デッドコード削除に関するテスト
  * Issue #415: Knipで検出された未使用ファイルが適切に削除されていることを確認
+ *
+ * このテストはファイルシステムにアクセスするため、Node.js環境で実行されます
  */
 describe("デッドコード削除", () => {
 	describe("未使用ファイルの削除確認", () => {
@@ -17,7 +23,7 @@ describe("デッドコード削除", () => {
 			"src/lib/api/subscriptions/index.ts",
 			"src/types/api.ts",
 			"src/utils/category-mapping.ts",
-		];
+		] as const;
 
 		it.each(filesToBeDeleted)("%s は削除されている必要がある", (filePath) => {
 			const fullPath = path.join(projectRoot, filePath);
@@ -33,8 +39,16 @@ describe("デッドコード削除", () => {
 			try {
 				const headerModule = await import("@/components/layout/Header");
 				expect("default" in headerModule).toBe(false);
-			} catch (_error) {
-				// インポートエラーの場合はスキップ（ファイルが削除されている可能性）
+			} catch (error) {
+				// モジュールが見つからない場合のみスキップ（削除済みファイル）
+				if (
+					error instanceof Error &&
+					error.message.includes("Cannot resolve")
+				) {
+					return; // スキップ
+				}
+				// その他のエラーは再throw
+				throw error;
 			}
 		});
 
@@ -42,8 +56,16 @@ describe("デッドコード削除", () => {
 			try {
 				const dialogModule = await import("@/components/ui/Dialog");
 				expect("default" in dialogModule).toBe(false);
-			} catch (_error) {
-				// インポートエラーの場合はスキップ（ファイルが削除されている可能性）
+			} catch (error) {
+				// モジュールが見つからない場合のみスキップ（削除済みファイル）
+				if (
+					error instanceof Error &&
+					error.message.includes("Cannot resolve")
+				) {
+					return; // スキップ
+				}
+				// その他のエラーは再throw
+				throw error;
 			}
 		});
 	});
@@ -55,7 +77,7 @@ describe("デッドコード削除", () => {
 			{ path: "@/lib/api/client", namedExport: "apiClient" },
 			{ path: "@/lib/api", namedExport: "api" },
 			{ path: "@/lib/logger", namedExport: "logger" },
-		];
+		] as const;
 
 		it.each(modulesWithDuplicateExports)(
 			"$namedExport は名前付きエクスポートのみを持つ（default exportなし）",
@@ -66,8 +88,16 @@ describe("デッドコード削除", () => {
 					expect(module[namedExport]).toBeDefined();
 					// default exportが存在しないこと
 					expect("default" in module).toBe(false);
-				} catch (_error) {
-					// インポートエラーの場合はスキップ
+				} catch (error) {
+					// モジュールが見つからない場合のみスキップ（削除済みファイル）
+					if (
+						error instanceof Error &&
+						error.message.includes("Cannot resolve")
+					) {
+						return; // スキップ
+					}
+					// その他のエラーは再throw
+					throw error;
 				}
 			},
 		);
