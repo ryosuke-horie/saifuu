@@ -2,9 +2,7 @@
 
 import {
 	subscriptionCreateSchema,
-	subscriptionUpdateSchema,
 	transactionCreateSchema,
-	transactionUpdateSchema,
 } from "../../../../shared/src/validation/zod-schemas";
 import type { SubscriptionFormData } from "../../lib/api/types";
 import type { ExpenseFormData } from "../../types/expense";
@@ -58,40 +56,6 @@ export function validateExpenseFormWithZod(data: ExpenseFormData): {
 }
 
 /**
- * 支出フォームデータのバリデーション（更新時）
- */
-export function validateExpenseUpdateFormWithZod(
-	data: Partial<ExpenseFormData>,
-): {
-	success: boolean;
-	errors: Record<string, string>;
-} {
-	const apiData =
-		data.amount !== undefined ||
-		data.type !== undefined ||
-		data.date !== undefined ||
-		data.description !== undefined ||
-		data.categoryId !== undefined
-			? toApiTransactionFormat(data as ExpenseFormData)
-			: {};
-
-	const result = transactionUpdateSchema.safeParse(apiData);
-
-	if (result.success) {
-		return { success: true, errors: {} };
-	}
-
-	// Zodのエラーをフォームエラー形式に変換
-	const errors: Record<string, string> = {};
-	result.error.errors.forEach((zodError) => {
-		const field = zodError.path[0] as string;
-		errors[field] = zodError.message;
-	});
-
-	return { success: false, errors };
-}
-
-/**
  * サブスクリプションフォームデータのバリデーション（作成時）
  */
 export function validateSubscriptionFormWithZod(data: SubscriptionFormData): {
@@ -100,42 +64,6 @@ export function validateSubscriptionFormWithZod(data: SubscriptionFormData): {
 } {
 	const apiData = toApiSubscriptionFormat(data);
 	const result = subscriptionCreateSchema.safeParse(apiData);
-
-	if (result.success) {
-		return { success: true, errors: {} };
-	}
-
-	// Zodのエラーをフォームエラー形式に変換
-	const errors: Record<string, string> = {};
-	result.error.errors.forEach((zodError) => {
-		const field = zodError.path[0] as string;
-		errors[field] = zodError.message;
-	});
-
-	return { success: false, errors };
-}
-
-/**
- * サブスクリプションフォームデータのバリデーション（更新時）
- */
-export function validateSubscriptionUpdateFormWithZod(
-	data: Partial<SubscriptionFormData>,
-): {
-	success: boolean;
-	errors: Record<string, string>;
-} {
-	const apiData =
-		data.name !== undefined ||
-		data.amount !== undefined ||
-		data.billingCycle !== undefined ||
-		data.nextBillingDate !== undefined ||
-		data.categoryId !== undefined ||
-		data.isActive !== undefined ||
-		data.description !== undefined
-			? toApiSubscriptionFormat(data as SubscriptionFormData)
-			: {};
-
-	const result = subscriptionUpdateSchema.safeParse(apiData);
 
 	if (result.success) {
 		return { success: true, errors: {} };
