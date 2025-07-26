@@ -12,7 +12,6 @@ import type {
 	GetSubscriptionsQuery,
 	Subscription,
 	SubscriptionStatsResponse,
-	UpdateSubscriptionRequest,
 } from "../types";
 import { useApiQuery } from "./useApiQuery";
 
@@ -107,76 +106,6 @@ export function useCreateSubscription() {
 }
 
 /**
- * サブスクリプション更新を管理するフック
- */
-export function useUpdateSubscription() {
-	const [state, setState] = useState<BaseState>({
-		isLoading: false,
-		error: null,
-	});
-
-	const updateSubscription = useCallback(
-		async (
-			id: string,
-			data: UpdateSubscriptionRequest,
-		): Promise<Subscription | null> => {
-			setState({ isLoading: true, error: null });
-
-			try {
-				const subscription = await subscriptionService.updateSubscription(
-					id,
-					data,
-				);
-				setState({ isLoading: false, error: null });
-				return subscription;
-			} catch (error) {
-				const apiError = handleApiError(error, "サブスクリプション更新");
-				setState({ isLoading: false, error: apiError.message });
-				return null;
-			}
-		},
-		[],
-	);
-
-	return {
-		...state,
-		updateSubscription,
-	};
-}
-
-/**
- * サブスクリプション削除を管理するフック
- */
-export function useDeleteSubscription() {
-	const [state, setState] = useState<BaseState>({
-		isLoading: false,
-		error: null,
-	});
-
-	const deleteSubscription = useCallback(
-		async (id: string): Promise<boolean> => {
-			setState({ isLoading: true, error: null });
-
-			try {
-				await subscriptionService.deleteSubscription(id);
-				setState({ isLoading: false, error: null });
-				return true;
-			} catch (error) {
-				const apiError = handleApiError(error, "サブスクリプション削除");
-				setState({ isLoading: false, error: apiError.message });
-				return false;
-			}
-		},
-		[],
-	);
-
-	return {
-		...state,
-		deleteSubscription,
-	};
-}
-
-/**
  * サブスクリプション統計を管理するフック
  *
  * useApiQueryを使用してコードの重複を解消し、
@@ -211,56 +140,3 @@ export function useActiveSubscriptions() {
 export function useInactiveSubscriptions() {
 	return useSubscriptions({ isActive: false });
 }
-
-/**
- * サブスクリプション状態切り替えを管理するフック
- */
-export function useToggleSubscriptionStatus() {
-	const [state, setState] = useState<BaseState>({
-		isLoading: false,
-		error: null,
-	});
-
-	const toggleStatus = useCallback(
-		async (id: string, isActive: boolean): Promise<Subscription | null> => {
-			setState({ isLoading: true, error: null });
-
-			try {
-				const subscription = await subscriptionService.toggleSubscriptionStatus(
-					id,
-					isActive,
-				);
-				setState({ isLoading: false, error: null });
-				return subscription;
-			} catch (error) {
-				const apiError = handleApiError(
-					error,
-					"サブスクリプション状態切り替え",
-				);
-				setState({ isLoading: false, error: apiError.message });
-				return null;
-			}
-		},
-		[],
-	);
-
-	return {
-		...state,
-		toggleStatus,
-	};
-}
-
-/**
- * サブスクリプション関連フックの統合オブジェクト
- */
-export const subscriptionHooks = {
-	useSubscriptions,
-	useSubscription,
-	useCreateSubscription,
-	useUpdateSubscription,
-	useDeleteSubscription,
-	useSubscriptionStats,
-	useActiveSubscriptions,
-	useInactiveSubscriptions,
-	useToggleSubscriptionStatus,
-} as const;
