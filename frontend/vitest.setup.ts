@@ -8,13 +8,10 @@ import "@testing-library/jest-dom";
 (globalThis as any).IS_TEST_ENV = true;
 
 // アラート関数をモック化（vitest globalsを使用）
-// windowオブジェクトが存在する場合のみ実行（jsdom環境）
-if (typeof window !== "undefined") {
-	Object.defineProperty(window, "alert", {
-		writable: true,
-		value: vi.fn(),
-	});
-}
+Object.defineProperty(window, "alert", {
+	writable: true,
+	value: vi.fn(),
+});
 
 // process オブジェクトをブラウザ環境で利用可能にする
 if (typeof process === "undefined") {
@@ -29,42 +26,38 @@ if (typeof process === "undefined") {
 }
 
 // window.matchMediaをモック化（レスポンシブテスト用）
-if (typeof window !== "undefined") {
-	Object.defineProperty(window, "matchMedia", {
-		writable: true,
-		value: vi.fn().mockImplementation((query: string) => ({
-			matches: false,
-			media: query,
-			onchange: null,
-			addListener: vi.fn(), // deprecated
-			removeListener: vi.fn(), // deprecated
-			addEventListener: vi.fn(),
-			removeEventListener: vi.fn(),
-			dispatchEvent: vi.fn(),
-		})),
-	});
-}
+Object.defineProperty(window, "matchMedia", {
+	writable: true,
+	value: vi.fn().mockImplementation((query: string) => ({
+		matches: false,
+		media: query,
+		onchange: null,
+		addListener: vi.fn(), // deprecated
+		removeListener: vi.fn(), // deprecated
+		addEventListener: vi.fn(),
+		removeEventListener: vi.fn(),
+		dispatchEvent: vi.fn(),
+	})),
+});
 
 // navigator.clipboardをモック化
 // @testing-library/user-eventとの互換性のため、windowオブジェクトにも設定
-if (typeof navigator !== "undefined" && typeof window !== "undefined") {
-	const clipboardMock = {
-		writeText: vi.fn().mockResolvedValue(undefined),
-		readText: vi.fn().mockResolvedValue(""),
-		write: vi.fn().mockResolvedValue(undefined),
-		read: vi.fn().mockResolvedValue(undefined),
-	};
+const clipboardMock = {
+	writeText: vi.fn().mockResolvedValue(undefined),
+	readText: vi.fn().mockResolvedValue(""),
+	write: vi.fn().mockResolvedValue(undefined),
+	read: vi.fn().mockResolvedValue(undefined),
+};
 
-	Object.defineProperty(navigator, "clipboard", {
-		writable: true,
-		configurable: true,
-		value: clipboardMock,
-	});
+Object.defineProperty(navigator, "clipboard", {
+	writable: true,
+	configurable: true,
+	value: clipboardMock,
+});
 
-	// windowオブジェクトにもclipboardを設定（user-eventが参照する場合があるため）
-	(window as any).navigator = window.navigator || {};
-	(window as any).navigator.clipboard = clipboardMock;
-}
+// windowオブジェクトにもclipboardを設定（user-eventが参照する場合があるため）
+(window as any).navigator = window.navigator || {};
+(window as any).navigator.clipboard = clipboardMock;
 
 // MSWのポリフィルを設定（必要に応じて）
 if (typeof global !== "undefined" && !global.TextEncoder) {
