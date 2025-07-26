@@ -154,44 +154,57 @@ function createCategoryIdSchema(options?: {
 	nullable?: boolean
 }) {
 	// 数値スキーマの定義
-	const numberSchema = 
+	const numberSchema =
 		options?.min !== undefined && options?.max !== undefined
-			? z.number()
+			? z
+					.number()
 					.int()
-					.min(options.min, options.minMessage || `カテゴリIDは${options.min}以上である必要があります`)
-					.max(options.max, options.maxMessage || `カテゴリIDは${options.max}以下である必要があります`)
+					.min(
+						options.min,
+						options.minMessage ||
+							`カテゴリIDは${options.min}以上である必要があります`,
+					)
+					.max(
+						options.max,
+						options.maxMessage ||
+							`カテゴリIDは${options.max}以下である必要があります`,
+					)
 			: z.number().positive('カテゴリIDは正の整数である必要があります')
 
 	// 文字列から数値への変換スキーマ
-	const stringSchema = z.string().transform((val: string, ctx: z.RefinementCtx) => {
-		const num = Number(val)
-		if (Number.isNaN(num)) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				message: 'カテゴリIDは数値である必要があります',
-			})
-			return z.NEVER
-		}
-		
-		// 範囲チェック
-		if (options?.min !== undefined && options?.max !== undefined) {
-			if (num < options.min || num > options.max) {
+	const stringSchema = z
+		.string()
+		.transform((val: string, ctx: z.RefinementCtx) => {
+			const num = Number(val)
+			if (Number.isNaN(num)) {
 				ctx.addIssue({
 					code: z.ZodIssueCode.custom,
-					message: options.minMessage || `カテゴリIDは${options.min}から${options.max}の範囲である必要があります`,
+					message: 'カテゴリIDは数値である必要があります',
 				})
 				return z.NEVER
 			}
-		} else if (num <= 0) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				message: 'カテゴリIDは正の整数である必要があります',
-			})
-			return z.NEVER
-		}
-		
-		return num
-	})
+
+			// 範囲チェック
+			if (options?.min !== undefined && options?.max !== undefined) {
+				if (num < options.min || num > options.max) {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						message:
+							options.minMessage ||
+							`カテゴリIDは${options.min}から${options.max}の範囲である必要があります`,
+					})
+					return z.NEVER
+				}
+			} else if (num <= 0) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: 'カテゴリIDは正の整数である必要があります',
+				})
+				return z.NEVER
+			}
+
+			return num
+		})
 
 	// nullableオプションに基づいて適切なスキーマを返す
 	if (options?.nullable !== false) {
@@ -280,11 +293,13 @@ export const incomeCreateSchema = z.object({
 // 収入更新スキーマ（全フィールドオプショナル）
 export const incomeUpdateSchema = z.object({
 	amount: incomeAmountSchema.optional(),
-	type: z.literal('income', {
-		errorMap: () => ({
-			message: '収入の取引種別はincomeである必要があります',
-		}),
-	}).optional(),
+	type: z
+		.literal('income', {
+			errorMap: () => ({
+				message: '収入の取引種別はincomeである必要があります',
+			}),
+		})
+		.optional(),
 	categoryId: incomeCategoryIdSchema.optional(),
 	// レビューコメント#4対応: 明示的な.optional()を付けて一貫性を改善
 	description: descriptionSchema.optional(),

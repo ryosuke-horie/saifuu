@@ -228,11 +228,11 @@ export function getCategoryOptions(type?: CategoryType): Array<{
  */
 export function getDefaultCategory(type: CategoryType): CategoryConfig {
 	const categories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
-	
+
 	if (categories.length === 0) {
 		throw new Error(`No ${type} categories available`)
 	}
-	
+
 	return categories[0]
 }
 
@@ -266,10 +266,16 @@ export function validateCategoryConfig(): boolean {
 
 	// numericId範囲の妥当性チェック
 	const invalidRanges = ALL_CATEGORIES.filter((category) => {
-		if (category.type === 'expense' && (category.numericId < 1 || category.numericId > 99)) {
+		if (
+			category.type === 'expense' &&
+			(category.numericId < 1 || category.numericId > 99)
+		) {
 			return true
 		}
-		if (category.type === 'income' && (category.numericId < 101 || category.numericId > 199)) {
+		if (
+			category.type === 'income' &&
+			(category.numericId < 101 || category.numericId > 199)
+		) {
 			return true
 		}
 		return false
