@@ -51,6 +51,22 @@ export class NotFoundError extends ApiError {
 }
 
 /**
+ * 不正なリクエストエラー
+ * 400エラーとして処理される
+ *
+ * 使用例: クエリパラメータの値制限、APIの使用方法が不正な場合
+ * 代替案: ValidationErrorとの使い分けを明確にするため、RequestValidationErrorという名前も検討した
+ * 設計意図: フォーム入力のバリデーション（ValidationError）と、API使用方法の誤り（BadRequestError）を区別
+ */
+export class BadRequestError extends ApiError {
+	constructor(message: string) {
+		super(message, 400)
+		this.name = 'BadRequestError'
+		Object.setPrototypeOf(this, BadRequestError.prototype)
+	}
+}
+
+/**
  * データベース関連のエラー
  * 500エラーとして処理される
  */
@@ -141,6 +157,17 @@ export function handleError<T extends { Variables: LoggingVariables }>(
 			error: error.message,
 		}
 		return c.json(response, error.statusCode as 404)
+	}
+
+	// BadRequestErrorの場合
+	if (error instanceof BadRequestError) {
+		logWithContext(c, 'warn', error.message, {
+			resource,
+		})
+		const response: ErrorResponse = {
+			error: error.message,
+		}
+		return c.json(response, error.statusCode as 400)
 	}
 
 	// DatabaseErrorの場合

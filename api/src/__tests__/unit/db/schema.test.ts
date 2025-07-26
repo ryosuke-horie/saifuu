@@ -3,9 +3,7 @@ import {
 	type NewSubscription,
 	type NewTransaction,
 	type Subscription,
-	subscriptions,
 	type Transaction,
-	transactions,
 } from '../../../db/schema'
 
 /**
