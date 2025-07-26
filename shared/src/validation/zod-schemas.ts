@@ -230,8 +230,8 @@ export const transactionTypeSchema = z.enum(['expense', 'income'], {
 export const incomeCategoryIdSchema = createCategoryIdSchema({
 	min: 101,
 	max: 105,
-	minMessage: '収入カテゴリIDは101から105の範囲である必要があります',
-	maxMessage: '収入カテゴリIDは101から105の範囲である必要があります',
+	minMessage: '収入カテゴリは101-105の範囲で指定してください',
+	maxMessage: '収入カテゴリは101-105の範囲で指定してください',
 	nullable: false,
 })
 
@@ -239,13 +239,7 @@ export const incomeCategoryIdSchema = createCategoryIdSchema({
 // レビューコメント#5対応: positive()とmin()の重複を解消してパフォーマンス改善
 export const incomeAmountSchema = z
 	.number()
-	.min(
-		VALIDATION_LIMITS.MIN_AMOUNT,
-		// MIN_AMOUNTが1以上の場合、positive()チェックは不要
-		VALIDATION_LIMITS.MIN_AMOUNT > 0
-			? `収入金額は${VALIDATION_LIMITS.MIN_AMOUNT}円以上である必要があります`
-			: '収入金額は0より大きい必要があります',
-	)
+	.positive('収入金額は0より大きい必要があります')
 	.max(
 		VALIDATION_LIMITS.MAX_AMOUNT,
 		`収入金額は${VALIDATION_LIMITS.MAX_AMOUNT}円以下である必要があります`,

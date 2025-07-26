@@ -30,9 +30,16 @@ interface ErrorResponse {
 	}>
 }
 
-// logWithContextのモック
+// logWithContext、getLogger、getRequestIdのモック
 vi.mock('../../middleware/logging', () => ({
 	logWithContext: vi.fn(),
+	getLogger: vi.fn(() => ({
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn(),
+		debug: vi.fn(),
+	})),
+	getRequestId: vi.fn(() => 'test-request-id'),
 }))
 
 describe('Transactions API with Zod - Unit Tests', () => {
@@ -192,11 +199,30 @@ describe('Transactions API with Zod - Unit Tests', () => {
 		})
 
 		it('should validate update data with Zod', async () => {
+			// まず取引を作成
+			const createData = {
+				amount: 1000,
+				type: 'expense',
+				categoryId: 1,
+				description: 'テスト取引',
+				date: '2024-01-01',
+			}
+
+			const createResponse = await app.request('/api/transactions', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(createData),
+			})
+
+			const created = (await createResponse.json()) as TransactionResponse
+			const transactionId = created.id
+
+			// 無効なデータで更新を試みる
 			const invalidUpdate = {
 				amount: 10_000_001, // 上限を超える
 			}
 
-			const response = await app.request('/api/transactions/1', {
+			const response = await app.request(`/api/transactions/${transactionId}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(invalidUpdate),

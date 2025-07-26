@@ -445,7 +445,7 @@ export function createCrudHandlers<
 					operationType: 'delete',
 				})
 
-				return c.json({ message: `${resourceNameCapitalized} deleted successfully` })
+				return c.body(null, 204)
 			} catch (error) {
 				logWithContext(c, 'error', `${resourceName}削除でエラーが発生`, {
 					[`${resourceName}Id`]: id,
