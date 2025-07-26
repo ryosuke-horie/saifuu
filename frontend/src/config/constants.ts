@@ -34,7 +34,7 @@ export const API_CONFIG = {
 /**
  * UI関連の定数
  */
-export const UI_CONFIG = {
+const _UI_CONFIG = {
 	/**
 	 * トーストメッセージの表示時間（ミリ秒）
 	 */
@@ -55,7 +55,7 @@ export const UI_CONFIG = {
 /**
  * バリデーション関連の定数
  */
-export const VALIDATION_CONFIG = {
+const _VALIDATION_CONFIG = {
 	/**
 	 * 最大金額（円）
 	 */
