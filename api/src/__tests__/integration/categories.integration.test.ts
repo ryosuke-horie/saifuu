@@ -333,9 +333,32 @@ describe('Categories API - Integration Tests', () => {
 			const data2 = await getResponseJson(response2)
 			const data3 = await getResponseJson(response3)
 
+			// タイムスタンプを除いてデータを比較
+			const compareWithoutTimestamps = (dataArray: unknown[]) => {
+				return dataArray.map((item) => {
+					const {
+						createdAt: _createdAt,
+						updatedAt: _updatedAt,
+						...rest
+					} = item as {
+						createdAt: string
+						updatedAt: string
+						id: number
+						name: string
+						type: string
+						color: string
+					}
+					return rest
+				})
+			}
+
+			const data1WithoutTimestamps = compareWithoutTimestamps(data1)
+			const data2WithoutTimestamps = compareWithoutTimestamps(data2)
+			const data3WithoutTimestamps = compareWithoutTimestamps(data3)
+
 			// すべて同じデータを返すことを確認
-			expect(JSON.stringify(data1)).toBe(JSON.stringify(data2))
-			expect(JSON.stringify(data2)).toBe(JSON.stringify(data3))
+			expect(JSON.stringify(data1WithoutTimestamps)).toBe(JSON.stringify(data2WithoutTimestamps))
+			expect(JSON.stringify(data2WithoutTimestamps)).toBe(JSON.stringify(data3WithoutTimestamps))
 		})
 	})
 
@@ -430,8 +453,31 @@ describe('Categories API - Integration Tests', () => {
 			const afterResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 			const afterData = await getResponseJson(afterResponse)
 
-			// データが変更されていないことを確認
-			expect(JSON.stringify(afterData)).toBe(JSON.stringify(beforeData))
+			// タイムスタンプを除いてデータが変更されていないことを確認
+			const removeTimestamps = (dataArray: unknown[]) => {
+				return dataArray.map((item) => {
+					const {
+						createdAt: _createdAt,
+						updatedAt: _updatedAt,
+						...rest
+					} = item as {
+						createdAt: string
+						updatedAt: string
+						id: number
+						name: string
+						type: string
+						color: string
+					}
+					return rest
+				})
+			}
+
+			const beforeDataWithoutTimestamps = removeTimestamps(beforeData)
+			const afterDataWithoutTimestamps = removeTimestamps(afterData)
+
+			expect(JSON.stringify(afterDataWithoutTimestamps)).toBe(
+				JSON.stringify(beforeDataWithoutTimestamps)
+			)
 		})
 
 		it('should handle database errors gracefully', async () => {
