@@ -74,7 +74,6 @@ export type {
 	LogSendResult,
 	LogTransformer,
 	NetworkInfo,
-	PerformanceMetrics,
 	SessionInfo,
 } from "./types";
 
