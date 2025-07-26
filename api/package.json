@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "hono": "^4.8.3",
-    "zod": "^4.0.7"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.6",
