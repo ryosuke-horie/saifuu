@@ -2,7 +2,13 @@ import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { type AnyDatabase, type Env } from '../db'
 import { type NewTransaction, type Transaction, transactions } from '../db/schema'
-import { errorHandler, handleError, NotFoundError, ValidationError } from '../lib/error-handler'
+import {
+	BadRequestError,
+	errorHandler,
+	handleError,
+	NotFoundError,
+	ValidationError,
+} from '../lib/error-handler'
 import { createRequestLogger } from '../lib/logger'
 import { createCrudHandlers } from '../lib/route-factory'
 import { type LoggingVariables } from '../middleware/logging'
@@ -42,7 +48,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 		validateUpdate: (data: unknown) =>
 			validateTransactionUpdateWithZod(data as Partial<NewTransaction>),
 		validateId: validateIdWithZod,
-		transformData: addCategoryInfo,
+		transformData: addCategoryInfo as (data: any[]) => any[],
 		testDatabase: options.testDatabase,
 	})
 
@@ -73,9 +79,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 					validationError: 'invalid_type_filter',
 					providedType: type,
 				})
-				throw new ValidationError('Invalid type filter. Only "expense" is allowed', [
-					{ field: 'type', message: 'Only "expense" is allowed' },
-				])
+				throw new BadRequestError('Invalid type filter. Only "expense" is allowed')
 			}
 
 			const categoryId = query.categoryId ? Number.parseInt(query.categoryId) : undefined
@@ -112,7 +116,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 			}
 
 			// カテゴリ情報を設定ファイルから補完
-			const resultWithCategories = addCategoryInfo(result)
+			const resultWithCategories = addCategoryInfo(result) as TransactionWithCategory<Transaction>[]
 
 			requestLogger.success({
 				transactionsCount: resultWithCategories.length,
