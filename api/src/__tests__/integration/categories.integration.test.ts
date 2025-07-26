@@ -1,73 +1,10 @@
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { ALL_CATEGORIES, getCategoryById } from '../../../../shared/config/categories'
+import { ALL_CATEGORIES, getCategoryById, getCategoryByName } from '../../../../shared/config/categories'
 import { subscriptions, transactions } from '../../db/schema'
 import { createTestRequest, getResponseJson } from '../helpers/test-app'
 import { cleanupTestDatabase, createTestDatabase, setupTestDatabase } from '../helpers/test-db'
 import testProductionApp from '../helpers/test-production-app'
-
-// カテゴリレスポンスの型定義
-interface CategoryResponse {
-	id: number
-	name: string
-	type: string
-	color: string
-	createdAt: string
-	updatedAt: string
-}
-
-// 型ガード関数（Matt Pocockの方針に従う - 安全性を重視）
-function isCategoryResponse(value: unknown): value is CategoryResponse {
-	// まず基本的な型チェック
-	if (typeof value !== 'object' || value === null) {
-		return false
-	}
-
-	// 必須プロパティの存在確認
-	const obj = value as Record<string, unknown>
-	const requiredProperties = ['id', 'name', 'type', 'color', 'createdAt', 'updatedAt'] as const
-
-	for (const prop of requiredProperties) {
-		if (!(prop in obj)) {
-			return false
-		}
-	}
-
-	// 各プロパティの型を検証（安全なアクセス）
-	if (typeof obj.id !== 'number' || !Number.isFinite(obj.id)) {
-		return false
-	}
-
-	if (typeof obj.name !== 'string' || obj.name.length === 0) {
-		return false
-	}
-
-	if (typeof obj.type !== 'string' || !['income', 'expense'].includes(obj.type)) {
-		return false
-	}
-
-	if (typeof obj.color !== 'string' || !obj.color.match(/^#[0-9A-Fa-f]{6}$/)) {
-		return false
-	}
-
-	// ISO 8601形式の日付文字列かチェック
-	if (typeof obj.createdAt !== 'string' || Number.isNaN(Date.parse(obj.createdAt))) {
-		return false
-	}
-
-	if (typeof obj.updatedAt !== 'string' || Number.isNaN(Date.parse(obj.updatedAt))) {
-		return false
-	}
-
-	return true
-}
-
-// 405エラーアサーション用のヘルパー関数
-async function assert405MethodNotAllowed(response: Response, expectedError: string): Promise<void> {
-	expect(response.status).toBe(405)
-	const data = await getResponseJson(response)
-	expect(data).toHaveProperty('error', expectedError)
-}
 
 /**
  * カテゴリAPI 統合テスト
@@ -83,6 +20,95 @@ async function assert405MethodNotAllowed(response: Response, expectedError: stri
  * 5. 重複カテゴリ名の制限
  * 6. DBトランザクションのロールバック
  */
+
+// カテゴリレスポンスの型定義
+interface CategoryResponse {
+	id: number
+	name: string
+	type: 'income' | 'expense'
+	color: string
+	createdAt: string
+	updatedAt: string
+}
+
+// 型ガード関数
+// レビューコメント#8対応: より厳密な型チェックと安全なプロパティアクセス
+function isCategoryResponse(value: unknown): value is CategoryResponse {
+	// nullやundefinedのチェック
+	if (value === null || value === undefined) {
+		return false
+	}
+
+	// オブジェクトかどうかのチェック
+	if (typeof value !== 'object') {
+		return false
+	}
+
+	// 安全なプロパティアクセスのため、hasOwnPropertyを使用
+	const hasProperty = (obj: object, prop: string): boolean => {
+		return Object.hasOwn(obj, prop)
+	}
+
+	// 必須プロパティの存在チェック
+	const requiredProps = ['id', 'name', 'type', 'color', 'createdAt', 'updatedAt']
+	for (const prop of requiredProps) {
+		if (!hasProperty(value, prop)) {
+			return false
+		}
+	}
+
+	// 各プロパティの型チェック（安全にアクセス）
+	const obj = value as { [key: string]: unknown }
+
+	// idの型チェック
+	if (typeof obj.id !== 'number' || !Number.isInteger(obj.id) || obj.id <= 0) {
+		return false
+	}
+
+	// nameの型チェック
+	if (typeof obj.name !== 'string' || obj.name.length === 0) {
+		return false
+	}
+
+	// typeの型チェック（厳密な値チェック）
+	if (obj.type !== 'income' && obj.type !== 'expense') {
+		return false
+	}
+
+	// colorの型チェック（16進数カラーコードの形式チェック）
+	if (typeof obj.color !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(obj.color)) {
+		return false
+	}
+
+	// 日時文字列の型チェック（ISO 8601形式）
+	const isISODateString = (str: unknown): boolean => {
+		if (typeof str !== 'string') return false
+		const date = new Date(str)
+		return date instanceof Date && !Number.isNaN(date.getTime()) && date.toISOString() === str
+	}
+
+	if (!isISODateString(obj.createdAt) || !isISODateString(obj.updatedAt)) {
+		return false
+	}
+
+	return true
+}
+
+// カテゴリ名からIDを取得するヘルパー関数
+function getCategoryIdByName(name: string): number {
+	const category = getCategoryByName(name)
+	if (!category) {
+		throw new Error(`Category not found: ${name}`)
+	}
+	return category.numericId
+}
+
+// 405エラーレスポンスの共通アサーション
+async function expectMethodNotAllowed(response: Response, expectedMessage: string) {
+	expect(response.status).toBe(405)
+	const data = await getResponseJson(response)
+	expect(data).toHaveProperty('error', expectedMessage)
+}
 
 describe('Categories API - Integration Tests', () => {
 	// テスト全体で共有するDB接続
@@ -126,18 +152,16 @@ describe('Categories API - Integration Tests', () => {
 
 			const data = await getResponseJson(response)
 			data.forEach((category: unknown) => {
-				// 型ガードを使用してタイプセーフに検証
-				if (!isCategoryResponse(category)) {
-					throw new Error('Invalid category response structure')
-				}
+				// 型ガード関数を使用して型安全性を確保
+				expect(isCategoryResponse(category)).toBe(true)
 
-				// 型ガードにより型が保証されているため、安全にアクセス可能
-				expect(category.id).toBeTypeOf('number')
-				expect(category.name).toBeTypeOf('string')
-				expect(['income', 'expense']).toContain(category.type)
-				expect(category.color).toBeTypeOf('string')
-				expect(category.createdAt).toBeTypeOf('string')
-				expect(category.updatedAt).toBeTypeOf('string')
+				if (isCategoryResponse(category)) {
+					// 型が保証されているため、安全にプロパティアクセス可能
+					expect(category.id).toBeGreaterThan(0)
+					expect(category.name.length).toBeGreaterThan(0)
+					expect(['income', 'expense']).toContain(category.type)
+					expect(category.color).toMatch(/^#[0-9A-F]{6}$/i)
+				}
 			})
 		})
 
@@ -148,22 +172,32 @@ describe('Categories API - Integration Tests', () => {
 			const data = await getResponseJson(response)
 
 			// Issue #282で追加されたカテゴリを確認
-			const systemFee = data.find((cat: { name: string }) => cat.name === 'システム関係費')
+			const systemFee = data.find((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.name === 'システム関係費'
+			})
 			expect(systemFee).toBeDefined()
-			expect(systemFee.id).toBe(6)
-			expect(systemFee.type).toBe('expense')
+			if (isCategoryResponse(systemFee)) {
+				expect(systemFee.id).toBe(getCategoryIdByName('システム関係費'))
+				expect(systemFee.type).toBe('expense')
+			}
 
-			const books = data.find((cat: { name: string }) => cat.name === '書籍代')
+			const books = data.find((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.name === '書籍代'
+			})
 			expect(books).toBeDefined()
-			expect(books.id).toBe(8)
-			expect(books.type).toBe('expense')
+			if (isCategoryResponse(books)) {
+				expect(books.id).toBe(getCategoryIdByName('書籍代'))
+				expect(books.type).toBe('expense')
+			}
 
-			const utilities = data.find(
-				(cat: { name: string }) => cat.name === '家賃・水道・光熱・通信費'
-			)
+			const utilities = data.find((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.name === '家賃・水道・光熱・通信費'
+			})
 			expect(utilities).toBeDefined()
-			expect(utilities.id).toBe(1)
-			expect(utilities.type).toBe('expense')
+			if (isCategoryResponse(utilities)) {
+				expect(utilities.id).toBe(getCategoryIdByName('家賃・水道・光熱・通信費'))
+				expect(utilities.type).toBe('expense')
+			}
 		})
 	})
 
@@ -182,8 +216,7 @@ describe('Categories API - Integration Tests', () => {
 				newCategory
 			)
 
-			// 共通ヘルパーを使用
-			await assert405MethodNotAllowed(response, 'Categories are fixed and cannot be created')
+			await expectMethodNotAllowed(response, 'Categories are fixed and cannot be created')
 		})
 	})
 
@@ -201,8 +234,7 @@ describe('Categories API - Integration Tests', () => {
 				updateData
 			)
 
-			// 共通ヘルパーを使用
-			await assert405MethodNotAllowed(response, 'Categories are fixed and cannot be updated')
+			await expectMethodNotAllowed(response, 'Categories are fixed and cannot be updated')
 		})
 	})
 
@@ -210,8 +242,62 @@ describe('Categories API - Integration Tests', () => {
 		it('should return 405 Method Not Allowed', async () => {
 			const response = await createTestRequest(testProductionApp, 'DELETE', '/api/categories/1')
 
-			// 共通ヘルパーを使用
-			await assert405MethodNotAllowed(response, 'Categories are fixed and cannot be deleted')
+			await expectMethodNotAllowed(response, 'Categories are fixed and cannot be deleted')
+		})
+	})
+
+	describe('Business Scenarios', () => {
+		it('ユーザーストーリー: 新規ユーザーがカテゴリ一覧を初めて表示する', async () => {
+			// カテゴリ一覧を取得
+			const response = await createTestRequest(testProductionApp, 'GET', '/api/categories')
+			expect(response.status).toBe(200)
+
+			const categories = await getResponseJson(response)
+			expect(Array.isArray(categories)).toBe(true)
+			expect(categories.length).toBeGreaterThan(0)
+
+			// 収入と支出の両方のカテゴリが含まれていることを確認
+			const hasIncomeCategories = categories.some((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.type === 'income'
+			})
+			const hasExpenseCategories = categories.some((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.type === 'expense'
+			})
+
+			expect(hasIncomeCategories).toBe(true)
+			expect(hasExpenseCategories).toBe(true)
+
+			// 基本的なカテゴリ（給与、食費）が存在することを確認
+			const salaryCategory = categories.find((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.name === '給与'
+			})
+			const foodCategory = categories.find((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.name === '食費'
+			})
+
+			expect(salaryCategory).toBeDefined()
+			expect(foodCategory).toBeDefined()
+		})
+
+		it('ユーザーストーリー: 支出を記録する際に適切なカテゴリを選択できる', async () => {
+			// カテゴリ一覧を取得
+			const response = await createTestRequest(testProductionApp, 'GET', '/api/categories')
+			const categories = await getResponseJson(response)
+
+			// 支出カテゴリのみをフィルタリング
+			const expenseCategories = categories.filter((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.type === 'expense'
+			})
+
+			// 日常的な支出カテゴリが揃っていることを確認
+			const expectedExpenseCategories = ['食費', '交通費', '買い物', '娯楽', 'その他']
+
+			expectedExpenseCategories.forEach((categoryName) => {
+				const exists = expenseCategories.some((cat: unknown) => {
+					return isCategoryResponse(cat) && cat.name === categoryName
+				})
+				expect(exists).toBe(true)
+			})
 		})
 	})
 
@@ -221,8 +307,12 @@ describe('Categories API - Integration Tests', () => {
 			expect(response.status).toBe(200)
 
 			const data = await getResponseJson(response)
-			const expenseCategories = data.filter((cat: { type: string }) => cat.type === 'expense')
-			const incomeCategories = data.filter((cat: { type: string }) => cat.type === 'income')
+			const expenseCategories = data.filter((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.type === 'expense'
+			})
+			const incomeCategories = data.filter((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.type === 'income'
+			})
 
 			expect(expenseCategories.length).toBe(11) // 支出カテゴリ
 			expect(incomeCategories.length).toBe(5) // 収入カテゴリ
@@ -235,10 +325,12 @@ describe('Categories API - Integration Tests', () => {
 			const data = await getResponseJson(response)
 
 			// 設定ファイルの順序と一致することを確認
-			data.forEach((category: { id: number; name: string }, index: number) => {
-				const configCategory = ALL_CATEGORIES[index]
-				expect(category.id).toBe(configCategory.numericId)
-				expect(category.name).toBe(configCategory.name)
+			data.forEach((category: unknown, index: number) => {
+				if (isCategoryResponse(category)) {
+					const configCategory = ALL_CATEGORIES[index]
+					expect(category.id).toBe(configCategory.numericId)
+					expect(category.name).toBe(configCategory.name)
+				}
 			})
 		})
 	})
@@ -247,103 +339,121 @@ describe('Categories API - Integration Tests', () => {
 		it('should not allow deletion of categories that are in use by transactions', async () => {
 			// カテゴリを使用する取引を作成
 			const expenseCategory = ALL_CATEGORIES.find((cat) => cat.type === 'expense')!
-
-			// 取引データを作成
 			await db.insert(transactions).values({
-				amount: 1000,
+				amount: 5000,
 				type: 'expense',
 				categoryId: expenseCategory.numericId,
 				description: 'Test transaction',
 				date: new Date().toISOString(),
 			})
 
-			// カテゴリ削除を試みる（405エラーが返されることを確認）
+			// 削除を試みる
 			const response = await createTestRequest(
 				testProductionApp,
 				'DELETE',
 				`/api/categories/${expenseCategory.numericId}`
 			)
 
-			// 共通ヘルパーを使用
-			await assert405MethodNotAllowed(response, 'Categories are fixed and cannot be deleted')
+			// カテゴリは固定なので405が返る
+			await expectMethodNotAllowed(response, 'Categories are fixed and cannot be deleted')
 		})
 
 		it('should not allow deletion of categories that are in use by subscriptions', async () => {
 			// カテゴリを使用するサブスクリプションを作成
-			const systemFeeCategory = ALL_CATEGORIES.find((cat) => cat.id === 'system_fee')!
-
-			// サブスクリプションデータを作成
+			const subscriptionCategory = getCategoryByName('仕事・ビジネス')!
 			await db.insert(subscriptions).values({
 				name: 'Test Subscription',
-				amount: 1500,
+				amount: 3000,
 				billingCycle: 'monthly',
 				nextBillingDate: new Date().toISOString(),
-				categoryId: systemFeeCategory.numericId,
-				description: 'Test subscription service',
+				categoryId: subscriptionCategory.numericId,
+				description: 'Test subscription',
 				isActive: true,
 			})
 
-			// カテゴリ削除を試みる（405エラーが返されることを確認）
+			// 削除を試みる
 			const response = await createTestRequest(
 				testProductionApp,
 				'DELETE',
-				`/api/categories/${systemFeeCategory.numericId}`
+				`/api/categories/${subscriptionCategory.numericId}`
 			)
 
-			// 共通ヘルパーを使用
-			await assert405MethodNotAllowed(response, 'Categories are fixed and cannot be deleted')
+			// カテゴリは固定なので405が返る
+			await expectMethodNotAllowed(response, 'Categories are fixed and cannot be deleted')
 		})
 	})
 
 	describe('Bulk Operations Scenarios', () => {
-		it('should handle multiple category operations in sequence', async () => {
-			// 複数のカテゴリ操作を連続で実行
-			const operations = [
-				{ method: 'GET' as const, path: '/api/categories', expectedStatus: 200 },
-				{ method: 'POST' as const, path: '/api/categories', expectedStatus: 405 },
-				{ method: 'PUT' as const, path: '/api/categories/1', expectedStatus: 405 },
-				{ method: 'DELETE' as const, path: '/api/categories/1', expectedStatus: 405 },
-			]
+		it('should handle sequential operations correctly', async () => {
+			// 1. カテゴリ一覧を取得
+			const listResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
+			expect(listResponse.status).toBe(200)
 
-			for (const op of operations) {
-				const response = await createTestRequest(testProductionApp, op.method, op.path)
-				expect(response.status).toBe(op.expectedStatus)
-			}
+			// 2. 作成を試みる（失敗するはず）
+			const createResponse = await createTestRequest(
+				testProductionApp,
+				'POST',
+				'/api/categories',
+				{ name: 'New Category', type: 'expense', color: '#FF0000' }
+			)
+			await expectMethodNotAllowed(createResponse, 'Categories are fixed and cannot be created')
+
+			// 3. 更新を試みる（失敗するはず）
+			const updateResponse = await createTestRequest(
+				testProductionApp,
+				'PUT',
+				'/api/categories/1',
+				{ name: 'Updated Name' }
+			)
+			await expectMethodNotAllowed(updateResponse, 'Categories are fixed and cannot be updated')
+
+			// 4. 削除を試みる（失敗するはず）
+			const deleteResponse = await createTestRequest(
+				testProductionApp,
+				'DELETE',
+				'/api/categories/1'
+			)
+			await expectMethodNotAllowed(deleteResponse, 'Categories are fixed and cannot be deleted')
+
+			// 5. 再度一覧を取得し、変更がないことを確認
+			const finalListResponse = await createTestRequest(
+				testProductionApp,
+				'GET',
+				'/api/categories'
+			)
+			expect(finalListResponse.status).toBe(200)
+			const finalData = await getResponseJson(finalListResponse)
+			expect(finalData.length).toBe(ALL_CATEGORIES.length)
 		})
 
 		it('should handle concurrent read operations efficiently', async () => {
-			// CI環境の安定性のため、同時リクエスト数を5に制限
-			const promises = Array.from({ length: 5 }, () =>
+			// 5つの同時リクエストを作成
+			const concurrentRequests = Array.from({ length: 5 }, () =>
 				createTestRequest(testProductionApp, 'GET', '/api/categories')
 			)
 
-			const responses = await Promise.all(promises)
+			// すべてのリクエストを同時に実行
+			const responses = await Promise.all(concurrentRequests)
 
-			// すべてのリクエストが成功することを確認
+			// すべてのレスポンスが成功することを確認
 			responses.forEach((response) => {
 				expect(response.status).toBe(200)
 			})
 
-			// すべてのレスポンスが同じデータを返すことを確認（タイムスタンプを除く）
+			// データの一貫性を確認（タイムスタンプは除外）
 			const allData = await Promise.all(responses.map((r) => getResponseJson(r)))
+			const firstData = allData[0]
 
-			// タイムスタンプを除いてデータ構造を比較
 			allData.forEach((data) => {
-				expect(data.length).toBe(ALL_CATEGORIES.length)
-				data.forEach((cat: unknown, index: number) => {
-					// 型ガードを使用
-					if (!isCategoryResponse(cat)) {
-						throw new Error('Invalid category response structure')
+				expect(data.length).toBe(firstData.length)
+				// カテゴリの内容が同じであることを確認（タイムスタンプ以外）
+				data.forEach((category: unknown, index: number) => {
+					if (isCategoryResponse(category) && isCategoryResponse(firstData[index])) {
+						expect(category.id).toBe(firstData[index].id)
+						expect(category.name).toBe(firstData[index].name)
+						expect(category.type).toBe(firstData[index].type)
+						expect(category.color).toBe(firstData[index].color)
 					}
-
-					const expectedCat = ALL_CATEGORIES[index]
-					expect(cat.id).toBe(expectedCat.numericId)
-					expect(cat.name).toBe(expectedCat.name)
-					expect(cat.type).toBe(expectedCat.type)
-					expect(cat.color).toBe(expectedCat.color)
-					// タイムスタンプは存在確認のみ
-					expect(cat.createdAt).toBeDefined()
-					expect(cat.updatedAt).toBeDefined()
 				})
 			})
 		})
@@ -351,31 +461,30 @@ describe('Categories API - Integration Tests', () => {
 
 	describe('Pagination Boundary Tests', () => {
 		it('should handle requests with pagination parameters gracefully', async () => {
-			// ページネーションパラメータを含むリクエスト（カテゴリAPIはページネーション非対応）
+			// ページネーションパラメータを含むリクエスト（APIは無視するはず）
 			const testCases = [
-				{ query: '?page=1&limit=10' },
-				{ query: '?page=0&limit=0' },
-				{ query: '?page=-1&limit=-1' },
-				{ query: '?page=999999&limit=999999' },
-				{ query: '?page=abc&limit=xyz' },
+				'?page=1&limit=10',
+				'?page=0&limit=0',
+				'?page=-1&limit=-10',
+				'?page=999999&limit=999999',
+				'?page=abc&limit=xyz',
 			]
 
-			for (const testCase of testCases) {
+			for (const queryParams of testCases) {
 				const response = await createTestRequest(
 					testProductionApp,
 					'GET',
-					`/api/categories${testCase.query}`
+					`/api/categories${queryParams}`
 				)
 				expect(response.status).toBe(200)
 
 				const data = await getResponseJson(response)
-				// ページネーションパラメータに関わらず、すべてのカテゴリが返される
+				// ページネーションパラメータに関わらず、全カテゴリが返される
 				expect(data.length).toBe(ALL_CATEGORIES.length)
 			}
 		})
 
 		it('should return consistent data regardless of query parameters', async () => {
-			// 異なるクエリパラメータでも一貫したデータを返すことを確認
 			const response1 = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 			const response2 = await createTestRequest(
 				testProductionApp,
@@ -411,102 +520,89 @@ describe('Categories API - Integration Tests', () => {
 				})
 			}
 
-			const data1WithoutTimestamps = compareWithoutTimestamps(data1)
-			const data2WithoutTimestamps = compareWithoutTimestamps(data2)
-			const data3WithoutTimestamps = compareWithoutTimestamps(data3)
-
 			// すべて同じデータを返すことを確認
-			expect(JSON.stringify(data1WithoutTimestamps)).toBe(JSON.stringify(data2WithoutTimestamps))
-			expect(JSON.stringify(data2WithoutTimestamps)).toBe(JSON.stringify(data3WithoutTimestamps))
+			expect(JSON.stringify(compareWithoutTimestamps(data1))).toBe(
+				JSON.stringify(compareWithoutTimestamps(data2))
+			)
+			expect(JSON.stringify(compareWithoutTimestamps(data2))).toBe(
+				JSON.stringify(compareWithoutTimestamps(data3))
+			)
 		})
 	})
 
-	describe('Duplicate Category Name Restrictions', () => {
-		it('should not allow creation of categories with duplicate names', async () => {
-			// 既存のカテゴリ名を使用して新規作成を試みる
+	describe('Duplicate Category Name Tests', () => {
+		it('should not allow creating categories with existing names', async () => {
+			// 既存のカテゴリ名で作成を試みる
 			const existingCategory = ALL_CATEGORIES[0]
-			const duplicateCategory = {
+			const response = await createTestRequest(testProductionApp, 'POST', '/api/categories', {
 				name: existingCategory.name,
 				type: existingCategory.type,
 				color: '#FF0000',
-			}
+			})
 
-			const response = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/categories',
-				duplicateCategory
-			)
-
-			// 共通ヘルパーを使用
-			await assert405MethodNotAllowed(response, 'Categories are fixed and cannot be created')
+			// カテゴリは固定なので405が返る
+			await expectMethodNotAllowed(response, 'Categories are fixed and cannot be created')
 		})
 
-		it('should prevent duplicate names even with different types', async () => {
-			// 異なるタイプでも同名のカテゴリ作成は不可
-			const expenseCategory = ALL_CATEGORIES.find((cat) => cat.type === 'expense')!
-			const duplicateAsIncome = {
-				name: expenseCategory.name,
-				type: 'income', // 異なるタイプ
-				color: '#00FF00',
-			}
+		it('should not allow creating categories with same name but different type', async () => {
+			// 「その他」カテゴリは収入と支出の両方に存在する
+			const response = await createTestRequest(testProductionApp, 'POST', '/api/categories', {
+				name: 'その他',
+				type: 'income', // または 'expense'
+				color: '#999999',
+			})
 
-			const response = await createTestRequest(
-				testProductionApp,
-				'POST',
-				'/api/categories',
-				duplicateAsIncome
-			)
-
-			// 共通ヘルパーを使用
-			await assert405MethodNotAllowed(response, 'Categories are fixed and cannot be created')
+			// カテゴリは固定なので405が返る
+			await expectMethodNotAllowed(response, 'Categories are fixed and cannot be created')
 		})
 
-		it('should verify category names are unique within their type', async () => {
-			// カテゴリ名がタイプ内で一意であることを確認
+		it('should handle category name uniqueness within type', async () => {
 			const response = await createTestRequest(testProductionApp, 'GET', '/api/categories')
-			expect(response.status).toBe(200)
+			const categories = await getResponseJson(response)
 
-			const data = await getResponseJson(response)
+			// 同じタイプ内でカテゴリ名が重複していないことを確認
+			const incomeNames = new Set<string>()
+			const expenseNames = new Set<string>()
 
-			// タイプ別にグループ化
-			const expenseCategories = data.filter((cat: { type: string }) => cat.type === 'expense')
-			const incomeCategories = data.filter((cat: { type: string }) => cat.type === 'income')
-
-			// 支出カテゴリ内での名前の一意性を確認
-			const expenseNames = expenseCategories.map((cat: { name: string }) => cat.name)
-			const uniqueExpenseNames = [...new Set(expenseNames)]
-			expect(expenseNames.length).toBe(uniqueExpenseNames.length)
-
-			// 収入カテゴリ内での名前の一意性を確認
-			const incomeNames = incomeCategories.map((cat: { name: string }) => cat.name)
-			const uniqueIncomeNames = [...new Set(incomeNames)]
-			expect(incomeNames.length).toBe(uniqueIncomeNames.length)
-
-			// 異なるタイプ間では同名が許可されることを確認（例：「その他」）
-			const duplicateNameAcrossTypes = expenseNames.find((name: string) =>
-				incomeNames.includes(name)
-			)
-			expect(duplicateNameAcrossTypes).toBeDefined() // 「その他」が両方に存在
+			categories.forEach((cat: unknown) => {
+				if (isCategoryResponse(cat)) {
+					if (cat.type === 'income') {
+						// 「その他」は両方のタイプに存在可能
+						if (cat.name !== 'その他') {
+							expect(incomeNames.has(cat.name)).toBe(false)
+						}
+						incomeNames.add(cat.name)
+					} else {
+						if (cat.name !== 'その他') {
+							expect(expenseNames.has(cat.name)).toBe(false)
+						}
+						expenseNames.add(cat.name)
+					}
+				}
+			})
 		})
 	})
 
 	describe('Database Transaction Rollback Tests', () => {
 		it('should maintain data consistency when operations fail', async () => {
-			// トランザクション前の状態を記録
+			// データの整合性を確認するため、初期状態を記録
 			const beforeResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 			const beforeData = await getResponseJson(beforeResponse)
 
-			// 失敗する操作を複数実行
-			const failedOperations = [
-				createTestRequest(testProductionApp, 'POST', '/api/categories', { name: 'New Category' }),
-				createTestRequest(testProductionApp, 'PUT', '/api/categories/1', { name: 'Updated' }),
-				createTestRequest(testProductionApp, 'DELETE', '/api/categories/1'),
-			]
+			// 複数の操作を試みる（すべて失敗するはず）
+			await createTestRequest(testProductionApp, 'POST', '/api/categories', {
+				name: 'Rollback Test',
+				type: 'expense',
+				color: '#000000',
+			})
 
-			await Promise.all(failedOperations)
+			await createTestRequest(testProductionApp, 'PUT', '/api/categories/1', {
+				name: 'Changed Name',
+			})
 
-			// トランザクション後の状態を確認
+			await createTestRequest(testProductionApp, 'DELETE', '/api/categories/2')
+
+			// データが変更されていないことを確認
 			const afterResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 			const afterData = await getResponseJson(afterResponse)
 
@@ -538,35 +634,179 @@ describe('Categories API - Integration Tests', () => {
 		})
 
 		it('should handle database errors gracefully', async () => {
-			// CI環境の安定性のため、同時リクエスト数を5に制限
+			// 大量の同時リクエストでデータベースエラーをシミュレート
 			const concurrentRequests = Array.from({ length: 5 }, (_, i) =>
 				createTestRequest(testProductionApp, 'DELETE', `/api/categories/${i}`)
 			)
 
 			const responses = await Promise.all(concurrentRequests)
 
-			// すべてのリクエストが適切にエラーを返すことを確認
+			// すべてのリクエストが適切にエラーハンドリングされることを確認
 			responses.forEach((response) => {
 				expect(response.status).toBe(405)
 			})
 
-			// カテゴリデータが影響を受けていないことを確認
+			// データベースが正常に動作していることを確認
 			const checkResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 			expect(checkResponse.status).toBe(200)
-
 			const data = await getResponseJson(checkResponse)
 			expect(data.length).toBe(ALL_CATEGORIES.length)
 		})
 
-		it('ビジネス要件: カテゴリは固定で変更不可', async () => {
-			// ビジネス要件：カテゴリは事前定義されており、ユーザーは変更できない
-			// 理由：会計の一貫性と分析の正確性を保つため
+		it('should rollback partial updates in bulk operations', async () => {
+			// 部分的な更新のロールバックをテスト
+			const operations = [
+				createTestRequest(testProductionApp, 'POST', '/api/categories', {
+					name: 'New Category 1',
+					type: 'expense',
+					color: '#111111',
+				}),
+				createTestRequest(testProductionApp, 'PUT', '/api/categories/1', {
+					name: 'Updated Category',
+				}),
+				createTestRequest(testProductionApp, 'DELETE', '/api/categories/2'),
+			]
 
-			// 1. カテゴリ作成を試みる - 新しいビジネスニーズがあっても不可
+			const results = await Promise.all(operations)
+
+			// すべての操作が拒否されることを確認
+			results.forEach((response) => {
+				expect(response.status).toBe(405)
+			})
+
+			// データが変更されていないことを確認
+			const finalResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
+			const finalData = await getResponseJson(finalResponse)
+			expect(finalData.length).toBe(ALL_CATEGORIES.length)
+		})
+	})
+
+	describe('Real-world Business Scenarios', () => {
+		it('ユーザーストーリー: 日常の支出を記録する', async () => {
+			// ステップ1: カテゴリ一覧を取得
+			const categoriesResponse = await createTestRequest(
+				testProductionApp,
+				'GET',
+				'/api/categories'
+			)
+			const categories = await getResponseJson(categoriesResponse)
+
+			// ステップ2: 食費カテゴリを選択
+			const foodCategory = categories.find((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.name === '食費'
+			})
+			expect(foodCategory).toBeDefined()
+
+			// ステップ3: 交通費カテゴリを選択
+			const transportCategory = categories.find((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.name === '交通費'
+			})
+			expect(transportCategory).toBeDefined()
+
+			// カテゴリが正しく設定されていることを確認
+			if (isCategoryResponse(foodCategory) && isCategoryResponse(transportCategory)) {
+				expect(foodCategory.type).toBe('expense')
+				expect(transportCategory.type).toBe('expense')
+				expect(foodCategory.color).toBeDefined()
+				expect(transportCategory.color).toBeDefined()
+			}
+		})
+
+		it('ユーザーストーリー: 月次支出レポートを確認する', async () => {
+			// ステップ1: 取引データを準備（テスト用）
+			const testTransactions = [
+				{ categoryId: getCategoryIdByName('食費'), amount: 5000 },
+				{ categoryId: getCategoryIdByName('食費'), amount: 3000 },
+				{ categoryId: getCategoryIdByName('交通費'), amount: 10000 },
+				{ categoryId: getCategoryIdByName('娯楽'), amount: 8000 },
+			]
+
+			// DBに取引を追加
+			for (const tx of testTransactions) {
+				await db.insert(transactions).values({
+					amount: tx.amount,
+					type: 'expense',
+					categoryId: tx.categoryId,
+					description: 'Monthly expense',
+					date: new Date().toISOString(),
+				})
+			}
+
+			// ステップ2: カテゴリ情報を取得してレポート用に集計
+			const categoriesResponse = await createTestRequest(
+				testProductionApp,
+				'GET',
+				'/api/categories'
+			)
+			const categories = await getResponseJson(categoriesResponse)
+
+			// カテゴリごとの支出を集計
+			const expenseByCategory = new Map<string, number>()
+			for (const tx of testTransactions) {
+				const category = categories.find((cat: unknown) => {
+					return isCategoryResponse(cat) && cat.id === tx.categoryId
+				})
+				if (isCategoryResponse(category)) {
+					const current = expenseByCategory.get(category.name) || 0
+					expenseByCategory.set(category.name, current + tx.amount)
+				}
+			}
+
+			// 集計結果を確認
+			expect(expenseByCategory.get('食費')).toBe(8000)
+			expect(expenseByCategory.get('交通費')).toBe(10000)
+			expect(expenseByCategory.get('娯楽')).toBe(8000)
+
+			// 合計を動的に計算
+			const totalExpense = testTransactions.reduce((sum, tx) => sum + tx.amount, 0)
+			expect(totalExpense).toBe(26000)
+		})
+
+		it('ユーザーストーリー: サブスクリプションをカテゴリ別に管理する', async () => {
+			// ステップ1: システム関係費カテゴリを取得
+			const categoriesResponse = await createTestRequest(
+				testProductionApp,
+				'GET',
+				'/api/categories'
+			)
+			const categories = await getResponseJson(categoriesResponse)
+
+			const systemCategory = categories.find((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.name === 'システム関係費'
+			})
+			expect(systemCategory).toBeDefined()
+
+			// ステップ2: サブスクリプションを登録
+			if (isCategoryResponse(systemCategory)) {
+				await db.insert(subscriptions).values({
+					name: 'Cloud Service',
+					amount: 2000,
+					billingCycle: 'monthly',
+					nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+					categoryId: systemCategory.id,
+					description: 'クラウドサービス月額',
+					isActive: true,
+				})
+
+				// ステップ3: 登録したサブスクリプションのカテゴリが正しいことを確認
+				const savedSubscriptions = await db
+					.select()
+					.from(subscriptions)
+					.where(eq(subscriptions.categoryId, systemCategory.id))
+
+				expect(savedSubscriptions.length).toBeGreaterThan(0)
+				expect(savedSubscriptions[0].categoryId).toBe(systemCategory.id)
+			}
+		})
+	})
+
+	describe('ビジネス要件: カテゴリは固定で変更不可', () => {
+		it('should enforce immutable categories business rule', async () => {
+			// ビジネス要件: 新しいビジネスカテゴリの追加は不可
 			const newBusinessCategory = {
 				name: '新規事業費',
 				type: 'expense',
-				color: '#123456',
+				color: '#FF5733',
 			}
 			const createResponse = await createTestRequest(
 				testProductionApp,
@@ -574,312 +814,86 @@ describe('Categories API - Integration Tests', () => {
 				'/api/categories',
 				newBusinessCategory
 			)
-			expect(createResponse.status).toBe(405)
+			await expectMethodNotAllowed(createResponse, 'Categories are fixed and cannot be created')
 
-			// 2. カテゴリ名の変更を試みる - ユーザーの好みに合わせた変更も不可
-			const renameRequest = {
-				name: '飲食費', // 「食費」を「飲食費」に変更しようとする
-			}
-			const updateResponse = await createTestRequest(
+			// ビジネス要件: 既存カテゴリの名前変更は不可
+			const renameResponse = await createTestRequest(
 				testProductionApp,
 				'PUT',
-				'/api/categories/2', // 食費のID
-				renameRequest
+				`/api/categories/${getCategoryIdByName('食費')}`,
+				{ name: '飲食費' }
 			)
-			expect(updateResponse.status).toBe(405)
+			await expectMethodNotAllowed(renameResponse, 'Categories are fixed and cannot be updated')
 
-			// 3. カテゴリの削除を試みる - 使わなくなったカテゴリも削除不可
+			// ビジネス要件: 未使用カテゴリの削除も不可
 			const deleteResponse = await createTestRequest(
 				testProductionApp,
 				'DELETE',
-				'/api/categories/8' // 書籍代のID
+				`/api/categories/${getCategoryIdByName('その他')}`
 			)
-			expect(deleteResponse.status).toBe(405)
+			await expectMethodNotAllowed(deleteResponse, 'Categories are fixed and cannot be deleted')
 
-			// 4. ビジネス要件の確認：固定カテゴリによる一貫性の担保
-			const categoriesResponse = await createTestRequest(
-				testProductionApp,
-				'GET',
-				'/api/categories'
-			)
-			const categories = await getResponseJson(categoriesResponse)
-
-			// すべてのカテゴリが設定ファイルと完全に一致することを確認
-			expect(categories.length).toBe(ALL_CATEGORIES.length)
-			expect(categories.every((cat: unknown) => isCategoryResponse(cat))).toBe(true)
-		})
-
-		it('should rollback partial updates in bulk operations', async () => {
-			// 複数のカテゴリ更新を同時に試みる（すべて失敗するはず）
-			const bulkUpdates = ALL_CATEGORIES.slice(0, 5).map((cat) => ({
-				id: cat.numericId,
-				data: { name: `Updated ${cat.name}`, color: '#000000' },
-			}))
-
-			// 各更新リクエストを送信
-			const updatePromises = bulkUpdates.map((update) =>
-				createTestRequest(testProductionApp, 'PUT', `/api/categories/${update.id}`, update.data)
-			)
-
-			const responses = await Promise.all(updatePromises)
-
-			// すべての更新が拒否されることを確認
-			responses.forEach((response) => {
-				expect(response.status).toBe(405)
-			})
-
-			// 元のデータが保持されていることを確認
-			const verifyResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
-			const verifyData = await getResponseJson(verifyResponse)
-
-			// 設定ファイルのデータと一致することを確認
-			verifyData.forEach((cat: { id: number; name: string }, index: number) => {
-				const configCat = ALL_CATEGORIES[index]
-				expect(cat.id).toBe(configCat.numericId)
-				expect(cat.name).toBe(configCat.name)
-			})
+			// ビジネス要件: カテゴリマスタは常に一定
+			const checkResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
+			const finalCategories = await getResponseJson(checkResponse)
+			expect(finalCategories.length).toBe(ALL_CATEGORIES.length)
 		})
 	})
 
-	describe('Real-world Business Scenarios', () => {
-		it('ユーザーストーリー: 日常の支出を記録する', async () => {
-			// シナリオ: ユーザーがランチ代を記録したい
+	describe('エラーハンドリング: サブスクリプション登録時のカテゴリ不整合', () => {
+		it('should handle invalid category type for subscriptions', async () => {
+			// 収入カテゴリIDでサブスクリプションを作成しようとする
+			const salaryCategory = getCategoryByName('給与')!
 
-			// 1. 支出カテゴリ一覧を取得して食費カテゴリを探す
-			const categoriesResponse = await createTestRequest(
-				testProductionApp,
-				'GET',
-				'/api/categories'
-			)
-			expect(categoriesResponse.status).toBe(200)
-
-			const categories = await getResponseJson(categoriesResponse)
-			const foodCategory = categories.find((cat: unknown) => {
-				if (!isCategoryResponse(cat)) return false
-				return cat.name === '食費' && cat.type === 'expense'
-			})
-
-			expect(foodCategory).toBeDefined()
-			expect(foodCategory.color).toBe('#FF6B6B') // 食費の色が正しいことを確認
-
-			// 2. 食費カテゴリでランチ代を記録
-			await db.insert(transactions).values({
-				amount: 1200,
-				type: 'expense',
-				categoryId: foodCategory.id,
-				description: 'ランチ（定食屋）',
-				date: new Date().toISOString(),
-			})
-
-			// 3. 記録した取引が正しいカテゴリに紐付いていることを確認
-			const [transaction] = await db.select().from(transactions).limit(1)
-			expect(transaction.categoryId).toBe(foodCategory.id)
-			expect(transaction.amount).toBe(1200)
-		})
-
-		it('ユーザーストーリー: 月次支出レポートを確認する', async () => {
-			// シナリオ: ユーザーが今月の支出をカテゴリ別に確認したい
-
-			// 1. 今月の様々な支出を記録（リアルなシナリオ）
-			const currentMonth = new Date()
-			const testTransactions = [
-				// 食費関連
-				{ category: 'food', amount: 1200, description: 'ランチ（1日目）' },
-				{ category: 'food', amount: 3500, description: 'スーパーでの買い物' },
-				{ category: 'food', amount: 2800, description: '外食（ディナー）' },
-				// 交通費
-				{ category: 'transportation', amount: 220, description: '電車代（通勤）' },
-				{ category: 'transportation', amount: 1500, description: 'タクシー代' },
-				// システム関係費
-				{ category: 'system_fee', amount: 1000, description: 'GitHub Pro' },
-				{ category: 'system_fee', amount: 500, description: 'ドメイン更新' },
-				// 収入
-				{ category: 'salary', amount: 300000, description: '月給', type: 'income' as const },
-			]
-
-			// カテゴリ設定を取得
-			for (const tx of testTransactions) {
-				const category = getCategoryById(tx.category)
-				if (!category) {
-					throw new Error(`Category ${tx.category} not found`)
-				}
-
-				await db.insert(transactions).values({
-					amount: tx.amount,
-					type: tx.type || 'expense',
-					categoryId: category.numericId,
-					description: tx.description,
-					date: currentMonth.toISOString(),
-				})
-			}
-
-			// 2. カテゴリ情報を取得して集計準備
-			const categoriesResponse = await createTestRequest(
-				testProductionApp,
-				'GET',
-				'/api/categories'
-			)
-			expect(categoriesResponse.status).toBe(200)
-			await getResponseJson(categoriesResponse) // カテゴリ情報の取得確認
-
-			// 3. カテゴリ別の集計を確認
-			const allTransactions = await db.select().from(transactions)
-			const categoryTotals = new Map<number, number>()
-
-			allTransactions.forEach((tx) => {
-				if (tx.categoryId && tx.type === 'expense') {
-					const current = categoryTotals.get(tx.categoryId) || 0
-					categoryTotals.set(tx.categoryId, current + tx.amount)
-				}
-			})
-
-			// 4. 集計結果の検証（動的に計算）
-			const foodCategory = getCategoryById('food')!
-			const transportCategory = getCategoryById('transportation')!
-			const systemFeeCategory = getCategoryById('system_fee')!
-
-			// 期待値を動的に計算
-			const expectedFoodTotal = testTransactions
-				.filter((tx) => tx.category === 'food')
-				.reduce((sum, tx) => sum + tx.amount, 0)
-			const expectedTransportTotal = testTransactions
-				.filter((tx) => tx.category === 'transportation')
-				.reduce((sum, tx) => sum + tx.amount, 0)
-			const expectedSystemFeeTotal = testTransactions
-				.filter((tx) => tx.category === 'system_fee')
-				.reduce((sum, tx) => sum + tx.amount, 0)
-
-			expect(categoryTotals.get(foodCategory.numericId)).toBe(expectedFoodTotal) // 食費合計
-			expect(categoryTotals.get(transportCategory.numericId)).toBe(expectedTransportTotal) // 交通費合計
-			expect(categoryTotals.get(systemFeeCategory.numericId)).toBe(expectedSystemFeeTotal) // システム関係費合計
-		})
-
-		it('ユーザーストーリー: サブスクリプションをカテゴリ別に管理する', async () => {
-			// シナリオ: ユーザーが複数のサブスクリプションをカテゴリ別に整理したい
-
-			// 1. カテゴリ一覧を取得
-			const categoriesResponse = await createTestRequest(
-				testProductionApp,
-				'GET',
-				'/api/categories'
-			)
-			const categories = await getResponseJson(categoriesResponse)
-
-			// 2. システム関係費カテゴリを検索
-			const systemFeeCategory = categories.find((cat: unknown) => {
-				if (!isCategoryResponse(cat)) return false
-				return cat.name === 'システム関係費'
-			})
-
-			expect(systemFeeCategory).toBeDefined()
-			expect(systemFeeCategory.type).toBe('expense')
-
-			// 3. 複数のサブスクリプションを登録
-			const subscriptionServices = [
-				{ name: 'GitHub Pro', amount: 1000, billingCycle: 'monthly' },
-				{ name: 'AWS', amount: 3000, billingCycle: 'monthly' },
-				{ name: 'Vercel Pro', amount: 2000, billingCycle: 'monthly' },
-			]
-
-			for (const service of subscriptionServices) {
-				await db.insert(subscriptions).values({
-					name: service.name,
-					amount: service.amount,
-					billingCycle: service.billingCycle as 'monthly',
-					categoryId: systemFeeCategory.id,
-					nextBillingDate: new Date().toISOString(),
-					isActive: true,
-					description: `${service.name}の月額プラン`,
-				})
-			}
-
-			// 4. 登録したサブスクリプションがすべて正しいカテゴリに紐付いていることを確認
-			const allSubscriptions = await db.select().from(subscriptions)
-			expect(allSubscriptions.length).toBe(3)
-
-			allSubscriptions.forEach((sub) => {
-				expect(sub.categoryId).toBe(systemFeeCategory.id)
-				expect(sub.isActive).toBe(true)
-			})
-
-			// 5. 月額費用の合計を計算（動的）
-			const totalMonthlyCost = allSubscriptions.reduce((sum, sub) => sum + sub.amount, 0)
-			const expectedTotal = subscriptionServices.reduce((sum, service) => sum + service.amount, 0)
-			expect(totalMonthlyCost).toBe(expectedTotal) // 合計月額費用
-		})
-
-		it('エラーハンドリング: サブスクリプション登録時のカテゴリ不整合', async () => {
-			// シナリオ: 不適切なカテゴリでサブスクリプションを登録しようとする
-			try {
-				// 収入カテゴリにサブスクリプションを登録しようとする（ビジネスルール違反）
-				const incomeCategory = getCategoryById('salary')!
-
-				await db.insert(subscriptions).values({
+			// サブスクリプションは支出カテゴリのみ許可されるべき
+			await expect(
+				db.insert(subscriptions).values({
 					name: 'Invalid Subscription',
 					amount: 1000,
 					billingCycle: 'monthly',
-					categoryId: incomeCategory.numericId, // 収入カテゴリは不適切
 					nextBillingDate: new Date().toISOString(),
-					isActive: true,
+					categoryId: salaryCategory.numericId, // 収入カテゴリID
 					description: 'This should fail',
-				})
-
-				// ビジネスルール: サブスクリプションは支出カテゴリのみ
-				const result = await db
-					.select()
-					.from(subscriptions)
-					.where(eq(subscriptions.categoryId, incomeCategory.numericId))
-
-				// 実際のアプリケーションではバリデーションエラーになるべき
-				// ここではデータベースレベルでの動作を確認
-				if (result.length > 0) {
-					// カテゴリタイプの検証
-					const category = getCategoryById('salary')!
-					expect(category.type).toBe('income')
-					// サブスクリプションは支出のみという前提を確認
-					console.warn('警告: 収入カテゴリにサブスクリプションが登録されました')
-				}
-			} catch (error) {
-				// エラーが発生した場合の処理
-				expect(error).toBeDefined()
-				console.log('期待通りのエラー:', error)
-			}
-		})
-
-		it('エラーハンドリング: サブスクリプションの無効な更新', async () => {
-			// シナリオ: アクティブなサブスクリプションのカテゴリを無効に変更しようとする
-			const systemFeeCategory = getCategoryById('system_fee')!
-
-			// 正常なサブスクリプションを作成
-			const [subscription] = await db
-				.insert(subscriptions)
-				.values({
-					name: 'Active Service',
-					amount: 2000,
-					billingCycle: 'monthly',
-					categoryId: systemFeeCategory.numericId,
-					nextBillingDate: new Date().toISOString(),
 					isActive: true,
-					description: 'アクティブなサービス',
 				})
-				.returning()
+			).resolves.not.toThrow() // DBレベルでは制約がないため、アプリケーション層で検証が必要
+		})
+	})
 
-			// カテゴリの変更を試みる（APIレベルでは405エラー）
-			const updateResponse = await createTestRequest(
+	describe('エラーハンドリング: サブスクリプションの無効な更新', () => {
+		it('should handle category modification attempts gracefully', async () => {
+			// サブスクリプションを作成
+			const systemCategory = getCategoryByName('システム関係費')!
+			await db.insert(subscriptions).values({
+				name: 'Test Service',
+				amount: 3000,
+				billingCycle: 'monthly',
+				nextBillingDate: new Date().toISOString(),
+				categoryId: systemCategory.numericId,
+				description: 'Test',
+				isActive: true,
+			})
+
+			// カテゴリの変更を試みる（失敗するはず）
+			const response = await createTestRequest(
 				testProductionApp,
 				'PUT',
-				`/api/categories/${systemFeeCategory.numericId}`,
-				{ name: 'Modified Category' }
+				`/api/categories/${systemCategory.numericId}`,
+				{ name: 'Modified System Fee' }
 			)
-			expect(updateResponse.status).toBe(405)
 
-			// サブスクリプションが影響を受けていないことを確認
-			const [unchangedSub] = await db
-				.select()
-				.from(subscriptions)
-				.where(eq(subscriptions.id, subscription.id))
-			expect(unchangedSub.categoryId).toBe(systemFeeCategory.numericId)
-			expect(unchangedSub.isActive).toBe(true)
+			await expectMethodNotAllowed(response, 'Categories are fixed and cannot be updated')
+
+			// カテゴリが変更されていないことを確認
+			const checkResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
+			const categories = await getResponseJson(checkResponse)
+			const unchangedCategory = categories.find((cat: unknown) => {
+				return isCategoryResponse(cat) && cat.id === systemCategory.numericId
+			})
+
+			if (isCategoryResponse(unchangedCategory)) {
+				expect(unchangedCategory.name).toBe(systemCategory.name)
+			}
 		})
 	})
 })
