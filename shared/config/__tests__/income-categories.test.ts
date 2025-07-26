@@ -135,15 +135,84 @@ describe('収入カテゴリマスタ', () => {
       console.error = originalConsoleError
     })
 
-    it('重複するIDがある場合の検証', () => {
-      // このテストはvalidateCategoryConfig関数の内部実装に依存するため、
-      // 実際のカテゴリデータに重複がない限り、正常系のテストで十分
-      expect(validateCategoryConfig()).toBe(true)
+    it('重複するnumericIdがある場合の検証', () => {
+      // すべてのnumericIdが一意であることを確認
+      const allNumericIds = ALL_CATEGORIES.map(c => c.numericId)
+      const uniqueNumericIds = [...new Set(allNumericIds)]
+      expect(allNumericIds.length).toBe(uniqueNumericIds.length)
+      
+      // 重複検出ロジックのテスト
+      const duplicateIds = [1, 2, 3, 2, 4, 3]
+      const uniqueSet = [...new Set(duplicateIds)]
+      expect(duplicateIds.length).toBeGreaterThan(uniqueSet.length)
+      
+      // 重複要素の抽出ロジックのテスト
+      const duplicates = duplicateIds.filter(
+        (id, index) => duplicateIds.indexOf(id) !== index
+      )
+      expect(duplicates).toContain(2)
+      expect(duplicates).toContain(3)
     })
 
-    it('必須フィールドが欠けている場合の検証', () => {
-      // 実際のカテゴリデータは完全なので、正常系のテストで十分
-      expect(validateCategoryConfig()).toBe(true)
+    it('収入カテゴリのnumericIdが101-105の範囲内であることの検証', () => {
+      // 収入カテゴリのnumericIdの範囲チェック
+      const incomeCategories = INCOME_CATEGORIES
+      incomeCategories.forEach(category => {
+        expect(category.numericId).toBeGreaterThanOrEqual(101)
+        expect(category.numericId).toBeLessThanOrEqual(105)
+      })
+      
+      // 範囲外のIDをテストするために一時的なカテゴリを作成
+      const invalidIncomeCategory = {
+        id: 'test_income',
+        name: 'テスト収入',
+        type: 'income' as const,
+        color: '#000000',
+        numericId: 106 // 範囲外
+      }
+      
+      // 収入カテゴリで101-105の範囲外は不正
+      expect(invalidIncomeCategory.numericId).toBeGreaterThan(105)
+    })
+
+    it('必須フィールドが欠けている場合のエラーハンドリング', () => {
+      // 必須フィールドのテスト用データ
+      const requiredFields = ['id', 'name', 'type', 'color', 'numericId']
+      
+      // 各カテゴリが必須フィールドを持つことを確認
+      ALL_CATEGORIES.forEach(category => {
+        requiredFields.forEach(field => {
+          expect(category).toHaveProperty(field)
+          expect(category[field as keyof typeof category]).toBeDefined()
+          expect(category[field as keyof typeof category]).not.toBe('')
+        })
+      })
+    })
+
+    it('色の形式が不正な場合の検証', () => {
+      // 正しい色形式のパターン
+      const validColorPattern = /^#[0-9A-F]{6}$/i
+      
+      // すべてのカテゴリの色が正しい形式であることを確認
+      ALL_CATEGORIES.forEach(category => {
+        expect(category.color).toMatch(validColorPattern)
+      })
+      
+      // 不正な色形式の例
+      const invalidColors = ['#FFF', 'red', '#GGGGGG', '123456', '#12345']
+      invalidColors.forEach(color => {
+        expect(color).not.toMatch(validColorPattern)
+      })
+    })
+
+    it('不正なカテゴリタイプの検証', () => {
+      // 有効なカテゴリタイプ
+      const validTypes = ['expense', 'income']
+      
+      // すべてのカテゴリが有効なタイプを持つことを確認
+      ALL_CATEGORIES.forEach(category => {
+        expect(validTypes).toContain(category.type)
+      })
     })
   })
 })

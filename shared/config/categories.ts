@@ -174,7 +174,7 @@ export const ALL_CATEGORIES: CategoryConfig[] = [
 /**
  * カテゴリタイプ別の設定取得
  */
-export function getCategoriesByType(type: CategoryType): CategoryConfig[] {
+export function getCategoriesByType(type: CategoryType = 'expense'): CategoryConfig[] {
 	if (type === 'income') {
 		return INCOME_CATEGORIES
 	}
