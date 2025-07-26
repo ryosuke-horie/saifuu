@@ -6,7 +6,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "docs:search": "node docs/scripts/search.js",
-    "test:ratio": "node scripts/monitor-test-ratio.js",
     "dev": "pnpm --parallel --filter './frontend' --filter './api' run dev",
     "build": "pnpm --filter './frontend' --filter './api' run build",
     "test:unit": "pnpm --filter './frontend' --filter './api' run test:unit",
