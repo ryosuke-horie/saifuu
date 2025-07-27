@@ -83,7 +83,7 @@ describe('Zodバリデーターのテスト', () => {
 			if (!result.success) {
 				const categoryError = result.errors.find((e) => e.field === 'categoryId')
 				expect(categoryError).toBeDefined()
-				expect(categoryError?.message).toContain('101から105の範囲')
+				expect(categoryError?.message).toContain('収入カテゴリは101-105の範囲で指定してください')
 			}
 		})
 	})
@@ -136,7 +136,7 @@ describe('Zodバリデーターのテスト', () => {
 			if (!result.success) {
 				const categoryError = result.errors.find((e) => e.field === 'categoryId')
 				expect(categoryError).toBeDefined()
-				expect(categoryError?.message).toContain('101から105の範囲')
+				expect(categoryError?.message).toContain('収入カテゴリは101-105の範囲で指定してください')
 			}
 		})
 
@@ -260,8 +260,8 @@ describe('Zodバリデーターのテスト', () => {
 			if (!result.success) {
 				const amountError = result.errors.find((e) => e.field === 'amount')
 				expect(amountError).toBeDefined()
-				// MIN_AMOUNTが1なので、このメッセージが正しい
-				expect(amountError?.message).toBe('収入金額は1円以上である必要があります')
+				// positive()によるエラーメッセージ
+				expect(amountError?.message).toBe('収入金額は0より大きい必要があります')
 			}
 		})
 
@@ -278,7 +278,7 @@ describe('Zodバリデーターのテスト', () => {
 			if (!result.success) {
 				const categoryError = result.errors.find((e) => e.field === 'categoryId')
 				expect(categoryError).toBeDefined()
-				expect(categoryError?.message).toContain('101から105の範囲')
+				expect(categoryError?.message).toContain('収入カテゴリは101-105の範囲で指定してください')
 			}
 		})
 
@@ -329,7 +329,7 @@ describe('Zodバリデーターのテスト', () => {
 				if (!result.success) {
 					const categoryError = result.errors.find((e) => e.field === 'categoryId')
 					expect(categoryError).toBeDefined()
-					expect(categoryError?.message).toContain('101から105の範囲')
+					expect(categoryError?.message).toContain('収入カテゴリは101-105の範囲で指定してください')
 				}
 			})
 		})
@@ -348,8 +348,8 @@ describe('Zodバリデーターのテスト', () => {
 			if (!result.success) {
 				const amountError = result.errors.find((e) => e.field === 'amount')
 				expect(amountError).toBeDefined()
-				// MIN_AMOUNTが1なので、このメッセージが正しい
-				expect(amountError?.message).toBe('収入金額は1円以上である必要があります')
+				// positive()によるエラーメッセージ
+				expect(amountError?.message).toBe('収入金額は0より大きい必要があります')
 			}
 		})
 
@@ -368,23 +368,18 @@ describe('Zodバリデーターのテスト', () => {
 			}
 		})
 
-		it('金額の下限未満（0.99円）でエラーを返す', () => {
+		it('金額の0.99円を受け入れる', () => {
 			const data = {
 				amount: 0.99,
 				type: 'income' as const,
 				categoryId: 103,
-				description: '下限未満テスト',
+				description: '小数点テスト',
 				date: '2024-01-01',
 			}
 			const result = validateIncomeCreateWithZod(data)
-			expect(result.success).toBe(false)
-			if (!result.success) {
-				const amountError = result.errors.find((e) => e.field === 'amount')
-				expect(amountError).toBeDefined()
-				// positive()とmin()の両方のエラーメッセージが出る可能性があるため、どちらかを確認
-				expect(amountError?.message).toMatch(
-					/収入金額は1円以上である必要があります|収入金額は0より大きい必要があります/
-				)
+			expect(result.success).toBe(true)
+			if (result.success) {
+				expect(result.data.amount).toBe(0.99)
 			}
 		})
 
@@ -449,7 +444,7 @@ describe('Zodバリデーターのテスト', () => {
 			if (!result.success) {
 				const categoryError = result.errors.find((e) => e.field === 'categoryId')
 				expect(categoryError).toBeDefined()
-				expect(categoryError?.message).toContain('101から105の範囲')
+				expect(categoryError?.message).toContain('収入カテゴリは101-105の範囲で指定してください')
 			}
 		})
 
@@ -462,8 +457,8 @@ describe('Zodバリデーターのテスト', () => {
 			if (!result.success) {
 				const amountError = result.errors.find((e) => e.field === 'amount')
 				expect(amountError).toBeDefined()
-				// MIN_AMOUNTが1なので、このメッセージが正しい
-				expect(amountError?.message).toBe('収入金額は1円以上である必要があります')
+				// positive()によるエラーメッセージ
+				expect(amountError?.message).toBe('収入金額は0より大きい必要があります')
 			}
 		})
 	})

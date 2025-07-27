@@ -68,6 +68,7 @@ describe('route-factory', () => {
 				return undefined
 			}),
 			json: vi.fn(),
+			body: vi.fn(),
 			req: {
 				param: vi.fn(),
 				json: vi.fn(),
@@ -324,6 +325,8 @@ describe('route-factory', () => {
 			it('レコードを削除する', async () => {
 				const deletedData = { id: 1, name: 'Deleted Test' }
 				mockContext.req.param.mockReturnValueOnce('1')
+				// delete().where().returning()のチェーンが返す値を設定
+				mockDb.where.mockReturnThis()
 				mockDb.returning.mockResolvedValueOnce([deletedData])
 
 				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
@@ -338,13 +341,13 @@ describe('route-factory', () => {
 
 				expect(mockDb.delete).toHaveBeenCalledWith(testTable)
 				expect(mockDb.where).toHaveBeenCalled()
-				expect(mockContext.json).toHaveBeenCalledWith({
-					message: 'Test deleted successfully',
-				})
+				// 削除成功時は204 No Contentを返すため、bodyメソッドが呼ばれる
+				expect(mockContext.body).toHaveBeenCalledWith(null, 204)
 			})
 
 			it('レコードが見つからない場合404を返す', async () => {
 				mockContext.req.param.mockReturnValueOnce('999')
+				mockDb.where.mockReturnThis()
 				mockDb.returning.mockResolvedValueOnce([])
 
 				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({

@@ -236,7 +236,7 @@ describe('Subscriptions API with CRUD Factory - Unit Tests', () => {
 			const deleteResponse = await app.request(`/api/subscriptions/${created.id}`, {
 				method: 'DELETE',
 			})
-			expect(deleteResponse.status).toBe(200)
+			expect(deleteResponse.status).toBe(204)
 		})
 
 		it('should validate subscription data correctly', async () => {

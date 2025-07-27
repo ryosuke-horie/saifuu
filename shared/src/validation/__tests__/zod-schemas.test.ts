@@ -124,8 +124,14 @@ describe('Zodスキーマのテスト', () => {
 			expect(transactionTypeSchema.safeParse('expense').success).toBe(true)
 		})
 
-		it('expense以外を拒否する', () => {
-			expect(transactionTypeSchema.safeParse('income').success).toBe(false)
+		it('incomeを受け入れる', () => {
+			expect(transactionTypeSchema.safeParse('income').success).toBe(true)
+		})
+
+		it('無効な取引種別を拒否する', () => {
+			expect(transactionTypeSchema.safeParse('other').success).toBe(false)
+			expect(transactionTypeSchema.safeParse('').success).toBe(false)
+			expect(transactionTypeSchema.safeParse(123).success).toBe(false)
 		})
 	})
 
@@ -251,8 +257,8 @@ describe('Zodスキーマのテスト', () => {
 			const result = amountSchema.safeParse(10_000_001)
 
 			if (!result.success) {
-				expect(result.error.errors[0].message).toContain(
-					'10000000以下である必要があります',
+				expect(result.error.errors[0].message).toBe(
+					'金額は10000000円以下である必要があります',
 				)
 			}
 		})
@@ -261,8 +267,8 @@ describe('Zodスキーマのテスト', () => {
 			const result = billingCycleSchema.safeParse('invalid')
 
 			if (!result.success) {
-				expect(result.error.errors[0].message).toContain(
-					'monthly, yearly, weeklyのいずれかである必要があります',
+				expect(result.error.errors[0].message).toBe(
+					'請求サイクルはmonthly、yearly、weeklyのいずれかである必要があります',
 				)
 			}
 		})
