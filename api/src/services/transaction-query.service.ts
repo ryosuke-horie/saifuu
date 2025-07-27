@@ -7,7 +7,7 @@
  * - 型安全なクエリ構築
  * - パフォーマンス最適化
  */
-import { and, between, eq, gte, lte, type SQL } from 'drizzle-orm'
+import { and, between, eq, gte, lte, sql, type SQL } from 'drizzle-orm'
 import type { AnyDatabase } from '../db'
 import { type Transaction, transactions } from '../db/schema'
 
@@ -78,48 +78,54 @@ export class TransactionQueryService {
 	/**
 	 * 収入統計を計算
 	 * 収入のみを対象に集計
+	 * SQLの集約関数を使用してデータベースレベルで効率的に計算
 	 */
 	async calculateIncomeStats(): Promise<IncomeStats> {
-		const incomeTransactions = await this.db
+		const result = await this.db
 			.select({
-				amount: transactions.amount,
+				totalIncome: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
+				incomeCount: sql<number>`COUNT(*)`,
 			})
 			.from(transactions)
 			.where(eq(transactions.type, 'income'))
 
-		const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0)
-		const incomeCount = incomeTransactions.length
+		// 結果は必ず1行返される
+		const stats = result[0]
 
 		return {
-			totalIncome,
-			incomeCount,
+			totalIncome: Number(stats.totalIncome),
+			incomeCount: Number(stats.incomeCount),
 		}
 	}
 
 	/**
 	 * 支出統計を計算
 	 * 支出のみを対象に集計
+	 * SQLの集約関数を使用してデータベースレベルで効率的に計算
 	 */
 	async calculateExpenseStats(): Promise<ExpenseStats> {
-		const expenseTransactions = await this.db
+		// 支出の合計と件数を1つのクエリで取得
+		const expenseResult = await this.db
 			.select({
-				amount: transactions.amount,
+				totalExpense: sql<number>`COALESCE(SUM(${transactions.amount}), 0)`,
+				expenseCount: sql<number>`COUNT(*)`,
 			})
 			.from(transactions)
 			.where(eq(transactions.type, 'expense'))
 
-		const totalExpense = expenseTransactions.reduce((sum, t) => sum + t.amount, 0)
-		
-		// 全取引数を取得（要件に応じて支出のみか全体かを選択）
-		const allTransactions = await this.db
-			.select()
+		// 全取引数を取得（支出のみではなく全体）
+		const totalResult = await this.db
+			.select({
+				transactionCount: sql<number>`COUNT(*)`,
+			})
 			.from(transactions)
-		
-		const transactionCount = allTransactions.length
+
+		const expenseStats = expenseResult[0]
+		const totalStats = totalResult[0]
 
 		return {
-			totalExpense,
-			transactionCount,
+			totalExpense: Number(expenseStats.totalExpense),
+			transactionCount: Number(totalStats.transactionCount),
 		}
 	}
 

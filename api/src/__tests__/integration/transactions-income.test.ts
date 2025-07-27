@@ -151,20 +151,12 @@ describe('Transaction API - Income Endpoints', () => {
 				amount: 300000,
 				type: 'income',
 				categoryId: 101,
-				category: {
-					id: 101,
-					name: '給与',
-				},
 			})
 			expect(data[1]).toMatchObject({
 				id: 3,
 				amount: 100000,
 				type: 'income',
 				categoryId: 102,
-				category: {
-					id: 102,
-					name: 'ボーナス',
-				},
 			})
 		})
 

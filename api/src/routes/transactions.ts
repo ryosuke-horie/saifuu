@@ -3,6 +3,7 @@ import { type AnyDatabase, type Env } from '../db'
 import { type NewTransaction, type Transaction, transactions } from '../db/schema'
 import { errorHandler, handleError } from '../lib/error-handler'
 import { createRequestLogger } from '../lib/logger'
+import { parsePositiveIntParam, parseTransactionType } from '../lib/query-parser'
 import { createCrudHandlers } from '../lib/route-factory'
 import { type LoggingVariables } from '../middleware/logging'
 import { TransactionService } from '../services/transaction.service'
@@ -65,12 +66,12 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 			// クエリパラメータを型安全に取得
 			const query = c.req.query()
 			const params = {
-				type: query.type as 'income' | 'expense' | undefined,
-				categoryId: query.categoryId ? Number.parseInt(query.categoryId) : undefined,
+				type: parseTransactionType(query.type),
+				categoryId: parsePositiveIntParam(query.categoryId),
 				startDate: query.startDate,
 				endDate: query.endDate,
-				limit: query.limit ? Number.parseInt(query.limit) : undefined,
-				offset: query.offset ? Number.parseInt(query.offset) : undefined,
+				limit: parsePositiveIntParam(query.limit),
+				offset: query.offset ? parsePositiveIntParam(query.offset) ?? 0 : undefined,
 			}
 
 			// サービスを使用してデータを取得

@@ -273,4 +273,62 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			expect(response.status).toBe(200)
 		})
 	})
+
+	describe('Query parameter validation', () => {
+		it('should handle invalid numeric query parameters safely', async () => {
+			// 無効な数値パラメータを含むリクエスト
+			const response = await app.request('/api/transactions?categoryId=abc&limit=xyz&offset=invalid', {
+				method: 'GET',
+			})
+
+			expect(response.status).toBe(200) // エラーではなく、無効なパラメータを無視して正常に動作すべき
+			const result = await response.json() as TransactionResponse[]
+			expect(Array.isArray(result)).toBe(true)
+		})
+
+		it('should parse valid numeric query parameters correctly', async () => {
+			// まず取引を作成
+			await app.request('/api/transactions', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					amount: 1000,
+					type: 'expense',
+					categoryId: 1,
+					date: '2024-01-01',
+				}),
+			})
+
+			// 有効な数値パラメータでフィルタリング
+			const response = await app.request('/api/transactions?categoryId=1&limit=10&offset=0', {
+				method: 'GET',
+			})
+
+			expect(response.status).toBe(200)
+			const result = await response.json() as TransactionResponse[]
+			expect(Array.isArray(result)).toBe(true)
+		})
+
+		it('should handle empty string query parameters', async () => {
+			// 空文字列のパラメータ
+			const response = await app.request('/api/transactions?categoryId=&limit=&offset=', {
+				method: 'GET',
+			})
+
+			expect(response.status).toBe(200)
+			const result = await response.json() as TransactionResponse[]
+			expect(Array.isArray(result)).toBe(true)
+		})
+
+		it('should handle NaN values from parseInt gracefully', async () => {
+			// parseIntがNaNを返すケース
+			const response = await app.request('/api/transactions?categoryId=null&limit=undefined', {
+				method: 'GET',
+			})
+
+			expect(response.status).toBe(200)
+			const result = await response.json() as TransactionResponse[]
+			expect(Array.isArray(result)).toBe(true)
+		})
+	})
 })

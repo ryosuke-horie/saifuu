@@ -1,6 +1,5 @@
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { AnyDatabase } from '../../db'
 import { type Transaction, transactions } from '../../db/schema'
@@ -16,8 +15,30 @@ describe('TransactionQueryService', () => {
 		sqlite = new Database(':memory:')
 		db = drizzle(sqlite)
 
-		// マイグレーションを実行
-		migrate(db, { migrationsFolder: './drizzle/migrations' })
+		// テーブルを手動で作成（マイグレーションの代替）
+		// 本番環境のスキーマとの一貫性を保つため、Drizzleスキーマ定義に基づく
+		sqlite.exec(`
+			CREATE TABLE IF NOT EXISTS transactions (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				amount INTEGER NOT NULL,
+				type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+				category_id INTEGER,
+				description TEXT,
+				date TEXT NOT NULL,
+				created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)
+		`)
+
+		sqlite.exec(`
+			CREATE TABLE IF NOT EXISTS categories (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				name TEXT NOT NULL,
+				type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+				created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)
+		`)
 
 		// サービスのインスタンスを作成
 		service = new TransactionQueryService(db as unknown as AnyDatabase)

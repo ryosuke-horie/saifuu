@@ -236,7 +236,8 @@ export const incomeCategoryIdSchema = createCategoryIdSchema({
 })
 
 // 収入金額（正の数のみ）
-// レビューコメント#5対応: positive()とmin()の重複を解消してパフォーマンス改善
+// 型安全性のため、positive()による0以下の拒否と、max()による上限チェックを実装
+// 小数点を含む金額（例：0.01円）も受け入れる必要があるため、min(1)は使用しない
 export const incomeAmountSchema = z
 	.number()
 	.positive('収入金額は0より大きい必要があります')
