@@ -12,20 +12,35 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { createTestRequest, getResponseJson } from '../helpers/test-app'
+import { cleanupTestDatabase, setupTestDatabase } from '../helpers/test-db'
+import testProductionApp from '../helpers/test-production-app'
+
+// Matt Pocockの型定義原則に従った型定義
+// 基本的な型定義を明示的に宣言
+type CategoryType = 'income' | 'expense'
 
 // カテゴリの型定義（設定ファイルベースのため、個別に定義）
 interface Category {
 	id: number
 	name: string
-	type: 'income' | 'expense'
+	type: CategoryType
 	color?: string
 	createdAt: string
 	updatedAt: string
 }
 
-import { createTestRequest, getResponseJson } from '../helpers/test-app'
-import { cleanupTestDatabase, setupTestDatabase } from '../helpers/test-db'
-import testProductionApp from '../helpers/test-production-app'
+// HTTPメソッドの型定義
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
+
+// テストケースの型定義（型安全性を保証）
+interface MutationTestCase {
+	method: Extract<HttpMethod, 'POST' | 'PUT' | 'DELETE'>
+	path: string
+	body: Record<string, unknown> | undefined
+	expectedError: string
+	description: string
+}
 
 describe('Categories API - Unit Tests', () => {
 	beforeEach(async () => {
@@ -102,33 +117,44 @@ describe('Categories API - Unit Tests', () => {
 
 	describe('Mutation operations (POST, PUT, DELETE)', () => {
 		// カテゴリの不変性というビジネスルールをテスト
-		it.each([
+		// 型安全なテストケース定義
+		const mutationTestCases: MutationTestCase[] = [
 			{
-				method: 'POST' as const,
+				method: 'POST',
 				path: '/api/categories',
 				body: { name: '新しいカテゴリ', type: 'expense' },
 				expectedError: 'Categories are fixed and cannot be created',
+				description: 'POST request should return 405 (ビジネスルール: カテゴリは作成不可)',
 			},
 			{
-				method: 'PUT' as const,
+				method: 'PUT',
 				path: '/api/categories/1',
 				body: { name: '更新されたカテゴリ' },
 				expectedError: 'Categories are fixed and cannot be updated',
+				description: 'PUT request should return 405 (ビジネスルール: カテゴリは更新不可)',
 			},
 			{
-				method: 'DELETE' as const,
+				method: 'DELETE',
 				path: '/api/categories/1',
 				body: undefined,
 				expectedError: 'Categories are fixed and cannot be deleted',
+				description: 'DELETE request should return 405 (ビジネスルール: カテゴリは削除不可)',
 			},
-		])(
-			'should return 405 for $method request (ビジネスルール: カテゴリは不変)',
-			async ({ method, path, body, expectedError }) => {
-				const response = await createTestRequest(testProductionApp, method, path, body)
+		] satisfies MutationTestCase[]
+
+		// 各テストケースを実行
+		mutationTestCases.forEach((testCase) => {
+			it(testCase.description, async () => {
+				const response = await createTestRequest(
+					testProductionApp,
+					testCase.method,
+					testCase.path,
+					testCase.body
+				)
 				expect(response.status).toBe(405)
 				const data = await getResponseJson(response)
-				expect(data).toHaveProperty('error', expectedError)
-			}
-		)
+				expect(data).toHaveProperty('error', testCase.expectedError)
+			})
+		})
 	})
 })
