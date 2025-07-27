@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
 import { INCOME_CATEGORIES } from "../../../../shared/config/categories";
+import { createMockCategories } from "../../test-utils/categoryHelpers";
 import { IncomeForm } from "./IncomeForm";
 
 const meta: Meta<typeof IncomeForm> = {
@@ -32,14 +33,7 @@ const meta: Meta<typeof IncomeForm> = {
 		},
 	},
 	args: {
-		categories: INCOME_CATEGORIES.map((cat) => ({
-			id: cat.id,
-			name: cat.name,
-			type: cat.type,
-			color: cat.color,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-		})),
+		categories: createMockCategories(INCOME_CATEGORIES),
 		isSubmitting: false,
 	},
 	tags: ["autodocs"],

@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { INCOME_CATEGORIES } from "../../../../../shared/config/categories";
+import { createMockCategories } from "../../../test-utils/categoryHelpers";
 import type { IncomeFormData, IncomeFormProps } from "../../../types/income";
 import { IncomeForm } from "../IncomeForm";
 
@@ -12,15 +13,7 @@ describe("IncomeForm", () => {
 	const defaultProps: IncomeFormProps = {
 		onSubmit: mockOnSubmit,
 		onCancel: mockOnCancel,
-		categories: INCOME_CATEGORIES.map((cat) => ({
-			id: cat.id,
-			name: cat.name,
-			type: cat.type,
-			color: cat.color,
-			numericId: cat.numericId,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-		})),
+		categories: createMockCategories(INCOME_CATEGORIES),
 	};
 
 	beforeEach(() => {
@@ -104,7 +97,7 @@ describe("IncomeForm", () => {
 	it("編集モードで初期データが正しく表示されること", () => {
 		const initialData: IncomeFormData = {
 			amount: 100000,
-			type: "income" as const,
+			type: "income",
 			date: "2025-01-15",
 			description: "ボーナス支給",
 			categoryId: "bonus",
