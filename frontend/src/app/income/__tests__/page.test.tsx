@@ -1,13 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import {
-	beforeEach,
-	describe,
-	expect,
-	it,
-	type MockedFunction,
-	vi,
-} from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useIncomes } from "@/hooks/useIncomes";
 import { fetchCategories } from "@/lib/api/categories/api";
 import type { Transaction } from "@/lib/api/types";
@@ -33,10 +26,10 @@ describe("IncomePage", () => {
 			description: "1月給与",
 			type: "income" as const,
 			category: {
-				id: "101",
+				id: "salary",
 				name: "給与",
 				type: "income" as const,
-				color: "#4CAF50",
+				color: "#10b981",
 				createdAt: "2024-01-01T00:00:00.000Z",
 				updatedAt: "2024-01-01T00:00:00.000Z",
 			},
@@ -50,10 +43,10 @@ describe("IncomePage", () => {
 			description: "冬季ボーナス",
 			type: "income" as const,
 			category: {
-				id: "102",
+				id: "bonus",
 				name: "ボーナス",
 				type: "income" as const,
-				color: "#2196F3",
+				color: "#059669",
 				createdAt: "2024-01-01T00:00:00.000Z",
 				updatedAt: "2024-01-01T00:00:00.000Z",
 			},
@@ -64,26 +57,26 @@ describe("IncomePage", () => {
 
 	const mockCategories = [
 		{
-			id: "101",
+			id: "salary",
 			name: "給与",
 			type: "income" as const,
-			color: "#4CAF50",
+			color: "#10b981",
 			createdAt: "2024-01-01T00:00:00.000Z",
 			updatedAt: "2024-01-01T00:00:00.000Z",
 		},
 		{
-			id: "102",
+			id: "bonus",
 			name: "ボーナス",
 			type: "income" as const,
-			color: "#2196F3",
+			color: "#059669",
 			createdAt: "2024-01-01T00:00:00.000Z",
 			updatedAt: "2024-01-01T00:00:00.000Z",
 		},
 		{
-			id: "103",
+			id: "side_business",
 			name: "副業",
 			type: "income" as const,
-			color: "#FF9800",
+			color: "#34d399",
 			createdAt: "2024-01-01T00:00:00.000Z",
 			updatedAt: "2024-01-01T00:00:00.000Z",
 		},
@@ -155,10 +148,10 @@ describe("IncomePage", () => {
 			description: "副業収入",
 			type: "income" as const,
 			category: {
-				id: "103",
+				id: "side_business",
 				name: "副業",
 				type: "income" as const,
-				color: "#FF9800",
+				color: "#34d399",
 				createdAt: "2024-01-01T00:00:00.000Z",
 				updatedAt: "2024-01-01T00:00:00.000Z",
 			},
@@ -174,7 +167,9 @@ describe("IncomePage", () => {
 		render(<IncomePage />);
 
 		// フォームに入力
-		await user.type(screen.getByLabelText(/金額/i), "50000");
+		const amountInput = screen.getByLabelText(/金額/i);
+		await user.clear(amountInput);
+		await user.type(amountInput, "50000");
 		await user.type(screen.getByLabelText(/説明/i), "副業収入");
 
 		// カテゴリを選択（フォームがロードされるまで待つ）
@@ -182,7 +177,10 @@ describe("IncomePage", () => {
 			const categorySelect = screen.getByLabelText(/カテゴリ/i);
 			expect(categorySelect).not.toBeDisabled();
 		});
-		await user.selectOptions(screen.getByLabelText(/カテゴリ/i), "103");
+		await user.selectOptions(
+			screen.getByLabelText(/カテゴリ/i),
+			"side_business",
+		);
 
 		// 登録ボタンをクリック
 		await user.click(screen.getByRole("button", { name: /登録/i }));
@@ -191,7 +189,7 @@ describe("IncomePage", () => {
 			expect(mockCreateIncomeMutation).toHaveBeenCalledWith({
 				amount: 50000,
 				date: new Date().toISOString().split("T")[0], // 今日の日付をYYYY-MM-DD形式で
-				categoryId: "103", // 副業のカテゴリID（文字列型）
+				categoryId: "side_business", // 副業のカテゴリID（文字列型）
 				description: "副業収入",
 			});
 		});
@@ -216,11 +214,12 @@ describe("IncomePage", () => {
 			expect(screen.getByText("1月給与")).toBeInTheDocument();
 		});
 
-		// 編集ボタンをクリック
-		await user.click(screen.getByRole("button", { name: /編集/i }));
+		// 最初の行の編集ボタンをクリック
+		const editButtons = screen.getAllByRole("button", { name: /編集/i });
+		await user.click(editButtons[0]);
 
 		// 金額を変更
-		const amountInput = screen.getByDisplayValue("300000");
+		const amountInput = screen.getByLabelText(/金額/i);
 		await user.clear(amountInput);
 		await user.type(amountInput, "350000");
 
@@ -231,7 +230,7 @@ describe("IncomePage", () => {
 			expect(mockUpdateIncomeMutation).toHaveBeenCalledWith("1", {
 				amount: 350000,
 				date: "2024-01-25",
-				categoryId: "101",
+				categoryId: "salary",
 				description: "1月給与",
 			});
 		});
@@ -253,8 +252,9 @@ describe("IncomePage", () => {
 			expect(screen.getByText("1月給与")).toBeInTheDocument();
 		});
 
-		// 削除ボタンをクリック
-		await user.click(screen.getByRole("button", { name: /削除/i }));
+		// 最初の行の削除ボタンをクリック
+		const deleteButtons = screen.getAllByRole("button", { name: /削除/i });
+		await user.click(deleteButtons[0]);
 
 		// 確認ダイアログで削除を確定
 		await user.click(screen.getByRole("button", { name: /削除を確定/i }));
@@ -274,8 +274,9 @@ describe("IncomePage", () => {
 		render(<IncomePage />);
 
 		await waitFor(() => {
+			// エラーメッセージはテーブル外に表示される
 			expect(
-				screen.getByText(/データの取得に失敗しました/i),
+				screen.getByText("データの取得に失敗しました"),
 			).toBeInTheDocument();
 		});
 	});
@@ -288,6 +289,7 @@ describe("IncomePage", () => {
 
 		render(<IncomePage />);
 
-		expect(screen.getByText(/読み込み中/i)).toBeInTheDocument();
+		// ページレベルのローディング表示を確認
+		expect(screen.getByText("読み込み中...")).toBeInTheDocument();
 	});
 });

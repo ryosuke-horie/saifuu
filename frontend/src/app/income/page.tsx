@@ -5,6 +5,7 @@ import { useIncomes } from "@/hooks/useIncomes";
 import { fetchCategories } from "@/lib/api/categories/api";
 import type { Transaction } from "@/lib/api/types";
 import type { Category } from "@/types/category";
+import type { IncomeFormData } from "@/types/income";
 import { DeleteConfirmDialog } from "../../components/income/DeleteConfirmDialog";
 import { IncomeForm } from "../../components/income/IncomeForm";
 import { IncomeList } from "../../components/income/IncomeList";
@@ -52,26 +53,24 @@ export default function IncomePage() {
 	}, [fetchCategoriesData]);
 
 	// フォーム送信ハンドラー
-	const handleSubmit = async (data: {
-		amount: number;
-		date: string;
-		description?: string;
-		categoryId?: string;
-	}) => {
+	const handleSubmit = async (data: IncomeFormData) => {
 		try {
+			// typeフィールドを除外してAPIに渡す
+			const { type: _, ...apiData } = data;
+
 			if (editingIncome) {
 				await updateIncomeMutation(editingIncome.id, {
-					amount: data.amount,
-					date: data.date,
-					description: data.description || null,
-					categoryId: data.categoryId || null,
+					amount: apiData.amount,
+					date: apiData.date,
+					description: apiData.description || null,
+					categoryId: apiData.categoryId || null,
 				});
 			} else {
 				await createIncomeMutation({
-					amount: data.amount,
-					date: data.date,
-					description: data.description || null,
-					categoryId: data.categoryId || null,
+					amount: apiData.amount,
+					date: apiData.date,
+					description: apiData.description || null,
+					categoryId: apiData.categoryId || null,
 				});
 			}
 			setEditingIncome(null);
