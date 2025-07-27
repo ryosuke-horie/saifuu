@@ -157,7 +157,7 @@ export interface GetSubscriptionsQuery extends PaginationQuery {
 /**
  * 取引タイプ
  */
-export type TransactionType = "expense";
+export type TransactionType = "expense" | "income";
 
 /**
  * 取引
