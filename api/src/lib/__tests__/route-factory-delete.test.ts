@@ -52,12 +52,12 @@ describe('Route Factory - DELETE endpoint', () => {
 			Variables: { db: AnyDatabase } & LoggingVariables
 		}>()
 		app.use('*', async (c: Context, next: Next) => {
-			c.set('db', db as AnyDatabase)
+			c.set('db', db as any)
 			await next()
 		})
 
 		// CRUDハンドラーを作成
-		const handlers = createCrudHandlers<typeof transactions>({
+		const handlers = createCrudHandlers({
 			table: transactions,
 			resourceName: 'transaction',
 			validateCreate: () => ({ success: true, data: {} }),

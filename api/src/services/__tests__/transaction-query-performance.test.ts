@@ -29,7 +29,7 @@ describe('TransactionQueryService - Performance Optimization', () => {
 		`)
 
 		// サービスのインスタンスを作成
-		service = new TransactionQueryService(db)
+		service = new TransactionQueryService(db as any)
 	})
 
 	describe('収入統計の計算', () => {
@@ -39,7 +39,7 @@ describe('TransactionQueryService - Performance Optimization', () => {
 			for (let i = 1; i <= 1000; i++) {
 				testData.push({
 					amount: i * 100,
-					type: i % 2 === 0 ? 'income' : 'expense',
+					type: (i % 2 === 0 ? 'income' : 'expense') as 'income' | 'expense',
 					date: '2024-01-01',
 					createdAt: new Date().toISOString(),
 					updatedAt: new Date().toISOString(),
@@ -86,7 +86,7 @@ describe('TransactionQueryService - Performance Optimization', () => {
 			for (let i = 1; i <= 100; i++) {
 				testData.push({
 					amount: i * 100,
-					type: 'expense',
+					type: 'expense' as 'expense',
 					date: '2024-01-01',
 					createdAt: new Date().toISOString(),
 					updatedAt: new Date().toISOString(),
@@ -110,7 +110,7 @@ describe('TransactionQueryService - Performance Optimization', () => {
 				for (let i = 1; i <= batchSize; i++) {
 					testData.push({
 						amount: Math.floor(Math.random() * 10000) + 1,
-						type: Math.random() > 0.5 ? 'income' : 'expense',
+						type: (Math.random() > 0.5 ? 'income' : 'expense') as 'income' | 'expense',
 						date: '2024-01-01',
 						createdAt: new Date().toISOString(),
 						updatedAt: new Date().toISOString(),
