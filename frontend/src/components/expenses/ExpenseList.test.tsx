@@ -23,7 +23,7 @@ describe("ExpenseList", () => {
 				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
-					error={null}
+					error={undefined}
 					onEdit={mockOnEdit}
 				/>,
 			);
@@ -40,7 +40,7 @@ describe("ExpenseList", () => {
 				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
-					error={null}
+					error={undefined}
 					onDelete={mockOnDelete}
 				/>,
 			);
@@ -61,7 +61,7 @@ describe("ExpenseList", () => {
 				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
-					error={null}
+					error={undefined}
 					onEdit={mockOnEdit}
 					onDelete={mockOnDelete}
 				/>,
@@ -109,7 +109,7 @@ describe("ExpenseList", () => {
 				<ExpenseList
 					transactions={unsortedTransactions}
 					isLoading={false}
-					error={null}
+					error={undefined}
 				/>,
 			);
 
@@ -143,7 +143,7 @@ describe("ExpenseList", () => {
 				<ExpenseList
 					transactions={sameDateTransactions}
 					isLoading={false}
-					error={null}
+					error={undefined}
 				/>,
 			);
 
@@ -163,7 +163,7 @@ describe("ExpenseList", () => {
 				<ExpenseList
 					transactions={mockTransactions}
 					isLoading={false}
-					error={null}
+					error={undefined}
 				/>,
 			);
 
@@ -187,7 +187,7 @@ describe("ExpenseList", () => {
 				<ExpenseList
 					transactions={transactionWithNulls}
 					isLoading={false}
-					error={null}
+					error={undefined}
 				/>,
 			);
 
@@ -214,7 +214,7 @@ describe("ExpenseList", () => {
 					<ExpenseList
 						transactions={invalidDateTransaction}
 						isLoading={false}
-						error={null}
+						error={undefined}
 					/>,
 				);
 			}).not.toThrow();
@@ -232,7 +232,7 @@ describe("ExpenseList", () => {
 				<ExpenseList
 					transactions={longDescriptionTransaction}
 					isLoading={false}
-					error={null}
+					error={undefined}
 				/>,
 			);
 

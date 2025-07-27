@@ -79,7 +79,7 @@ const meta: Meta<typeof ExpenseList> = {
 	args: {
 		transactions: mockTransactions,
 		isLoading: false,
-		error: null,
+		error: undefined,
 		className: "",
 	},
 	tags: ["autodocs"],

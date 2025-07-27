@@ -38,7 +38,9 @@ export const IncomeList: FC<IncomeListProps> = memo(
 		// 収入データを日付降順でソート（useMemoで最適化）
 		const sortedTransactions = useMemo(() => {
 			return [...transactions].sort((a, b) => {
-				return new Date(b.date).getTime() - new Date(a.date).getTime();
+				const dateA = new Date(a.date).getTime();
+				const dateB = new Date(b.date).getTime();
+				return dateB - dateA;
 			});
 		}, [transactions]);
 
