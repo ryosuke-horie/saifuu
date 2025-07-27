@@ -97,9 +97,10 @@ export const idSchema = z
 	.int('IDは整数である必要があります')
 	.positive('IDは正の整数である必要があります')
 
-// 金額（正の数、範囲制限あり）
+// 金額（正の整数、範囲制限あり）
 export const amountSchema = z
 	.number()
+	.int('金額は整数である必要があります')
 	.positive('金額は正の数値である必要があります')
 	.min(
 		VALIDATION_LIMITS.MIN_AMOUNT,
