@@ -64,15 +64,22 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 		try {
 			// クエリパラメータを取得
 			const query = c.req.query()
-			const type = query.type as 'income' | 'expense' | undefined
 
-			// 収入タイプのフィルタリングはエラー
-			if (type === 'income') {
+			// 型安全なバリデーション（const assertionと配列includesを使用）
+			const validTypes = ['income', 'expense'] as const
+			type ValidType = (typeof validTypes)[number]
+
+			const type = query.type as string | undefined
+			const validatedType: ValidType | undefined =
+				type && validTypes.includes(type as ValidType) ? (type as ValidType) : undefined
+
+			// typeパラメータの検証
+			if (type && !validatedType) {
 				requestLogger.warn('無効なフィルタタイプ', {
 					validationError: 'invalid_type_filter',
 					providedType: type,
 				})
-				throw new BadRequestError('Invalid type filter. Only "expense" is allowed')
+				throw new BadRequestError('Invalid type filter. Allowed values are "income" or "expense"')
 			}
 
 			const categoryId = query.categoryId ? Number.parseInt(query.categoryId) : undefined
@@ -87,8 +94,8 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 			let result = await db.select().from(transactions)
 
 			// WHERE条件をインメモリでフィルタリング（パフォーマンス改善は今後の課題）
-			if (type) {
-				result = result.filter((tx) => tx.type === type)
+			if (validatedType) {
+				result = result.filter((tx) => tx.type === validatedType)
 			}
 			if (categoryId !== undefined) {
 				result = result.filter((tx) => tx.categoryId === categoryId)
@@ -147,17 +154,31 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				})
 				.from(transactions)
 
-			// 支出専用の統計計算
-			const totalExpense = allTransactions
-				.filter((t) => t.type === 'expense')
-				.reduce((sum, t) => sum + t.amount, 0)
+			// 単一のreduceで統計を計算（O(n) パフォーマンス最適化）
+			const stats = allTransactions.reduce(
+				(acc, transaction) => {
+					if (transaction.type === 'expense') {
+						acc.totalExpense += transaction.amount
+						acc.expenseCount++
+					} else if (transaction.type === 'income') {
+						acc.totalIncome += transaction.amount
+						acc.incomeCount++
+					}
+					acc.transactionCount++
+					return acc
+				},
+				{
+					totalExpense: 0,
+					totalIncome: 0,
+					balance: 0,
+					transactionCount: 0,
+					expenseCount: 0,
+					incomeCount: 0,
+				}
+			)
 
-			const transactionCount = allTransactions.length
-
-			const stats = {
-				totalExpense,
-				transactionCount,
-			}
+			// balanceを計算
+			stats.balance = stats.totalIncome - stats.totalExpense
 
 			requestLogger.success(stats)
 

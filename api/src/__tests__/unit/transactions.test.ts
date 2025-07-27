@@ -7,28 +7,7 @@ import type { AnyDatabase, Env } from '../../db'
 import { testLogger } from '../../logger/factory'
 import type { LoggingVariables } from '../../middleware/logging'
 import { createTransactionsApp } from '../../routes/transactions'
-
-// APIレスポンスの型定義
-interface TransactionResponse {
-	id: number
-	amount: number
-	type: string
-	categoryId?: number
-	categoryName?: string
-	description?: string
-	date: string
-	createdAt: string
-	updatedAt: string
-}
-
-interface ErrorResponse {
-	error: string
-	details?: Array<{
-		field: string
-		message: string
-		code?: string
-	}>
-}
+import type { ErrorResponse, TransactionResponse } from '../../types/api'
 
 // logWithContextのモック
 vi.mock('../../middleware/logging', () => ({

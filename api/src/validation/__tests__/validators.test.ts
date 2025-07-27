@@ -381,10 +381,8 @@ describe('Zodバリデーターのテスト', () => {
 			if (!result.success) {
 				const amountError = result.errors.find((e) => e.field === 'amount')
 				expect(amountError).toBeDefined()
-				// positive()とmin()の両方のエラーメッセージが出る可能性があるため、どちらかを確認
-				expect(amountError?.message).toMatch(
-					/収入金額は1円以上である必要があります|収入金額は0より大きい必要があります/
-				)
+				// int()チェックが先に実行されるため、小数点の値に対しては整数エラーが表示される
+				expect(amountError?.message).toBe('収入金額は整数である必要があります')
 			}
 		})
 

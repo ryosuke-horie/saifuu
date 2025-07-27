@@ -97,9 +97,10 @@ export const idSchema = z
 	.int('IDは整数である必要があります')
 	.positive('IDは正の整数である必要があります')
 
-// 金額（正の数、範囲制限あり）
+// 金額（正の整数、範囲制限あり）
 export const amountSchema = z
 	.number()
+	.int('金額は整数である必要があります')
 	.positive('金額は正の数値である必要があります')
 	.min(
 		VALIDATION_LIMITS.MIN_AMOUNT,
@@ -239,6 +240,7 @@ export const incomeCategoryIdSchema = createCategoryIdSchema({
 // レビューコメント#5対応: positive()とmin()の重複を解消してパフォーマンス改善
 export const incomeAmountSchema = z
 	.number()
+	.int('収入金額は整数である必要があります')
 	.min(
 		VALIDATION_LIMITS.MIN_AMOUNT,
 		// MIN_AMOUNTが1以上の場合、positive()チェックは不要
