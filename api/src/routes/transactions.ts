@@ -66,13 +66,13 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 			const query = c.req.query()
 			const type = query.type as 'income' | 'expense' | undefined
 
-			// 収入タイプのフィルタリングはエラー
-			if (type === 'income') {
+			// typeパラメータの検証（income/expenseのみ許可）
+			if (type && type !== 'income' && type !== 'expense') {
 				requestLogger.warn('無効なフィルタタイプ', {
 					validationError: 'invalid_type_filter',
 					providedType: type,
 				})
-				throw new BadRequestError('Invalid type filter. Only "expense" is allowed')
+				throw new BadRequestError('Invalid type filter. Allowed values are "income" or "expense"')
 			}
 
 			const categoryId = query.categoryId ? Number.parseInt(query.categoryId) : undefined
@@ -147,16 +147,21 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				})
 				.from(transactions)
 
-			// 支出専用の統計計算
-			const totalExpense = allTransactions
-				.filter((t) => t.type === 'expense')
-				.reduce((sum, t) => sum + t.amount, 0)
+			// 収入・支出の統計計算
+			const expenseTransactions = allTransactions.filter((t) => t.type === 'expense')
+			const incomeTransactions = allTransactions.filter((t) => t.type === 'income')
 
-			const transactionCount = allTransactions.length
+			const totalExpense = expenseTransactions.reduce((sum, t) => sum + t.amount, 0)
+			const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0)
+			const balance = totalIncome - totalExpense
 
 			const stats = {
 				totalExpense,
-				transactionCount,
+				totalIncome,
+				balance,
+				transactionCount: allTransactions.length,
+				expenseCount: expenseTransactions.length,
+				incomeCount: incomeTransactions.length,
 			}
 
 			requestLogger.success(stats)
