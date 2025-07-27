@@ -2,16 +2,16 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { ALL_CATEGORIES } from '../../../../shared/config/categories'
 import { testSubscriptions, testTransactions } from '../helpers/fixtures'
 import { createTestRequest, getResponseJson } from '../helpers/test-app'
-import { cleanupTestDatabase, setupTestDatabase } from '../helpers/test-db'
-import testProductionApp from '../helpers/test-production-app'
 import {
-	TEST_CATEGORY_IDS,
-	TEST_SUBSCRIPTION_NAMES,
-	TEST_DESCRIPTIONS,
-	TEST_AMOUNTS,
 	EXPECTED_TOTALS,
 	HTTP_STATUS,
+	TEST_AMOUNTS,
+	TEST_CATEGORY_IDS,
+	TEST_DESCRIPTIONS,
+	TEST_SUBSCRIPTION_NAMES,
 } from '../helpers/test-constants'
+import { cleanupTestDatabase, setupTestDatabase } from '../helpers/test-db'
+import testProductionApp from '../helpers/test-production-app'
 
 /**
  * カテゴリ-サブスクリプション間 統合テスト
@@ -44,7 +44,9 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 	describe('Category Reference Integrity', () => {
 		it('should create subscription with valid category ID from config', async () => {
 			// 設定ファイルから既存のカテゴリIDを使用
-			const systemFeeCategory = ALL_CATEGORIES.find((cat) => cat.id === TEST_CATEGORY_IDS.SYSTEM_FEE)
+			const systemFeeCategory = ALL_CATEGORIES.find(
+				(cat) => cat.id === TEST_CATEGORY_IDS.SYSTEM_FEE
+			)
 			expect(systemFeeCategory).toBeDefined()
 			const categoryId = systemFeeCategory!.numericId
 
@@ -164,7 +166,9 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 	describe('Category Changes and Transaction History', () => {
 		it('should create subscription with entertainment category', async () => {
 			// カテゴリを選択
-			const entertainmentCategory = ALL_CATEGORIES.find((cat) => cat.id === TEST_CATEGORY_IDS.ENTERTAINMENT)
+			const entertainmentCategory = ALL_CATEGORIES.find(
+				(cat) => cat.id === TEST_CATEGORY_IDS.ENTERTAINMENT
+			)
 			expect(entertainmentCategory).toBeDefined()
 			const categoryId = entertainmentCategory!.numericId
 
@@ -186,7 +190,9 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 
 		it('should create transaction with same category as subscription', async () => {
 			// カテゴリを選択
-			const entertainmentCategory = ALL_CATEGORIES.find((cat) => cat.id === TEST_CATEGORY_IDS.ENTERTAINMENT)
+			const entertainmentCategory = ALL_CATEGORIES.find(
+				(cat) => cat.id === TEST_CATEGORY_IDS.ENTERTAINMENT
+			)
 			expect(entertainmentCategory).toBeDefined()
 			const categoryId = entertainmentCategory!.numericId
 
@@ -209,7 +215,9 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 
 		it('should retrieve transaction with category information', async () => {
 			// カテゴリを選択
-			const entertainmentCategory = ALL_CATEGORIES.find((cat) => cat.id === TEST_CATEGORY_IDS.ENTERTAINMENT)
+			const entertainmentCategory = ALL_CATEGORIES.find(
+				(cat) => cat.id === TEST_CATEGORY_IDS.ENTERTAINMENT
+			)
 			expect(entertainmentCategory).toBeDefined()
 			const categoryId = entertainmentCategory!.numericId
 
@@ -283,7 +291,11 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 			const subscriptions = [
 				{ ...testSubscriptions.github, name: TEST_SUBSCRIPTION_NAMES.GITHUB_PRO, categoryId },
 				{ ...testSubscriptions.github, name: TEST_SUBSCRIPTION_NAMES.GITHUB_TEAM, categoryId },
-				{ ...testSubscriptions.github, name: TEST_SUBSCRIPTION_NAMES.GITHUB_ENTERPRISE, categoryId },
+				{
+					...testSubscriptions.github,
+					name: TEST_SUBSCRIPTION_NAMES.GITHUB_ENTERPRISE,
+					categoryId,
+				},
 			]
 
 			const createdIds: string[] = []
@@ -326,7 +338,9 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 		})
 
 		it('should calculate correct totals for subscriptions in the same category', async () => {
-			const streamingCategory = ALL_CATEGORIES.find((cat) => cat.id === TEST_CATEGORY_IDS.ENTERTAINMENT)
+			const streamingCategory = ALL_CATEGORIES.find(
+				(cat) => cat.id === TEST_CATEGORY_IDS.ENTERTAINMENT
+			)
 			expect(streamingCategory).toBeDefined()
 			const categoryId = streamingCategory!.numericId
 
@@ -334,7 +348,12 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 			const streamingServices = [
 				{ ...testSubscriptions.netflix, amount: TEST_AMOUNTS.NETFLIX, categoryId },
 				{ ...testSubscriptions.spotify, amount: TEST_AMOUNTS.SPOTIFY, categoryId },
-				{ ...testSubscriptions.youtube, name: TEST_SUBSCRIPTION_NAMES.YOUTUBE_PREMIUM, amount: TEST_AMOUNTS.YOUTUBE, categoryId },
+				{
+					...testSubscriptions.youtube,
+					name: TEST_SUBSCRIPTION_NAMES.YOUTUBE_PREMIUM,
+					amount: TEST_AMOUNTS.YOUTUBE,
+					categoryId,
+				},
 			]
 
 			for (const service of streamingServices) {
