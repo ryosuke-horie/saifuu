@@ -38,6 +38,14 @@ describe("IncomeForm", () => {
 		const user = userEvent.setup();
 		render(<IncomeForm {...defaultProps} />);
 
+		// 金額フィールドをクリア
+		const amountInput = screen.getByLabelText(/金額（円）/);
+		await user.clear(amountInput);
+
+		// 日付フィールドをクリア
+		const dateInput = screen.getByLabelText(/日付/);
+		await user.clear(dateInput);
+
 		// 送信ボタンをクリック
 		await user.click(screen.getByRole("button", { name: "登録" }));
 
@@ -56,15 +64,15 @@ describe("IncomeForm", () => {
 
 		const amountInput = screen.getByLabelText(/金額（円）/);
 
-		// 負の値を入力
+		// 0を入力（正の値でない）
 		await user.clear(amountInput);
-		await user.type(amountInput, "-1000");
-		await user.tab(); // フォーカスを外す
+		await user.type(amountInput, "0");
+		await user.click(screen.getByRole("button", { name: "登録" }));
 
 		// エラーメッセージの確認
 		await waitFor(() => {
 			expect(
-				screen.getByText("収入金額は0より大きい値を入力してください"),
+				screen.getByText("金額は0より大きい値を入力してください"),
 			).toBeInTheDocument();
 		});
 	});
@@ -74,8 +82,14 @@ describe("IncomeForm", () => {
 		render(<IncomeForm {...defaultProps} />);
 
 		// フォームに入力
-		await user.type(screen.getByLabelText(/金額（円）/), "50000");
-		await user.type(screen.getByLabelText(/日付/), "2025-01-27");
+		const amountInput = screen.getByLabelText(/金額（円）/);
+		await user.clear(amountInput);
+		await user.type(amountInput, "50000");
+
+		const dateInput = screen.getByLabelText(/日付/);
+		await user.clear(dateInput);
+		await user.type(dateInput, "2025-01-27");
+
 		await user.type(screen.getByLabelText(/説明（任意）/), "1月分給与");
 		await user.selectOptions(screen.getByLabelText(/カテゴリ/), "salary");
 
@@ -84,6 +98,7 @@ describe("IncomeForm", () => {
 
 		// onSubmitが正しいデータで呼ばれることを確認
 		await waitFor(() => {
+			expect(mockOnSubmit).toHaveBeenCalledTimes(1);
 			expect(mockOnSubmit).toHaveBeenCalledWith({
 				amount: 50000,
 				type: "income",

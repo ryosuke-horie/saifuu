@@ -41,6 +41,7 @@ export const Header: FC<HeaderProps> = ({
 	const navigationItems = [
 		{ href: "/", label: "ホーム", icon: "🏠" },
 		{ href: "/expenses", label: "支出管理", icon: "💸" },
+		{ href: "/income", label: "収入管理", icon: "💰" },
 		{ href: "/subscriptions", label: "サブスク管理", icon: "📱" },
 	];
 	return (
