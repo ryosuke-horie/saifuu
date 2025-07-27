@@ -19,7 +19,7 @@ type FormErrors = Partial<Record<keyof IncomeFormData, string>>;
 const defaultFormData: IncomeFormData = {
 	amount: 0,
 	type: "income",
-	date: new Date().toISOString().split('T')[0], // 今日の日付をデフォルトに
+	date: new Date().toISOString().split("T")[0], // 今日の日付をデフォルトに
 	description: "",
 	categoryId: "",
 };
