@@ -1,13 +1,13 @@
 /**
  * 取引クエリサービス
  * データベースクエリの構築と実行を担当
- * 
+ *
  * 設計意図：
  * - SQLクエリビルダーのロジックを集約
  * - 型安全なクエリ構築
  * - パフォーマンス最適化
  */
-import { and, between, eq, gte, lte, sql, type SQL } from 'drizzle-orm'
+import { and, between, eq, gte, lte, type SQL, sql } from 'drizzle-orm'
 import type { AnyDatabase } from '../db'
 import { type Transaction, transactions } from '../db/schema'
 
@@ -53,11 +53,8 @@ export class TransactionQueryService {
 	 */
 	async findTransactions(params: TransactionFilterParams): Promise<Transaction[]> {
 		const conditions = this.buildWhereConditions(params)
-		
-		let query = this.db
-			.select()
-			.from(transactions)
-			.$dynamic()
+
+		let query = this.db.select().from(transactions).$dynamic()
 
 		// WHERE条件を追加
 		if (conditions.length > 0) {

@@ -13,7 +13,7 @@ export function parseNumberParam(value: string | undefined): number | undefined 
 	}
 
 	const parsed = Number(value)
-	
+
 	// NaN、Infinity、-Infinityをチェック
 	if (!Number.isFinite(parsed)) {
 		return undefined
@@ -29,7 +29,7 @@ export function parseNumberParam(value: string | undefined): number | undefined 
  */
 export function parseIntParam(value: string | undefined): number | undefined {
 	const parsed = parseNumberParam(value)
-	
+
 	if (parsed === undefined) {
 		return undefined
 	}
@@ -49,7 +49,7 @@ export function parseIntParam(value: string | undefined): number | undefined {
  */
 export function parsePositiveIntParam(value: string | undefined): number | undefined {
 	const parsed = parseIntParam(value)
-	
+
 	if (parsed === undefined || parsed <= 0) {
 		return undefined
 	}

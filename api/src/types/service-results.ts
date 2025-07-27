@@ -26,7 +26,7 @@ export type ErrorResult = {
 /**
  * エラータイプの定義
  */
-export type ErrorType = 
+export type ErrorType =
 	| 'VALIDATION_ERROR'
 	| 'NOT_FOUND'
 	| 'CONFLICT'
@@ -90,7 +90,7 @@ export type ServiceResult<T> = SuccessResult<T> | ErrorResult
 /**
  * 取引サービスの結果型
  */
-export type TransactionServiceResult<T> = 
+export type TransactionServiceResult<T> =
 	| SuccessResult<T>
 	| ValidationErrorResult
 	| NotFoundErrorResult
@@ -136,9 +136,10 @@ export const ServiceResults = {
 			success: false,
 			error: 'DATABASE_ERROR',
 			message,
-			details: { 
+			details: {
 				operation,
-				originalError: originalError instanceof Error ? originalError.message : String(originalError)
+				originalError:
+					originalError instanceof Error ? originalError.message : String(originalError),
 			},
 		}
 	},
@@ -151,7 +152,9 @@ export const isSuccessResult = <T>(result: ServiceResult<T>): result is SuccessR
 	return result.success === true
 }
 
-export const isValidationError = (result: ServiceResult<unknown>): result is ValidationErrorResult => {
+export const isValidationError = (
+	result: ServiceResult<unknown>
+): result is ValidationErrorResult => {
 	return !result.success && result.error === 'VALIDATION_ERROR'
 }
 

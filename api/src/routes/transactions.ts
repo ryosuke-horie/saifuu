@@ -1,18 +1,10 @@
 import { Hono } from 'hono'
 import { type AnyDatabase, type Env } from '../db'
-import { type NewTransaction, type Transaction, transactions } from '../db/schema'
 import { errorHandler, handleError } from '../lib/error-handler'
 import { createRequestLogger } from '../lib/logger'
 import { parsePositiveIntParam, parseTransactionType } from '../lib/query-parser'
-import { createCrudHandlers } from '../lib/route-factory'
 import { type LoggingVariables } from '../middleware/logging'
 import { TransactionService } from '../services/transaction.service'
-import { type TransactionWithCategory } from '../utils/transaction-utils'
-import {
-	validateIdWithZod,
-	validateTransactionCreateWithZod,
-	validateTransactionUpdateWithZod,
-} from '../validation/zod-validators'
 
 /**
  * 取引APIのファクトリ関数
@@ -29,22 +21,6 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 	// エラーハンドリングミドルウェアを適用
 	app.use('*', errorHandler())
-
-	// CRUDハンドラーを作成（型パラメータを明示的に指定）
-	const crudHandlers = createCrudHandlers<
-		NewTransaction,
-		Partial<NewTransaction>,
-		Transaction,
-		TransactionWithCategory<Transaction>
-	>({
-		table: transactions,
-		resourceName: 'transactions',
-		validateCreate: (data: unknown) => validateTransactionCreateWithZod(data as NewTransaction),
-		validateUpdate: (data: unknown) =>
-			validateTransactionUpdateWithZod(data as Partial<NewTransaction>),
-		validateId: validateIdWithZod,
-		testDatabase: options.testDatabase,
-	})
 
 	/**
 	 * 取引一覧を取得するエンドポイント
@@ -71,7 +47,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				startDate: query.startDate,
 				endDate: query.endDate,
 				limit: parsePositiveIntParam(query.limit),
-				offset: query.offset ? parsePositiveIntParam(query.offset) ?? 0 : undefined,
+				offset: query.offset ? (parsePositiveIntParam(query.offset) ?? 0) : undefined,
 			}
 
 			// サービスを使用してデータを取得
@@ -84,10 +60,13 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				filters: {
 					type: params.type,
 					categoryId: params.categoryId,
-					dateRange: params.startDate || params.endDate ? {
-						start: params.startDate,
-						end: params.endDate,
-					} : undefined,
+					dateRange:
+						params.startDate || params.endDate
+							? {
+									start: params.startDate,
+									end: params.endDate,
+								}
+							: undefined,
 				},
 			})
 
@@ -119,9 +98,8 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 			const type = c.req.query('type') as 'income' | 'expense' | undefined
 
 			// タイプに応じた統計を取得
-			const stats = type === 'income' 
-				? await service.getIncomeStats()
-				: await service.getExpenseStats()
+			const stats =
+				type === 'income' ? await service.getIncomeStats() : await service.getExpenseStats()
 
 			requestLogger.success({
 				statsType: type || 'expense',
@@ -156,10 +134,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 					validationErrors: result.errors,
 					providedData: body,
 				})
-				return c.json(
-					{ error: result.errors[0].message, details: result.errors },
-					400
-				)
+				return c.json({ error: result.errors[0].message, details: result.errors }, 400)
 			}
 
 			requestLogger.success({
@@ -185,7 +160,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 		const db = options.testDatabase || c.get('db')
 		const service = new TransactionService(db)
-		
+
 		// ID検証
 		const idResult = service.validateId(c.req.param('id'))
 		if (!idResult.success) {
@@ -238,8 +213,8 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 			if (!result.success) {
 				if (result.notFound) {
-					requestLogger.warn('対象トランザクションが見つからない', { 
-						transactionId: idResult.data 
+					requestLogger.warn('対象トランザクションが見つからない', {
+						transactionId: idResult.data,
 					})
 					return c.json({ error: 'Transaction not found' }, 404)
 				}
@@ -248,13 +223,10 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 					validationErrors: result.errors,
 					providedData: body,
 				})
-				return c.json(
-					{ error: result.errors![0].message, details: result.errors },
-					400
-				)
+				return c.json({ error: result.errors![0].message, details: result.errors }, 400)
 			}
 
-			requestLogger.success({ 
+			requestLogger.success({
 				transactionId: idResult.data,
 				updatedFields: Object.keys(body),
 			})

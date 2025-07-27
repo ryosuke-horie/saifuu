@@ -52,7 +52,7 @@ describe('Route Factory - DELETE endpoint', () => {
 			Variables: { db: AnyDatabase } & LoggingVariables
 		}>()
 		app.use('*', async (c: Context, next: Next) => {
-			c.set('db', db as any)
+			c.set('db', db as unknown as AnyDatabase)
 			await next()
 		})
 
@@ -154,10 +154,10 @@ describe('Route Factory - DELETE endpoint', () => {
 			// 'not-found'は無効なIDなので400エラーになる
 			expect(response.status).toBe(400)
 			expect(response.headers.get('Content-Type')).toContain('application/json')
-			
+
 			const result = await response.json()
 			expect(result).toMatchObject({
-				error: expect.any(String)
+				error: expect.any(String),
 			})
 		})
 	})

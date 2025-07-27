@@ -277,12 +277,15 @@ describe('Transactions API with Zod - Unit Tests', () => {
 	describe('Query parameter validation', () => {
 		it('should handle invalid numeric query parameters safely', async () => {
 			// 無効な数値パラメータを含むリクエスト
-			const response = await app.request('/api/transactions?categoryId=abc&limit=xyz&offset=invalid', {
-				method: 'GET',
-			})
+			const response = await app.request(
+				'/api/transactions?categoryId=abc&limit=xyz&offset=invalid',
+				{
+					method: 'GET',
+				}
+			)
 
 			expect(response.status).toBe(200) // エラーではなく、無効なパラメータを無視して正常に動作すべき
-			const result = await response.json() as TransactionResponse[]
+			const result = (await response.json()) as TransactionResponse[]
 			expect(Array.isArray(result)).toBe(true)
 		})
 
@@ -305,7 +308,7 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(200)
-			const result = await response.json() as TransactionResponse[]
+			const result = (await response.json()) as TransactionResponse[]
 			expect(Array.isArray(result)).toBe(true)
 		})
 
@@ -316,7 +319,7 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(200)
-			const result = await response.json() as TransactionResponse[]
+			const result = (await response.json()) as TransactionResponse[]
 			expect(Array.isArray(result)).toBe(true)
 		})
 
@@ -327,7 +330,7 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(200)
-			const result = await response.json() as TransactionResponse[]
+			const result = (await response.json()) as TransactionResponse[]
 			expect(Array.isArray(result)).toBe(true)
 		})
 	})

@@ -1,7 +1,7 @@
 /**
  * 取引サービス
  * 取引に関するビジネスロジックを管理
- * 
+ *
  * 設計意図：
  * - 収入と支出の処理を統一的に扱う
  * - バリデーションとデータ変換の責任を持つ
@@ -39,7 +39,9 @@ export class TransactionService {
 	 * フィルタリングされた取引一覧を取得
 	 * カテゴリ情報を付加して返す
 	 */
-	async getTransactions(params: TransactionFilterParams): Promise<TransactionWithCategory<Transaction>[]> {
+	async getTransactions(
+		params: TransactionFilterParams
+	): Promise<TransactionWithCategory<Transaction>[]> {
 		const transactions = await this.queryService.findTransactions(params)
 		return addCategoryInfo(transactions)
 	}
@@ -67,13 +69,16 @@ export class TransactionService {
 	 * 新しい取引を作成
 	 * バリデーションとタイムスタンプの設定を行う
 	 */
-	async createTransaction(data: unknown): Promise<{
-		success: true
-		data: TransactionWithCategory<Transaction>
-	} | {
-		success: false
-		errors: ValidationError[]
-	}> {
+	async createTransaction(data: unknown): Promise<
+		| {
+				success: true
+				data: TransactionWithCategory<Transaction>
+		  }
+		| {
+				success: false
+				errors: ValidationError[]
+		  }
+	> {
 		// バリデーション
 		const validationResult = validateTransactionCreateWithZod(data as NewTransaction)
 		if (!validationResult.success) {
@@ -87,10 +92,7 @@ export class TransactionService {
 			updatedAt: new Date().toISOString(),
 		}
 
-		const [created] = await this.db
-			.insert(transactions)
-			.values(newData)
-			.returning()
+		const [created] = await this.db.insert(transactions).values(newData).returning()
 
 		const [transactionWithCategory] = addCategoryInfo([created])
 		return { success: true, data: transactionWithCategory }
@@ -103,14 +105,17 @@ export class TransactionService {
 	async updateTransaction(
 		id: number,
 		data: unknown
-	): Promise<{
-		success: true
-		data: TransactionWithCategory<Transaction>
-	} | {
-		success: false
-		errors?: ValidationError[]
-		notFound?: boolean
-	}> {
+	): Promise<
+		| {
+				success: true
+				data: TransactionWithCategory<Transaction>
+		  }
+		| {
+				success: false
+				errors?: ValidationError[]
+				notFound?: boolean
+		  }
+	> {
 		// 既存データの確認
 		const existing = await this.getTransactionById(id)
 		if (!existing) {
@@ -119,8 +124,10 @@ export class TransactionService {
 
 		// タイプを保持したバリデーション
 		const dataWithType = { ...(data as object), type: existing.type }
-		const validationResult = validateTransactionUpdateWithZod(dataWithType as Partial<NewTransaction>)
-		
+		const validationResult = validateTransactionUpdateWithZod(
+			dataWithType as Partial<NewTransaction>
+		)
+
 		if (!validationResult.success) {
 			return { success: false, errors: validationResult.errors }
 		}
@@ -145,10 +152,7 @@ export class TransactionService {
 	 * 取引を削除
 	 */
 	async deleteTransaction(id: number): Promise<boolean> {
-		const result = await this.db
-			.delete(transactions)
-			.where(eq(transactions.id, id))
-			.returning()
+		const result = await this.db.delete(transactions).where(eq(transactions.id, id)).returning()
 
 		return result.length > 0
 	}

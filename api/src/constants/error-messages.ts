@@ -55,18 +55,17 @@ export const ERROR_MESSAGES = {
  * 動的なエラーメッセージを生成するヘルパー関数
  */
 export const createErrorMessage = {
-	notFound: (resourceType: string, id: number | string) => 
+	notFound: (resourceType: string, id: number | string) =>
 		`${resourceType}（ID: ${id}）が見つかりません`,
-	
+
 	validationFailed: (fieldName: string, reason: string) =>
 		`${fieldName}の検証に失敗しました: ${reason}`,
-	
+
 	operationFailed: (operation: string, resourceType: string) =>
 		`${resourceType}の${operation}に失敗しました`,
-	
-	duplicateEntry: (fieldName: string, value: string) =>
-		`${fieldName}「${value}」は既に存在します`,
-	
+
+	duplicateEntry: (fieldName: string, value: string) => `${fieldName}「${value}」は既に存在します`,
+
 	outOfRange: (fieldName: string, min: number, max: number) =>
 		`${fieldName}は${min}から${max}の範囲で入力してください`,
 } as const

@@ -93,7 +93,7 @@ describe('TransactionQueryService', () => {
 		it('typeでフィルタリングできる', async () => {
 			const expenses = await service.findTransactions({ type: 'expense' })
 			expect(expenses).toHaveLength(2)
-			expect(expenses.every(tx => tx.type === 'expense')).toBe(true)
+			expect(expenses.every((tx) => tx.type === 'expense')).toBe(true)
 
 			const incomes = await service.findTransactions({ type: 'income' })
 			expect(incomes).toHaveLength(1)
@@ -112,7 +112,7 @@ describe('TransactionQueryService', () => {
 				endDate: '2025-01-20',
 			})
 			expect(result).toHaveLength(2)
-			expect(result.every(tx => tx.date >= '2025-01-10' && tx.date <= '2025-01-20')).toBe(true)
+			expect(result.every((tx) => tx.date >= '2025-01-10' && tx.date <= '2025-01-20')).toBe(true)
 		})
 
 		it('開始日のみでフィルタリングできる', async () => {
@@ -120,7 +120,7 @@ describe('TransactionQueryService', () => {
 				startDate: '2025-01-15',
 			})
 			expect(result).toHaveLength(2)
-			expect(result.every(tx => tx.date >= '2025-01-15')).toBe(true)
+			expect(result.every((tx) => tx.date >= '2025-01-15')).toBe(true)
 		})
 
 		it('終了日のみでフィルタリングできる', async () => {
@@ -128,7 +128,7 @@ describe('TransactionQueryService', () => {
 				endDate: '2025-01-15',
 			})
 			expect(result).toHaveLength(2)
-			expect(result.every(tx => tx.date <= '2025-01-15')).toBe(true)
+			expect(result.every((tx) => tx.date <= '2025-01-15')).toBe(true)
 		})
 
 		it('複数の条件でフィルタリングできる', async () => {

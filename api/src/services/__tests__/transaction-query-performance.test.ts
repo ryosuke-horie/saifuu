@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { AnyDatabase } from '../../db'
 import { transactions } from '../../db/schema'
 import { TransactionQueryService } from '../transaction-query.service'
 
@@ -29,7 +30,7 @@ describe('TransactionQueryService - Performance Optimization', () => {
 		`)
 
 		// サービスのインスタンスを作成
-		service = new TransactionQueryService(db as any)
+		service = new TransactionQueryService(db as unknown as AnyDatabase)
 	})
 
 	describe('収入統計の計算', () => {
@@ -86,7 +87,7 @@ describe('TransactionQueryService - Performance Optimization', () => {
 			for (let i = 1; i <= 100; i++) {
 				testData.push({
 					amount: i * 100,
-					type: 'expense' as 'expense',
+					type: 'expense' as const,
 					date: '2024-01-01',
 					createdAt: new Date().toISOString(),
 					updatedAt: new Date().toISOString(),
@@ -121,10 +122,10 @@ describe('TransactionQueryService - Performance Optimization', () => {
 
 			// 実行時間を計測
 			const startTime = performance.now()
-			
+
 			const incomeStats = await service.calculateIncomeStats()
 			const expenseStats = await service.calculateExpenseStats()
-			
+
 			const endTime = performance.now()
 			const executionTime = endTime - startTime
 

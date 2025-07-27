@@ -57,11 +57,11 @@ describe('TransactionService', () => {
 		it('カテゴリ情報付きで取引一覧を取得できる', async () => {
 			const result = await service.getTransactions({})
 			expect(result).toHaveLength(2)
-			
+
 			// カテゴリ情報が付加されている
 			expect(result[0].category).toBeDefined()
 			expect(result[0].category?.name).toBe('食費')
-			
+
 			expect(result[1].category).toBeDefined()
 			expect(result[1].category?.name).toBe('給与')
 		})
@@ -108,7 +108,7 @@ describe('TransactionService', () => {
 
 			const result = await service.createTransaction(data)
 			expect(result.success).toBe(true)
-			
+
 			if (result.success) {
 				expect(result.data.amount).toBe(1000)
 				expect(result.data.category?.name).toBe('食費')
@@ -126,7 +126,7 @@ describe('TransactionService', () => {
 
 			const result = await service.createTransaction(data)
 			expect(result.success).toBe(false)
-			
+
 			if (!result.success) {
 				expect(result.errors).toBeDefined()
 				expect(result.errors.length).toBeGreaterThan(0)
@@ -144,7 +144,7 @@ describe('TransactionService', () => {
 
 			const result = await service.createTransaction(data)
 			expect(result.success).toBe(true)
-			
+
 			if (result.success) {
 				expect(result.data.type).toBe('income')
 				expect(result.data.category?.name).toBe('給与')
@@ -172,7 +172,7 @@ describe('TransactionService', () => {
 
 			const result = await service.updateTransaction(1, updateData)
 			expect(result.success).toBe(true)
-			
+
 			if (result.success) {
 				expect(result.data.amount).toBe(2000)
 				expect(result.data.description).toBe('更新後のデータ')
@@ -183,7 +183,7 @@ describe('TransactionService', () => {
 		it('存在しないIDの場合エラーを返す', async () => {
 			const result = await service.updateTransaction(999, { amount: 2000 })
 			expect(result.success).toBe(false)
-			
+
 			if (!result.success) {
 				expect(result.notFound).toBe(true)
 			}
@@ -192,7 +192,7 @@ describe('TransactionService', () => {
 		it('無効なデータの場合バリデーションエラーを返す', async () => {
 			const result = await service.updateTransaction(1, { amount: -1000 })
 			expect(result.success).toBe(false)
-			
+
 			if (!result.success) {
 				expect(result.errors).toBeDefined()
 			}
@@ -211,7 +211,7 @@ describe('TransactionService', () => {
 			// 無効なカテゴリIDで更新を試みる
 			const result = await service.updateTransaction(2, { categoryId: 3 }) // 支出カテゴリ
 			expect(result.success).toBe(false)
-			
+
 			if (!result.success) {
 				expect(result.errors).toBeDefined()
 			}
