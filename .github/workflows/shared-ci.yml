@@ -1,0 +1,76 @@
+name: Shared CI (Self-hosted Runner)
+
+on:
+  # プルリクエストで自動実行
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'shared/**'
+      - '.github/workflows/shared-ci.yml'
+  # mainブランチへのpushは引き続き自動実行
+  push:
+    branches:
+      - main
+    paths:
+      - 'shared/**'
+      - '.github/workflows/shared-ci.yml'
+  # 手動トリガー（デバッグ用に残す）
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull Request number'
+        required: false
+        type: string
+
+# GitHub Actions無料枠節約のため、同一PRで複数実行時は前の実行をキャンセル
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shared-checks:
+    name: Shared Quality Checks & Tests
+    runs-on: self-hosted
+    timeout-minutes: 15
+    
+    # PRコメント投稿権限を追加
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    defaults:
+      run:
+        working-directory: shared
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          # セルフホストランナーの制約によりキャッシュは無効
+          # cache: 'pnpm'
+          # cache-dependency-path: shared/pnpm-lock.yaml
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      
+      - name: Install dependencies
+        run: |
+          # セルフホストランナーではキャッシュを使用しない
+          pnpm config set store-dir /tmp/pnpm-store-${{ github.run_id }}
+          pnpm install --frozen-lockfile --prefer-offline false
+      
+      - name: Type check
+        run: pnpm run typecheck
+      
+      - name: Biome check
+        run: pnpm run lint
+      
+      - name: Unit tests
+        run: pnpm run test:run
