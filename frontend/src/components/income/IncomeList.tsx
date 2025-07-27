@@ -1,32 +1,32 @@
 /**
- * 支出一覧コンポーネント
+ * 収入一覧コンポーネント
  *
- * 支出データをテーブル形式で表示する
+ * 収入データをテーブル形式で表示する
  * レスポンシブデザインに対応し、モバイルでは適切なレイアウトに切り替わる
  *
  * 設計方針:
- * - 支出を明確に表示（負の金額表示）
+ * - 収入を明確に表示（緑色で金額表示）
  * - 日付降順（新しい順）でのソート
  * - 編集・削除機能の提供
  * - ローディング・エラー・空状態の適切な表示
  * - アクセシビリティを考慮したセマンティックHTML
- * - SubscriptionListコンポーネントのパターンを踏襲
+ * - ExpenseListコンポーネントのパターンを踏襲
  */
 
 import type { FC } from "react";
 import { memo, useMemo } from "react";
-import type { ExpenseListProps } from "../../types/expense";
+import type { IncomeListProps } from "../../types/income";
 import { EmptyState, ErrorState } from "../common/table";
 import { TransactionRow } from "../transactions";
 import { LoadingState } from "../ui";
 
 /**
- * 支出一覧コンポーネント
+ * 収入一覧コンポーネント
  *
  * React.memoでパフォーマンス最適化
  * useMemoでソート処理の最適化
  */
-export const ExpenseList: FC<ExpenseListProps> = memo(
+export const IncomeList: FC<IncomeListProps> = memo(
 	({
 		transactions,
 		isLoading = false,
@@ -35,7 +35,7 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 		onDelete,
 		className = "",
 	}) => {
-		// 取引データを日付降順でソート（useMemoで最適化）
+		// 収入データを日付降順でソート（useMemoで最適化）
 		const sortedTransactions = useMemo(() => {
 			return [...transactions].sort((a, b) => {
 				return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -47,8 +47,8 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 				{/* テーブルヘッダー */}
 				<div className="px-4 py-4 border-b border-gray-200">
 					<div>
-						<h2 className="text-lg font-semibold text-gray-900">取引一覧</h2>
-						<p className="text-sm text-gray-600 mt-1">支出の履歴</p>
+						<h2 className="text-lg font-semibold text-gray-900">収入一覧</h2>
+						<p className="text-sm text-gray-600 mt-1">収入の履歴</p>
 					</div>
 				</div>
 
@@ -101,9 +101,9 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 							{error && <ErrorState message={error} />}
 							{!isLoading && !error && sortedTransactions.length === 0 && (
 								<EmptyState
-									message="登録されている取引がありません"
+									message="登録されている収入がありません"
 									subMessage="新規登録ボタンから追加してください"
-									icon="💰"
+									icon="💵"
 								/>
 							)}
 							{!isLoading &&
@@ -114,7 +114,6 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 										transaction={transaction}
 										onEdit={onEdit}
 										onDelete={onDelete}
-										showSign={true}
 									/>
 								))}
 						</tbody>
@@ -125,4 +124,4 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 	},
 );
 
-ExpenseList.displayName = "ExpenseList";
+IncomeList.displayName = "IncomeList";

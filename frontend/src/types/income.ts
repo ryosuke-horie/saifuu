@@ -4,7 +4,7 @@
  * 収入管理機能で使用されるデータ型を定義
  */
 
-import type { Category } from "../lib/api/types";
+import type { Category, Transaction } from "../lib/api/types";
 
 // 基本型をre-export
 export type { TransactionType } from "../lib/api/types";
@@ -68,6 +68,41 @@ export interface IncomeFormProps {
 	 * カテゴリ一覧（フォームで選択肢として表示）
 	 */
 	categories: Category[];
+
+	/**
+	 * 追加のCSSクラス名
+	 */
+	className?: string;
+}
+
+/**
+ * 収入一覧表示用のプロパティ
+ */
+export interface IncomeListProps {
+	/**
+	 * 取引データの配列（収入のみ）
+	 */
+	transactions: Transaction[];
+
+	/**
+	 * ローディング状態
+	 */
+	isLoading?: boolean;
+
+	/**
+	 * エラー状態
+	 */
+	error?: string | null;
+
+	/**
+	 * 編集時のコールバック
+	 */
+	onEdit?: (transaction: Transaction) => void;
+
+	/**
+	 * 削除時のコールバック
+	 */
+	onDelete?: (transactionId: string) => void;
 
 	/**
 	 * 追加のCSSクラス名
