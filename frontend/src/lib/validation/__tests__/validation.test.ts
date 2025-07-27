@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { ExpenseFormData } from "../../../types/expense";
+import type { IncomeFormData } from "../../../types/income";
 import type { SubscriptionFormData } from "../../api/types";
 import {
 	validateExpenseFieldWithZod,
 	validateExpenseFormWithZod,
+	validateIncomeFieldWithZod,
+	validateIncomeFormWithZod,
 	validateSubscriptionFieldWithZod,
 	validateSubscriptionFormWithZod,
 } from "../validation";
@@ -192,6 +195,147 @@ describe("Zodバリデーション関数のテスト", () => {
 				baseData,
 			);
 			expect(error).toBeDefined();
+		});
+	});
+
+	describe("validateIncomeFormWithZod", () => {
+		it("有効な収入データを受け入れる", () => {
+			const data: IncomeFormData = {
+				amount: 300000,
+				type: "income",
+				date: "2024-01-25",
+				description: "1月分給与",
+				categoryId: "salary",
+			};
+
+			const result = validateIncomeFormWithZod(data);
+			expect(result.success).toBe(true);
+			expect(result.errors).toEqual({});
+		});
+
+		it("必須フィールドのエラーを検出する", () => {
+			const data: IncomeFormData = {
+				amount: 0,
+				type: "income",
+				date: "",
+				description: "",
+				categoryId: "",
+			};
+
+			const result = validateIncomeFormWithZod(data);
+			expect(result.success).toBe(false);
+			expect(result.errors.amount).toContain(
+				"金額は0より大きい値を入力してください",
+			);
+			expect(result.errors.date).toContain("日付を入力してください");
+		});
+
+		it("金額が負の値の場合にエラーを検出する", () => {
+			const data: IncomeFormData = {
+				amount: -1000,
+				type: "income",
+				date: "2024-01-01",
+				description: "",
+				categoryId: "salary",
+			};
+
+			const result = validateIncomeFormWithZod(data);
+			expect(result.success).toBe(false);
+			expect(result.errors.amount).toContain(
+				"金額は0より大きい値を入力してください",
+			);
+		});
+
+		it("説明文の長さエラーを検出する", () => {
+			const data: IncomeFormData = {
+				amount: 100000,
+				type: "income",
+				date: "2024-01-01",
+				description: "a".repeat(501),
+				categoryId: "salary",
+			};
+
+			const result = validateIncomeFormWithZod(data);
+			expect(result.success).toBe(false);
+			expect(result.errors.description).toContain(
+				"説明は500文字以内で入力してください",
+			);
+		});
+
+		it("カテゴリIDが適切にマッピングされる", () => {
+			const testCases = [
+				{ categoryId: "salary", expectedNumericId: 101 },
+				{ categoryId: "bonus", expectedNumericId: 102 },
+				{ categoryId: "side_business", expectedNumericId: 103 },
+				{ categoryId: "investment", expectedNumericId: 104 },
+				{ categoryId: "other_income", expectedNumericId: 105 },
+			];
+
+			testCases.forEach(({ categoryId }) => {
+				const data: IncomeFormData = {
+					amount: 100000,
+					type: "income",
+					date: "2024-01-01",
+					description: "",
+					categoryId,
+				};
+
+				const result = validateIncomeFormWithZod(data);
+				expect(result.success).toBe(true);
+			});
+		});
+	});
+
+	describe("validateIncomeFieldWithZod", () => {
+		const baseData: IncomeFormData = {
+			amount: 300000,
+			type: "income",
+			date: "2024-01-25",
+			description: "",
+			categoryId: "salary",
+		};
+
+		it("有効な金額フィールドを受け入れる", () => {
+			const error = validateIncomeFieldWithZod("amount", 500000, baseData);
+			expect(error).toBeUndefined();
+		});
+
+		it("無効な金額フィールドのエラーを返す", () => {
+			const error = validateIncomeFieldWithZod("amount", -100, baseData);
+			expect(error).toBe("収入金額は0より大きい値を入力してください");
+		});
+
+		it("金額が0の場合にエラーを返す", () => {
+			const error = validateIncomeFieldWithZod("amount", 0, baseData);
+			expect(error).toBe("収入金額は0より大きい値を入力してください");
+		});
+
+		it("有効な日付フィールドを受け入れる", () => {
+			const error = validateIncomeFieldWithZod("date", "2024-12-31", baseData);
+			expect(error).toBeUndefined();
+		});
+
+		it("無効な日付フィールドのエラーを返す", () => {
+			const error = validateIncomeFieldWithZod("date", "", baseData);
+			expect(error).toBe("日付を入力してください");
+		});
+
+		it("有効な説明フィールドを受け入れる", () => {
+			const error = validateIncomeFieldWithZod(
+				"description",
+				"給与振込",
+				baseData,
+			);
+			expect(error).toBeUndefined();
+		});
+
+		it("説明フィールドが長すぎる場合にエラーを返す", () => {
+			const error = validateIncomeFieldWithZod(
+				"description",
+				"a".repeat(501),
+				baseData,
+			);
+			expect(error).toBe("説明は500文字以内で入力してください");
 		});
 	});
 });
