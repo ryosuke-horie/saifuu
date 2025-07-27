@@ -1,0 +1,56 @@
+{
+	"$schema": "https://unpkg.com/knip@5/schema.json",
+	"entry": [
+		"src/index.tsx",
+		"src/routes/**/*.ts",
+		"src/middleware/**/*.ts",
+		"src/lib/**/*.ts",
+		"src/logger/**/*.ts",
+		"src/db/**/*.ts",
+		"src/validation/**/*.ts",
+		"vite.config.ts",
+		"vitest.config.ts",
+		"vitest.integration.config.ts",
+		"drizzle.config.ts",
+		"scripts/**/*.js",
+		"server-node.js",
+		"server-e2e.js"
+	],
+	"project": ["src/**/*.{ts,tsx}", "scripts/**/*.js"],
+	"ignore": [
+		"**/*.test.{ts,tsx}",
+		"**/__tests__/**",
+		"src/__tests__/**",
+		"drizzle/**/*.sql",
+		"drizzle/migrations/**",
+		"coverage/**",
+		"dist/**",
+		"temp-build/**",
+		"test-results/**",
+		"*.d.ts"
+	],
+	"ignoreDependencies": [
+		"@biomejs/biome",
+		"@cloudflare/vite-plugin",
+		"@cloudflare/workers-types",
+		"@vitest/*",
+		"vitest",
+		"@types/*",
+		"better-sqlite3",
+		"drizzle-kit",
+		"tsx",
+		"wrangler",
+		"vite-ssr-components"
+	],
+	"rules": {
+		"files": "warn",
+		"dependencies": "warn",
+		"devDependencies": "warn",
+		"exports": "warn",
+		"types": "warn",
+		"duplicates": "warn",
+		"unlisted": "warn",
+		"binaries": "warn",
+		"unresolved": "warn"
+	}
+}

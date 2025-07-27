@@ -52,6 +52,9 @@ importers:
       drizzle-orm:
         specifier: ^0.44.2
         version: 0.44.3(@cloudflare/workers-types@4.20250719.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.2.0)
+      knip:
+        specifier: 5.45.0
+        version: 5.45.0(@types/node@24.0.15)(typescript@5.8.3)
       tsx:
         specifier: ^4.20.3
         version: 4.20.3

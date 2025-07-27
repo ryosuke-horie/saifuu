@@ -33,7 +33,11 @@
     "db:seed:dev": "sqlite3 dev.db < drizzle/seed.sql && echo '✅ 開発環境シード投入完了'",
     "db:setup:dev": "pnpm run db:migrate:dev && pnpm run db:seed:dev && echo '✅ 開発環境データベースの準備完了（マイグレーション+シード）'",
     "db:reset:local": "pnpm run db:clear:local && pnpm run db:migrate:local && echo '✅ ローカルD1リセット完了'",
-    "db:reset:dev": "rm -f dev.db && pnpm run db:migrate:dev && pnpm run db:seed:dev && echo '✅ 開発環境リセット完了'"
+    "db:reset:dev": "rm -f dev.db && pnpm run db:migrate:dev && pnpm run db:seed:dev && echo '✅ 開発環境リセット完了'",
+    "knip": "knip",
+    "knip:production": "knip --production --strict",
+    "knip:fix": "knip --fix",
+    "check:knip": "pnpm run check && pnpm run knip"
   },
   "dependencies": {
     "hono": "^4.8.3",
@@ -49,6 +53,7 @@
     "better-sqlite3": "^12.2.0",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.2",
+    "knip": "5.45.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
