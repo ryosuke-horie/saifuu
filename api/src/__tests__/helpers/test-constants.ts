@@ -9,7 +9,7 @@ export const TEST_CATEGORY_IDS = {
 	BUSINESS: 'business',
 	SYSTEM_FEE: 'system_fee',
 	INVALID: 99999,
-	MIN_VALID: 0,
+	BOUNDARY_ZERO: 0,
 	NEGATIVE: -1,
 } as const
 

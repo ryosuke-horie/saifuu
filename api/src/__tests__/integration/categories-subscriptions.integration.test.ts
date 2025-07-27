@@ -48,7 +48,10 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 				(cat) => cat.id === TEST_CATEGORY_IDS.SYSTEM_FEE
 			)
 			expect(systemFeeCategory).toBeDefined()
-			const categoryId = systemFeeCategory!.numericId
+			if (!systemFeeCategory) {
+				throw new Error(`Category with id ${TEST_CATEGORY_IDS.SYSTEM_FEE} not found`)
+			}
+			const categoryId = systemFeeCategory.numericId
 
 			// 既存のカテゴリIDを使用してサブスクリプションを作成
 			const subscription = {
@@ -73,7 +76,10 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 			// 設定ファイルから既存のカテゴリIDを使用
 			const softwareCategory = ALL_CATEGORIES.find((cat) => cat.id === TEST_CATEGORY_IDS.BUSINESS)
 			expect(softwareCategory).toBeDefined()
-			const categoryId = softwareCategory!.numericId
+			if (!softwareCategory) {
+				throw new Error(`Category with id ${TEST_CATEGORY_IDS.BUSINESS} not found`)
+			}
+			const categoryId = softwareCategory.numericId
 
 			// サブスクリプションを作成
 			const subscription = {
@@ -102,9 +108,9 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 			const fetchedData = await getResponseJson(response)
 			expect(fetchedData.category).toBeDefined()
 			expect(fetchedData.category.id).toBe(categoryId)
-			expect(fetchedData.category.name).toBe(softwareCategory!.name)
-			expect(fetchedData.category.type).toBe(softwareCategory!.type)
-			expect(fetchedData.category.color).toBe(softwareCategory!.color)
+			expect(fetchedData.category.name).toBe(softwareCategory.name)
+			expect(fetchedData.category.type).toBe(softwareCategory.type)
+			expect(fetchedData.category.color).toBe(softwareCategory.color)
 		})
 
 		it('should handle subscription creation with invalid category ID', async () => {
@@ -170,7 +176,10 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 				(cat) => cat.id === TEST_CATEGORY_IDS.ENTERTAINMENT
 			)
 			expect(entertainmentCategory).toBeDefined()
-			const categoryId = entertainmentCategory!.numericId
+			if (!entertainmentCategory) {
+				throw new Error(`Category with id ${TEST_CATEGORY_IDS.ENTERTAINMENT} not found`)
+			}
+			const categoryId = entertainmentCategory.numericId
 
 			// 同じカテゴリでサブスクリプションを作成
 			const subscription = {
@@ -194,7 +203,10 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 				(cat) => cat.id === TEST_CATEGORY_IDS.ENTERTAINMENT
 			)
 			expect(entertainmentCategory).toBeDefined()
-			const categoryId = entertainmentCategory!.numericId
+			if (!entertainmentCategory) {
+				throw new Error(`Category with id ${TEST_CATEGORY_IDS.ENTERTAINMENT} not found`)
+			}
+			const categoryId = entertainmentCategory.numericId
 
 			// 同じカテゴリで取引を作成
 			const transaction = {
@@ -219,7 +231,10 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 				(cat) => cat.id === TEST_CATEGORY_IDS.ENTERTAINMENT
 			)
 			expect(entertainmentCategory).toBeDefined()
-			const categoryId = entertainmentCategory!.numericId
+			if (!entertainmentCategory) {
+				throw new Error(`Category with id ${TEST_CATEGORY_IDS.ENTERTAINMENT} not found`)
+			}
+			const categoryId = entertainmentCategory.numericId
 
 			// 取引を作成
 			const transaction = {
@@ -246,7 +261,7 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 			const fetchedTx = await getResponseJson(response)
 			expect(fetchedTx.category).toBeDefined()
 			expect(fetchedTx.category.id).toBe(categoryId)
-			expect(fetchedTx.category.name).toBe(entertainmentCategory!.name)
+			expect(fetchedTx.category.name).toBe(entertainmentCategory.name)
 		})
 
 		it('should handle transactions with invalid category gracefully', async () => {
@@ -277,7 +292,7 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 			expect(fetchResponse.status).toBe(200)
 			const fetchedTx = await getResponseJson(fetchResponse)
 			// カテゴリ情報が存在しないか、nullであることを確認
-			expect(fetchedTx.category == null).toBe(true)
+			expect(fetchedTx.category).toBeNull()
 		})
 	})
 
@@ -285,7 +300,10 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 		it('should allow multiple subscriptions to use the same category', async () => {
 			const softwareCategory = ALL_CATEGORIES.find((cat) => cat.id === TEST_CATEGORY_IDS.BUSINESS)
 			expect(softwareCategory).toBeDefined()
-			const categoryId = softwareCategory!.numericId
+			if (!softwareCategory) {
+				throw new Error(`Category with id ${TEST_CATEGORY_IDS.BUSINESS} not found`)
+			}
+			const categoryId = softwareCategory.numericId
 
 			// 同じカテゴリで複数のサブスクリプションを作成
 			const subscriptions = [
@@ -333,7 +351,7 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 				const sub = await getResponseJson(response)
 				expect(sub.category).toBeDefined()
 				expect(sub.category.id).toBe(categoryId)
-				expect(sub.category.name).toBe(softwareCategory!.name)
+				expect(sub.category.name).toBe(softwareCategory.name)
 			}
 		})
 
@@ -342,7 +360,10 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 				(cat) => cat.id === TEST_CATEGORY_IDS.ENTERTAINMENT
 			)
 			expect(streamingCategory).toBeDefined()
-			const categoryId = streamingCategory!.numericId
+			if (!streamingCategory) {
+				throw new Error(`Category with id ${TEST_CATEGORY_IDS.ENTERTAINMENT} not found`)
+			}
+			const categoryId = streamingCategory.numericId
 
 			// 同じカテゴリで異なる金額のサブスクリプションを作成
 			const streamingServices = [
@@ -356,6 +377,7 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 				},
 			]
 
+			const createdIds: string[] = []
 			for (const service of streamingServices) {
 				const response = await createTestRequest(
 					testProductionApp,
@@ -364,6 +386,8 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 					service
 				)
 				expect(response.status).toBe(HTTP_STATUS.CREATED)
+				const created = await getResponseJson(response)
+				createdIds.push(created.id)
 			}
 
 			// カテゴリ別の合計を手動で計算して確認
@@ -371,11 +395,14 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 			expect(listResponse.status).toBe(200)
 			const allSubs = await getResponseJson(listResponse)
 
-			const categoryTotal = allSubs
-				.filter((sub: { categoryId: number }) => sub.categoryId === categoryId)
-				.reduce((sum: number, sub: { amount: number }) => sum + sub.amount, 0)
+			// このテストで作成したサブスクリプションのみをフィルタリング
+			const thisTestSubs = allSubs.filter((sub: { id: string }) => createdIds.includes(sub.id))
+			const categoryTotal = thisTestSubs.reduce(
+				(sum: number, sub: { amount: number }) => sum + sub.amount,
+				0
+			)
 
-			expect(categoryTotal).toBeGreaterThanOrEqual(EXPECTED_TOTALS.STREAMING_SERVICES)
+			expect(categoryTotal).toBe(EXPECTED_TOTALS.STREAMING_SERVICES)
 		})
 	})
 
@@ -388,9 +415,12 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 			expect(expenseCategory).toBeDefined()
 
 			// 収入カテゴリで取引を作成
+			if (!incomeCategory) {
+				throw new Error('Income category not found')
+			}
 			const incomeTransaction = {
 				...testTransactions.income,
-				categoryId: incomeCategory!.numericId,
+				categoryId: incomeCategory.numericId,
 				type: 'income' as const,
 			}
 			let response = await createTestRequest(
@@ -402,9 +432,12 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 			expect(response.status).toBe(HTTP_STATUS.CREATED)
 
 			// 支出カテゴリでサブスクリプションを作成（サブスクリプションは常に支出）
+			if (!expenseCategory) {
+				throw new Error('Expense category not found')
+			}
 			const subscription = {
 				...testSubscriptions.netflix,
-				categoryId: expenseCategory!.numericId,
+				categoryId: expenseCategory.numericId,
 			}
 			response = await createTestRequest(
 				testProductionApp,
@@ -417,7 +450,7 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 			// カテゴリタイプの不整合をテスト（収入カテゴリで支出取引）
 			const mismatchedTransaction = {
 				...testTransactions.convenience,
-				categoryId: incomeCategory!.numericId,
+				categoryId: incomeCategory.numericId,
 				type: 'expense' as const,
 			}
 			response = await createTestRequest(
@@ -432,50 +465,78 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 	})
 
 	describe('Edge Cases and Error Scenarios', () => {
-		it('should handle boundary category IDs correctly', async () => {
+		it('should create subscription with minimum valid category ID', async () => {
 			// 最小のカテゴリIDを取得
 			const minCategoryId = Math.min(...ALL_CATEGORIES.map((cat) => cat.numericId))
-			// 最大のカテゴリIDを取得
-			const maxCategoryId = Math.max(...ALL_CATEGORIES.map((cat) => cat.numericId))
 
 			// 最小IDでサブスクリプションを作成
-			let response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', {
+			const response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', {
 				...testSubscriptions.netflix,
 				categoryId: minCategoryId,
 			})
 			expect(response.status).toBe(HTTP_STATUS.CREATED)
+			const created = await getResponseJson(response)
+			expect(created.categoryId).toBe(minCategoryId)
+		})
+
+		it('should create subscription with maximum valid category ID', async () => {
+			// 最大のカテゴリIDを取得
+			const maxCategoryId = Math.max(...ALL_CATEGORIES.map((cat) => cat.numericId))
 
 			// 最大IDでサブスクリプションを作成
-			response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', {
+			const response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', {
 				...testSubscriptions.spotify,
 				categoryId: maxCategoryId,
 			})
 			expect(response.status).toBe(HTTP_STATUS.CREATED)
+			const created = await getResponseJson(response)
+			expect(created.categoryId).toBe(maxCategoryId)
+		})
 
+		it('should reject subscription creation with zero category ID', async () => {
 			// 0のカテゴリID（無効）
-			response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', {
+			const response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', {
 				...testSubscriptions.github,
-				categoryId: TEST_CATEGORY_IDS.MIN_VALID,
+				categoryId: TEST_CATEGORY_IDS.BOUNDARY_ZERO,
 			})
 			// バリデーションにより0は拒否される
 			expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST)
+		})
+
+		it('should return appropriate error message for zero category ID', async () => {
+			// 0のカテゴリID（無効）
+			const response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', {
+				...testSubscriptions.github,
+				categoryId: TEST_CATEGORY_IDS.BOUNDARY_ZERO,
+			})
 			// エラーレスポンスの詳細を検証
 			const errorResponse = await getResponseJson(response)
 			expect(errorResponse).toHaveProperty('error')
 			expect(errorResponse.error).toMatch(/カテゴリID|category/i)
+		})
 
+		it('should reject subscription creation with negative category ID', async () => {
 			// 負のカテゴリID（無効）
-			response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', {
+			const response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', {
 				...testSubscriptions.youtube,
 				name: TEST_SUBSCRIPTION_NAMES.TEST_SUBSCRIPTION,
 				categoryId: TEST_CATEGORY_IDS.NEGATIVE,
 			})
 			// バリデーションにより負の値も拒否される
 			expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST)
+		})
+
+		it('should return appropriate error message for negative category ID', async () => {
+			// 負のカテゴリID（無効）
+			const response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', {
+				...testSubscriptions.youtube,
+				name: TEST_SUBSCRIPTION_NAMES.TEST_SUBSCRIPTION,
+				categoryId: TEST_CATEGORY_IDS.NEGATIVE,
+			})
 			// エラーレスポンスの詳細を検証
-			const negativeErrorResponse = await getResponseJson(response)
-			expect(negativeErrorResponse).toHaveProperty('error')
-			expect(negativeErrorResponse.error).toMatch(/カテゴリID|category/i)
+			const errorResponse = await getResponseJson(response)
+			expect(errorResponse).toHaveProperty('error')
+			expect(errorResponse.error).toMatch(/カテゴリID|category/i)
 		})
 
 		it('should handle null category references appropriately', async () => {
@@ -498,8 +559,8 @@ describe('Categories-Subscriptions Cross-Module Integration Tests', () => {
 			expect(response.status).toBe(HTTP_STATUS.CREATED)
 
 			const created = await getResponseJson(response)
-			// categoryIdがnullまたは未定義であることを確認
-			expect(created.categoryId == null).toBe(true)
+			// categoryIdがnullであることを確認（APIはnullを返す）
+			expect(created.categoryId).toBeNull()
 		})
 	})
 
