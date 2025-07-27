@@ -40,7 +40,7 @@ export const testSubscriptions = {
 
 	github: {
 		name: 'GitHub Pro',
-		amount: 400,
+		amount: 400, // 4ドルの日本円換算（1ドル100円計算）を表現
 		billingCycle: 'monthly' as const,
 		nextBillingDate: new Date('2024-02-10').toISOString(),
 		categoryId: 2,
