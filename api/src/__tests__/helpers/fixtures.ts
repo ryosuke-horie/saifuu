@@ -40,7 +40,7 @@ export const testSubscriptions = {
 
 	github: {
 		name: 'GitHub Pro',
-		amount: 4,
+		amount: 400,
 		billingCycle: 'monthly' as const,
 		nextBillingDate: new Date('2024-02-10').toISOString(),
 		categoryId: 2,
@@ -48,6 +48,18 @@ export const testSubscriptions = {
 		isActive: true,
 		createdAt: new Date('2024-01-10').toISOString(),
 		updatedAt: new Date('2024-01-10').toISOString(),
+	} satisfies NewSubscription,
+
+	youtube: {
+		name: 'YouTube Premium',
+		amount: 1180,
+		billingCycle: 'monthly' as const,
+		nextBillingDate: new Date('2024-02-05').toISOString(),
+		categoryId: 1,
+		description: '動画・音楽ストリーミング',
+		isActive: true,
+		createdAt: new Date('2024-01-05').toISOString(),
+		updatedAt: new Date('2024-01-05').toISOString(),
 	} satisfies NewSubscription,
 
 	inactive: {
@@ -82,6 +94,26 @@ export const testTransactions = {
 		type: 'expense' as const,
 		categoryId: 3,
 		description: '家賃',
+		date: new Date('2024-01-25').toISOString(),
+		createdAt: new Date('2024-01-25').toISOString(),
+		updatedAt: new Date('2024-01-25').toISOString(),
+	} satisfies NewTransaction,
+
+	convenience: {
+		amount: 1500,
+		type: 'expense' as const,
+		categoryId: 1,
+		description: 'コンビニ購入',
+		date: new Date('2024-01-15').toISOString(),
+		createdAt: new Date('2024-01-15').toISOString(),
+		updatedAt: new Date('2024-01-15').toISOString(),
+	} satisfies NewTransaction,
+
+	income: {
+		amount: 50000,
+		type: 'income' as const,
+		categoryId: 101,
+		description: '月給',
 		date: new Date('2024-01-25').toISOString(),
 		createdAt: new Date('2024-01-25').toISOString(),
 		updatedAt: new Date('2024-01-25').toISOString(),
