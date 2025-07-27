@@ -240,6 +240,7 @@ export const incomeCategoryIdSchema = createCategoryIdSchema({
 // レビューコメント#5対応: positive()とmin()の重複を解消してパフォーマンス改善
 export const incomeAmountSchema = z
 	.number()
+	.int('収入金額は整数である必要があります')
 	.min(
 		VALIDATION_LIMITS.MIN_AMOUNT,
 		// MIN_AMOUNTが1以上の場合、positive()チェックは不要
