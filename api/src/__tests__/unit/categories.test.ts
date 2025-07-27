@@ -101,33 +101,34 @@ describe('Categories API - Unit Tests', () => {
 	})
 
 	describe('Mutation operations (POST, PUT, DELETE)', () => {
-		it('should return 405 for all mutation operations', async () => {
-			// POST テスト
-			const postResponse = await createTestRequest(testProductionApp, 'POST', '/api/categories', {
-				name: '新しいカテゴリ',
-				type: 'expense',
-			})
-			expect(postResponse.status).toBe(405)
-			const postData = await getResponseJson(postResponse)
-			expect(postData).toHaveProperty('error', 'Categories are fixed and cannot be created')
-
-			// PUT テスト
-			const putResponse = await createTestRequest(testProductionApp, 'PUT', '/api/categories/1', {
-				name: '更新されたカテゴリ',
-			})
-			expect(putResponse.status).toBe(405)
-			const putData = await getResponseJson(putResponse)
-			expect(putData).toHaveProperty('error', 'Categories are fixed and cannot be updated')
-
-			// DELETE テスト
-			const deleteResponse = await createTestRequest(
-				testProductionApp,
-				'DELETE',
-				'/api/categories/1'
-			)
-			expect(deleteResponse.status).toBe(405)
-			const deleteData = await getResponseJson(deleteResponse)
-			expect(deleteData).toHaveProperty('error', 'Categories are fixed and cannot be deleted')
-		})
+		// カテゴリの不変性というビジネスルールをテスト
+		it.each([
+			{
+				method: 'POST' as const,
+				path: '/api/categories',
+				body: { name: '新しいカテゴリ', type: 'expense' },
+				expectedError: 'Categories are fixed and cannot be created',
+			},
+			{
+				method: 'PUT' as const,
+				path: '/api/categories/1',
+				body: { name: '更新されたカテゴリ' },
+				expectedError: 'Categories are fixed and cannot be updated',
+			},
+			{
+				method: 'DELETE' as const,
+				path: '/api/categories/1',
+				body: undefined,
+				expectedError: 'Categories are fixed and cannot be deleted',
+			},
+		])(
+			'should return 405 for $method request (ビジネスルール: カテゴリは不変)',
+			async ({ method, path, body, expectedError }) => {
+				const response = await createTestRequest(testProductionApp, method, path, body)
+				expect(response.status).toBe(405)
+				const data = await getResponseJson(response)
+				expect(data).toHaveProperty('error', expectedError)
+			}
+		)
 	})
 })

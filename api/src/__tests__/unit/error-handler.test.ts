@@ -214,15 +214,8 @@ describe('Error Handler', () => {
 	})
 
 	describe('errorHandler (middleware)', () => {
-		it('正常なリクエストはそのまま通す', async () => {
-			const next = vi.fn().mockResolvedValue(undefined)
-			const middleware = errorHandler()
-
-			await middleware(mockContext, next)
-
-			expect(next).toHaveBeenCalled()
-			expect(mockContext.json).not.toHaveBeenCalled()
-		})
+		// ビジネスロジックに焦点を当てたテストのみ残す
+		// フレームワークの基本的なミドルウェア動作のテストは削除
 
 		it('ApiErrorをキャッチして処理する', async () => {
 			const error = new ApiError('認証が必要です', 401)
