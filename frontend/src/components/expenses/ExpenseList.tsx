@@ -38,7 +38,9 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 		// 取引データを日付降順でソート（useMemoで最適化）
 		const sortedTransactions = useMemo(() => {
 			return [...transactions].sort((a, b) => {
-				return new Date(b.date).getTime() - new Date(a.date).getTime();
+				const dateA = new Date(a.date).getTime();
+				const dateB = new Date(b.date).getTime();
+				return dateB - dateA;
 			});
 		}, [transactions]);
 
@@ -47,7 +49,7 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 				{/* テーブルヘッダー */}
 				<div className="px-4 py-4 border-b border-gray-200">
 					<div>
-						<h2 className="text-lg font-semibold text-gray-900">取引一覧</h2>
+						<h2 className="text-lg font-semibold text-gray-900">支出一覧</h2>
 						<p className="text-sm text-gray-600 mt-1">支出の履歴</p>
 					</div>
 				</div>

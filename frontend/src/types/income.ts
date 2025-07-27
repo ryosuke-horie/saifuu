@@ -92,7 +92,7 @@ export interface IncomeListProps {
 	/**
 	 * エラー状態
 	 */
-	error?: string | null;
+	error?: string;
 
 	/**
 	 * 編集時のコールバック

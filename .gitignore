@@ -12,6 +12,7 @@
 coverage-*.txt
 *.coverage
 test-ratio-report.json
+test-result.json
 
 # playwright
 **/test-results/

@@ -189,11 +189,41 @@ describe("IncomeList", () => {
 		expect(screen.queryByText("削除")).not.toBeInTheDocument();
 	});
 
-	it("説明がない収入データも正しく表示する", () => {
+	it("説明がない収入データも正しく表示する（null）", () => {
 		const transactionsWithoutDescription: Transaction[] = [
 			{
 				...mockIncomeTransactions[0],
 				description: null,
+			},
+		];
+
+		render(<IncomeList transactions={transactionsWithoutDescription} />);
+
+		// 説明欄が空でもエラーにならないことを確認
+		const rows = screen.getAllByRole("row");
+		expect(rows).toHaveLength(2); // ヘッダー + 1データ行
+	});
+
+	it("説明がない収入データも正しく表示する（undefined）", () => {
+		const transactionsWithoutDescription: Transaction[] = [
+			{
+				...mockIncomeTransactions[0],
+				description: undefined as any,
+			},
+		];
+
+		render(<IncomeList transactions={transactionsWithoutDescription} />);
+
+		// 説明欄が空でもエラーにならないことを確認
+		const rows = screen.getAllByRole("row");
+		expect(rows).toHaveLength(2); // ヘッダー + 1データ行
+	});
+
+	it("説明がない収入データも正しく表示する（空文字）", () => {
+		const transactionsWithoutDescription: Transaction[] = [
+			{
+				...mockIncomeTransactions[0],
+				description: "",
 			},
 		];
 

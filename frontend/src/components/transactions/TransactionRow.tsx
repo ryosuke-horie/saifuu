@@ -26,7 +26,20 @@ export interface TransactionRowProps {
 	onEdit?: (transaction: Transaction) => void;
 	/** 削除時のコールバック */
 	onDelete?: (transactionId: string) => void;
-	/** 支出の場合に符号を表示するか */
+	/**
+	 * 支出の場合に符号を表示するか
+	 *
+	 * 設計意図:
+	 * - true: 支出を「-¥1,000」のようにマイナス符号付きで表示
+	 * - false: 支出を「¥1,000」のように符号なしで表示（デフォルト）
+	 *
+	 * 使用場面:
+	 * - 収支サマリーなど、収入と支出を同じリストで表示する場合にtrueに設定
+	 * - 支出一覧など、支出のみを表示する場合はfalse（デフォルト）のまま使用
+	 *
+	 * 代替案として金額の色分け（収入:緑、支出:赤）も採用しているため、
+	 * 符号表示は必須ではないが、より明確な区別が必要な場合に使用する
+	 */
 	showSign?: boolean;
 	/** 追加のCSSクラス名 */
 	className?: string;
@@ -79,7 +92,7 @@ export const TransactionRow: FC<TransactionRowProps> = memo(
 								type="button"
 								onClick={handleEdit}
 								className="text-blue-600 hover:text-blue-800 transition-colors text-xs sm:text-sm whitespace-nowrap"
-								aria-label={`${transaction.description || "取引"}を編集`}
+								aria-label={`${transaction.type === "income" ? "収入" : "支出"} ${transaction.description || `${formatDate(transaction.date)}の取引`}を編集`}
 							>
 								編集
 							</button>
@@ -89,7 +102,7 @@ export const TransactionRow: FC<TransactionRowProps> = memo(
 								type="button"
 								onClick={handleDelete}
 								className="text-red-600 hover:text-red-800 transition-colors text-xs sm:text-sm whitespace-nowrap"
-								aria-label={`${transaction.description || "取引"}を削除`}
+								aria-label={`${transaction.type === "income" ? "収入" : "支出"} ${transaction.description || `${formatDate(transaction.date)}の取引`}を削除`}
 							>
 								削除
 							</button>
