@@ -5,7 +5,7 @@
  * 現在は設定ファイルベースだが、将来のAPI実装も考慮したテスト
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as categoriesApi from "../categories/api";
 import { apiClient } from "../client";
 import { endpoints } from "../config";
@@ -16,6 +16,7 @@ import type {
 	UpdateCategoryRequest,
 } from "../types";
 import {
+	type CategoryService,
 	categoryService,
 	createCategory,
 	deleteCategory,
@@ -398,6 +399,21 @@ describe("Categories Service", () => {
 			// 検証
 			expect(result).toEqual(mockCategories);
 			expect(categoriesApi.fetchCategories).toHaveBeenCalledTimes(1);
+		});
+
+		it("categoryServiceがCategoryService型に適合している", () => {
+			// 型チェック: categoryServiceがCategoryService型に適合することを確認
+			// TypeScriptの型システムがコンパイル時にこれを保証する
+			const service: CategoryService = categoryService;
+			expect(service).toBeDefined();
+
+			// 各メソッドの型が正しいことを確認
+			expect(typeof service.getCategories).toBe("function");
+			expect(typeof service.getCategory).toBe("function");
+			expect(typeof service.createCategory).toBe("function");
+			expect(typeof service.updateCategory).toBe("function");
+			expect(typeof service.deleteCategory).toBe("function");
+			expect(typeof service.invalidateCategoriesCache).toBe("function");
 		});
 	});
 });

@@ -101,9 +101,25 @@ export function invalidateCategoriesCache(): void {
 }
 
 /**
+ * カテゴリサービスの型定義
+ * Matt Pocock方針に従い、明示的に型を定義
+ */
+export type CategoryService = {
+	getCategories: () => Promise<Category[]>;
+	getCategory: (id: string) => Promise<Category>;
+	createCategory: (data: CreateCategoryRequest) => Promise<Category>;
+	updateCategory: (
+		id: string,
+		data: UpdateCategoryRequest,
+	) => Promise<Category>;
+	deleteCategory: (id: string) => Promise<DeleteResponse>;
+	invalidateCategoriesCache: () => void;
+};
+
+/**
  * カテゴリサービスのデフォルトエクスポート
  */
-export const categoryService = {
+export const categoryService: CategoryService = {
 	getCategories,
 	getCategory,
 	createCategory,
