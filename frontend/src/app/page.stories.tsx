@@ -1,5 +1,5 @@
-import { http, HttpResponse } from "msw";
 import type { Meta, StoryObj } from "@storybook/react";
+import { HttpResponse, http } from "msw";
 import Page from "./page";
 
 const meta = {
@@ -9,7 +9,8 @@ const meta = {
 		layout: "fullscreen",
 		docs: {
 			description: {
-				component: "家計管理アプリケーションのダッシュボードページ。支出・収入・サブスクリプションのサマリーと各管理ページへのナビゲーションを提供します。",
+				component:
+					"家計管理アプリケーションのダッシュボードページ。支出・収入・サブスクリプションのサマリーと各管理ページへのナビゲーションを提供します。",
 			},
 		},
 	},
@@ -152,7 +153,7 @@ export const Loading: Story = {
 };
 
 // エラー状態
-export const Error: Story = {
+export const ErrorState: Story = {
 	parameters: {
 		msw: {
 			handlers: [
