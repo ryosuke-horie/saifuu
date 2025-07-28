@@ -27,7 +27,13 @@ import {
 
 // モック設定
 vi.mock("../categories/api");
-vi.mock("../client");
+vi.mock("../client", () => ({
+	apiClient: {
+		post: vi.fn(),
+		put: vi.fn(),
+		delete: vi.fn(),
+	},
+}));
 
 describe("Categories Service", () => {
 	const mockCategories: Category[] = [
@@ -60,10 +66,6 @@ describe("Categories Service", () => {
 	const mockCategory: Category = mockCategories[0];
 
 	beforeEach(() => {
-		vi.clearAllMocks();
-	});
-
-	afterEach(() => {
 		vi.clearAllMocks();
 	});
 
@@ -356,9 +358,21 @@ describe("Categories Service", () => {
 	});
 
 	describe("invalidateCategoriesCache", () => {
-		it("キャッシュ無効化関数が正常に実行される", () => {
-			// 実行（現在は何もしない）
+		it("キャッシュ無効化関数が存在し、呼び出し可能である", () => {
+			// 関数の存在を確認
+			expect(invalidateCategoriesCache).toBeDefined();
+			expect(typeof invalidateCategoriesCache).toBe("function");
+
+			// 関数が正常に実行される（エラーをスローしない）
 			expect(() => invalidateCategoriesCache()).not.toThrow();
+		});
+
+		it("将来のキャッシュ無効化実装のためのプレースホルダーとして機能する", () => {
+			// この関数は現在何も行わないが、将来的にはReact Queryなどの
+			// キャッシュライブラリと統合されることを想定している
+			// 現時点では、関数の存在自体がインターフェースの一部として重要
+			const result = invalidateCategoriesCache();
+			expect(result).toBeUndefined();
 		});
 	});
 

@@ -20,53 +20,73 @@ import type {
 
 /**
  * カテゴリ一覧を取得する
- * 現在は設定ファイルから取得するが、将来的にはAPIから取得可能
+ *
+ * 移行期の実装:
+ * - 現在: 設定ファイルから静的データを取得
+ * - 将来: APIエンドポイントから動的に取得
+ *
+ * この実装により、APIが準備できるまでアプリケーションの開発を継続可能
  */
 export async function getCategories(): Promise<Category[]> {
-	// 設定ファイルから取得
+	// 移行期: 設定ファイルから取得
+	// TODO: API実装後は apiClient.get(endpoints.categories.list) に変更
 	return fetchCategoriesFromConfig();
 }
 
 /**
  * カテゴリ詳細を取得する
- * 現在は設定ファイルから取得するが、将来的にはAPIから取得可能
+ *
+ * 移行期の実装:
+ * - 現在: 設定ファイルから静的データを取得
+ * - 将来: APIエンドポイントから動的に取得
  */
 export async function getCategory(id: string): Promise<Category> {
-	// 設定ファイルから取得
+	// 移行期: 設定ファイルから取得
+	// TODO: API実装後は apiClient.get(endpoints.categories.detail(id)) に変更
 	return fetchCategoryByIdFromConfig(id);
 }
 
 /**
  * 新しいカテゴリを作成する
- * 注意: 現在は設定ファイルベースのため、実際の作成はサポートされていない
+ *
+ * 現在の実装:
+ * - APIエンドポイントにPOSTリクエストを送信
+ * - 注意: バックエンドAPIが未実装のため、実際には動作しない
+ * - フロントエンドの型安全性とインターフェースは完成済み
  */
 export async function createCategory(
 	data: CreateCategoryRequest,
 ): Promise<Category> {
-	// 将来的にAPIが実装された場合のコード
+	// API実装待ち: エンドポイントは定義済みだがバックエンドが未実装
 	const endpoint = endpoints.categories.create;
 	return apiClient.post<Category>(endpoint, data);
 }
 
 /**
  * カテゴリを更新する
- * 注意: 現在は設定ファイルベースのため、実際の更新はサポートされていない
+ *
+ * 現在の実装:
+ * - APIエンドポイントにPUTリクエストを送信
+ * - 注意: バックエンドAPIが未実装のため、実際には動作しない
  */
 export async function updateCategory(
 	id: string,
 	data: UpdateCategoryRequest,
 ): Promise<Category> {
-	// 将来的にAPIが実装された場合のコード
+	// API実装待ち: エンドポイントは定義済みだがバックエンドが未実装
 	const endpoint = endpoints.categories.update(id);
 	return apiClient.put<Category>(endpoint, data);
 }
 
 /**
  * カテゴリを削除する
- * 注意: 現在は設定ファイルベースのため、実際の削除はサポートされていない
+ *
+ * 現在の実装:
+ * - APIエンドポイントにDELETEリクエストを送信
+ * - 注意: バックエンドAPIが未実装のため、実際には動作しない
  */
 export async function deleteCategory(id: string): Promise<DeleteResponse> {
-	// 将来的にAPIが実装された場合のコード
+	// API実装待ち: エンドポイントは定義済みだがバックエンドが未実装
 	const endpoint = endpoints.categories.delete(id);
 	return apiClient.delete<DeleteResponse>(endpoint);
 }
