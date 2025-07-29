@@ -22,7 +22,6 @@ import {
 	deleteCategory,
 	getCategories,
 	getCategory,
-	invalidateCategoriesCache,
 	updateCategory,
 } from "./categories";
 
@@ -358,25 +357,6 @@ describe("Categories Service", () => {
 		});
 	});
 
-	describe("invalidateCategoriesCache", () => {
-		it("キャッシュ無効化関数が存在し、呼び出し可能である", () => {
-			// 関数の存在を確認
-			expect(invalidateCategoriesCache).toBeDefined();
-			expect(typeof invalidateCategoriesCache).toBe("function");
-
-			// 関数が正常に実行される（エラーをスローしない）
-			expect(() => invalidateCategoriesCache()).not.toThrow();
-		});
-
-		it("将来のキャッシュ無効化実装のためのプレースホルダーとして機能する", () => {
-			// この関数は現在何も行わないが、将来的にはReact Queryなどの
-			// キャッシュライブラリと統合されることを想定している
-			// 現時点では、関数の存在自体がインターフェースの一部として重要
-			const result = invalidateCategoriesCache();
-			expect(result).toBeUndefined();
-		});
-	});
-
 	describe("categoryService", () => {
 		it("すべての関数が含まれている", () => {
 			expect(categoryService).toHaveProperty("getCategories");
@@ -384,7 +364,6 @@ describe("Categories Service", () => {
 			expect(categoryService).toHaveProperty("createCategory");
 			expect(categoryService).toHaveProperty("updateCategory");
 			expect(categoryService).toHaveProperty("deleteCategory");
-			expect(categoryService).toHaveProperty("invalidateCategoriesCache");
 		});
 
 		it("categoryServiceの関数が正しく動作する", async () => {
@@ -413,7 +392,6 @@ describe("Categories Service", () => {
 			expect(typeof service.createCategory).toBe("function");
 			expect(typeof service.updateCategory).toBe("function");
 			expect(typeof service.deleteCategory).toBe("function");
-			expect(typeof service.invalidateCategoriesCache).toBe("function");
 		});
 	});
 });

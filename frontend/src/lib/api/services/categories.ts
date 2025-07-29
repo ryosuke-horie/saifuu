@@ -92,15 +92,6 @@ export async function deleteCategory(id: string): Promise<DeleteResponse> {
 }
 
 /**
- * キャッシュ無効化
- * React Query等のキャッシュライブラリと連携する際に使用
- */
-export function invalidateCategoriesCache(): void {
-	// キャッシュ無効化のロジックをここに実装
-	// 現在は何もしない（将来的な実装のためのプレースホルダー）
-}
-
-/**
  * カテゴリサービスの型定義
  * Matt Pocock方針に従い、明示的に型を定義
  */
@@ -113,7 +104,6 @@ export type CategoryService = {
 		data: UpdateCategoryRequest,
 	) => Promise<Category>;
 	deleteCategory: (id: string) => Promise<DeleteResponse>;
-	invalidateCategoriesCache: () => void;
 };
 
 /**
@@ -125,5 +115,4 @@ export const categoryService: CategoryService = {
 	createCategory,
 	updateCategory,
 	deleteCategory,
-	invalidateCategoriesCache,
 } as const;
