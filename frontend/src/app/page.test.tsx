@@ -24,14 +24,10 @@ import { useExpenses } from "../hooks/useExpenses";
 import { useIncomes } from "../hooks/useIncomes";
 import { useSubscriptionStats } from "../lib/api/hooks/useSubscriptions";
 
-const mockUseExpenseStats = useExpenseStats as unknown as ReturnType<
-	typeof vi.fn
->;
-const mockUseExpenses = useExpenses as unknown as ReturnType<typeof vi.fn>;
-const mockUseIncomes = useIncomes as unknown as ReturnType<typeof vi.fn>;
-const mockUseSubscriptionStats = useSubscriptionStats as unknown as ReturnType<
-	typeof vi.fn
->;
+const mockUseExpenseStats = vi.mocked(useExpenseStats);
+const mockUseExpenses = vi.mocked(useExpenses);
+const mockUseIncomes = vi.mocked(useIncomes);
+const mockUseSubscriptionStats = vi.mocked(useSubscriptionStats);
 
 describe("ダッシュボード（ホームページ）", () => {
 	beforeEach(() => {
@@ -71,6 +67,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				stats: null,
 				isLoading: true,
 				error: null,
+				refetch: vi.fn(),
 			});
 
 			render(<Page />);
@@ -137,6 +134,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				stats: null,
 				isLoading: true,
 				error: null,
+				refetch: vi.fn(),
 			});
 
 			render(<Page />);
@@ -201,6 +199,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				stats: null,
 				isLoading: true,
 				error: null,
+				refetch: vi.fn(),
 			});
 
 			render(<Page />);
@@ -241,6 +240,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				stats: null,
 				isLoading: true,
 				error: null,
+				refetch: vi.fn(),
 			});
 
 			render(<Page />);
@@ -305,6 +305,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				stats: null,
 				isLoading: true,
 				error: null,
+				refetch: vi.fn(),
 			});
 
 			render(<Page />);
@@ -358,6 +359,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				},
 				isLoading: false,
 				error: null,
+				refetch: vi.fn(),
 			});
 
 			render(<Page />);
@@ -409,6 +411,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				},
 				isLoading: false,
 				error: null,
+				refetch: vi.fn(),
 			});
 
 			render(<Page />);
@@ -452,6 +455,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				stats: null,
 				isLoading: true,
 				error: null,
+				refetch: vi.fn(),
 			});
 		};
 
@@ -517,6 +521,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				stats: null,
 				isLoading: false,
 				error: null,
+				refetch: vi.fn(),
 			});
 
 			render(<Page />);
@@ -557,6 +562,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				stats: null,
 				isLoading: false,
 				error: "サブスクリプションデータの取得に失敗しました",
+				refetch: vi.fn(),
 			});
 
 			render(<Page />);

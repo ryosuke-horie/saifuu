@@ -42,11 +42,11 @@ export default function Home() {
 	} = useSubscriptionStats();
 
 	// エラーメッセージの配列を構築
-	const errors = [
-		{ key: "expenses", message: expensesError },
-		{ key: "incomes", message: incomesError },
-		{ key: "subscriptions", message: subscriptionError },
-	];
+	const errors = [];
+	if (expensesError) errors.push({ key: "expenses", message: expensesError });
+	if (incomesError) errors.push({ key: "incomes", message: incomesError });
+	if (subscriptionError)
+		errors.push({ key: "subscriptions", message: subscriptionError });
 
 	return (
 		<div className="min-h-screen p-4 sm:p-8 max-w-7xl mx-auto">

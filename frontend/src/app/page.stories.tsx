@@ -140,11 +140,11 @@ export const Loading: Story = {
 		msw: {
 			handlers: [
 				http.get("/api/transactions", async () => {
-					await new Promise((resolve) => setTimeout(resolve, 10000));
+					await new Promise((resolve) => setTimeout(resolve, 2000));
 					return HttpResponse.json([]);
 				}),
 				http.get("/api/subscriptions/stats", async () => {
-					await new Promise((resolve) => setTimeout(resolve, 10000));
+					await new Promise((resolve) => setTimeout(resolve, 2000));
 					return HttpResponse.json({});
 				}),
 			],

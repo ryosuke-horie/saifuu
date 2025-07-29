@@ -7,23 +7,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-
-// 右矢印アイコンコンポーネント
-const ChevronRightIcon = () => (
-	<svg
-		className="w-6 h-6 text-gray-400"
-		fill="none"
-		stroke="currentColor"
-		viewBox="0 0 24 24"
-	>
-		<path
-			strokeLinecap="round"
-			strokeLinejoin="round"
-			strokeWidth={2}
-			d="M9 5l7 7-7 7"
-		/>
-	</svg>
-);
+import { ChevronRightIcon } from "../icons/ChevronRightIcon";
 
 interface NavigationCardProps {
 	/** リンク先のURL */

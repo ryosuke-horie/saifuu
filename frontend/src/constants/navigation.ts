@@ -39,4 +39,4 @@ export const DASHBOARD_NAVIGATION_ITEMS = [
 		title: "サブスクリプション管理",
 		description: "定期支払いの管理",
 	},
-] as const satisfies readonly NavigationItem[];
+] as const;
