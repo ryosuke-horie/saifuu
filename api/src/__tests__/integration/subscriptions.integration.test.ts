@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { ApiSubscription } from '../../types/subscription'
+import type { Subscription } from '../../db/schema'
 import { testSubscriptions } from '../helpers/fixtures'
 import { createTestRequest, getResponseJson } from '../helpers/test-app'
 import { cleanupTestDatabase, setupTestDatabase } from '../helpers/test-db'
@@ -441,7 +441,7 @@ describe('Subscriptions API - Integration Tests', () => {
 				},
 			]
 
-			const createdIds: string[] = []
+			const createdIds: number[] = []
 			for (const sub of subscriptions) {
 				const response = await createTestRequest(
 					testProductionApp,
@@ -461,9 +461,11 @@ describe('Subscriptions API - Integration Tests', () => {
 			const allSubscriptions = await getResponseJson(response)
 
 			// アクティブなサブスクリプションのみをフィルタリング
-			const activeSubscriptions = allSubscriptions.filter(
-				(sub: ApiSubscription) => sub.isActive && createdIds.includes(sub.id)
-			)
+			const activeSubscriptions = allSubscriptions.filter((sub: Subscription) => {
+				if (!sub.isActive) return false
+				// createdIdsに含まれているかチェック
+				return createdIds.includes(sub.id)
+			})
 
 			// 月額換算の合計を計算
 			let totalMonthly = 0
@@ -537,7 +539,7 @@ describe('Subscriptions API - Integration Tests', () => {
 				},
 			]
 
-			const createdIds: string[] = []
+			const createdIds: number[] = []
 			for (const sub of subscriptions) {
 				const response = await createTestRequest(
 					testProductionApp,
@@ -843,7 +845,7 @@ describe('Subscriptions API - Integration Tests', () => {
 				if (Array.isArray(filterData)) {
 					// フィルタリングが実装されている場合のみアクティブなサブスクリプションのチェック
 					if (filterData.length > 0 && filterData.length < successCount) {
-						const allActive = filterData.every((sub: ApiSubscription) => sub.isActive === true)
+						const allActive = filterData.every((sub: Subscription) => sub.isActive === true)
 						expect(allActive).toBe(true)
 					} else {
 						// フィルタリングが実装されていない場合は全件返却
@@ -856,7 +858,7 @@ describe('Subscriptions API - Integration Tests', () => {
 		it('should handle concurrent read/write operations efficiently', async () => {
 			// まず5個のサブスクリプションを作成
 			const initialCount = 5
-			const createdIds: string[] = []
+			const createdIds: number[] = []
 
 			for (let i = 0; i < initialCount; i++) {
 				const response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', {
