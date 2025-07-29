@@ -40,7 +40,8 @@
 		"drizzle-kit",
 		"tsx",
 		"wrangler",
-		"vite-ssr-components"
+		"vite-ssr-components",
+		"zod"
 	],
 	"rules": {
 		"files": "warn",
