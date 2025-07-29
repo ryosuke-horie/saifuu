@@ -31,10 +31,8 @@ export const useIncomeStats = (
 			};
 		}
 
-		// 収入のみをフィルタリングして合計を計算
-		const totalIncome = incomes
-			.filter((t) => t.type === "income")
-			.reduce((sum, t) => sum + t.amount, 0);
+		// 収入の合計を計算
+		const totalIncome = incomes.reduce((sum, t) => sum + t.amount, 0);
 
 		return {
 			totalIncome,

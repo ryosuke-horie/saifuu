@@ -14,7 +14,7 @@ export const formatCurrency = (amount: number) => {
 		minimumFractionDigits: 0,
 	})
 		.format(amount)
-		.replace("￥", "¥");
+		.replaceAll("￥", "¥");
 };
 
 /**
