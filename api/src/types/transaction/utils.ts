@@ -34,7 +34,18 @@ export function addCategoryInfoToTransactions(
 // 複数の取引にカテゴリ情報を付加（型安全版）
 export function addCategoryInfoToTransactions(transactions: DbTransaction[]): Transaction[]
 // 実装
-export function addCategoryInfoToTransactions(transactions: any[]): Transaction[] {
+export function addCategoryInfoToTransactions(
+	transactions: (
+		| DbTransaction
+		| (Omit<DbTransaction, 'id' | 'categoryId' | 'createdAt' | 'updatedAt' | 'date'> & {
+				id: number
+				categoryId: number | null
+				createdAt: string
+				updatedAt: string
+				date: string
+		  })
+	)[]
+): Transaction[] {
 	const currentTimestamp = new Date().toISOString() as ISODateString
 
 	// カテゴリマップを作成（検索効率化）

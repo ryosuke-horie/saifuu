@@ -9,27 +9,7 @@ import type { LoggingVariables } from '../../middleware/logging'
 import { createSubscriptionsApp } from '../../routes/subscriptions'
 import type { Subscription } from '../../types'
 
-// APIレスポンスの型定義
-interface SubscriptionResponse {
-	id: string
-	name: string
-	amount: number
-	billingCycle: string
-	nextBillingDate: string
-	categoryId: number
-	description?: string
-	isActive: boolean
-	createdAt: string
-	updatedAt: string
-	category?: {
-		id: number
-		name: string
-		type: string
-		color: string
-		createdAt: string
-		updatedAt: string
-	} | null
-}
+// APIレスポンスの型定義はSubscription型を使用（types/subscription/index.tsで定義）
 
 interface ErrorResponse {
 	error: string

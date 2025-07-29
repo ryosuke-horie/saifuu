@@ -1,9 +1,13 @@
 import { Hono } from 'hono'
 import { type AnyDatabase, type Env } from '../db'
-import { type NewSubscription, type Subscription, subscriptions } from '../db/schema'
+import {
+	type Subscription as DbSubscription,
+	type NewSubscription,
+	subscriptions,
+} from '../db/schema'
 import { createCrudHandlers } from '../lib/route-factory'
 import { type LoggingVariables } from '../middleware/logging'
-import { addCategoryInfoToSubscriptions } from '../types'
+import { addCategoryInfoToSubscriptions, type Subscription } from '../types'
 import {
 	validateIdWithZod,
 	validateSubscriptionCreateWithZod,
@@ -27,17 +31,20 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 	}>()
 
 	// CRUDハンドラーを作成
-	const handlers = createCrudHandlers<NewSubscription, Partial<NewSubscription>, Subscription, any>(
-		{
-			table: subscriptions,
-			resourceName: 'subscription',
-			validateCreate: validateSubscriptionCreateWithZod,
-			validateUpdate: validateSubscriptionUpdateWithZod,
-			validateId: validateIdWithZod,
-			transformData: addCategoryInfoToSubscriptions as any,
-			testDatabase: options.testDatabase,
-		}
-	)
+	const handlers = createCrudHandlers<
+		NewSubscription,
+		Partial<NewSubscription>,
+		DbSubscription,
+		Subscription
+	>({
+		table: subscriptions,
+		resourceName: 'subscription',
+		validateCreate: validateSubscriptionCreateWithZod,
+		validateUpdate: validateSubscriptionUpdateWithZod,
+		validateId: validateIdWithZod,
+		transformData: addCategoryInfoToSubscriptions,
+		testDatabase: options.testDatabase,
+	})
 
 	// ルーティング設定
 	app.get('/', handlers.getAll)

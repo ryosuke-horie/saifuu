@@ -38,7 +38,18 @@ export function addCategoryInfoToSubscriptions(
 // 複数のサブスクリプションにカテゴリ情報を付加（型安全版）
 export function addCategoryInfoToSubscriptions(subscriptions: DbSubscription[]): Subscription[]
 // 実装
-export function addCategoryInfoToSubscriptions(subscriptions: any[]): Subscription[] {
+export function addCategoryInfoToSubscriptions(
+	subscriptions: (
+		| DbSubscription
+		| (Omit<DbSubscription, 'id' | 'categoryId' | 'createdAt' | 'updatedAt' | 'nextBillingDate'> & {
+				id: number
+				categoryId: number | null
+				createdAt: string
+				updatedAt: string
+				nextBillingDate: string
+		  })
+	)[]
+): Subscription[] {
 	const currentTimestamp = new Date().toISOString() as ISODateString
 
 	// カテゴリマップを作成（検索効率化）

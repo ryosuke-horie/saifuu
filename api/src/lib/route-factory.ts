@@ -321,13 +321,18 @@ export function createCrudHandlers<
 					throw new Error('Failed to create item - no data returned')
 				}
 
+				// transformDataが定義されている場合、作成されたデータを変換
+				const responseData = transformData
+					? transformData([createdItem as unknown as TEntity])[0]
+					: createdItem
+
 				logWithContext(c, 'info', `${resourceName}作成が完了`, {
 					[`${resourceName}Id`]: createdItem.id,
 					resource: resourceName,
 					operationType: 'write',
 				})
 
-				return c.json(createdItem, 201)
+				return c.json(responseData as unknown as object, 201)
 			} catch (error) {
 				logWithContext(c, 'error', `${resourceName}作成でエラーが発生`, {
 					error: error instanceof Error ? error.message : String(error),
@@ -389,13 +394,18 @@ export function createCrudHandlers<
 					return c.json({ error: `${resourceNameCapitalized} not found` }, 404)
 				}
 
+				// transformDataが定義されている場合、更新されたデータを変換
+				const responseData = transformData
+					? transformData([updatedItem as unknown as TEntity])[0]
+					: updatedItem
+
 				logWithContext(c, 'info', `${resourceName}更新が完了`, {
 					[`${resourceName}Id`]: id,
 					resource: resourceName,
 					operationType: 'write',
 				})
 
-				return c.json(updatedItem)
+				return c.json(responseData as unknown as object)
 			} catch (error) {
 				logWithContext(c, 'error', `${resourceName}更新でエラーが発生`, {
 					[`${resourceName}Id`]: id,

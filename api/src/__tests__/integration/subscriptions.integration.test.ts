@@ -64,7 +64,7 @@ describe('Subscriptions API - Integration Tests', () => {
 			expect(response.status).toBe(200)
 
 			data = await getResponseJson(response)
-			expect(data.id).toBe(createdId)
+			expect(data.id).toBe(String(createdId))
 			expect(data.name).toBe(newSubscription.name)
 
 			// 4. 一覧に追加されていることを確認
@@ -74,7 +74,7 @@ describe('Subscriptions API - Integration Tests', () => {
 			data = await getResponseJson(response)
 			expect(data).toHaveLength(initialCount + 1)
 
-			const createdSubscription = data.find((sub: { id: number }) => sub.id === createdId)
+			const createdSubscription = data.find((sub: { id: string }) => sub.id === String(createdId))
 			expect(createdSubscription).toBeTruthy()
 			expect(createdSubscription.name).toBe(newSubscription.name)
 
@@ -178,8 +178,8 @@ describe('Subscriptions API - Integration Tests', () => {
 			expect(data.length).toBeGreaterThanOrEqual(2)
 
 			// 各サブスクリプションにカテゴリ情報が含まれることを確認
-			const sub1 = data.find((sub: { id: number }) => sub.id === sub1Data.id)
-			const sub2 = data.find((sub: { id: number }) => sub.id === sub2Data.id)
+			const sub1 = data.find((sub: { id: string }) => sub.id === String(sub1Data.id))
+			const sub2 = data.find((sub: { id: string }) => sub.id === String(sub2Data.id))
 
 			expect(sub1).toBeTruthy()
 			expect(sub2).toBeTruthy()
@@ -451,7 +451,7 @@ describe('Subscriptions API - Integration Tests', () => {
 				)
 				expect(response.status).toBe(201)
 				const data = await getResponseJson(response)
-				createdIds.push(data.id)
+				createdIds.push(String(data.id))
 			}
 
 			// 一覧を取得して月額合計を計算
@@ -547,7 +547,7 @@ describe('Subscriptions API - Integration Tests', () => {
 				)
 				expect(response.status).toBe(201)
 				const data = await getResponseJson(response)
-				createdIds.push(data.id)
+				createdIds.push(String(data.id))
 			}
 
 			// カテゴリとの関連性を持つサブスクリプションの動作確認
@@ -869,7 +869,7 @@ describe('Subscriptions API - Integration Tests', () => {
 				})
 				expect(response.status).toBe(201)
 				const data = await getResponseJson(response)
-				createdIds.push(data.id)
+				createdIds.push(String(data.id))
 			}
 
 			// 読み取りと書き込みを同時に実行

@@ -1,11 +1,11 @@
 import { Hono } from 'hono'
 import { type AnyDatabase, type Env } from '../db'
-import { type NewTransaction, type Transaction, transactions } from '../db/schema'
+import { type Transaction as DbTransaction, type NewTransaction, transactions } from '../db/schema'
 import { BadRequestError, errorHandler, handleError } from '../lib/error-handler'
 import { createRequestLogger } from '../lib/logger'
 import { createCrudHandlers } from '../lib/route-factory'
 import { type LoggingVariables } from '../middleware/logging'
-import { addCategoryInfoToTransactions } from '../types'
+import { addCategoryInfoToTransactions, type Transaction } from '../types'
 import {
 	validateIdWithZod,
 	validateTransactionCreateWithZod,
@@ -32,8 +32,8 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 	const crudHandlers = createCrudHandlers<
 		NewTransaction,
 		Partial<NewTransaction>,
-		Transaction,
-		any
+		DbTransaction,
+		Transaction
 	>({
 		table: transactions,
 		resourceName: 'transactions',
@@ -41,7 +41,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 		validateUpdate: (data: unknown) =>
 			validateTransactionUpdateWithZod(data as Partial<NewTransaction>),
 		validateId: validateIdWithZod,
-		transformData: (data: Transaction[]) => addCategoryInfoToTransactions(data as any),
+		transformData: (data: DbTransaction[]) => addCategoryInfoToTransactions(data),
 		testDatabase: options.testDatabase,
 	})
 
@@ -116,9 +116,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 			}
 
 			// カテゴリ情報を設定ファイルから補完
-			// 型を明確にしてから変換を行う
-			const typedResult: Transaction[] = result
-			const resultWithCategories = addCategoryInfoToTransactions(typedResult)
+			const resultWithCategories = addCategoryInfoToTransactions(result)
 
 			requestLogger.success({
 				transactionsCount: resultWithCategories.length,
