@@ -22,7 +22,6 @@ import {
 	deleteCategory,
 	getCategories,
 	getCategory,
-	invalidateCategoriesCache,
 	updateCategory,
 } from "./categories";
 
@@ -355,25 +354,6 @@ describe("Categories Service", () => {
 				"Unauthorized to delete category",
 			);
 			expect(apiClient.delete).toHaveBeenCalledTimes(1);
-		});
-	});
-
-	describe("invalidateCategoriesCache", () => {
-		it("キャッシュ無効化関数が存在し、呼び出し可能である", () => {
-			// 関数の存在を確認
-			expect(invalidateCategoriesCache).toBeDefined();
-			expect(typeof invalidateCategoriesCache).toBe("function");
-
-			// 関数が正常に実行される（エラーをスローしない）
-			expect(() => invalidateCategoriesCache()).not.toThrow();
-		});
-
-		it("将来のキャッシュ無効化実装のためのプレースホルダーとして機能する", () => {
-			// この関数は現在何も行わないが、将来的にはReact Queryなどの
-			// キャッシュライブラリと統合されることを想定している
-			// 現時点では、関数の存在自体がインターフェースの一部として重要
-			const result = invalidateCategoriesCache();
-			expect(result).toBeUndefined();
 		});
 	});
 
