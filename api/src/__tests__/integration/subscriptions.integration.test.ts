@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { ApiSubscription } from '../../types/subscription'
 import { testSubscriptions } from '../helpers/fixtures'
 import { createTestRequest, getResponseJson } from '../helpers/test-app'
 import { cleanupTestDatabase, setupTestDatabase } from '../helpers/test-db'
@@ -462,7 +461,7 @@ describe('Subscriptions API - Integration Tests', () => {
 
 			// アクティブなサブスクリプションのみをフィルタリング
 			const activeSubscriptions = allSubscriptions.filter(
-				(sub: ApiSubscription) => sub.isActive && createdIds.includes(sub.id)
+				(sub: any) => sub.isActive && createdIds.includes(sub.id)
 			)
 
 			// 月額換算の合計を計算
@@ -843,7 +842,7 @@ describe('Subscriptions API - Integration Tests', () => {
 				if (Array.isArray(filterData)) {
 					// フィルタリングが実装されている場合のみアクティブなサブスクリプションのチェック
 					if (filterData.length > 0 && filterData.length < successCount) {
-						const allActive = filterData.every((sub: ApiSubscription) => sub.isActive === true)
+						const allActive = filterData.every((sub: any) => sub.isActive === true)
 						expect(allActive).toBe(true)
 					} else {
 						// フィルタリングが実装されていない場合は全件返却
