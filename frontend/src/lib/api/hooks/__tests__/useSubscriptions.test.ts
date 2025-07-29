@@ -29,6 +29,10 @@ import {
 } from "../useSubscriptions";
 
 // subscriptionServiceをモック化
+// TODO: プロジェクトガイドラインに従い、MSW 2.10.2へ移行する
+// 優先度: 中、実装予定: APIモックの統一化時に一括対応
+// 設計方針: MSWハンドラーを.storybook/mocks/に統一管理し、
+// テストとStorybookで共通利用できるようにする
 vi.mock("../../services/subscriptions", () => ({
 	subscriptionService: {
 		getSubscriptions: vi.fn(),
@@ -467,25 +471,10 @@ describe("useCreateSubscription", () => {
 				1,
 			);
 		});
-
-		it("作成完了後、エラー状態がクリアされる", async () => {
-			mockSubscriptionService.createSubscription.mockResolvedValue(
-				mockCreatedSubscription,
-			);
-
-			const { result } = renderHook(() => useCreateSubscription());
-
-			await act(async () => {
-				await result.current.createSubscription(mockCreateRequest);
-			});
-
-			expect(result.current.error).toBeNull();
-			expect(result.current.isLoading).toBe(false);
-		});
 	});
 
 	describe("エラーハンドリング", () => {
-		it("作成に失敗した場合、エラーメッセージが設定される", async () => {
+		it("ネットワークエラー発生時、適切なエラーメッセージが設定される", async () => {
 			const errorMessage = "サブスクリプション作成に失敗しました";
 			const apiError = new Error("Network error");
 			mockSubscriptionService.createSubscription.mockRejectedValue(apiError);
@@ -539,16 +528,20 @@ describe("useCreateSubscription", () => {
 
 	describe("ローディング状態管理", () => {
 		it("非同期操作中はローディング状態がtrueになる", async () => {
-			// Promiseを手動で制御するためのヘルパー
-			let resolvePromise: (value: Subscription) => void;
-			const promise = new Promise<Subscription>((resolve) => {
-				resolvePromise = resolve;
+			// 遅延解決されるPromiseを作成
+			const delayedPromise = new Promise<Subscription>((resolve) => {
+				setTimeout(() => resolve(mockCreatedSubscription), 100);
 			});
-			mockSubscriptionService.createSubscription.mockReturnValue(promise);
+			mockSubscriptionService.createSubscription.mockReturnValue(
+				delayedPromise,
+			);
 
 			const { result } = renderHook(() => useCreateSubscription());
 
-			// 作成を開始（awaitしない）
+			// 初期状態を確認
+			expect(result.current.isLoading).toBe(false);
+
+			// 作成を開始（actでラップ）
 			let createPromise: Promise<Subscription | null>;
 			act(() => {
 				createPromise = result.current.createSubscription(mockCreateRequest);
@@ -559,14 +552,14 @@ describe("useCreateSubscription", () => {
 				expect(result.current.isLoading).toBe(true);
 			});
 
-			// Promiseを解決
+			// 完了を待つ
 			await act(async () => {
-				resolvePromise!(mockCreatedSubscription);
 				await createPromise!;
 			});
 
 			// ローディングが完了
 			expect(result.current.isLoading).toBe(false);
+			expect(result.current.error).toBeNull();
 		});
 
 		it("エラー発生時もローディング状態が適切に更新される", async () => {
@@ -724,10 +717,17 @@ describe("useCreateSubscription", () => {
 /**
  * TODO: 今後実装が必要なミューテーション系フックのテスト
  *
+ * 実装タイムライン: サブスクリプション管理機能の次フェーズ（優先度: 中）
+ *
  * Issue #235のコメントで言及されていた未実装のフック:
- * - useUpdateSubscription: サブスクリプション更新
- * - useDeleteSubscription: サブスクリプション削除
- * - useToggleSubscriptionStatus: アクティブ/非アクティブ切り替え
+ * - useUpdateSubscription: サブスクリプション更新（優先度: 高）
+ * - useDeleteSubscription: サブスクリプション削除（優先度: 高）
+ * - useToggleSubscriptionStatus: アクティブ/非アクティブ切り替え（優先度: 中）
+ *
+ * 設計方針:
+ * - useApiMutationをベースに実装（useCreateSubscriptionと同様）
+ * - エラーハンドリングはhandleApiErrorで統一
+ * - 楽観的更新は実装せず、成功後にクエリを再取得
  *
  * これらのフックが実装された際は、useCreateSubscriptionと同様の
  * テストパターンで以下をカバーすること:
