@@ -8,8 +8,8 @@ test.describe('サブスクリプション管理機能', () => {
     
     // ホーム画面からサブスクリプション管理画面へ遷移
     await page.goto('/');
-    // ダッシュボードのナビゲーションカードをクリック（ヘッダーのリンクではなく）
-    await page.getByRole('link', { name: '📱 サブスクリプション管理 定期支払いの管理' }).click();
+    // ダッシュボードのナビゲーションカードをクリック（data-testidを使用）
+    await page.getByTestId('navigation-subscriptions').click();
     
     // サブスクリプション管理画面が表示されることを確認
     await expect(page).toHaveURL(/\/subscriptions/);

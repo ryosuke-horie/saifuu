@@ -20,6 +20,8 @@ interface NavigationCardProps {
 	description: string;
 	/** 追加のCSSクラス */
 	className?: string;
+	/** テスト用のID（data-testidに使用） */
+	testId?: string;
 }
 
 export const NavigationCard = ({
@@ -28,11 +30,13 @@ export const NavigationCard = ({
 	title,
 	description,
 	className = "",
+	testId,
 }: NavigationCardProps) => {
 	return (
 		<Link
 			href={href}
 			className={`bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow ${className}`}
+			{...(testId && { "data-testid": testId })}
 		>
 			<div className="flex items-center justify-between mb-4">
 				<span className="text-4xl">{icon}</span>
