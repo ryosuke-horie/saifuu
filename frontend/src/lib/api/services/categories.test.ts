@@ -364,7 +364,6 @@ describe("Categories Service", () => {
 			expect(categoryService).toHaveProperty("createCategory");
 			expect(categoryService).toHaveProperty("updateCategory");
 			expect(categoryService).toHaveProperty("deleteCategory");
-			expect(categoryService).toHaveProperty("invalidateCategoriesCache");
 		});
 
 		it("categoryServiceの関数が正しく動作する", async () => {
@@ -393,7 +392,6 @@ describe("Categories Service", () => {
 			expect(typeof service.createCategory).toBe("function");
 			expect(typeof service.updateCategory).toBe("function");
 			expect(typeof service.deleteCategory).toBe("function");
-			expect(typeof service.invalidateCategoriesCache).toBe("function");
 		});
 	});
 });
