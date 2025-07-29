@@ -5,7 +5,7 @@ import { BadRequestError, errorHandler, handleError } from '../lib/error-handler
 import { createRequestLogger } from '../lib/logger'
 import { createCrudHandlers } from '../lib/route-factory'
 import { type LoggingVariables } from '../middleware/logging'
-import { addCategoryInfo, type TransactionWithCategory } from '../utils/transaction-utils'
+import { addCategoryInfoToTransactions } from '../types'
 import {
 	validateIdWithZod,
 	validateTransactionCreateWithZod,
@@ -33,7 +33,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 		NewTransaction,
 		Partial<NewTransaction>,
 		Transaction,
-		TransactionWithCategory<Transaction>
+		any
 	>({
 		table: transactions,
 		resourceName: 'transactions',
@@ -41,7 +41,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 		validateUpdate: (data: unknown) =>
 			validateTransactionUpdateWithZod(data as Partial<NewTransaction>),
 		validateId: validateIdWithZod,
-		transformData: (data: Transaction[]) => addCategoryInfo(data),
+		transformData: (data: Transaction[]) => addCategoryInfoToTransactions(data as any),
 		testDatabase: options.testDatabase,
 	})
 
@@ -118,7 +118,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 			// カテゴリ情報を設定ファイルから補完
 			// 型を明確にしてから変換を行う
 			const typedResult: Transaction[] = result
-			const resultWithCategories = addCategoryInfo(typedResult)
+			const resultWithCategories = addCategoryInfoToTransactions(typedResult)
 
 			requestLogger.success({
 				transactionsCount: resultWithCategories.length,
@@ -182,7 +182,7 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 			requestLogger.success(stats)
 
-			return c.json(stats)
+			return c.json({ summary: stats })
 		} catch (error) {
 			return handleError(c, error, 'transactions')
 		}

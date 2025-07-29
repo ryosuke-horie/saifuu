@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { transactions } from '../../db/schema'
-import type { ErrorResponse, StatsResponse, TransactionResponse } from '../../types/api'
+import type { ErrorResponse, StatsResponse, Transaction } from '../../types'
 import { createTestRequest, getResponseJson } from '../helpers/test-app'
 import { cleanupTestDatabase, createTestDatabase, setupTestDatabase } from '../helpers/test-db'
 import testProductionApp from '../helpers/test-production-app'
@@ -60,12 +60,12 @@ describe('Transactions Integration Tests', () => {
 				}
 
 				const res = await createTestRequest(app, 'POST', '/api/transactions', incomeData)
-				const body = (await getResponseJson(res)) as TransactionResponse
+				const body = (await getResponseJson(res)) as Transaction
 
 				expect(res.status).toBe(201)
 				expect(body.amount).toBe(300000)
 				expect(body.type).toBe('income')
-				expect(body.categoryId).toBe(101)
+				expect(body.category?.id).toBe(101)
 				expect(body.description).toBe('月給')
 			})
 
@@ -93,7 +93,7 @@ describe('Transactions Integration Tests', () => {
 				})
 
 				const res = await createTestRequest(app, 'POST', '/api/transactions', maxAmountData)
-				const body = (await getResponseJson(res)) as TransactionResponse
+				const body = (await getResponseJson(res)) as Transaction
 
 				expect(res.status).toBe(201)
 				expect(body.amount).toBe(10000000)
@@ -107,7 +107,7 @@ describe('Transactions Integration Tests', () => {
 				})
 
 				const res = await createTestRequest(app, 'POST', '/api/transactions', minAmountData)
-				const body = (await getResponseJson(res)) as TransactionResponse
+				const body = (await getResponseJson(res)) as Transaction
 
 				expect(res.status).toBe(201)
 				expect(body.amount).toBe(1)
@@ -187,7 +187,7 @@ describe('Transactions Integration Tests', () => {
 
 			it('Given: 収入・支出混在データ, When: type=incomeフィルター適用, Then: 収入データのみ返される', async () => {
 				const res = await createTestRequest(app, 'GET', '/api/transactions?type=income')
-				const body = (await getResponseJson(res)) as TransactionResponse[]
+				const body = (await getResponseJson(res)) as Transaction[]
 
 				expect(res.status).toBe(200)
 				expect(body).toHaveLength(2)
@@ -196,12 +196,12 @@ describe('Transactions Integration Tests', () => {
 
 			it('Given: 収入・支出混在データ, When: typeパラメータなし, Then: 全データが返される', async () => {
 				const res = await createTestRequest(app, 'GET', '/api/transactions')
-				const body = (await getResponseJson(res)) as TransactionResponse[]
+				const body = (await getResponseJson(res)) as Transaction[]
 
 				expect(res.status).toBe(200)
 				expect(body).toHaveLength(4)
-				expect(body.some((t: TransactionResponse) => t.type === 'expense')).toBe(true)
-				expect(body.some((t: TransactionResponse) => t.type === 'income')).toBe(true)
+				expect(body.some((t: Transaction) => t.type === 'expense')).toBe(true)
+				expect(body.some((t: Transaction) => t.type === 'income')).toBe(true)
 			})
 
 			it('Given: 無効なtypeパラメータ, When: GETリクエスト送信, Then: 400エラーが返される', async () => {
@@ -242,13 +242,13 @@ describe('Transactions Integration Tests', () => {
 					`/api/transactions/${transaction.id}`,
 					updateData
 				)
-				const body = (await getResponseJson(res)) as TransactionResponse
+				const body = (await getResponseJson(res)) as Transaction
 
 				// 重要度順にアサーション
 				expect(res.status).toBe(200)
 				expect(body.type).toBe('income') // typeは変更されない
 				expect(body.amount).toBe(500000)
-				expect(body.categoryId).toBe(102)
+				expect(body.category?.id).toBe(102)
 				expect(body.description).toBe('夏季ボーナス')
 			})
 
@@ -346,12 +346,12 @@ describe('Transactions Integration Tests', () => {
 				const body = (await getResponseJson(res)) as StatsResponse
 
 				expect(res.status).toBe(200)
-				expect(body.totalExpense).toBe(10000) // 5000 + 3000 + 2000
-				expect(body.totalIncome).toBe(400000) // 300000 + 100000
-				expect(body.balance).toBe(390000) // 400000 - 10000
-				expect(body.transactionCount).toBe(5)
-				expect(body.expenseCount).toBe(3)
-				expect(body.incomeCount).toBe(2)
+				expect(body.summary.totalExpense).toBe(10000) // 5000 + 3000 + 2000
+				expect(body.summary.totalIncome).toBe(400000) // 300000 + 100000
+				expect(body.summary.balance).toBe(390000) // 400000 - 10000
+				expect(body.summary.transactionCount).toBe(5)
+				expect(body.summary.expenseCount).toBe(3)
+				expect(body.summary.incomeCount).toBe(2)
 			})
 
 			it('Given: データなし, When: 統計情報を取得, Then: すべて0が返される', async () => {
@@ -359,10 +359,10 @@ describe('Transactions Integration Tests', () => {
 				const body = (await getResponseJson(res)) as StatsResponse
 
 				expect(res.status).toBe(200)
-				expect(body.totalExpense).toBe(0)
-				expect(body.totalIncome).toBe(0)
-				expect(body.balance).toBe(0)
-				expect(body.transactionCount).toBe(0)
+				expect(body.summary.totalExpense).toBe(0)
+				expect(body.summary.totalIncome).toBe(0)
+				expect(body.summary.balance).toBe(0)
+				expect(body.summary.transactionCount).toBe(0)
 			})
 		})
 	})
@@ -384,7 +384,7 @@ describe('Transactions Integration Tests', () => {
 			])
 
 			const res = await createTestRequest(app, 'GET', '/api/transactions')
-			const body = (await getResponseJson(res)) as TransactionResponse[]
+			const body = (await getResponseJson(res)) as Transaction[]
 
 			expect(res.status).toBe(200)
 			expect(body).toHaveLength(2)
@@ -398,10 +398,10 @@ describe('Transactions Integration Tests', () => {
 
 			// type=expenseでのフィルタリング
 			const getRes = await createTestRequest(app, 'GET', '/api/transactions?type=expense')
-			const body = (await getResponseJson(getRes)) as TransactionResponse[]
+			const body = (await getResponseJson(getRes)) as Transaction[]
 
 			expect(getRes.status).toBe(200)
-			expect(body.every((t: TransactionResponse) => t.type === 'expense')).toBe(true)
+			expect(body.every((t: Transaction) => t.type === 'expense')).toBe(true)
 		})
 	})
 
@@ -433,7 +433,7 @@ describe('Transactions Integration Tests', () => {
 				})
 
 				const res = await createTestRequest(app, 'POST', '/api/transactions', futureDateData)
-				const body = (await getResponseJson(res)) as TransactionResponse
+				const body = (await getResponseJson(res)) as Transaction
 
 				expect(res.status).toBe(201)
 				expect(body.date).toBe(futureDateData.date)
@@ -487,7 +487,7 @@ describe('Transactions Integration Tests', () => {
 
 				// 作成されたデータが正しいことを確認
 				results.forEach((body, i) => {
-					const transaction = body as TransactionResponse
+					const transaction = body as Transaction
 					expect(transaction.amount).toBe(1000 * (i + 1))
 					expect(transaction.description).toBe(`並行テスト${i + 1}`)
 				})

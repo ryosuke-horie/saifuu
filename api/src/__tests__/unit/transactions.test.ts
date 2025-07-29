@@ -7,7 +7,7 @@ import type { AnyDatabase, Env } from '../../db'
 import { testLogger } from '../../logger/factory'
 import type { LoggingVariables } from '../../middleware/logging'
 import { createTransactionsApp } from '../../routes/transactions'
-import type { ErrorResponse, TransactionResponse } from '../../types/api'
+import type { Transaction, ValidationErrorResponse } from '../../types'
 
 // logWithContextのモック
 vi.mock('../../middleware/logging', () => ({
@@ -74,7 +74,7 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(201)
-			const result = (await response.json()) as TransactionResponse
+			const result = (await response.json()) as Transaction
 			expect(result).toMatchObject({
 				amount: 1000,
 				type: 'expense',
@@ -99,12 +99,12 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(400)
-			const result = (await response.json()) as ErrorResponse
+			const result = (await response.json()) as ValidationErrorResponse
 			expect(result.error).toBeDefined()
 			expect(result.details).toBeDefined()
 
 			// エラーメッセージが日本語であることを確認
-			const errors = result.details!
+			const errors = result.details
 			expect(errors.some((e) => e.field === 'amount' && e.message.includes('正の数値'))).toBe(true)
 			expect(
 				errors.some((e) => e.field === 'type' && e.message.includes('expenseまたはincome'))
@@ -128,8 +128,8 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(400)
-			const result = (await response.json()) as ErrorResponse
-			expect(result.details!.some((e) => e.field === 'date' && e.message.includes('必須'))).toBe(
+			const result = (await response.json()) as ValidationErrorResponse
+			expect(result.details.some((e) => e.field === 'date' && e.message.includes('必須'))).toBe(
 				true
 			)
 		})
@@ -150,7 +150,7 @@ describe('Transactions API with Zod - Unit Tests', () => {
 				}),
 			})
 
-			const created = (await createResponse.json()) as TransactionResponse
+			const created = (await createResponse.json()) as Transaction
 
 			// 更新
 			const updateData = {
@@ -165,7 +165,7 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(200)
-			const result = (await response.json()) as TransactionResponse
+			const result = (await response.json()) as Transaction
 			expect(result.amount).toBe(2000)
 			expect(result.description).toBe('更新後のデータ')
 		})
@@ -182,9 +182,9 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(400)
-			const result = (await response.json()) as ErrorResponse
+			const result = (await response.json()) as ValidationErrorResponse
 			expect(
-				result.details!.some((e) => e.field === 'amount' && e.message.includes('10000000円以下'))
+				result.details.some((e) => e.field === 'amount' && e.message.includes('10000000円以下'))
 			).toBe(true)
 		})
 	})
@@ -196,12 +196,12 @@ describe('Transactions API with Zod - Unit Tests', () => {
 			})
 
 			expect(response.status).toBe(400)
-			const result = (await response.json()) as ErrorResponse
+			const result = (await response.json()) as ValidationErrorResponse
 			// デバッグ用
 			console.log('Error result:', JSON.stringify(result, null, 2))
 			expect(result.error).toBeDefined()
 			expect(result.details).toBeDefined()
-			expect(result.details!.length).toBeGreaterThan(0)
+			expect(result.details.length).toBeGreaterThan(0)
 		})
 
 		it('should accept string IDs that can be converted to numbers', async () => {
@@ -216,7 +216,7 @@ describe('Transactions API with Zod - Unit Tests', () => {
 				}),
 			})
 
-			const created = (await createResponse.json()) as TransactionResponse
+			const created = (await createResponse.json()) as Transaction
 
 			// 文字列IDでアクセス
 			const response = await app.request(`/api/transactions/${created.id}`, {

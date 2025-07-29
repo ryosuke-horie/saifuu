@@ -7,10 +7,11 @@ import type { AnyDatabase, Env } from '../../db'
 import { testLogger } from '../../logger/factory'
 import type { LoggingVariables } from '../../middleware/logging'
 import { createSubscriptionsApp } from '../../routes/subscriptions'
+import type { Subscription } from '../../types'
 
 // APIレスポンスの型定義
 interface SubscriptionResponse {
-	id: number
+	id: string
 	name: string
 	amount: number
 	billingCycle: string
@@ -104,7 +105,7 @@ describe('Subscriptions API with CRUD Factory - Unit Tests', () => {
 			})
 
 			expect(createResponse.status).toBe(201)
-			const created = (await createResponse.json()) as SubscriptionResponse
+			const created = (await createResponse.json()) as Subscription
 
 			// 一覧取得でカテゴリ情報が付加されることを確認
 			const listResponse = await app.request('/api/subscriptions', {
@@ -112,8 +113,8 @@ describe('Subscriptions API with CRUD Factory - Unit Tests', () => {
 			})
 
 			expect(listResponse.status).toBe(200)
-			const list = (await listResponse.json()) as SubscriptionResponse[]
-			const subscription = list.find((s) => s.id === created.id)
+			const list = (await listResponse.json()) as Subscription[]
+			const subscription = list.find((s) => s.id === String(created.id))
 
 			expect(subscription).toBeDefined()
 			expect(subscription!.category).toEqual({
@@ -143,7 +144,7 @@ describe('Subscriptions API with CRUD Factory - Unit Tests', () => {
 			})
 
 			expect(createResponse.status).toBe(201)
-			const created = (await createResponse.json()) as SubscriptionResponse
+			const created = (await createResponse.json()) as Subscription
 
 			// 詳細取得でカテゴリがnullになることを確認
 			const getResponse = await app.request(`/api/subscriptions/${created.id}`, {
@@ -151,7 +152,7 @@ describe('Subscriptions API with CRUD Factory - Unit Tests', () => {
 			})
 
 			expect(getResponse.status).toBe(200)
-			const result = (await getResponse.json()) as SubscriptionResponse
+			const result = (await getResponse.json()) as Subscription
 			expect(result.category).toBeNull()
 		})
 
@@ -187,7 +188,7 @@ describe('Subscriptions API with CRUD Factory - Unit Tests', () => {
 				method: 'GET',
 			})
 
-			const result = (await response.json()) as SubscriptionResponse[]
+			const result = (await response.json()) as Subscription[]
 			const categoriesWithTimestamps = result
 				.filter((s) => s.category !== null)
 				.map((s) => s.category)
@@ -216,7 +217,7 @@ describe('Subscriptions API with CRUD Factory - Unit Tests', () => {
 				}),
 			})
 			expect(createResponse.status).toBe(201)
-			const created = (await createResponse.json()) as SubscriptionResponse
+			const created = (await createResponse.json()) as Subscription
 
 			// Read
 			const getResponse = await app.request(`/api/subscriptions/${created.id}`, {

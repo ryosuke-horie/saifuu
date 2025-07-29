@@ -1,71 +1,17 @@
 import { Hono } from 'hono'
-import { ALL_CATEGORIES } from '../../../shared/config/categories'
 import { type AnyDatabase, type Env } from '../db'
 import { type NewSubscription, type Subscription, subscriptions } from '../db/schema'
 import { createCrudHandlers } from '../lib/route-factory'
 import { type LoggingVariables } from '../middleware/logging'
+import { addCategoryInfoToSubscriptions } from '../types'
 import {
 	validateIdWithZod,
 	validateSubscriptionCreateWithZod,
 	validateSubscriptionUpdateWithZod,
 } from '../validation/zod-validators'
 
-// カテゴリ情報の型定義
-interface CategoryInfo {
-	id: number
-	name: string
-	type: string
-	color: string
-	createdAt: string
-	updatedAt: string
-}
-
-// カテゴリ情報付きサブスクリプションの型定義
-interface SubscriptionWithCategory extends Subscription {
-	category: CategoryInfo | null
-}
-
-/**
- * カテゴリ情報を付加するデータ変換関数
- * subscriptions配列の各要素にカテゴリマスタから対応するカテゴリ情報を付加する
- *
- * 設計意図：フロントエンドでのカテゴリ名表示のため、アプリケーション層で結合処理を実装
- * 代替案：
- * - DB層でのJOIN処理も検討したが、カテゴリマスタが設定ファイルベースのため現在の方式を採用
- * - GraphQL等でのリゾルバーでの結合も可能だが、RESTful APIのシンプルさを優先
- *
- * パフォーマンス考慮：
- * - カテゴリ数は少数（10件程度）のため、O(n*m)の計算量でも実用上問題なし
- * - タイムスタンプは関数実行時に1回だけ生成し、全レコードで共有
- *
- * @param data - サブスクリプションデータの配列
- * @returns カテゴリ情報が付加されたサブスクリプションデータの配列
- */
-function addCategoryInfo(data: Subscription[]): SubscriptionWithCategory[] {
-	const currentTimestamp = new Date().toISOString()
-
-	// カテゴリをMapに変換して検索を高速化（O(1)）
-	const categoryMap = new Map(ALL_CATEGORIES.map((cat) => [cat.numericId, cat]))
-
-	return data.map((subscription) => {
-		const category =
-			subscription.categoryId !== null ? categoryMap.get(subscription.categoryId) : undefined
-
-		return {
-			...subscription,
-			category: category
-				? {
-						id: category.numericId,
-						name: category.name,
-						type: category.type,
-						color: category.color,
-						createdAt: currentTimestamp,
-						updatedAt: currentTimestamp,
-					}
-				: null,
-		}
-	})
-}
+// カテゴリ情報付加のための変換関数は types/subscription/utils.ts に移動済み
+// addCategoryInfoToSubscriptions を使用
 
 /**
  * サブスクリプションAPIのファクトリ関数（CRUDファクトリ版）
@@ -81,20 +27,17 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 	}>()
 
 	// CRUDハンドラーを作成
-	const handlers = createCrudHandlers<
-		NewSubscription,
-		Partial<NewSubscription>,
-		Subscription,
-		SubscriptionWithCategory
-	>({
-		table: subscriptions,
-		resourceName: 'subscription',
-		validateCreate: validateSubscriptionCreateWithZod,
-		validateUpdate: validateSubscriptionUpdateWithZod,
-		validateId: validateIdWithZod,
-		transformData: addCategoryInfo,
-		testDatabase: options.testDatabase,
-	})
+	const handlers = createCrudHandlers<NewSubscription, Partial<NewSubscription>, Subscription, any>(
+		{
+			table: subscriptions,
+			resourceName: 'subscription',
+			validateCreate: validateSubscriptionCreateWithZod,
+			validateUpdate: validateSubscriptionUpdateWithZod,
+			validateId: validateIdWithZod,
+			transformData: addCategoryInfoToSubscriptions as any,
+			testDatabase: options.testDatabase,
+		}
+	)
 
 	// ルーティング設定
 	app.get('/', handlers.getAll)

@@ -112,17 +112,17 @@ describe('Transactions Route Refactoring - ユーティリティ統合テスト'
 	})
 
 	describe('ビジネスロジックの分離', () => {
-		it('addCategoryInfo関数が別ファイルに分離されていること', async () => {
-			// transaction-utils.tsからaddCategoryInfo関数がエクスポートされていることを確認
-			const utils = await import('../../utils/transaction-utils')
-			expect(utils.addCategoryInfo).toBeDefined()
-			expect(typeof utils.addCategoryInfo).toBe('function')
+		it('addCategoryInfoToTransactions関数が型定義に移動されていること', async () => {
+			// typesからaddCategoryInfoToTransactions関数がエクスポートされていることを確認
+			const types = await import('../../types')
+			expect(types.addCategoryInfoToTransactions).toBeDefined()
+			expect(typeof types.addCategoryInfoToTransactions).toBe('function')
 		})
 
-		it('TransactionWithCategory型が定義されていること', async () => {
+		it('Transaction型が定義されていること', async () => {
 			// 型定義の存在を確認（ランタイムでは型情報は消えるため、エクスポートの存在のみ確認）
-			const utils = await import('../../utils/transaction-utils')
-			expect(utils).toBeDefined()
+			const types = await import('../../types')
+			expect(types).toBeDefined()
 		})
 	})
 
