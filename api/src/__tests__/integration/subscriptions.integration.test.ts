@@ -456,7 +456,7 @@ describe('Subscriptions API - Integration Tests', () => {
 				},
 			]
 
-			const createdIds: string[] = []
+			const createdIds: number[] = []
 			for (const sub of subscriptions) {
 				const response = await createTestRequest(
 					testProductionApp,
@@ -476,9 +476,11 @@ describe('Subscriptions API - Integration Tests', () => {
 			const allSubscriptions = await getResponseJson(response)
 
 			// アクティブなサブスクリプションのみをフィルタリング
-			const activeSubscriptions = allSubscriptions.filter(
-				(sub: TestSubscription) => sub.isActive && createdIds.includes(sub.id.toString())
-			)
+			const activeSubscriptions = allSubscriptions.filter((sub: TestSubscription) => {
+				if (!sub.isActive) return false
+				// createdIdsに含まれているかチェック
+				return createdIds.includes(Number(sub.id))
+			})
 
 			// 月額換算の合計を計算
 			let totalMonthly = 0
@@ -552,7 +554,7 @@ describe('Subscriptions API - Integration Tests', () => {
 				},
 			]
 
-			const createdIds: string[] = []
+			const createdIds: number[] = []
 			for (const sub of subscriptions) {
 				const response = await createTestRequest(
 					testProductionApp,
@@ -871,7 +873,7 @@ describe('Subscriptions API - Integration Tests', () => {
 		it('should handle concurrent read/write operations efficiently', async () => {
 			// まず5個のサブスクリプションを作成
 			const initialCount = 5
-			const createdIds: string[] = []
+			const createdIds: number[] = []
 
 			for (let i = 0; i < initialCount; i++) {
 				const response = await createTestRequest(testProductionApp, 'POST', '/api/subscriptions', {
