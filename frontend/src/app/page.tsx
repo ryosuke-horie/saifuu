@@ -90,6 +90,7 @@ export default function Home() {
 						icon={item.icon}
 						title={item.title}
 						description={item.description}
+						testId={`navigation-${item.id}`}
 					/>
 				))}
 			</div>
