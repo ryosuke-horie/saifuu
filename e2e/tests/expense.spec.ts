@@ -9,7 +9,8 @@ test.describe('支出管理機能', () => {
     
     // ホーム画面から支出管理画面へ遷移
     await page.goto('/');
-    await page.getByRole('link', { name: '支出管理ページへ移動' }).click();
+    // ダッシュボードのナビゲーションカードをクリック（ヘッダーのリンクではなく）
+    await page.getByRole('link', { name: '💸 支出管理 支出の記録と管理' }).click();
     
     // 支出管理画面が表示されることを確認
     await expect(page).toHaveURL(/\/expenses/);
