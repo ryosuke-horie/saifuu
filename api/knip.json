@@ -43,6 +43,17 @@
 		"vite-ssr-components",
 		"zod"
 	],
+	"ignoreBinaries": [
+		"vite",
+		"tsx",
+		"wrangler",
+		"tsc",
+		"biome",
+		"vitest",
+		"drizzle-kit",
+		"sqlite3",
+		"knip"
+	],
 	"rules": {
 		"files": "warn",
 		"dependencies": "warn",
