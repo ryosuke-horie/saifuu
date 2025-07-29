@@ -9,17 +9,19 @@
  * - useActiveSubscriptions、useInactiveSubscriptionsの動作
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, handleApiError } from "../../errors";
 import { subscriptionService } from "../../services/subscriptions";
 import type {
+	CreateSubscriptionRequest,
 	GetSubscriptionsQuery,
 	Subscription,
 	SubscriptionStatsResponse,
 } from "../../types";
 import {
 	useActiveSubscriptions,
+	useCreateSubscription,
 	useInactiveSubscriptions,
 	useSubscription,
 	useSubscriptionStats,
@@ -27,11 +29,16 @@ import {
 } from "../useSubscriptions";
 
 // subscriptionServiceをモック化
+// TODO: プロジェクトガイドラインに従い、MSW 2.10.2へ移行する
+// 優先度: 中、実装予定: APIモックの統一化時に一括対応
+// 設計方針: MSWハンドラーを.storybook/mocks/に統一管理し、
+// テストとStorybookで共通利用できるようにする
 vi.mock("../../services/subscriptions", () => ({
 	subscriptionService: {
 		getSubscriptions: vi.fn(),
 		getSubscription: vi.fn(),
 		getSubscriptionStats: vi.fn(),
+		createSubscription: vi.fn(),
 	},
 }));
 
@@ -395,3 +402,338 @@ describe("useSubscriptionStats (useApiQuery対応)", () => {
 		expect(mockSubscriptionService.getSubscriptionStats).toHaveBeenCalled();
 	});
 });
+
+describe("useCreateSubscription", () => {
+	const mockCreateRequest: CreateSubscriptionRequest = {
+		name: "Amazon Prime",
+		amount: 500,
+		billingCycle: "monthly",
+		nextBillingDate: "2024-03-01",
+		description: "プライム会員",
+		isActive: true,
+		categoryId: "1",
+	};
+
+	const mockCreatedSubscription: Subscription = {
+		id: "3",
+		name: "Amazon Prime",
+		amount: 500,
+		billingCycle: "monthly",
+		nextBillingDate: "2024-03-01",
+		description: "プライム会員",
+		isActive: true,
+		category: null,
+		createdAt: "2024-02-01T00:00:00Z",
+		updatedAt: "2024-02-01T00:00:00Z",
+	};
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	describe("初期状態", () => {
+		it("初期状態ではローディングはfalse、エラーはnullである", () => {
+			const { result } = renderHook(() => useCreateSubscription());
+
+			expect(result.current.isLoading).toBe(false);
+			expect(result.current.error).toBeNull();
+			expect(typeof result.current.createSubscription).toBe("function");
+		});
+	});
+
+	describe("サブスクリプション作成の成功", () => {
+		it("サブスクリプションが正常に作成される", async () => {
+			mockSubscriptionService.createSubscription.mockResolvedValue(
+				mockCreatedSubscription,
+			);
+
+			const { result } = renderHook(() => useCreateSubscription());
+
+			// サブスクリプション作成を実行
+			let createdSubscription: Subscription | null = null;
+			await act(async () => {
+				createdSubscription =
+					await result.current.createSubscription(mockCreateRequest);
+			});
+
+			// 作成されたサブスクリプションが返される
+			expect(createdSubscription).toEqual(mockCreatedSubscription);
+
+			// ローディング状態が適切に更新される
+			expect(result.current.isLoading).toBe(false);
+			expect(result.current.error).toBeNull();
+
+			// subscriptionServiceが正しいパラメータで呼ばれる
+			expect(mockSubscriptionService.createSubscription).toHaveBeenCalledWith(
+				mockCreateRequest,
+			);
+			expect(mockSubscriptionService.createSubscription).toHaveBeenCalledTimes(
+				1,
+			);
+		});
+	});
+
+	describe("エラーハンドリング", () => {
+		it("ネットワークエラー発生時、適切なエラーメッセージが設定される", async () => {
+			const errorMessage = "サブスクリプション作成に失敗しました";
+			const apiError = new Error("Network error");
+			mockSubscriptionService.createSubscription.mockRejectedValue(apiError);
+			mockHandleApiError.mockReturnValue(new ApiError("network", errorMessage));
+
+			const { result } = renderHook(() => useCreateSubscription());
+
+			// サブスクリプション作成を実行
+			let createdSubscription: Subscription | null = null;
+			await act(async () => {
+				createdSubscription =
+					await result.current.createSubscription(mockCreateRequest);
+			});
+
+			// nullが返される
+			expect(createdSubscription).toBeNull();
+
+			// エラー状態が設定される
+			expect(result.current.error).toBe(errorMessage);
+			expect(result.current.isLoading).toBe(false);
+
+			// handleApiErrorが適切なパラメータで呼ばれる
+			expect(mockHandleApiError).toHaveBeenCalledWith(
+				apiError,
+				"サブスクリプション作成",
+			);
+		});
+
+		it("APIエラーが発生した場合、適切にハンドリングされる", async () => {
+			const errorMessage = "入力データが不正です";
+			const apiError = new ApiError("validation", errorMessage, 400);
+			mockSubscriptionService.createSubscription.mockRejectedValue(apiError);
+			mockHandleApiError.mockReturnValue(apiError);
+
+			const { result } = renderHook(() => useCreateSubscription());
+
+			let createdSubscription: Subscription | null = null;
+			await act(async () => {
+				createdSubscription =
+					await result.current.createSubscription(mockCreateRequest);
+			});
+
+			expect(createdSubscription).toBeNull();
+			expect(result.current.error).toBe(errorMessage);
+			expect(mockHandleApiError).toHaveBeenCalledWith(
+				apiError,
+				"サブスクリプション作成",
+			);
+		});
+	});
+
+	describe("ローディング状態管理", () => {
+		it("非同期操作中はローディング状態がtrueになる", async () => {
+			// 遅延解決されるPromiseを作成
+			const delayedPromise = new Promise<Subscription>((resolve) => {
+				setTimeout(() => resolve(mockCreatedSubscription), 100);
+			});
+			mockSubscriptionService.createSubscription.mockReturnValue(
+				delayedPromise,
+			);
+
+			const { result } = renderHook(() => useCreateSubscription());
+
+			// 初期状態を確認
+			expect(result.current.isLoading).toBe(false);
+
+			// 作成を開始（actでラップ）
+			let createPromise: Promise<Subscription | null>;
+			act(() => {
+				createPromise = result.current.createSubscription(mockCreateRequest);
+			});
+
+			// ローディング中であることを確認
+			await waitFor(() => {
+				expect(result.current.isLoading).toBe(true);
+			});
+
+			// 完了を待つ
+			await act(async () => {
+				await createPromise!;
+			});
+
+			// ローディングが完了
+			expect(result.current.isLoading).toBe(false);
+			expect(result.current.error).toBeNull();
+		});
+
+		it("エラー発生時もローディング状態が適切に更新される", async () => {
+			const apiError = new Error("Network error");
+			mockSubscriptionService.createSubscription.mockRejectedValue(apiError);
+			mockHandleApiError.mockReturnValue(
+				new ApiError("network", "エラーが発生しました"),
+			);
+
+			const { result } = renderHook(() => useCreateSubscription());
+
+			// 初期状態
+			expect(result.current.isLoading).toBe(false);
+
+			// 作成を実行
+			await act(async () => {
+				await result.current.createSubscription(mockCreateRequest);
+			});
+
+			// エラー後もローディングはfalse
+			expect(result.current.isLoading).toBe(false);
+			expect(result.current.error).not.toBeNull();
+		});
+	});
+
+	describe("handleApiErrorの呼び出し", () => {
+		it("エラー時にhandleApiErrorが正しいパラメータで呼ばれる", async () => {
+			const networkError = new Error("Connection failed");
+			const apiError = new ApiError("network", "ネットワークエラー", 0);
+			mockSubscriptionService.createSubscription.mockRejectedValue(
+				networkError,
+			);
+			mockHandleApiError.mockReturnValue(apiError);
+
+			const { result } = renderHook(() => useCreateSubscription());
+
+			await act(async () => {
+				await result.current.createSubscription(mockCreateRequest);
+			});
+
+			// handleApiErrorが適切に呼ばれることを確認
+			expect(mockHandleApiError).toHaveBeenCalledWith(
+				networkError,
+				"サブスクリプション作成",
+			);
+			expect(mockHandleApiError).toHaveBeenCalledTimes(1);
+
+			// エラーメッセージが設定される
+			expect(result.current.error).toBe("ネットワークエラー");
+		});
+
+		it("異なるエラータイプでもhandleApiErrorが呼ばれる", async () => {
+			const validationError = new ApiError(
+				"validation",
+				"金額は正の数値である必要があります",
+				400,
+			);
+			mockSubscriptionService.createSubscription.mockRejectedValue(
+				validationError,
+			);
+			mockHandleApiError.mockReturnValue(validationError);
+
+			const { result } = renderHook(() => useCreateSubscription());
+
+			await act(async () => {
+				await result.current.createSubscription({
+					...mockCreateRequest,
+					amount: -100, // 不正な値
+				});
+			});
+
+			expect(mockHandleApiError).toHaveBeenCalledWith(
+				validationError,
+				"サブスクリプション作成",
+			);
+			expect(result.current.error).toBe("金額は正の数値である必要があります");
+		});
+	});
+
+	describe("複数回の呼び出し", () => {
+		it("複数回作成を実行しても正しく動作する", async () => {
+			const subscription1: Subscription = {
+				...mockCreatedSubscription,
+				id: "4",
+				name: "Spotify",
+			};
+			const subscription2: Subscription = {
+				...mockCreatedSubscription,
+				id: "5",
+				name: "YouTube Premium",
+			};
+
+			mockSubscriptionService.createSubscription
+				.mockResolvedValueOnce(subscription1)
+				.mockResolvedValueOnce(subscription2);
+
+			const { result } = renderHook(() => useCreateSubscription());
+
+			// 1回目の作成
+			let created1: Subscription | null = null;
+			await act(async () => {
+				created1 = await result.current.createSubscription({
+					...mockCreateRequest,
+					name: "Spotify",
+				});
+			});
+			expect(created1).toEqual(subscription1);
+
+			// 2回目の作成
+			let created2: Subscription | null = null;
+			await act(async () => {
+				created2 = await result.current.createSubscription({
+					...mockCreateRequest,
+					name: "YouTube Premium",
+				});
+			});
+			expect(created2).toEqual(subscription2);
+
+			// 両方の呼び出しが記録される
+			expect(mockSubscriptionService.createSubscription).toHaveBeenCalledTimes(
+				2,
+			);
+		});
+
+		it("成功後にエラーが発生しても適切に処理される", async () => {
+			mockSubscriptionService.createSubscription
+				.mockResolvedValueOnce(mockCreatedSubscription)
+				.mockRejectedValueOnce(new Error("Server error"));
+
+			mockHandleApiError.mockReturnValue(
+				new ApiError("server", "サーバーエラー", 500),
+			);
+
+			const { result } = renderHook(() => useCreateSubscription());
+
+			// 1回目：成功
+			let created: Subscription | null = null;
+			await act(async () => {
+				created = await result.current.createSubscription(mockCreateRequest);
+			});
+			expect(created).toEqual(mockCreatedSubscription);
+			expect(result.current.error).toBeNull();
+
+			// 2回目：エラー
+			let failed: Subscription | null = null;
+			await act(async () => {
+				failed = await result.current.createSubscription(mockCreateRequest);
+			});
+			expect(failed).toBeNull();
+			expect(result.current.error).toBe("サーバーエラー");
+		});
+	});
+});
+
+/**
+ * TODO: 今後実装が必要なミューテーション系フックのテスト
+ *
+ * 実装タイムライン: サブスクリプション管理機能の次フェーズ（優先度: 中）
+ *
+ * Issue #235のコメントで言及されていた未実装のフック:
+ * - useUpdateSubscription: サブスクリプション更新（優先度: 高）
+ * - useDeleteSubscription: サブスクリプション削除（優先度: 高）
+ * - useToggleSubscriptionStatus: アクティブ/非アクティブ切り替え（優先度: 中）
+ *
+ * 設計方針:
+ * - useApiMutationをベースに実装（useCreateSubscriptionと同様）
+ * - エラーハンドリングはhandleApiErrorで統一
+ * - 楽観的更新は実装せず、成功後にクエリを再取得
+ *
+ * これらのフックが実装された際は、useCreateSubscriptionと同様の
+ * テストパターンで以下をカバーすること:
+ * 1. 初期状態のテスト
+ * 2. 成功ケースのテスト
+ * 3. エラーハンドリングのテスト
+ * 4. ローディング状態管理のテスト
+ * 5. handleApiError呼び出しのテスト
+ */
