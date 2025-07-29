@@ -11,6 +11,22 @@ import testProductionApp from '../helpers/test-production-app'
  * 実際のD1データベースまたはそれに近いモック環境を使用
  */
 
+// テスト用の型定義
+type TestSubscription = {
+	id: number | string
+	name?: string
+	amount?: number
+	categoryId?: number | null
+	isActive?: boolean
+	billingCycle?: string
+	nextBillingDate?: string
+	description?: string
+	category?: {
+		id: number
+		name?: string
+	}
+}
+
 describe('Subscriptions API - Integration Tests', () => {
 	beforeEach(async () => {
 		// テストデータベースのセットアップ
@@ -461,7 +477,7 @@ describe('Subscriptions API - Integration Tests', () => {
 
 			// アクティブなサブスクリプションのみをフィルタリング
 			const activeSubscriptions = allSubscriptions.filter(
-				(sub: any) => sub.isActive && createdIds.includes(sub.id)
+				(sub: TestSubscription) => sub.isActive && createdIds.includes(sub.id.toString())
 			)
 
 			// 月額換算の合計を計算
@@ -842,7 +858,7 @@ describe('Subscriptions API - Integration Tests', () => {
 				if (Array.isArray(filterData)) {
 					// フィルタリングが実装されている場合のみアクティブなサブスクリプションのチェック
 					if (filterData.length > 0 && filterData.length < successCount) {
-						const allActive = filterData.every((sub: any) => sub.isActive === true)
+						const allActive = filterData.every((sub: TestSubscription) => sub.isActive === true)
 						expect(allActive).toBe(true)
 					} else {
 						// フィルタリングが実装されていない場合は全件返却
