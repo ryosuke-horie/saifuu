@@ -448,9 +448,8 @@ describe("useCreateSubscription", () => {
 			// サブスクリプション作成を実行
 			let createdSubscription: Subscription | null = null;
 			await act(async () => {
-				createdSubscription = await result.current.createSubscription(
-					mockCreateRequest,
-				);
+				createdSubscription =
+					await result.current.createSubscription(mockCreateRequest);
 			});
 
 			// 作成されたサブスクリプションが返される
@@ -464,7 +463,9 @@ describe("useCreateSubscription", () => {
 			expect(mockSubscriptionService.createSubscription).toHaveBeenCalledWith(
 				mockCreateRequest,
 			);
-			expect(mockSubscriptionService.createSubscription).toHaveBeenCalledTimes(1);
+			expect(mockSubscriptionService.createSubscription).toHaveBeenCalledTimes(
+				1,
+			);
 		});
 
 		it("作成完了後、エラー状態がクリアされる", async () => {
@@ -495,9 +496,8 @@ describe("useCreateSubscription", () => {
 			// サブスクリプション作成を実行
 			let createdSubscription: Subscription | null = null;
 			await act(async () => {
-				createdSubscription = await result.current.createSubscription(
-					mockCreateRequest,
-				);
+				createdSubscription =
+					await result.current.createSubscription(mockCreateRequest);
 			});
 
 			// nullが返される
@@ -524,9 +524,8 @@ describe("useCreateSubscription", () => {
 
 			let createdSubscription: Subscription | null = null;
 			await act(async () => {
-				createdSubscription = await result.current.createSubscription(
-					mockCreateRequest,
-				);
+				createdSubscription =
+					await result.current.createSubscription(mockCreateRequest);
 			});
 
 			expect(createdSubscription).toBeNull();
@@ -597,7 +596,9 @@ describe("useCreateSubscription", () => {
 		it("エラー時にhandleApiErrorが正しいパラメータで呼ばれる", async () => {
 			const networkError = new Error("Connection failed");
 			const apiError = new ApiError("network", "ネットワークエラー", 0);
-			mockSubscriptionService.createSubscription.mockRejectedValue(networkError);
+			mockSubscriptionService.createSubscription.mockRejectedValue(
+				networkError,
+			);
 			mockHandleApiError.mockReturnValue(apiError);
 
 			const { result } = renderHook(() => useCreateSubscription());
@@ -685,7 +686,9 @@ describe("useCreateSubscription", () => {
 			expect(created2).toEqual(subscription2);
 
 			// 両方の呼び出しが記録される
-			expect(mockSubscriptionService.createSubscription).toHaveBeenCalledTimes(2);
+			expect(mockSubscriptionService.createSubscription).toHaveBeenCalledTimes(
+				2,
+			);
 		});
 
 		it("成功後にエラーが発生しても適切に処理される", async () => {
@@ -720,12 +723,12 @@ describe("useCreateSubscription", () => {
 
 /**
  * TODO: 今後実装が必要なミューテーション系フックのテスト
- * 
+ *
  * Issue #235のコメントで言及されていた未実装のフック:
  * - useUpdateSubscription: サブスクリプション更新
  * - useDeleteSubscription: サブスクリプション削除
  * - useToggleSubscriptionStatus: アクティブ/非アクティブ切り替え
- * 
+ *
  * これらのフックが実装された際は、useCreateSubscriptionと同様の
  * テストパターンで以下をカバーすること:
  * 1. 初期状態のテスト
