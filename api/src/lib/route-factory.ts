@@ -315,6 +315,7 @@ export function createCrudHandlers<
 				}
 
 				const result = await db.insert(table).values(newData).returning()
+
 				const createdItem = extractResult<TNew & { id: number }>(result)
 
 				if (!createdItem) {
