@@ -93,8 +93,8 @@ describe("useBalanceSummary", () => {
 			expect(result.current.loading).toBe(false);
 		});
 
-		// デフォルトエラーメッセージの確認
-		expect(result.current.error).toBe("収支サマリーの取得に失敗しました");
+		// 文字列エラーはそのまま返される
+		expect(result.current.error).toBe("Unknown error");
 	});
 
 	it("refetch関数で再取得ができる", async () => {

@@ -277,6 +277,94 @@ export interface BalanceSummary {
 }
 
 /**
+ * BalanceSummaryの型ガード
+ *
+ * 設計意図: Matt Pocockのパターンに従い、ランタイムでの型安全性を保証
+ * APIレスポンスの検証に使用し、不正なデータを早期に検出
+ */
+export function isBalanceSummary(value: unknown): value is BalanceSummary {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"income" in value &&
+		"expense" in value &&
+		"balance" in value &&
+		"savingsRate" in value &&
+		"trend" in value &&
+		typeof (value as BalanceSummary).income === "number" &&
+		typeof (value as BalanceSummary).expense === "number" &&
+		typeof (value as BalanceSummary).balance === "number" &&
+		typeof (value as BalanceSummary).savingsRate === "number" &&
+		isBalanceTrend((value as BalanceSummary).trend)
+	);
+}
+
+/**
+ * BalanceSummaryのtrendフィールドの型ガード
+ */
+function isBalanceTrend(value: unknown): value is BalanceSummary["trend"] {
+	return value === "positive" || value === "negative" || value === "neutral";
+}
+
+/**
+ * BalanceSummaryのアサーション関数
+ *
+ * 設計意図: 型ガードでの検証が失敗した場合に明確なエラーをスロー
+ * デバッグ時にエラーの原因を特定しやすくする
+ */
+export function assertBalanceSummary(
+	value: unknown,
+): asserts value is BalanceSummary {
+	if (!isBalanceSummary(value)) {
+		const details = analyzeBalanceSummaryError(value);
+		throw new Error(`Value is not a valid BalanceSummary: ${details}`);
+	}
+}
+
+/**
+ * BalanceSummary検証エラーの詳細分析
+ *
+ * 設計意図: どのフィールドが不正かを特定し、デバッグを容易にする
+ */
+function analyzeBalanceSummaryError(value: unknown): string {
+	if (typeof value !== "object" || value === null) {
+		return `expected object, got ${typeof value}`;
+	}
+
+	const obj = value as Record<string, unknown>;
+	const errors: string[] = [];
+
+	// 必須フィールドのチェック
+	const requiredFields = [
+		"income",
+		"expense",
+		"balance",
+		"savingsRate",
+		"trend",
+	] as const;
+	for (const field of requiredFields) {
+		if (!(field in obj)) {
+			errors.push(`missing field: ${field}`);
+			continue;
+		}
+
+		// 数値フィールドの検証
+		if (field !== "trend" && typeof obj[field] !== "number") {
+			errors.push(`${field} must be number, got ${typeof obj[field]}`);
+		}
+	}
+
+	// trendフィールドの検証
+	if ("trend" in obj && !isBalanceTrend(obj.trend)) {
+		errors.push(
+			`trend must be 'positive', 'negative', or 'neutral', got ${obj.trend}`,
+		);
+	}
+
+	return errors.length > 0 ? errors.join(", ") : "unknown validation error";
+}
+
+/**
  * 月別統計
  */
 export interface MonthlyStats {
@@ -579,3 +667,132 @@ export interface NewSubscriptionDialogProps {
 	 */
 	categories?: Category[];
 }
+
+// =============================================================================
+// 型ガード・アサーション関数（Matt Pocockパターン）
+// =============================================================================
+
+/**
+ * APIレスポンスの型ガード
+ *
+ * 設計意図: APIからのレスポンスが正しい形式かを検証
+ */
+export function isApiResponse<T>(value: unknown): value is ApiResponse<T> {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		("data" in value || "error" in value || "message" in value)
+	);
+}
+
+/**
+ * ページネーション情報の型ガード
+ */
+export function isPaginationInfo(value: unknown): value is PaginationInfo {
+	if (typeof value !== "object" || value === null) return false;
+
+	const obj = value as Record<string, unknown>;
+	return (
+		typeof obj.page === "number" &&
+		typeof obj.limit === "number" &&
+		typeof obj.total === "number" &&
+		typeof obj.totalPages === "number" &&
+		typeof obj.hasNext === "boolean" &&
+		typeof obj.hasPrev === "boolean"
+	);
+}
+
+/**
+ * カテゴリの型ガード
+ */
+export function isCategory(value: unknown): value is Category {
+	if (typeof value !== "object" || value === null) return false;
+
+	const obj = value as Record<string, unknown>;
+	return (
+		typeof obj.id === "string" &&
+		typeof obj.name === "string" &&
+		(obj.type === "expense" || obj.type === "income") &&
+		(obj.color === null || typeof obj.color === "string") &&
+		typeof obj.createdAt === "string" &&
+		typeof obj.updatedAt === "string"
+	);
+}
+
+/**
+ * 取引の型ガード
+ */
+export function isTransaction(value: unknown): value is Transaction {
+	if (typeof value !== "object" || value === null) return false;
+
+	const obj = value as Record<string, unknown>;
+	return (
+		typeof obj.id === "string" &&
+		typeof obj.amount === "number" &&
+		(obj.type === "expense" || obj.type === "income") &&
+		(obj.description === null || typeof obj.description === "string") &&
+		typeof obj.date === "string" &&
+		(obj.category === null || isCategory(obj.category)) &&
+		typeof obj.createdAt === "string" &&
+		typeof obj.updatedAt === "string"
+	);
+}
+
+/**
+ * サブスクリプションの型ガード
+ */
+export function isSubscription(value: unknown): value is Subscription {
+	if (typeof value !== "object" || value === null) return false;
+
+	const obj = value as Record<string, unknown>;
+	return (
+		typeof obj.id === "string" &&
+		typeof obj.name === "string" &&
+		typeof obj.amount === "number" &&
+		(obj.billingCycle === "monthly" ||
+			obj.billingCycle === "yearly" ||
+			obj.billingCycle === "weekly") &&
+		typeof obj.nextBillingDate === "string" &&
+		(obj.description === null || typeof obj.description === "string") &&
+		typeof obj.isActive === "boolean" &&
+		(obj.category === null || isCategory(obj.category)) &&
+		typeof obj.createdAt === "string" &&
+		typeof obj.updatedAt === "string"
+	);
+}
+
+/**
+ * 汎用的なアサーション関数ファクトリ
+ *
+ * 設計意図: 各型に対して統一的なアサーション関数を生成
+ * @param guard 型ガード関数
+ * @param typeName 型名（エラーメッセージ用）
+ */
+function createAssertFunction<T>(
+	guard: (value: unknown) => value is T,
+	typeName: string,
+): (value: unknown) => asserts value is T {
+	return (value: unknown): asserts value is T => {
+		if (!guard(value)) {
+			throw new Error(`Value is not a valid ${typeName}`);
+		}
+	};
+}
+
+/**
+ * 各型のアサーション関数
+ */
+export const assertCategory = createAssertFunction(isCategory, "Category");
+export const assertTransaction = createAssertFunction(
+	isTransaction,
+	"Transaction",
+);
+export const assertSubscription = createAssertFunction(
+	isSubscription,
+	"Subscription",
+);
+export const assertPaginationInfo = createAssertFunction(
+	isPaginationInfo,
+	"PaginationInfo",
+);
+// BalanceSummaryは独自の詳細なエラー分析を持つため、assertBalanceSummaryは既に定義済み

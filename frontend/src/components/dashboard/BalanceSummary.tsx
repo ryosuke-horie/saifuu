@@ -9,6 +9,14 @@ import { useBalanceSummary } from "../../hooks/useBalanceSummary";
 import { formatCurrency } from "../../lib/utils/format";
 import { Spinner } from "../ui/Spinner";
 
+/**
+ * 収支サマリーコンポーネントの実装
+ *
+ * 設計意図: ダッシュボードで最も重要な情報を表示するため、
+ *          視覚的にわかりやすいUIを優先
+ * 代替案: グラフ表示も検討したが、即座に数値を把握できる
+ *         テキスト中心の表示を採用
+ */
 export const BalanceSummary = () => {
 	const { summary, loading, error } = useBalanceSummary();
 
@@ -44,10 +52,7 @@ export const BalanceSummary = () => {
 	};
 
 	// バランスバーの幅を計算（収入を100%として計算）
-	const calculateBarWidth = (amount: number, total: number) => {
-		if (total === 0) return 0;
-		return Math.min((amount / total) * 100, 100);
-	};
+	const calculateBarWidth = calculatePercentageWidth;
 
 	return (
 		<div className="bg-white rounded-lg shadow p-6">
@@ -168,3 +173,17 @@ export const BalanceSummary = () => {
 		</div>
 	);
 };
+
+/**
+ * 金額の割合をパーセンテージ幅として計算する
+ *
+ * 設計意図: バーの幅計算ロジックを共通関数として切り出し、
+ *          再利用性とテスト可能性を向上
+ * @param amount 表示する金額
+ * @param total 全体の金額（100%とする基準）
+ * @returns パーセンテージ幅（0-100）
+ */
+function calculatePercentageWidth(amount: number, total: number): number {
+	if (total === 0) return 0;
+	return Math.min((amount / total) * 100, 100);
+}

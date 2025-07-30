@@ -232,7 +232,7 @@ describe('Balance API', () => {
 				select: () => {
 					throw new Error('Database connection failed')
 				},
-			} as any
+			} as unknown as AnyDatabase
 
 			// エラーアプリケーションを作成
 			const errorBalanceApp = createBalanceApp({ testDatabase: errorDb })

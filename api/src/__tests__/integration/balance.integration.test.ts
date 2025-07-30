@@ -152,7 +152,7 @@ describe('Balance API Integration Tests', () => {
 			expect(summary.trend).toBe('positive')
 		})
 
-		it.skip('CORSヘッダーが正しく設定される', async () => {
+		it('CORSヘッダーが正しく設定される', async () => {
 			const res = await app.request('/api/balance/summary', {
 				headers: {
 					Origin: 'http://localhost:3000',
@@ -163,7 +163,7 @@ describe('Balance API Integration Tests', () => {
 			expect(res.headers.get('access-control-allow-origin')).toBe('http://localhost:3000')
 		})
 
-		it.skip('ログが正しく記録される', async () => {
+		it('ログが正しく記録される', async () => {
 			// ログミドルウェアが設定されているため、エラーがなければログも正常に記録される
 			const res = await app.request('/api/balance/summary', {
 				headers: {

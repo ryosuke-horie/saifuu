@@ -9,6 +9,10 @@ import { type LoggingVariables } from '../middleware/logging'
 /**
  * 収支サマリーレスポンスの型定義
  * 月間の収入・支出・残高と貯蓄率、トレンドを返す
+ *
+ * 設計意図: APIレスポンスとして必要最小限の情報を含む
+ * 代替案: 前月比較や年間累計を含むことも検討したが、
+ *         パフォーマンスと使用頻度を考慮して現在の形式を採用
  */
 export interface BalanceSummaryResponse {
 	income: number
@@ -62,8 +66,6 @@ export function createBalanceApp(options: { testDatabase?: AnyDatabase } = {}) {
 			const startDate = startOfMonth.toISOString()
 			const endDate = endOfMonth.toISOString()
 
-			// 期間を設定: startDate, endDate
-
 			// 現在月の取引を取得
 			const monthlyTransactions = await db
 				.select({
@@ -74,39 +76,16 @@ export function createBalanceApp(options: { testDatabase?: AnyDatabase } = {}) {
 				.where(and(gte(transactions.date, startDate), lte(transactions.date, endDate)))
 
 			// 収入と支出を集計
-			const summary = monthlyTransactions.reduce(
-				(acc, transaction) => {
-					if (transaction.type === 'income') {
-						acc.income += transaction.amount
-					} else if (transaction.type === 'expense') {
-						acc.expense += transaction.amount
-					}
-					return acc
-				},
-				{
-					income: 0,
-					expense: 0,
-				}
-			)
+			const summary = calculateTransactionSummary(monthlyTransactions)
 
 			// 残高を計算
 			const balance = summary.income - summary.expense
 
-			// 貯蓄率を計算（収入が0の場合は0%とする）
-			const savingsRate =
-				summary.income > 0
-					? Math.round((balance / summary.income) * 100 * 10) / 10 // 小数点第1位まで
-					: 0
+			// 貯蓄率を計算
+			const savingsRate = calculateSavingsRate(balance, summary.income)
 
 			// トレンドを判定
-			let trend: 'positive' | 'negative' | 'neutral'
-			if (balance > 0) {
-				trend = 'positive'
-			} else if (balance < 0) {
-				trend = 'negative'
-			} else {
-				trend = 'neutral'
-			}
+			const trend = determineTrend(balance)
 
 			const response: BalanceSummaryResponse = {
 				income: summary.income,
@@ -128,6 +107,57 @@ export function createBalanceApp(options: { testDatabase?: AnyDatabase } = {}) {
 	})
 
 	return app
+}
+
+/**
+ * 取引データから収入・支出を集計する
+ *
+ * 設計意図: 単一責任の原則に従い、集計ロジックを分離
+ * 代替案: SQLでの集計も検討したが、複雑なクエリより
+ *         TypeScriptでの処理の方が保守性が高いと判断
+ */
+function calculateTransactionSummary(transactions: Array<{ amount: number; type: string }>): {
+	income: number
+	expense: number
+} {
+	return transactions.reduce(
+		(acc, transaction) => {
+			if (transaction.type === 'income') {
+				acc.income += transaction.amount
+			} else if (transaction.type === 'expense') {
+				acc.expense += transaction.amount
+			}
+			return acc
+		},
+		{
+			income: 0,
+			expense: 0,
+		}
+	)
+}
+
+/**
+ * 貯蓄率を計算する（小数点第1位まで）
+ *
+ * 設計意図: 貯蓄率の計算ロジックを独立させ、テスト可能にする
+ * 収入が0の場合は0%を返す（ゼロ除算を防ぐ）
+ */
+function calculateSavingsRate(balance: number, income: number): number {
+	if (income <= 0) return 0
+	return Math.round((balance / income) * 100 * 10) / 10
+}
+
+/**
+ * 残高からトレンドを判定する
+ *
+ * 設計意図: トレンド判定のロジックを分離し、将来の拡張を容易にする
+ * 代替案: より詳細なトレンド（大幅改善、微増など）も検討したが、
+ *         UIの単純性を優先して3段階に留めた
+ */
+function determineTrend(balance: number): 'positive' | 'negative' | 'neutral' {
+	if (balance > 0) return 'positive'
+	if (balance < 0) return 'negative'
+	return 'neutral'
 }
 
 // デフォルトエクスポート（本番環境用）
