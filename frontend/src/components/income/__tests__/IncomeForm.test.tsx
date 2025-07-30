@@ -128,7 +128,7 @@ describe("IncomeForm", () => {
 		// セレクトボックスの値確認
 		const categorySelect = screen.getByLabelText(/カテゴリ/);
 		expect((categorySelect as unknown as HTMLSelectElement).value).toBe(
-			"bonus",
+			"102", // ボーナスのnumericId
 		);
 
 		expect(screen.getByRole("button", { name: "更新" })).toBeInTheDocument();

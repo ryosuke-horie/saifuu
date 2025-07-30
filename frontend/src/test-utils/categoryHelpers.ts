@@ -14,7 +14,7 @@ import type { Category } from "../lib/api/types";
 export function createMockCategory(config: CategoryConfig): Category {
 	const now = new Date().toISOString();
 	return {
-		id: config.id,
+		id: config.numericId.toString(), // 実際のAPIと同じく、numericIdを文字列化して使用
 		name: config.name,
 		type: config.type,
 		color: config.color,
