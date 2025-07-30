@@ -4,6 +4,7 @@ import { type AnyDatabase, createDatabase, type Env } from './db'
 import { transactions } from './db/schema'
 import { type LoggingVariables, loggingMiddleware, logWithContext } from './middleware/logging'
 import { renderer } from './renderer'
+import balanceRouter from './routes/balance'
 import categoriesRouter from './routes/categories'
 import subscriptionsRouter from './routes/subscriptions'
 import transactionsRouter from './routes/transactions'
@@ -138,6 +139,7 @@ app.get('/api/health', async (c) => {
 })
 
 // APIルートの設定
+app.route('/api/balance', balanceRouter)
 app.route('/api/categories', categoriesRouter)
 app.route('/api/subscriptions', subscriptionsRouter)
 app.route('/api/transactions', transactionsRouter)

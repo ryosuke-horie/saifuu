@@ -3,7 +3,7 @@ import { ALL_CATEGORIES } from '../../../shared/config/categories'
 import { type AnyDatabase, type Env } from '../db'
 import { type NewSubscription, type Subscription, subscriptions } from '../db/schema'
 import { createCrudHandlers } from '../lib/route-factory'
-import { type LoggingVariables } from '../middleware/logging'
+import { type LoggingVariables, logWithContext } from '../middleware/logging'
 import {
 	validateIdWithZod,
 	validateSubscriptionCreateWithZod,
@@ -97,6 +97,48 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 	})
 
 	// ルーティング設定
+	// statsエンドポイントを先に定義（:idより前に配置する必要がある）
+	app.get('/stats', async (c) => {
+		const db = options.testDatabase || c.get('db')
+		if (!db) {
+			throw new Error('Database not initialized')
+		}
+
+		try {
+			// すべてのサブスクリプションを取得
+			const allSubscriptions = await db.select().from(subscriptions)
+
+			// 月額合計を計算
+			const monthlyTotal = allSubscriptions.reduce((sum, sub) => {
+				// billingCycleに応じて月額換算
+				let monthlyAmount = sub.amount
+				if (sub.billingCycle === 'yearly') {
+					monthlyAmount = Math.round(sub.amount / 12)
+				} else if (sub.billingCycle === 'weekly') {
+					monthlyAmount = Math.round(sub.amount * 4.33) // 52週/12ヶ月 ≈ 4.33
+				}
+				return sum + monthlyAmount
+			}, 0)
+
+			// アクティブなサブスクリプション数
+			const activeCount = allSubscriptions.filter((sub) => sub.isActive).length
+
+			return c.json({
+				stats: {
+					totalMonthlyAmount: monthlyTotal,
+					activeCount,
+					totalCount: allSubscriptions.length,
+				},
+			})
+		} catch (error) {
+			logWithContext(c, 'error', 'Failed to get subscription stats', {
+				error: error instanceof Error ? error.message : String(error),
+			})
+			return c.json({ error: 'Failed to get subscription stats' }, 500)
+		}
+	})
+
+	// 通常のCRUDエンドポイント
 	app.get('/', handlers.getAll)
 	app.get('/:id', handlers.getById)
 	app.post('/', handlers.create)

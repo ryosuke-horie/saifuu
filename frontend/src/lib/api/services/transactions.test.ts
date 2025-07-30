@@ -122,7 +122,11 @@ const mockUpdateRequest: UpdateTransactionRequest = {
 
 const mockStats: TransactionStats = {
 	totalExpense: 53000,
+	totalIncome: 100000,
+	balance: 47000,
 	transactionCount: 11,
+	expenseCount: 8,
+	incomeCount: 3,
 	avgTransaction: 4818,
 	categoryBreakdown: [
 		{

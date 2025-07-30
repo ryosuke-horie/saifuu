@@ -15,18 +15,30 @@ vi.mock("../hooks/useIncomes", () => ({
 	useIncomes: vi.fn(),
 }));
 
+vi.mock("../hooks/useIncomeStats", () => ({
+	useIncomeStats: vi.fn(),
+}));
+
+vi.mock("../hooks/useTransactionStats", () => ({
+	useTransactionStats: vi.fn(),
+}));
+
 vi.mock("../lib/api/hooks/useSubscriptions", () => ({
 	useSubscriptionStats: vi.fn(),
 }));
 
 import { useExpenseStats } from "../hooks/useExpenseStats";
 import { useExpenses } from "../hooks/useExpenses";
+import { useIncomeStats } from "../hooks/useIncomeStats";
 import { useIncomes } from "../hooks/useIncomes";
+import { useTransactionStats } from "../hooks/useTransactionStats";
 import { useSubscriptionStats } from "../lib/api/hooks/useSubscriptions";
 
 const mockUseExpenseStats = vi.mocked(useExpenseStats);
 const mockUseExpenses = vi.mocked(useExpenses);
 const mockUseIncomes = vi.mocked(useIncomes);
+const mockUseIncomeStats = vi.mocked(useIncomeStats);
+const mockUseTransactionStats = vi.mocked(useTransactionStats);
 const mockUseSubscriptionStats = vi.mocked(useSubscriptionStats);
 
 describe("ダッシュボード（ホームページ）", () => {
@@ -62,6 +74,16 @@ describe("ダッシュボード（ホームページ）", () => {
 			mockUseExpenseStats.mockReturnValue({
 				totalExpense: 0,
 				transactionCount: 0,
+			});
+			mockUseIncomeStats.mockReturnValue({
+				totalIncome: 0,
+				transactionCount: 0,
+			});
+			mockUseTransactionStats.mockReturnValue({
+				stats: null,
+				loading: true,
+				error: null,
+				refetch: vi.fn(),
 			});
 			mockUseSubscriptionStats.mockReturnValue({
 				stats: null,
@@ -236,6 +258,16 @@ describe("ダッシュボード（ホームページ）", () => {
 				totalExpense: 0,
 				transactionCount: 0,
 			});
+			mockUseIncomeStats.mockReturnValue({
+				totalIncome: 0,
+				transactionCount: 0,
+			});
+			mockUseTransactionStats.mockReturnValue({
+				stats: null,
+				loading: true,
+				error: null,
+				refetch: vi.fn(),
+			});
 			mockUseSubscriptionStats.mockReturnValue({
 				stats: null,
 				isLoading: true,
@@ -245,7 +277,8 @@ describe("ダッシュボード（ホームページ）", () => {
 
 			render(<Page />);
 
-			expect(screen.getAllByTestId("loading-spinner")).toHaveLength(2);
+			// 支出、収入、サブスク、バランスカードの4つのローディングスピナー
+			expect(screen.getAllByTestId("loading-spinner")).toHaveLength(4);
 		});
 	});
 
@@ -301,9 +334,19 @@ describe("ダッシュボード（ホームページ）", () => {
 				totalExpense: 0,
 				transactionCount: 0,
 			});
+			mockUseIncomeStats.mockReturnValue({
+				totalIncome: 80000,
+				transactionCount: 2,
+			});
+			mockUseTransactionStats.mockReturnValue({
+				stats: null,
+				loading: false,
+				error: null,
+				refetch: vi.fn(),
+			});
 			mockUseSubscriptionStats.mockReturnValue({
 				stats: null,
-				isLoading: true,
+				isLoading: false,
 				error: null,
 				refetch: vi.fn(),
 			});
@@ -450,6 +493,16 @@ describe("ダッシュボード（ホームページ）", () => {
 			mockUseExpenseStats.mockReturnValue({
 				totalExpense: 0,
 				transactionCount: 0,
+			});
+			mockUseIncomeStats.mockReturnValue({
+				totalIncome: 0,
+				transactionCount: 0,
+			});
+			mockUseTransactionStats.mockReturnValue({
+				stats: null,
+				loading: true,
+				error: null,
+				refetch: vi.fn(),
 			});
 			mockUseSubscriptionStats.mockReturnValue({
 				stats: null,
