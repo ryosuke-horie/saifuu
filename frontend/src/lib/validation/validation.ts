@@ -1,5 +1,6 @@
 // フロントエンドでZodスキーマを活用するためのバリデーション関数
 
+import { getCategoryById } from "../../../../shared/config/categories";
 import {
 	incomeCreateSchema,
 	subscriptionCreateSchema,
@@ -22,14 +23,18 @@ function toApiTransactionFormat(data: ExpenseFormData) {
 
 // IncomeFormDataをAPIで期待される形式に変換
 function toApiIncomeFormat(data: IncomeFormData) {
-	// カテゴリIDの変換
-	// フォームからは数値の文字列（'101'など）が渡されるため、数値に変換
+	// カテゴリIDの変換処理
 	let categoryId: number | undefined;
+
 	if (data.categoryId) {
-		const numericId = Number(data.categoryId);
-		// 有効な数値かつ収入カテゴリの範囲内（101-105）であることを確認
-		if (!isNaN(numericId) && numericId >= 101 && numericId <= 105) {
-			categoryId = numericId;
+		// 数値文字列の場合（例: "101"）
+		const numericValue = Number(data.categoryId);
+		if (!Number.isNaN(numericValue)) {
+			categoryId = numericValue;
+		} else {
+			// 文字列IDの場合（例: "salary"）、numericIdに変換
+			const category = getCategoryById(data.categoryId);
+			categoryId = category?.numericId;
 		}
 	}
 

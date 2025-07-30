@@ -292,7 +292,7 @@ describe("Zodバリデーション関数のテスト", () => {
 			type: "income",
 			date: "2024-01-25",
 			description: "",
-			categoryId: "salary",
+			categoryId: "101", // 給与カテゴリのnumericId
 		};
 
 		it("有効な金額フィールドを受け入れる", () => {
