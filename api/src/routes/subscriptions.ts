@@ -107,7 +107,7 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 		try {
 			// すべてのサブスクリプションを取得
 			const allSubscriptions = await db.select().from(subscriptions)
-			
+
 			// 月額合計を計算
 			const monthlyTotal = allSubscriptions.reduce((sum, sub) => {
 				// billingCycleに応じて月額換算
@@ -121,18 +121,18 @@ export function createSubscriptionsApp(options: { testDatabase?: AnyDatabase } =
 			}, 0)
 
 			// アクティブなサブスクリプション数
-			const activeCount = allSubscriptions.filter(sub => sub.isActive).length
+			const activeCount = allSubscriptions.filter((sub) => sub.isActive).length
 
 			return c.json({
 				stats: {
 					totalMonthlyAmount: monthlyTotal,
 					activeCount,
-					totalCount: allSubscriptions.length
-				}
+					totalCount: allSubscriptions.length,
+				},
 			})
 		} catch (error) {
 			logWithContext(c, 'error', 'Failed to get subscription stats', {
-				error: error instanceof Error ? error.message : String(error)
+				error: error instanceof Error ? error.message : String(error),
 			})
 			return c.json({ error: 'Failed to get subscription stats' }, 500)
 		}
