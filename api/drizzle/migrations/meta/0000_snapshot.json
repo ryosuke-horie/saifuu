@@ -1,61 +1,9 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "cd2dd492-9daf-4602-951e-bf52c41a9546",
+  "id": "069bcaea-580b-43f2-ab83-8e893485bf6c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "categories": {
-      "name": "categories",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "type": {
-          "name": "type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "color": {
-          "name": "color",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
     "subscriptions": {
       "name": "subscriptions",
       "columns": {
@@ -90,7 +38,7 @@
         },
         "next_billing_date": {
           "name": "next_billing_date",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -119,35 +67,21 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "subscriptions_category_id_categories_id_fk": {
-          "name": "subscriptions_category_id_categories_id_fk",
-          "tableFrom": "subscriptions",
-          "tableTo": "categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -192,42 +126,28 @@
         },
         "date": {
           "name": "date",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "transactions_category_id_categories_id_fk": {
-          "name": "transactions_category_id_categories_id_fk",
-          "tableFrom": "transactions",
-          "tableTo": "categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}

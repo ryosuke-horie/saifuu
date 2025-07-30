@@ -91,7 +91,7 @@ describe("IncomeForm", () => {
 		await user.type(dateInput, "2025-01-27");
 
 		await user.type(screen.getByLabelText(/説明（任意）/), "1月分給与");
-		await user.selectOptions(screen.getByLabelText(/カテゴリ/), "salary");
+		await user.selectOptions(screen.getByLabelText(/カテゴリ/), "101");
 
 		// 送信
 		await user.click(screen.getByRole("button", { name: "登録" }));
@@ -104,7 +104,7 @@ describe("IncomeForm", () => {
 				type: "income",
 				date: "2025-01-27",
 				description: "1月分給与",
-				categoryId: "salary",
+				categoryId: "101",
 			});
 		});
 	});
@@ -115,7 +115,7 @@ describe("IncomeForm", () => {
 			type: "income",
 			date: "2025-01-15",
 			description: "ボーナス支給",
-			categoryId: "bonus",
+			categoryId: "102",
 		};
 
 		render(<IncomeForm {...defaultProps} initialData={initialData} />);
@@ -128,7 +128,7 @@ describe("IncomeForm", () => {
 		// セレクトボックスの値確認
 		const categorySelect = screen.getByLabelText(/カテゴリ/);
 		expect((categorySelect as unknown as HTMLSelectElement).value).toBe(
-			"bonus",
+			"102", // ボーナスのnumericId
 		);
 
 		expect(screen.getByRole("button", { name: "更新" })).toBeInTheDocument();

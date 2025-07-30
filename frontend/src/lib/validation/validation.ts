@@ -1,6 +1,6 @@
 // フロントエンドでZodスキーマを活用するためのバリデーション関数
 
-import { INCOME_CATEGORIES } from "../../../../shared/config/categories";
+import { getCategoryById } from "../../../../shared/config/categories";
 import {
 	incomeCreateSchema,
 	subscriptionCreateSchema,
@@ -23,21 +23,27 @@ function toApiTransactionFormat(data: ExpenseFormData) {
 
 // IncomeFormDataをAPIで期待される形式に変換
 function toApiIncomeFormat(data: IncomeFormData) {
-	// カテゴリIDをマッピング（収入カテゴリのnumericIdに変換）
-	const categoryIdMap = INCOME_CATEGORIES.reduce(
-		(acc, category) => {
-			acc[category.id] = category.numericId;
-			return acc;
-		},
-		{} as Record<string, number>,
-	);
+	// カテゴリIDの変換処理
+	let categoryId: number | undefined;
+
+	if (data.categoryId) {
+		// 数値文字列の場合（例: "101"）
+		const numericValue = Number(data.categoryId);
+		if (!Number.isNaN(numericValue)) {
+			categoryId = numericValue;
+		} else {
+			// 文字列IDの場合（例: "salary"）、numericIdに変換
+			const category = getCategoryById(data.categoryId);
+			categoryId = category?.numericId;
+		}
+	}
 
 	return {
 		amount: data.amount,
 		type: data.type,
 		date: data.date,
 		description: data.description || undefined,
-		categoryId: data.categoryId ? categoryIdMap[data.categoryId] : undefined,
+		categoryId: categoryId,
 	};
 }
 

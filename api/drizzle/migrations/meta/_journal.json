@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1751174949484,
-      "tag": "0000_unknown_lilith",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1751699123506,
-      "tag": "0001_neat_tiger_shark",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1752417445169,
-      "tag": "0002_moaning_kabuki",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1753600000000,
-      "tag": "0003_add_income_type",
+      "when": 1753849287240,
+      "tag": "0000_whole_owl",
       "breakpoints": true
     }
   ]
