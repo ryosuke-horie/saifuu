@@ -250,7 +250,11 @@ export interface SubscriptionStatsResponse {
  */
 export interface TransactionStats {
 	totalExpense: number;
+	totalIncome: number;
+	balance: number;
 	transactionCount: number;
+	expenseCount: number;
+	incomeCount: number;
 	avgTransaction?: number;
 	categoryBreakdown?: Array<{
 		categoryId: string;
@@ -259,6 +263,17 @@ export interface TransactionStats {
 		count: number;
 		totalAmount: number;
 	}>;
+}
+
+/**
+ * 収支サマリー
+ */
+export interface BalanceSummary {
+	income: number;
+	expense: number;
+	balance: number;
+	savingsRate: number;
+	trend: "positive" | "negative" | "neutral";
 }
 
 /**

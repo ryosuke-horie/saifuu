@@ -29,7 +29,7 @@ export const SubscriptionSummaryCard = ({
 	return (
 		<div className={`bg-white rounded-lg shadow p-6 ${className}`}>
 			{isLoading ? (
-				<div className="flex justify-center py-4">
+				<div className="flex justify-center py-4" data-testid="loading-spinner">
 					<Spinner size="md" />
 				</div>
 			) : (

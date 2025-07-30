@@ -3,6 +3,7 @@ import { Hono } from 'hono'
 import type { AnyDatabase, Env } from '../../db'
 import * as schema from '../../db/schema'
 import { type LoggingVariables, loggingMiddleware } from '../../middleware/logging'
+import { createBalanceApp } from '../../routes/balance'
 import categoriesRouter from '../../routes/categories'
 import { createSubscriptionsApp } from '../../routes/subscriptions'
 import { createTransactionsApp } from '../../routes/transactions'
@@ -37,6 +38,7 @@ export function createTestProductionApp(db?: AnyDatabase) {
 	})
 
 	// ルートの設定（メインアプリと同じ構成）
+	app.route('/api/balance', createBalanceApp({ testDatabase }))
 	app.route('/api/categories', categoriesRouter)
 	app.route('/api/subscriptions', createSubscriptionsApp({ testDatabase }))
 	app.route('/api/transactions', createTransactionsApp({ testDatabase }))
