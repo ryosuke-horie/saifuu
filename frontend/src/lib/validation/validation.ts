@@ -1,6 +1,5 @@
 // フロントエンドでZodスキーマを活用するためのバリデーション関数
 
-import { INCOME_CATEGORIES } from "../../../../shared/config/categories";
 import {
 	incomeCreateSchema,
 	subscriptionCreateSchema,
@@ -23,21 +22,23 @@ function toApiTransactionFormat(data: ExpenseFormData) {
 
 // IncomeFormDataをAPIで期待される形式に変換
 function toApiIncomeFormat(data: IncomeFormData) {
-	// カテゴリIDをマッピング（収入カテゴリのnumericIdに変換）
-	const categoryIdMap = INCOME_CATEGORIES.reduce(
-		(acc, category) => {
-			acc[category.id] = category.numericId;
-			return acc;
-		},
-		{} as Record<string, number>,
-	);
+	// カテゴリIDの変換
+	// フォームからは数値の文字列（'101'など）が渡されるため、数値に変換
+	let categoryId: number | undefined;
+	if (data.categoryId) {
+		const numericId = Number(data.categoryId);
+		// 有効な数値かつ収入カテゴリの範囲内（101-105）であることを確認
+		if (!isNaN(numericId) && numericId >= 101 && numericId <= 105) {
+			categoryId = numericId;
+		}
+	}
 
 	return {
 		amount: data.amount,
 		type: data.type,
 		date: data.date,
 		description: data.description || undefined,
-		categoryId: data.categoryId ? categoryIdMap[data.categoryId] : undefined,
+		categoryId: categoryId,
 	};
 }
 
@@ -145,6 +146,11 @@ export function validateIncomeFormWithZod(data: IncomeFormData): {
 		formErrors.description = "説明は500文字以内で入力してください";
 	}
 
+	// カテゴリのバリデーション（収入では必須）
+	if (!data.categoryId) {
+		formErrors.categoryId = "カテゴリを選択してください";
+	}
+
 	// フォームエラーがある場合は早期リターン
 	if (Object.keys(formErrors).length > 0) {
 		return { success: false, errors: formErrors };
@@ -181,6 +187,21 @@ export function validateIncomeFormWithZod(data: IncomeFormData): {
 			zodError.message.includes("500文字以下")
 		) {
 			errors[field] = "説明は500文字以内で入力してください";
+		} else if (field === "categoryId") {
+			// カテゴリIDのエラーメッセージを日本語化
+			if (
+				zodError.message.includes("101から105") ||
+				zodError.message.includes("範囲")
+			) {
+				errors[field] = "有効なカテゴリを選択してください";
+			} else if (
+				zodError.message.includes("required") ||
+				zodError.message.includes("必須")
+			) {
+				errors[field] = "カテゴリを選択してください";
+			} else {
+				errors[field] = "有効なカテゴリを選択してください";
+			}
 		} else {
 			errors[field] = zodError.message;
 		}
@@ -211,6 +232,10 @@ export function validateIncomeFieldWithZod(
 		const desc = String(value || "");
 		if (desc.length > 500) {
 			return "説明は500文字以内で入力してください";
+		}
+	} else if (field === "categoryId") {
+		if (!value) {
+			return "カテゴリを選択してください";
 		}
 	}
 

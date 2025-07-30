@@ -16,34 +16,42 @@ test.describe('収入管理機能', () => {
     await expect(page).toHaveURL(/\/income/);
     
     // カテゴリが読み込まれるまで待つ
-    await page.waitForTimeout(1000);
+    // selectが有効になるまで待機（カテゴリの読み込み完了を意味する）
+    const categorySelect = page.getByLabel('カテゴリ');
+    await expect(categorySelect).toBeEnabled({ timeout: 5000 });
     
     // 新規収入を登録
     // 支出管理と異なり、収入管理ではフォームが直接表示されている
     
     // フォームに入力（一意なデータ）
     await page.getByRole('spinbutton', { name: '金額（円） *' }).fill('350000');
-    await page.getByRole('textbox', { name: '日付 *' }).fill('2025-07-25');
+    
+    // 日付入力: type="date"のinput要素に直接値を設定
+    const dateInput = page.locator('#income-date');
+    await dateInput.evaluate((el: HTMLInputElement) => {
+      el.value = '2025-07-25';
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    
     await page.getByRole('textbox', { name: '説明（任意）' }).fill(testDescription);
     
     // カテゴリは任意項目 - 実際の値（value属性）で選択する
-    // 収入カテゴリのIDは101-105の範囲
-    const categorySelect = page.getByLabel('カテゴリ');
+    // 収入カテゴリのIDは'101'（給与）、'102'（ボーナス）など（numericIdのstring版）
     const options = await categorySelect.locator('option').count();
     if (options > 1) { // デフォルトの「選択してください」以外のオプションがある場合
-      // 最初の実際のオプション（給与=101相当）の値を取得して選択
-      const firstOption = await categorySelect.locator('option').nth(1).getAttribute('value');
-      if (firstOption) {
-        await categorySelect.selectOption(firstOption);
-      }
+      // 給与カテゴリ（numericId: 101）を選択
+      await categorySelect.selectOption('101');
     }
     
     // 登録ボタンをクリック
     await page.getByRole('button', { name: '登録', exact: true }).click();
     
     // エラーメッセージが表示されていないか確認
-    const errorAlert = page.getByRole('alert');
-    if (await errorAlert.isVisible()) {
+    // role="alert"が複数存在する可能性があるため、より具体的にエラーメッセージのみを取得
+    const errorAlert = page.locator('p[role="alert"]').first();
+    const errorCount = await errorAlert.count();
+    if (errorCount > 0 && await errorAlert.isVisible()) {
       const errorText = await errorAlert.textContent();
       console.error('Form validation error:', errorText);
     }
@@ -64,7 +72,13 @@ test.describe('収入管理機能', () => {
     // フォームの値を更新
     await page.getByRole('textbox', { name: '説明（任意）' }).fill(editedDescription);
     await page.getByRole('spinbutton', { name: '金額（円） *' }).fill('380000');
-    await page.getByRole('textbox', { name: '日付 *' }).fill('2025-07-26');
+    
+    // 日付更新
+    await dateInput.evaluate((el: HTMLInputElement) => {
+      el.value = '2025-07-26';
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     
     // 更新ボタンをクリック
     await page.getByRole('button', { name: '更新' }).click();
