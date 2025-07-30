@@ -12,6 +12,9 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
+      better-sqlite3:
+        specifier: ^12.2.0
+        version: 12.2.0
       glob:
         specifier: ^11.0.3
         version: 11.0.3

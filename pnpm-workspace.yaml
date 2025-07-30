@@ -1,6 +1,13 @@
-# pnpmワークスペース設定
-# このプロジェクトの各パッケージを管理
 packages:
-  - 'api'
-  - 'frontend'
-  - 'e2e'
+  - api
+  - frontend
+  - e2e
+
+ignoredBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - better-sqlite3
+  - core-js-pure
+  - esbuild
+  - msw
+  - sharp
+  - workerd
