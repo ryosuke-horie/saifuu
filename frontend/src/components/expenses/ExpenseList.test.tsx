@@ -266,8 +266,13 @@ describe("ExpenseList", () => {
 			);
 			const renderTime = performance.now() - startTime;
 
-			// 仮想スクロール実装後は100ms以内にレンダリングされることを期待
-			expect(renderTime).toBeLessThan(100);
+			// CI環境を考慮して閾値を調整
+			// CI環境（GitHub Actions）ではより緩い閾値を使用
+			const isCI = process.env.CI === "true";
+			const threshold = isCI ? 200 : 100;
+
+			// 仮想スクロール実装後は閾値以内にレンダリングされることを期待
+			expect(renderTime).toBeLessThan(threshold);
 		});
 
 		it("スクロール時に表示範囲のアイテムのみがDOMに存在する", () => {
