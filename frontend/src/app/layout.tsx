@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout";
 import { LoggedErrorBoundary, NextjsLoggerProvider } from "@/lib/logger";
+import { QueryProvider } from "@/components/providers";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -117,10 +118,12 @@ export default function RootLayout({
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
 				<NextjsLoggerProvider config={loggerConfig}>
-					<LoggedErrorBoundary>
-						<Header />
-						{children}
-					</LoggedErrorBoundary>
+					<QueryProvider>
+						<LoggedErrorBoundary>
+							<Header />
+							{children}
+						</LoggedErrorBoundary>
+					</QueryProvider>
 				</NextjsLoggerProvider>
 			</body>
 		</html>
