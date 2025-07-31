@@ -2,6 +2,10 @@
 
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import {
+	createTouchAllFields,
+	handleFormKeyboardShortcuts,
+} from "../../lib/utils/form-keyboard";
+import {
 	validateExpenseFieldWithZod,
 	validateExpenseFormWithZod,
 } from "../../lib/validation/validation";
@@ -44,6 +48,7 @@ const defaultFormData: ExpenseFormData = {
 export const ExpenseForm: FC<ExpenseFormProps> = ({
 	onSubmit,
 	onCancel,
+	onEscape,
 	isSubmitting = false,
 	initialData,
 	categories,
@@ -122,16 +127,24 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 		[formData],
 	);
 
-	// 全フィールドをタッチ済みに設定
+	// 全フィールドをタッチ済みに設定（抽出されたユーティリティを使用）
+	// Matt Pocockパターン: as constで厳密な型推論
+	const expenseFormFields = [
+		"amount",
+		"type",
+		"description",
+		"date",
+		"categoryId",
+	] as const satisfies ReadonlyArray<keyof ExpenseFormData>;
+
+	const touchAllFields = useMemo(
+		() => createTouchAllFields<ExpenseFormData>(expenseFormFields),
+		[expenseFormFields],
+	);
+
 	const setAllFieldsTouched = useCallback(() => {
-		setTouched((prev) => {
-			const newTouched = {} as typeof prev;
-			(Object.keys(prev) as Array<keyof typeof prev>).forEach((key) => {
-				newTouched[key] = true;
-			});
-			return newTouched;
-		});
-	}, []);
+		setTouched(touchAllFields());
+	}, [touchAllFields]);
 
 	// フォーム送信ハンドラー
 	const handleSubmit = useCallback(
@@ -153,6 +166,18 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 		[formData, validateForm, onSubmit, setAllFieldsTouched],
 	);
 
+	// キーボードショートカットハンドラー（抽出されたユーティリティを使用）
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent) => {
+			handleFormKeyboardShortcuts(e, {
+				onSubmit: () => handleSubmit(e as unknown as React.FormEvent),
+				onEscape,
+				isSubmitting,
+			});
+		},
+		[handleSubmit, onEscape, isSubmitting],
+	);
+
 	// カテゴリフィルタリングの最適化
 	const filteredCategories = useMemo(
 		() =>
@@ -165,6 +190,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({
 	return (
 		<form
 			onSubmit={handleSubmit}
+			onKeyDown={handleKeyDown}
 			className={`space-y-6 ${className}`}
 			noValidate
 		>

@@ -1,11 +1,15 @@
 "use client";
 
-import { type FC, useCallback, useEffect, useState } from "react";
+import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import type {
 	BillingCycle,
 	SubscriptionFormData,
 	SubscriptionFormProps,
 } from "../../lib/api/types";
+import {
+	createTouchAllFields,
+	handleFormKeyboardShortcuts,
+} from "../../lib/utils/form-keyboard";
 
 /**
  * サブスクリプションフォームコンポーネント
@@ -57,6 +61,7 @@ const billingCycleLabels: Record<BillingCycle, string> = {
 export const SubscriptionForm: FC<SubscriptionFormProps> = ({
 	onSubmit,
 	onCancel,
+	onEscape,
 	isSubmitting = false,
 	initialData,
 	categories,
@@ -208,6 +213,27 @@ export const SubscriptionForm: FC<SubscriptionFormProps> = ({
 		[formData, validateField],
 	);
 
+	// 全フィールドをタッチ済みに設定（抽出されたユーティリティを使用）
+	// Matt Pocockパターン: as constで厳密な型推論
+	const subscriptionFormFields = [
+		"name",
+		"amount",
+		"billingCycle",
+		"nextBillingDate",
+		"categoryId",
+		"isActive",
+		"description",
+	] as const satisfies ReadonlyArray<keyof SubscriptionFormData>;
+
+	const touchAllFields = useMemo(
+		() => createTouchAllFields<SubscriptionFormData>(subscriptionFormFields),
+		[subscriptionFormFields],
+	);
+
+	const setAllFieldsTouched = useCallback(() => {
+		setTouched(touchAllFields());
+	}, [touchAllFields]);
+
 	// フォーム送信ハンドラー
 	const handleSubmit = useCallback(
 		(e: React.FormEvent) => {
@@ -218,22 +244,26 @@ export const SubscriptionForm: FC<SubscriptionFormProps> = ({
 			setErrors(newErrors);
 
 			// 全フィールドをタッチ済みに設定
-			setTouched({
-				name: true,
-				amount: true,
-				billingCycle: true,
-				nextBillingDate: true,
-				categoryId: true,
-				isActive: true,
-				description: true,
-			});
+			setAllFieldsTouched();
 
 			// エラーがない場合のみ送信
 			if (Object.keys(newErrors).length === 0) {
 				onSubmit(formData);
 			}
 		},
-		[formData, validateForm, onSubmit],
+		[formData, validateForm, onSubmit, setAllFieldsTouched],
+	);
+
+	// キーボードショートカットハンドラー（抽出されたユーティリティを使用）
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent) => {
+			handleFormKeyboardShortcuts(e, {
+				onSubmit: () => handleSubmit(e as unknown as React.FormEvent),
+				onEscape,
+				isSubmitting,
+			});
+		},
+		[handleSubmit, onEscape, isSubmitting],
 	);
 
 	// 今日の日付をYYYY-MM-DD形式で取得
@@ -245,8 +275,10 @@ export const SubscriptionForm: FC<SubscriptionFormProps> = ({
 	return (
 		<form
 			onSubmit={handleSubmit}
+			onKeyDown={handleKeyDown}
 			className={`space-y-6 ${className}`}
 			noValidate
+			tabIndex={-1}
 		>
 			{/* サービス名 */}
 			<div>

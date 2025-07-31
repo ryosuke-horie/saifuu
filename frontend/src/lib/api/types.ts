@@ -616,6 +616,11 @@ export interface SubscriptionFormProps {
 	onCancel: () => void;
 
 	/**
+	 * Escapeキー押下時のコールバック（オプション）
+	 */
+	onEscape?: () => void;
+
+	/**
 	 * 送信中の状態
 	 */
 	isSubmitting?: boolean;
