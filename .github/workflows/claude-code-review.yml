@@ -1,35 +1,84 @@
 name: Claude Code Review
 
 on:
-  pull_request:
-    types: [opened, synchronize]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+  issue_comment:
+    types: [created]
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # PRコメントで@claudeがメンションされた場合のみ実行
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@claude')
     
     runs-on: self-hosted
     permissions:
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write  # コメント作成のために write に変更
+      issues: write        # issue_comment イベントでコメント作成に必要
       id-token: write
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0  # PR全体の変更を取得するため
+
+      # PR情報を取得してブランチをチェックアウト
+      - name: Get PR branch
+        id: pr-info
+        run: |
+          PR_NUMBER=${{ github.event.issue.number }}
+          PR_DATA=$(gh pr view $PR_NUMBER --json headRefName,headRepository --jq '{branch: .headRefName, repo: .headRepository.owner.login + "/" + .headRepository.name}')
+          echo "branch=$(echo $PR_DATA | jq -r .branch)" >> $GITHUB_OUTPUT
+          echo "repo=$(echo $PR_DATA | jq -r .repo)" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.pr-info.outputs.repo }}
+          ref: ${{ steps.pr-info.outputs.branch }}
+          fetch-depth: 0
+
+      # 過去のレビューコメントを取得
+      - name: Get previous review comments
+        id: previous-reviews
+        run: |
+          PR_NUMBER=${{ github.event.issue.number }}
+          
+          # PRのレビューコメントを取得
+          echo "Fetching review comments for PR #$PR_NUMBER..."
+          REVIEW_COMMENTS=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER/comments --paginate || echo "[]")
+          
+          # 通常のPRコメントも取得
+          echo "Fetching issue comments for PR #$PR_NUMBER..."
+          ISSUE_COMMENTS=$(gh api repos/${{ github.repository }}/issues/$PR_NUMBER/comments --paginate || echo "[]")
+          
+          # Claude Code Action のコメントを識別（botユーザーまたは特定の形式を持つコメント）
+          # sticky comment の識別パターンも含む
+          echo "$REVIEW_COMMENTS" > review_comments.json
+          echo "$ISSUE_COMMENTS" > issue_comments.json
+          
+          # レビュー履歴サマリーを作成
+          cat > review_history.txt << 'EOF'
+          以前のレビュー履歴：
+          EOF
+          
+          # Claude関連のコメントを抽出して履歴に追加
+          jq -r '.[] | select(.user.type == "Bot" or .body | contains("Claude Code Action") or .body | contains("<!-- claude-code-sticky-comment")) | "- " + (.created_at | split("T")[0]) + ": " + (.body | split("\n")[0:3] | join(" "))' review_comments.json >> review_history.txt || true
+          jq -r '.[] | select(.user.type == "Bot" or .body | contains("Claude Code Action") or .body | contains("<!-- claude-code-sticky-comment")) | "- " + (.created_at | split("T")[0]) + ": " + (.body | split("\n")[0:3] | join(" "))' issue_comments.json >> review_history.txt || true
+          
+          # ファイルに保存
+          if [ -s review_history.txt ]; then
+            echo "has_previous_reviews=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_previous_reviews=false" >> $GITHUB_OUTPUT
+            echo "レビュー履歴なし" > review_history.txt
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Run Claude Code Review
         id: claude-review
@@ -37,15 +86,32 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           
-          allowed_tools: "mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff"
+          allowed_tools: "mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_comments"
           
-          # Direct prompt for automated review (no @claude mention needed)
+          # コメントトリガーによるレビュー用のプロンプト
           direct_prompt: |
+            ユーザーから @claude メンションでレビューが要求されました。
+            
+            ${{ steps.previous-reviews.outputs.has_previous_reviews == 'true' && format('このPRには以前のレビュー履歴があります。以下の内容を確認して、既に指摘された項目については重複を避け、対応状況を考慮した上で新しい観点からレビューを行ってください：\n\n{0}\n\n', readFile('review_history.txt')) || '' }}
+            
             このプルリクエスト（PR）をレビューし、GitHub のレビュー機能を使ってフィードバックをしてください。作業は次の手順に沿って進めてください：
-            1.  **レビューを開始する:** `mcp__github__create_pending_pull_request_review` を使って、保留中のレビューを開始します。
-            2.  **変更内容を確認する:** `mcp__github__get_pull_request_diff` を使って、コードの変更点や行番号を把握します。
-            3.  **インラインコメントを追加する:** 改善点や懸念事項があるコードの行には `mcp__github__add_pull_request_review_comment_to_pending_review` を使ってコメントを追加してください。修正方針が明確な場合には積極的にsuggestionを利用してください。
-            4.  **レビューを提出する:** `mcp__github__submit_pending_pull_request_review` を使って、イベントタイプを「COMMENT」に設定してレビューを提出してください。まとめコメントは空文字列("")で構いません（※「REQUEST_CHANGES」は使わないでください）。
+            
+            1.  **過去のレビューを確認する:** `mcp__github__get_pull_request_comments` を使って、このPRの既存のレビューコメントを取得し、既に指摘された内容を把握します。
+            2.  **レビューを開始する:** `mcp__github__create_pending_pull_request_review` を使って、保留中のレビューを開始します。
+            3.  **変更内容を確認する:** `mcp__github__get_pull_request_diff` を使って、コードの変更点や行番号を把握します。
+            4.  **インラインコメントを追加する:** 改善点や懸念事項があるコードの行には `mcp__github__add_pull_request_review_comment_to_pending_review` を使ってコメントを追加してください。修正方針が明確な場合には積極的にsuggestionを利用してください。
+            5.  **レビューを提出する:** `mcp__github__submit_pending_pull_request_review` を使って、イベントタイプを「COMMENT」に設定してレビューを提出してください。まとめコメントは空文字列("")で構いません（※「REQUEST_CHANGES」は使わないでください）。
+
+            **レビュー時の重要事項**
+            
+            * **重複を避ける:** 過去のレビューで既に指摘された内容については、以下の場合を除き再度指摘しないでください：
+                * 指摘に対する修正が不十分または誤っている場合
+                * 新しい変更により以前の指摘が再び該当するようになった場合
+                
+            * **対応状況の考慮:** 過去の指摘事項に対して：
+                * 対応済みの項目は肯定的に評価（ただしインラインコメントでは言及しない）
+                * 未対応の項目で依然として重要なものは、優先度を明確にして再度指摘
+                * 部分的に対応された項目は、残りの改善点を具体的に示す
 
             **コメントの書き方に関する重要事項**
 
@@ -79,30 +145,9 @@ jobs:
             3. スティッキーコメントが自動更新されるため、それ以外の総括的なコメントは不要
             4. 各インラインコメントでは結論を先に述べ、その後に理由と具体的な修正案を提示する
             5. CLAUDE.mdのガイドラインに従っているかを必ず確認する
+            6. 過去のレビュー履歴を考慮し、重複した指摘を避ける
             
             すべてのフィードバックは日本語で、建設的かつ実用的な内容にしてください。
 
-          # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
+          # Sticky comments を使用して同一PRへの複数回のレビューを管理
           use_sticky_comment: true
-          
-          # Optional: Customize review based on file types
-          # direct_prompt: |
-          #   Review this PR focusing on:
-          #   - For TypeScript files: Type safety and proper interface usage
-          #   - For API endpoints: Security, input validation, and error handling
-          #   - For React components: Performance, accessibility, and best practices
-          #   - For tests: Coverage, edge cases, and test quality
-          
-          # Optional: Different prompts for different authors
-          # direct_prompt: |
-          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' && 
-          #   'Welcome! Please review this PR from a first-time contributor. Be encouraging and provide detailed explanations for any suggestions.' ||
-          #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
-          
-          # Optional: Add specific tools for running tests or linting
-          # allowed_tools: "Bash(pnpm run test),Bash(pnpm run lint),Bash(pnpm run typecheck)"
-          
-          # Optional: Skip review for certain conditions
-          # if: |
-          #   !contains(github.event.pull_request.title, '[skip-review]') &&
-          #   !contains(github.event.pull_request.title, '[WIP]')
