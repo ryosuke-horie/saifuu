@@ -1,3 +1,4 @@
+import { and, count, eq, gte, lte, sum } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { type AnyDatabase, type Env } from '../db'
 import { type NewTransaction, type Transaction, transactions } from '../db/schema'
@@ -46,9 +47,9 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 	})
 
 	/**
-	 * 取引一覧を取得するエンドポイント
+	 * 取引一覧を取得するエンドポイント（SQLクエリレベル最適化済み）
 	 * @route GET /api/transactions
-	 * @query {string} [type] - 取引タイプでフィルタ（expense のみ）
+	 * @query {string} [type] - 取引タイプでフィルタ（income or expense）
 	 * @query {number} [categoryId] - カテゴリIDでフィルタ
 	 * @query {string} [startDate] - 開始日でフィルタ（YYYY-MM-DD）
 	 * @query {string} [endDate] - 終了日でフィルタ（YYYY-MM-DD）
@@ -63,13 +64,13 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 		try {
 			// クエリパラメータを取得
-			const query = c.req.query()
+			const queryParams = c.req.query()
 
 			// 型安全なバリデーション（const assertionと配列includesを使用）
 			const validTypes = ['income', 'expense'] as const
 			type ValidType = (typeof validTypes)[number]
 
-			const type = query.type as string | undefined
+			const type = queryParams.type as string | undefined
 			const validatedType: ValidType | undefined =
 				type && validTypes.includes(type as ValidType) ? (type as ValidType) : undefined
 
@@ -82,43 +83,57 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				throw new BadRequestError('Invalid type filter. Allowed values are "income" or "expense"')
 			}
 
-			const categoryId = query.categoryId ? Number.parseInt(query.categoryId) : undefined
-			const startDate = query.startDate
-			const endDate = query.endDate
-			const limit = query.limit ? Number.parseInt(query.limit) : undefined
-			const offset = query.offset ? Number.parseInt(query.offset) : undefined
+			const categoryId = queryParams.categoryId
+				? Number.parseInt(queryParams.categoryId)
+				: undefined
+			const startDate = queryParams.startDate
+			const endDate = queryParams.endDate
+			const limit = queryParams.limit ? Number.parseInt(queryParams.limit) : undefined
+			const offset = queryParams.offset ? Number.parseInt(queryParams.offset) : undefined
 
 			const db = options.testDatabase || c.get('db')
 
-			// データベースレベルでのクエリ構築（シンプルな実装）
-			let result = await db.select().from(transactions)
+			// SQLレベルでのWHERE条件構築
+			const conditions = []
 
-			// WHERE条件をインメモリでフィルタリング（パフォーマンス改善は今後の課題）
 			if (validatedType) {
-				result = result.filter((tx) => tx.type === validatedType)
+				conditions.push(eq(transactions.type, validatedType))
 			}
 			if (categoryId !== undefined) {
-				result = result.filter((tx) => tx.categoryId === categoryId)
+				conditions.push(eq(transactions.categoryId, categoryId))
 			}
 			if (startDate) {
-				result = result.filter((tx) => new Date(tx.date) >= new Date(startDate))
+				conditions.push(gte(transactions.date, startDate))
 			}
 			if (endDate) {
-				result = result.filter((tx) => new Date(tx.date) <= new Date(endDate))
+				conditions.push(lte(transactions.date, endDate))
 			}
 
-			// ページネーション（インメモリ）
+			// SQLレベルでのクエリ構築とフィルタリング・ページネーション実行
+			// Drizzle ORMのクエリビルダーでフィルタリングとページネーションを適用
+			const whereCondition = conditions.length > 0 ? and(...conditions) : undefined
+
+			// Drizzle ORMのクエリビルダーを使用（型システムの制約のため一時的にany使用）
+			// biome-ignore lint/suspicious/noExplicitAny: Drizzle ORMのクエリビルダーの型互換性問題のため
+			let selectQuery: any = db.select().from(transactions)
+
+			if (whereCondition) {
+				selectQuery = selectQuery.where(whereCondition)
+			}
+
+			// ページネーションの適用
 			if (offset !== undefined) {
-				result = result.slice(offset)
+				selectQuery = selectQuery.offset(offset)
 			}
 			if (limit !== undefined) {
-				result = result.slice(0, limit)
+				selectQuery = selectQuery.limit(limit)
 			}
 
+			// クエリ実行
+			const result = await selectQuery
+
 			// カテゴリ情報を設定ファイルから補完
-			// 型を明確にしてから変換を行う
-			const typedResult: Transaction[] = result
-			const resultWithCategories = addCategoryInfo(typedResult)
+			const resultWithCategories = addCategoryInfo(result)
 
 			requestLogger.success({
 				transactionsCount: resultWithCategories.length,
@@ -131,11 +146,15 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 	})
 
 	/**
-	 * 取引統計情報を取得するエンドポイント
+	 * 取引統計情報を取得するエンドポイント（SQL集計関数使用で最適化済み）
 	 * @route GET /api/transactions/stats
-	 * @returns {object} 支出統計情報
+	 * @returns {object} 取引統計情報
 	 * @returns {number} totalExpense - 総支出額
-	 * @returns {number} transactionCount - 取引件数
+	 * @returns {number} totalIncome - 総収入額
+	 * @returns {number} balance - 収支バランス
+	 * @returns {number} transactionCount - 総取引件数
+	 * @returns {number} expenseCount - 支出取引件数
+	 * @returns {number} incomeCount - 収入取引件数
 	 */
 	app.get('/stats', async (c) => {
 		const requestLogger = createRequestLogger(c, {
@@ -146,39 +165,50 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 		try {
 			const db = options.testDatabase || c.get('db')
 
-			// 基本統計の取得
-			const allTransactions = await db
-				.select({
-					amount: transactions.amount,
-					type: transactions.type,
-				})
-				.from(transactions)
+			// SQL集計関数を使用してパフォーマンス最適化
+			const [expenseStats, incomeStats, totalStats] = await Promise.all([
+				// 支出統計
+				db
+					.select({
+						totalAmount: sum(transactions.amount),
+						count: count(transactions.id),
+					})
+					.from(transactions)
+					.where(eq(transactions.type, 'expense')),
 
-			// 単一のreduceで統計を計算（O(n) パフォーマンス最適化）
-			const stats = allTransactions.reduce(
-				(acc, transaction) => {
-					if (transaction.type === 'expense') {
-						acc.totalExpense += transaction.amount
-						acc.expenseCount++
-					} else if (transaction.type === 'income') {
-						acc.totalIncome += transaction.amount
-						acc.incomeCount++
-					}
-					acc.transactionCount++
-					return acc
-				},
-				{
-					totalExpense: 0,
-					totalIncome: 0,
-					balance: 0,
-					transactionCount: 0,
-					expenseCount: 0,
-					incomeCount: 0,
-				}
-			)
+				// 収入統計
+				db
+					.select({
+						totalAmount: sum(transactions.amount),
+						count: count(transactions.id),
+					})
+					.from(transactions)
+					.where(eq(transactions.type, 'income')),
 
-			// balanceを計算
-			stats.balance = stats.totalIncome - stats.totalExpense
+				// 全体統計
+				db
+					.select({
+						count: count(transactions.id),
+					})
+					.from(transactions),
+			])
+
+			// SQLの結果から統計データを構築
+			const totalExpense = Number(expenseStats[0]?.totalAmount || 0)
+			const expenseCount = Number(expenseStats[0]?.count || 0)
+			const totalIncome = Number(incomeStats[0]?.totalAmount || 0)
+			const incomeCount = Number(incomeStats[0]?.count || 0)
+			const transactionCount = Number(totalStats[0]?.count || 0)
+			const balance = totalIncome - totalExpense
+
+			const stats = {
+				totalExpense,
+				totalIncome,
+				balance,
+				transactionCount,
+				expenseCount,
+				incomeCount,
+			}
 
 			requestLogger.success(stats)
 
