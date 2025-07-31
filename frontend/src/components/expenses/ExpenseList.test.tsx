@@ -341,34 +341,39 @@ describe("ExpenseList", () => {
 	});
 
 	describe("仮想スクロール対応", () => {
-		it.skipIf(process.env.CI === "true")("大量データ（1000件以上）でも高速にレンダリングされる", () => {
-			// 1000件のテストデータを生成
-			const largeDataset = Array.from({ length: 1000 }, (_, index) => ({
-				...mockTransactions[0],
-				id: `large-${index}`,
-				description: `取引 ${index + 1}`,
-				date: new Date(2025, 6, 15 - (index % 30)).toISOString().split("T")[0],
-			}));
+		it.skipIf(process.env.CI === "true")(
+			"大量データ（1000件以上）でも高速にレンダリングされる",
+			() => {
+				// 1000件のテストデータを生成
+				const largeDataset = Array.from({ length: 1000 }, (_, index) => ({
+					...mockTransactions[0],
+					id: `large-${index}`,
+					description: `取引 ${index + 1}`,
+					date: new Date(2025, 6, 15 - (index % 30))
+						.toISOString()
+						.split("T")[0],
+				}));
 
-			const startTime = performance.now();
-			render(
-				<ExpenseList
-					transactions={largeDataset}
-					isLoading={false}
-					error={undefined}
-				/>,
-			);
-			const renderTime = performance.now() - startTime;
+				const startTime = performance.now();
+				render(
+					<ExpenseList
+						transactions={largeDataset}
+						isLoading={false}
+						error={undefined}
+					/>,
+				);
+				const renderTime = performance.now() - startTime;
 
-			// CI環境を考慮して閾値を調整
-			// CI環境（GitHub Actions）ではより緩い閾値を使用
-			// 動的インポートの影響で初回レンダリングは遅くなる可能性がある
-			const isCI = process.env.CI === "true";
-			const threshold = isCI ? 500 : 400;
+				// CI環境を考慮して閾値を調整
+				// CI環境（GitHub Actions）ではより緩い閾値を使用
+				// 動的インポートの影響で初回レンダリングは遅くなる可能性がある
+				const isCI = process.env.CI === "true";
+				const threshold = isCI ? 500 : 400;
 
-			// 仮想スクロール実装後は閾値以内にレンダリングされることを期待
-			expect(renderTime).toBeLessThan(threshold);
-		});
+				// 仮想スクロール実装後は閾値以内にレンダリングされることを期待
+				expect(renderTime).toBeLessThan(threshold);
+			},
+		);
 
 		it("スクロール時に表示範囲のアイテムのみがDOMに存在する", () => {
 			// 1000件のテストデータを生成
