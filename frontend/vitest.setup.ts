@@ -73,3 +73,12 @@ if (typeof window !== "undefined" && !window.setTimeout) {
 	window.setInterval = global.setInterval;
 	window.clearInterval = global.clearInterval;
 }
+
+// ResizeObserverをモック化（Rechartsなどで使用）
+class ResizeObserverMock {
+	observe() {}
+	unobserve() {}
+	disconnect() {}
+}
+
+global.ResizeObserver = ResizeObserverMock;
