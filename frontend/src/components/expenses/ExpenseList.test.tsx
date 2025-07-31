@@ -245,4 +245,156 @@ describe("ExpenseList", () => {
 			expect(screen.getByText("a".repeat(200))).toBeInTheDocument();
 		});
 	});
+
+	describe("仮想スクロール対応", () => {
+		it("大量データ（1000件以上）でも高速にレンダリングされる", () => {
+			// 1000件のテストデータを生成
+			const largeDataset = Array.from({ length: 1000 }, (_, index) => ({
+				...mockTransactions[0],
+				id: `large-${index}`,
+				description: `取引 ${index + 1}`,
+				date: new Date(2025, 6, 15 - (index % 30)).toISOString().split("T")[0],
+			}));
+
+			const startTime = performance.now();
+			render(
+				<ExpenseList
+					transactions={largeDataset}
+					isLoading={false}
+					error={undefined}
+				/>,
+			);
+			const renderTime = performance.now() - startTime;
+
+			// 仮想スクロール実装後は100ms以内にレンダリングされることを期待
+			expect(renderTime).toBeLessThan(100);
+		});
+
+		it("スクロール時に表示範囲のアイテムのみがDOMに存在する", () => {
+			// 1000件のテストデータを生成
+			const largeDataset = Array.from({ length: 1000 }, (_, index) => ({
+				...mockTransactions[0],
+				id: `scroll-${index}`,
+				description: `スクロール取引 ${index + 1}`,
+				date: new Date(2025, 6, 15).toISOString().split("T")[0],
+			}));
+
+			const { container } = render(
+				<ExpenseList
+					transactions={largeDataset}
+					isLoading={false}
+					error={undefined}
+				/>,
+			);
+
+			// 仮想スクロール実装後は、表示領域に収まる数（約20-30件）のみDOMに存在
+			const rows = container.querySelectorAll("tbody tr");
+			expect(rows.length).toBeLessThan(50);
+		});
+
+		it("スクロール位置に応じて適切なアイテムが表示される", async () => {
+			// 1000件のテストデータを生成
+			const largeDataset = Array.from({ length: 1000 }, (_, index) => ({
+				...mockTransactions[0],
+				id: `position-${index}`,
+				description: `位置確認取引 ${index + 1}`,
+				date: new Date(2025, 6, 15).toISOString().split("T")[0],
+			}));
+
+			const { container } = render(
+				<ExpenseList
+					transactions={largeDataset}
+					isLoading={false}
+					error={undefined}
+				/>,
+			);
+
+			// スクロールコンテナを取得
+			const scrollContainer = container.querySelector(
+				".virtual-scroll-container",
+			);
+			expect(scrollContainer).toBeInTheDocument();
+
+			// 初期状態の確認（最初の10件が表示されている）
+			expect(screen.getByText("位置確認取引 1")).toBeInTheDocument();
+			expect(screen.getByText("位置確認取引 2")).toBeInTheDocument();
+
+			// 仮想スクロールコンテナが適切に設定されていることを確認
+			const virtualContainer = container.querySelector(
+				'[style*="height: 59400px"]',
+			); // 1000 * 60 - 600
+			expect(virtualContainer).toBeInTheDocument();
+
+			// 注: テスト環境では仮想スクロールのスクロールイベントハンドリングに制限があるため、
+			// 実際のスクロール動作のテストは統合テストまたはE2Eテストで行うことを推奨
+		});
+
+		it("仮想スクロール有効時もソート機能が正常に動作する", () => {
+			// 異なる日付の大量データを生成
+			const unsortedLargeDataset = Array.from({ length: 100 }, (_, index) => ({
+				...mockTransactions[0],
+				id: `sort-${index}`,
+				description: `ソート取引 ${index + 1}`,
+				// ランダムな日付を生成
+				date: new Date(2025, 6, Math.floor(Math.random() * 30) + 1)
+					.toISOString()
+					.split("T")[0],
+			}));
+
+			render(
+				<ExpenseList
+					transactions={unsortedLargeDataset}
+					isLoading={false}
+					error={undefined}
+				/>,
+			);
+
+			// 最初のアイテムが最新日付であることを確認
+			const firstRow = screen.getAllByRole("row")[1];
+			const firstDate = firstRow.querySelector("td")?.textContent;
+
+			// 2番目のアイテムの日付を取得
+			const secondRow = screen.getAllByRole("row")[2];
+			const secondDate = secondRow.querySelector("td")?.textContent;
+
+			// 日付降順でソートされていることを確認
+			expect(new Date(firstDate!).getTime()).toBeGreaterThanOrEqual(
+				new Date(secondDate!).getTime(),
+			);
+		});
+
+		it("仮想スクロール有効時も編集・削除機能が正常に動作する", () => {
+			const mockOnEdit = vi.fn();
+			const mockOnDelete = vi.fn();
+
+			// 100件のテストデータを生成
+			const dataset = Array.from({ length: 100 }, (_, index) => ({
+				...mockTransactions[0],
+				id: `action-${index}`,
+				description: `アクション取引 ${index + 1}`,
+				date: new Date(2025, 6, 15).toISOString().split("T")[0],
+			}));
+
+			render(
+				<ExpenseList
+					transactions={dataset}
+					isLoading={false}
+					error={undefined}
+					onEdit={mockOnEdit}
+					onDelete={mockOnDelete}
+				/>,
+			);
+
+			// 最初の編集ボタンをクリック
+			const editButtons = screen.getAllByText("編集");
+			fireEvent.click(editButtons[0]);
+
+			// 正しいデータで編集コールバックが呼ばれることを確認
+			expect(mockOnEdit).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: expect.stringMatching(/^action-\d+$/),
+				}),
+			);
+		});
+	});
 });
