@@ -8,13 +8,19 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import { CHART_COLORS, CHART_HEIGHTS, formatCurrency } from "../constants";
+import {
+	CHART_COLORS,
+	CHART_DATA_KEYS,
+	CHART_HEIGHTS,
+	CHART_LABELS,
+	formatCurrency,
+} from "../constants";
 
 type TrendData = {
 	month: string;
-	収入: number;
-	支出: number;
-	残高: number;
+	[CHART_DATA_KEYS.income]: number;
+	[CHART_DATA_KEYS.expense]: number;
+	[CHART_DATA_KEYS.balance]: number;
 };
 
 type TrendChartProps = {
@@ -39,22 +45,26 @@ export function TrendChart({ data }: TrendChartProps) {
 						<XAxis dataKey="month" />
 						<YAxis />
 						<Tooltip formatter={(value: number) => formatCurrency(value)} />
-						<Legend />
+						<Legend
+							formatter={(value: string) =>
+								CHART_LABELS[value as keyof typeof CHART_LABELS] || value
+							}
+						/>
 						<Line
 							type="monotone"
-							dataKey="収入"
+							dataKey={CHART_DATA_KEYS.income}
 							stroke={CHART_COLORS.success}
 							strokeWidth={2}
 						/>
 						<Line
 							type="monotone"
-							dataKey="支出"
+							dataKey={CHART_DATA_KEYS.expense}
 							stroke={CHART_COLORS.danger}
 							strokeWidth={2}
 						/>
 						<Line
 							type="monotone"
-							dataKey="残高"
+							dataKey={CHART_DATA_KEYS.balance}
 							stroke={CHART_COLORS.primary}
 							strokeWidth={2}
 						/>

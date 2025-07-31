@@ -43,7 +43,7 @@ export function CategoryPieChart({
 						>
 							{data.map((item, index) => (
 								<Cell
-									key={`${item.categoryId}-${item.categoryName}`}
+									key={item.categoryId}
 									fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]}
 								/>
 							))}

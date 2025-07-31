@@ -56,10 +56,12 @@ describe("Reports API Service", () => {
 				ok: false,
 				status: 500,
 				statusText: "Internal Server Error",
+				json: async () => ({ message: "Server error" }),
+				text: async () => "Internal Server Error",
 			} as Response);
 
 			await expect(fetchMonthlyReports({ period: "6months" })).rejects.toThrow(
-				"Failed to fetch monthly reports",
+				"Server error",
 			);
 		});
 
@@ -147,10 +149,12 @@ describe("Reports API Service", () => {
 				ok: false,
 				status: 500,
 				statusText: "Export failed",
+				json: async () => ({ message: "Export service unavailable" }),
+				text: async () => "Export failed",
 			} as Response);
 
 			await expect(exportReportAsCSV({ period: "6months" })).rejects.toThrow(
-				"Failed to export report",
+				"Export service unavailable",
 			);
 		});
 

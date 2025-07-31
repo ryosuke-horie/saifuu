@@ -34,9 +34,31 @@ export const CHART_HEIGHTS = {
 	savingsRate: 300,
 } as const;
 
+// チャートのデータキー定義（英語）
+export const CHART_DATA_KEYS = {
+	income: "income",
+	expense: "expense",
+	balance: "balance",
+	savingsRate: "savingsRate",
+} as const;
+
+// チャートの表示ラベル定義（日本語）
+export const CHART_LABELS = {
+	[CHART_DATA_KEYS.income]: "収入",
+	[CHART_DATA_KEYS.expense]: "支出",
+	[CHART_DATA_KEYS.balance]: "残高",
+	[CHART_DATA_KEYS.savingsRate]: "貯蓄率",
+} as const;
+
 // フォーマッター関数
 export const formatCurrency = (value: number): string => {
-	return `¥${value.toLocaleString()}`;
+	// Intl.NumberFormatを使用して国際化対応（LOW優先度の修正も含む）
+	return new Intl.NumberFormat("ja-JP", {
+		style: "currency",
+		currency: "JPY",
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 0,
+	}).format(value);
 };
 
 export const formatPercentage = (value: number): string => {

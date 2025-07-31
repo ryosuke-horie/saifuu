@@ -7,11 +7,17 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import { CHART_COLORS, CHART_HEIGHTS, formatPercentage } from "../constants";
+import {
+	CHART_COLORS,
+	CHART_DATA_KEYS,
+	CHART_HEIGHTS,
+	CHART_LABELS,
+	formatPercentage,
+} from "../constants";
 
 type SavingsRateData = {
 	month: string;
-	貯蓄率: number;
+	[CHART_DATA_KEYS.savingsRate]: number;
 };
 
 type SavingsRateChartProps = {
@@ -35,8 +41,16 @@ export function SavingsRateChart({ data }: SavingsRateChartProps) {
 						<CartesianGrid strokeDasharray="3 3" />
 						<XAxis dataKey="month" />
 						<YAxis />
-						<Tooltip formatter={(value: number) => formatPercentage(value)} />
-						<Bar dataKey="貯蓄率" fill={CHART_COLORS.purple} />
+						<Tooltip
+							formatter={(value: number) => formatPercentage(value)}
+							labelFormatter={(label: string) => `${label}月`}
+							contentStyle={{ backgroundColor: "rgba(255, 255, 255, 0.95)" }}
+						/>
+						<Bar
+							dataKey={CHART_DATA_KEYS.savingsRate}
+							fill={CHART_COLORS.purple}
+							name={CHART_LABELS[CHART_DATA_KEYS.savingsRate]}
+						/>
 					</BarChart>
 				</ResponsiveContainer>
 			</div>

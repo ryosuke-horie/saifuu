@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MonthlyReport } from "@/lib/api/types/reports";
+import { CHART_DATA_KEYS } from "../../constants";
 import {
 	calculateReportSummary,
 	prepareSavingsRateData,
@@ -63,15 +64,15 @@ describe("reportCalculations", () => {
 			expect(result).toHaveLength(2);
 			expect(result[0]).toEqual({
 				month: "2025-01",
-				収入: 500000,
-				支出: 300000,
-				残高: 200000,
+				[CHART_DATA_KEYS.income]: 500000,
+				[CHART_DATA_KEYS.expense]: 300000,
+				[CHART_DATA_KEYS.balance]: 200000,
 			});
 			expect(result[1]).toEqual({
 				month: "2024-12",
-				収入: 450000,
-				支出: 280000,
-				残高: 170000,
+				[CHART_DATA_KEYS.income]: 450000,
+				[CHART_DATA_KEYS.expense]: 280000,
+				[CHART_DATA_KEYS.balance]: 170000,
 			});
 		});
 
@@ -88,11 +89,11 @@ describe("reportCalculations", () => {
 			expect(result).toHaveLength(2);
 			expect(result[0]).toEqual({
 				month: "2025-01",
-				貯蓄率: 40,
+				[CHART_DATA_KEYS.savingsRate]: 40,
 			});
 			expect(result[1]).toEqual({
 				month: "2024-12",
-				貯蓄率: 37.8,
+				[CHART_DATA_KEYS.savingsRate]: 37.8,
 			});
 		});
 

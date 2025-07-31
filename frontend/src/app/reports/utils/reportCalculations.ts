@@ -1,4 +1,5 @@
 import type { MonthlyReport } from "@/lib/api/types/reports";
+import { CHART_DATA_KEYS } from "../constants";
 
 /**
  * 月次レポートの集計結果
@@ -52,9 +53,9 @@ export function calculateReportSummary(
 export function prepareTrendData(reports: MonthlyReport[]) {
 	return reports.map((report) => ({
 		month: report.month,
-		収入: report.income,
-		支出: report.expense,
-		残高: report.balance,
+		[CHART_DATA_KEYS.income]: report.income,
+		[CHART_DATA_KEYS.expense]: report.expense,
+		[CHART_DATA_KEYS.balance]: report.balance,
 	}));
 }
 
@@ -64,6 +65,6 @@ export function prepareTrendData(reports: MonthlyReport[]) {
 export function prepareSavingsRateData(reports: MonthlyReport[]) {
 	return reports.map((report) => ({
 		month: report.month,
-		貯蓄率: report.savingsRate,
+		[CHART_DATA_KEYS.savingsRate]: report.savingsRate,
 	}));
 }

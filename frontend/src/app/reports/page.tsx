@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
 	useCategoryBreakdown,
 	useExportReport,
@@ -40,6 +40,16 @@ export default function ReportsPage() {
 	} = useCategoryBreakdown({ period });
 	const { exportCSV, isExporting } = useExportReport();
 
+	// 集計データの計算（メモ化により再計算を防ぐ）
+	const summary = useMemo(() => calculateReportSummary(reports), [reports]);
+
+	// チャート用データの準備（メモ化により再計算を防ぐ）
+	const trendData = useMemo(() => prepareTrendData(reports), [reports]);
+	const savingsRateData = useMemo(
+		() => prepareSavingsRateData(reports),
+		[reports],
+	);
+
 	// ローディング状態
 	if (isLoadingReports || isLoadingBreakdown) {
 		return <LoadingState />;
@@ -53,13 +63,6 @@ export default function ReportsPage() {
 			"エラーが発生しました";
 		return <ErrorState message={errorMessage} />;
 	}
-
-	// 集計データの計算
-	const summary = calculateReportSummary(reports);
-
-	// チャート用データの準備
-	const trendData = prepareTrendData(reports);
-	const savingsRateData = prepareSavingsRateData(reports);
 
 	// CSVエクスポート処理
 	const handleExport = async () => {

@@ -6,6 +6,40 @@ import type {
 	ReportParams,
 } from "../types/reports";
 
+// APIエラーのカスタムクラス
+class APIError extends Error {
+	constructor(
+		message: string,
+		public status: number,
+		public details?: unknown,
+	) {
+		super(message);
+		this.name = "APIError";
+	}
+}
+
+// エラーレスポンスの処理を共通化
+async function handleErrorResponse(response: Response, defaultMessage: string) {
+	let errorDetails: unknown;
+	try {
+		// エラーレスポンスのJSONボディをパース
+		errorDetails = await response.json();
+	} catch {
+		// JSONパースに失敗した場合は、テキストを取得
+		errorDetails = await response.text();
+	}
+
+	const errorMessage =
+		typeof errorDetails === "object" &&
+		errorDetails !== null &&
+		"message" in errorDetails &&
+		typeof errorDetails.message === "string"
+			? errorDetails.message
+			: defaultMessage;
+
+	throw new APIError(errorMessage, response.status, errorDetails);
+}
+
 // 月別レポートを取得
 export async function fetchMonthlyReports(
 	params: ReportParams,
@@ -25,7 +59,7 @@ export async function fetchMonthlyReports(
 	);
 
 	if (!response.ok) {
-		throw new Error("Failed to fetch monthly reports");
+		await handleErrorResponse(response, "Failed to fetch monthly reports");
 	}
 
 	return response.json();
@@ -50,7 +84,7 @@ export async function fetchCategoryBreakdown(
 	);
 
 	if (!response.ok) {
-		throw new Error("Failed to fetch category breakdown");
+		await handleErrorResponse(response, "Failed to fetch category breakdown");
 	}
 
 	return response.json();
@@ -72,7 +106,7 @@ export async function exportReportAsCSV(params: ExportParams): Promise<Blob> {
 	const response = await fetch(`/api/reports/export?${queryParams.toString()}`);
 
 	if (!response.ok) {
-		throw new Error("Failed to export report");
+		await handleErrorResponse(response, "Failed to export report");
 	}
 
 	return response.blob();

@@ -44,12 +44,13 @@ export function useExportReport() {
 	const exportCSV = async (params: ExportParams) => {
 		setIsExporting(true);
 		setError(null);
+		let url: string | null = null;
 
 		try {
 			const blob = await exportReportAsCSV(params);
 
 			// ダウンロード処理
-			const url = URL.createObjectURL(blob);
+			url = URL.createObjectURL(blob);
 			const link = document.createElement("a");
 			link.href = url;
 			link.download = `report_${new Date().toISOString().split("T")[0]}.csv`;
@@ -57,10 +58,13 @@ export function useExportReport() {
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
-			URL.revokeObjectURL(url);
 		} catch (err) {
 			setError(err instanceof Error ? err : new Error("Export failed"));
 		} finally {
+			// メモリリークを防ぐため、必ずrevokeObjectURLを呼ぶ
+			if (url) {
+				URL.revokeObjectURL(url);
+			}
 			setIsExporting(false);
 		}
 	};
