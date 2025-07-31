@@ -174,7 +174,7 @@ describe("TransactionService", () => {
 			const transaction = mockTransactions[0];
 			const formatted = TransactionService.format(transaction, mockCategories);
 
-			expect(formatted.formattedAmount).toBe("¥1,000");
+			expect(formatted.formattedAmount).toBe("￥1,000");
 			expect(formatted.formattedDate).toBe("2025/01/20");
 			expect(formatted.categoryName).toBe("食費");
 		});
