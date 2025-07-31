@@ -49,6 +49,11 @@ export function useExportReport() {
 		try {
 			const blob = await exportReportAsCSV(params);
 
+			// blobがnullまたはundefinedの場合はエラーとして扱う
+			if (!blob) {
+				throw new Error("Invalid response format");
+			}
+
 			// ダウンロード処理
 			url = URL.createObjectURL(blob);
 			const link = document.createElement("a");
