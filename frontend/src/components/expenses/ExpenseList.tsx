@@ -13,9 +13,9 @@
  * - SubscriptionListコンポーネントのパターンを踏襲
  */
 
-import { useVirtualizer } from "@tanstack/react-virtual";
+import dynamic from "next/dynamic";
 import type { FC } from "react";
-import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import type { ExpenseListProps } from "../../types/expense";
 import { EmptyState, ErrorState } from "../common/table";
 import { TransactionRow } from "../transactions";
@@ -23,10 +23,23 @@ import { LoadingState } from "../ui";
 
 // 定数定義
 const VIRTUAL_SCROLL_THRESHOLD = 100; // 仮想スクロールを有効にする閾値
-const VIRTUAL_ROW_HEIGHT = 60; // 各行の推定高さ（px）
-const VIRTUAL_OVERSCAN = 5; // 表示範囲外にレンダリングする追加アイテム数
-const VIRTUAL_CONTAINER_HEIGHT = 400; // 仮想スクロールコンテナの高さ（px）
-const INITIAL_DISPLAY_COUNT = 10; // 初期表示アイテム数
+
+// 仮想スクロールコンポーネントの動的インポート
+// SSR環境でのwindowエラーを回避するため、クライアントサイドでのみロード
+const VirtualizedExpenseList = dynamic(
+	() =>
+		import("./VirtualizedExpenseList").then(
+			(mod) => mod.VirtualizedExpenseList,
+		),
+	{
+		ssr: false,
+		loading: () => (
+			<div className="text-center py-8">
+				<p className="text-gray-500">読み込み中...</p>
+			</div>
+		),
+	},
+);
 
 // テーブルヘッダーの列定義
 const TABLE_COLUMNS = [
@@ -93,46 +106,19 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 			});
 		}, [transactions]);
 
-		// 仮想スクロール用のコンテナref
-		const scrollContainerRef = useRef<HTMLDivElement>(null);
+		// SSR時は仮想スクロールを無効化し、クライアントサイドでのみ有効化
+		const [isClient, setIsClient] = useState(false);
+
+		// クライアントサイドでのみtrueになる
+		useEffect(() => {
+			setIsClient(true);
+		}, []);
 
 		// 仮想スクロールを使用するかの判定
 		// 大量データのパフォーマンス向上のため、閾値を超えたら有効化
+		// ただし、SSR時は必ず無効化する
 		const useVirtualScroll =
-			sortedTransactions.length >= VIRTUAL_SCROLL_THRESHOLD;
-
-		// 仮想スクロールの設定
-		// 大量データでも高速レンダリングを実現するための最適化設定
-		const virtualizer = useVirtualizer({
-			count: sortedTransactions.length,
-			getScrollElement: () => scrollContainerRef.current,
-			estimateSize: () => VIRTUAL_ROW_HEIGHT,
-			overscan: VIRTUAL_OVERSCAN,
-			enabled: useVirtualScroll,
-		});
-
-		// measureElementのコールバックref
-		const measureElement = useCallback(
-			(element: HTMLDivElement | null) => {
-				if (element && useVirtualScroll) {
-					virtualizer.measureElement(element);
-				}
-			},
-			[virtualizer, useVirtualScroll],
-		);
-
-		// 仮想化されたアイテムのレンダリング
-		const virtualItems = virtualizer.getVirtualItems();
-
-		// 仮想スクロールの初期化とリセット
-		useEffect(() => {
-			if (useVirtualScroll && scrollContainerRef.current) {
-				// スクロール位置をリセット
-				scrollContainerRef.current.scrollTop = 0;
-				// 仮想スクロールの再計算をトリガー
-				virtualizer.measure();
-			}
-		}, [useVirtualScroll, virtualizer]);
+			isClient && sortedTransactions.length >= VIRTUAL_SCROLL_THRESHOLD;
 
 		// ローディング状態の表示
 		if (isLoading) {
@@ -189,51 +175,6 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 			);
 		}
 
-		// 仮想スクロール用のテーブル行レンダリング
-		const renderVirtualRows = () => {
-			const itemsToRender =
-				virtualItems.length > 0
-					? virtualItems
-					: sortedTransactions
-							.slice(0, INITIAL_DISPLAY_COUNT)
-							.map((_, index) => ({
-								index,
-								start: index * VIRTUAL_ROW_HEIGHT,
-								key: `initial-${index}`,
-								size: VIRTUAL_ROW_HEIGHT,
-								lane: 0,
-							}));
-
-			return itemsToRender.map((virtualItem) => {
-				const transaction = sortedTransactions[virtualItem.index];
-				return (
-					<div
-						key={transaction.id}
-						data-index={virtualItem.index}
-						ref={(el) => measureElement(el)}
-						style={{
-							position: "absolute",
-							top: 0,
-							left: 0,
-							width: "100%",
-							transform: `translateY(${virtualItem.start}px)`,
-						}}
-					>
-						<table className="min-w-full">
-							<tbody className="bg-white divide-y divide-gray-200">
-								<TransactionRow
-									transaction={transaction}
-									onEdit={onEdit}
-									onDelete={onDelete}
-									showSign={true}
-								/>
-							</tbody>
-						</table>
-					</div>
-				);
-			});
-		};
-
 		return (
 			<div className={`bg-white rounded-lg shadow ${className}`}>
 				{/* コンポーネントヘッダー */}
@@ -252,22 +193,12 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 							<table className="min-w-full divide-y divide-gray-200">
 								<TableHeader />
 							</table>
-							{/* 仮想スクロールコンテナ */}
-							<div
-								ref={scrollContainerRef}
-								className="virtual-scroll-container overflow-y-auto"
-								style={{ height: `${VIRTUAL_CONTAINER_HEIGHT}px` }}
-							>
-								<div
-									style={{
-										height: `${virtualizer.getTotalSize()}px`,
-										width: "100%",
-										position: "relative",
-									}}
-								>
-									{renderVirtualRows()}
-								</div>
-							</div>
+							{/* 仮想スクロールコンポーネント（動的インポート） */}
+							<VirtualizedExpenseList
+								transactions={sortedTransactions}
+								onEdit={onEdit}
+								onDelete={onDelete}
+							/>
 						</>
 					) : (
 						// 通常版（少量データ対応）
