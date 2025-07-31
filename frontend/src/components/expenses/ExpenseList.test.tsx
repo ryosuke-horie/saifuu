@@ -8,6 +8,11 @@
  * - アクセシビリティ要素
  *
  * 注: UI表示・レスポンシブデザインテストはStorybookに移行
+ *
+ * Issue #237で指摘された低価値テストは、Issue #310で既に削除済み:
+ * - テーブルヘッダーの単純な文字列確認テスト（削除済み）
+ * - roleの存在確認のみのARIA属性テスト（削除済み）
+ * - DOM属性のカスタムクラス名テスト（削除済み）
  */
 
 import { fireEvent, render, screen } from "@testing-library/react";
@@ -195,7 +200,7 @@ describe("ExpenseList", () => {
 			const rows = screen.getAllByRole("row");
 			// 日付、金額、カテゴリが含まれることを確認
 			expect(rows[1]).toHaveTextContent("2025/07/09");
-			expect(rows[1]).toHaveTextContent("-\uffe51,000"); // 支出なのでマイナス
+			expect(rows[1]).toHaveTextContent("-￥1,000"); // 支出なのでマイナス
 
 			// nullのカテゴリは"未分類"として表示
 			expect(screen.getByText("未分類")).toBeInTheDocument();
