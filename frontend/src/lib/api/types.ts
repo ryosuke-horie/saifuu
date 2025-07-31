@@ -796,3 +796,18 @@ export const assertPaginationInfo = createAssertFunction(
 	"PaginationInfo",
 );
 // BalanceSummaryは独自の詳細なエラー分析を持つため、assertBalanceSummaryは既に定義済み
+
+// =============================================================================
+// レポート関連型の再エクスポート
+// =============================================================================
+
+export type {
+	CategoryBreakdown,
+	CategoryDetail,
+	CategorySummary,
+	ExportFormat,
+	ExportParams,
+	MonthlyReport,
+	ReportParams,
+	ReportPeriod,
+} from "./types/reports";
