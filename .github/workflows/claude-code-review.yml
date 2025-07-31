@@ -62,20 +62,33 @@ jobs:
           echo "$ISSUE_COMMENTS" > issue_comments.json
           
           # レビュー履歴サマリーを作成
-          cat > review_history.txt << 'EOF'
-          以前のレビュー履歴：
-          EOF
+          REVIEW_HISTORY="以前のレビュー履歴："
           
           # Claude関連のコメントを抽出して履歴に追加
-          jq -r '.[] | select(.user.type == "Bot" or .body | contains("Claude Code Action") or .body | contains("<!-- claude-code-sticky-comment")) | "- " + (.created_at | split("T")[0]) + ": " + (.body | split("\n")[0:3] | join(" "))' review_comments.json >> review_history.txt || true
-          jq -r '.[] | select(.user.type == "Bot" or .body | contains("Claude Code Action") or .body | contains("<!-- claude-code-sticky-comment")) | "- " + (.created_at | split("T")[0]) + ": " + (.body | split("\n")[0:3] | join(" "))' issue_comments.json >> review_history.txt || true
+          CLAUDE_REVIEW_COMMENTS=$(jq -r '.[] | select(.user.type == "Bot" or .body | contains("Claude Code Action") or .body | contains("<!-- claude-code-sticky-comment")) | "- " + (.created_at | split("T")[0]) + ": " + (.body | split("\n")[0:3] | join(" "))' review_comments.json 2>/dev/null || echo "")
+          CLAUDE_ISSUE_COMMENTS=$(jq -r '.[] | select(.user.type == "Bot" or .body | contains("Claude Code Action") or .body | contains("<!-- claude-code-sticky-comment")) | "- " + (.created_at | split("T")[0]) + ": " + (.body | split("\n")[0:3] | join(" "))' issue_comments.json 2>/dev/null || echo "")
           
-          # ファイルに保存
-          if [ -s review_history.txt ]; then
+          # 履歴を環境変数として保存（複数行対応）
+          if [ -n "$CLAUDE_REVIEW_COMMENTS" ] || [ -n "$CLAUDE_ISSUE_COMMENTS" ]; then
+            {
+              echo "REVIEW_HISTORY<<EOF"
+              echo "$REVIEW_HISTORY"
+              if [ -n "$CLAUDE_REVIEW_COMMENTS" ]; then
+                echo "$CLAUDE_REVIEW_COMMENTS"
+              fi
+              if [ -n "$CLAUDE_ISSUE_COMMENTS" ]; then
+                echo "$CLAUDE_ISSUE_COMMENTS"
+              fi
+              echo "EOF"
+            } >> $GITHUB_ENV
             echo "has_previous_reviews=true" >> $GITHUB_OUTPUT
           else
+            {
+              echo "REVIEW_HISTORY<<EOF"  
+              echo "レビュー履歴なし"
+              echo "EOF"
+            } >> $GITHUB_ENV
             echo "has_previous_reviews=false" >> $GITHUB_OUTPUT
-            echo "レビュー履歴なし" > review_history.txt
           fi
         env:
           GH_TOKEN: ${{ github.token }}
@@ -92,11 +105,11 @@ jobs:
           direct_prompt: |
             ユーザーから @claude メンションでレビューが要求されました。
             
-            ${{ steps.previous-reviews.outputs.has_previous_reviews == 'true' && format('このPRには以前のレビュー履歴があります。以下の内容を確認して、既に指摘された項目については重複を避け、対応状況を考慮した上で新しい観点からレビューを行ってください：\n\n{0}\n\n', readFile('review_history.txt')) || '' }}
+            ${{ env.REVIEW_HISTORY }}
             
             このプルリクエスト（PR）をレビューし、GitHub のレビュー機能を使ってフィードバックをしてください。作業は次の手順に沿って進めてください：
             
-            1.  **過去のレビューを確認する:** `mcp__github__get_pull_request_comments` を使って、このPRの既存のレビューコメントを取得し、既に指摘された内容を把握します。
+            1.  **過去のレビューを確認する:** `mcp__github__get_pull_request_comments` を使って、このPRの既存のレビューコメントを取得し、既に指摘された内容を把握します。上記のレビュー履歴も参考にしてください。
             2.  **レビューを開始する:** `mcp__github__create_pending_pull_request_review` を使って、保留中のレビューを開始します。
             3.  **変更内容を確認する:** `mcp__github__get_pull_request_diff` を使って、コードの変更点や行番号を把握します。
             4.  **インラインコメントを追加する:** 改善点や懸念事項があるコードの行には `mcp__github__add_pull_request_review_comment_to_pending_review` を使ってコメントを追加してください。修正方針が明確な場合には積極的にsuggestionを利用してください。
