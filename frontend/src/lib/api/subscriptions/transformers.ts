@@ -33,11 +33,12 @@ export function transformApiSubscriptionToFrontend(
 		id: apiSubscription.id.toString(), // number -> string変換
 		name: apiSubscription.name,
 		amount: apiSubscription.amount,
-		category: category, // categoryId -> categoryオブジェクト変換
+		categoryId: category.id, // APIと同じくcategoryIdを使用
 		billingCycle: apiSubscription.billingCycle,
+		startDate: apiSubscription.createdAt.split("T")[0], // createdAtから日付部分を抽出
 		nextBillingDate: formatDateToYYYYMMDD(apiSubscription.nextBillingDate), // ISO -> YYYY-MM-DD変換
 		isActive: apiSubscription.isActive,
-		description: apiSubscription.description ?? null,
+		description: apiSubscription.description ?? undefined,
 		createdAt: apiSubscription.createdAt,
 		updatedAt: apiSubscription.updatedAt,
 	};

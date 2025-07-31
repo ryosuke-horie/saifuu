@@ -140,10 +140,7 @@ export function useExpenses(): UseExpensesReturn {
 	): Promise<Transaction> => {
 		try {
 			setState((prev) => ({ ...prev, operationLoading: true, error: null }));
-			const updatedExpense = await updateTransaction(id, {
-				...formData,
-				type: "expense",
-			});
+			const updatedExpense = await updateTransaction(id, formData);
 
 			setState((prev) => ({
 				...prev,

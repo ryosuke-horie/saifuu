@@ -3,10 +3,68 @@
  *
  * フロントエンドとバックエンド間でやり取りされる
  * データ型の定義を行う
+ * 共有型定義を使用して一貫性を保つ
  */
 
+import type {
+	BillingCycle,
+	BaseCategory as Category,
+	CategoryType,
+	CreateCategoryRequest,
+	CreateSubscriptionRequest,
+	// リクエスト型
+	CreateTransactionRequest,
+	// レスポンス型
+	DeleteResponse,
+	GetCategoriesQuery,
+	GetSubscriptionsQuery,
+	// クエリ型
+	GetTransactionsQuery,
+	BaseSubscription as Subscription,
+	// エンティティ型
+	BaseTransaction as Transaction,
+	// 基本型
+	TransactionType,
+	UpdateCategoryRequest,
+	UpdateSubscriptionRequest,
+	UpdateTransactionRequest,
+} from "@shared/types";
+
+// 共有型定義から必要な型を再エクスポート
+export type {
+	TransactionType,
+	CategoryType,
+	BillingCycle,
+	Transaction,
+	Category,
+	Subscription,
+	CreateTransactionRequest,
+	UpdateTransactionRequest,
+	CreateCategoryRequest,
+	UpdateCategoryRequest,
+	CreateSubscriptionRequest,
+	UpdateSubscriptionRequest,
+	GetTransactionsQuery,
+	GetCategoriesQuery,
+	GetSubscriptionsQuery,
+	DeleteResponse,
+};
+
+// 型ガード関数も再エクスポート
+export {
+	isCategory,
+	isSubscription,
+	isTransaction,
+} from "@shared/types";
+
+// フロントエンド固有の拡張型
+export type {
+	SubscriptionWithCategory,
+	TransactionWithCategory,
+} from "./types/extended";
+
 // =============================================================================
-// 基本型定義
+// フロントエンド固有の型定義
 // =============================================================================
 
 /**
@@ -52,161 +110,7 @@ export interface PaginationQuery {
 }
 
 // =============================================================================
-// カテゴリ関連型
-// =============================================================================
-
-/**
- * カテゴリタイプ
- */
-export type CategoryType = "expense" | "income";
-
-/**
- * カテゴリ
- */
-export interface Category {
-	id: string;
-	name: string;
-	type: CategoryType;
-	color: string | null;
-	createdAt: string;
-	updatedAt: string;
-}
-
-/**
- * カテゴリ作成リクエスト
- */
-export interface CreateCategoryRequest {
-	name: string;
-	type: CategoryType;
-	color?: string | null;
-}
-
-/**
- * カテゴリ更新リクエスト
- */
-export interface UpdateCategoryRequest {
-	name?: string;
-	type?: CategoryType;
-	color?: string | null;
-}
-
-// =============================================================================
-// サブスクリプション関連型
-// =============================================================================
-
-/**
- * 請求サイクル
- */
-export type BillingCycle = "monthly" | "yearly" | "weekly";
-
-/**
- * サブスクリプション
- */
-export interface Subscription {
-	id: string;
-	name: string;
-	amount: number;
-	billingCycle: BillingCycle;
-	nextBillingDate: string;
-	description: string | null;
-	isActive: boolean;
-	category: Category | null;
-	createdAt: string;
-	updatedAt: string;
-}
-
-/**
- * サブスクリプション作成リクエスト
- */
-export interface CreateSubscriptionRequest {
-	name: string;
-	amount: number;
-	billingCycle: BillingCycle;
-	nextBillingDate: string;
-	categoryId?: string | null;
-	description?: string | null;
-	isActive?: boolean;
-}
-
-/**
- * サブスクリプション更新リクエスト
- */
-export interface UpdateSubscriptionRequest {
-	name?: string;
-	amount?: number;
-	billingCycle?: BillingCycle;
-	nextBillingDate?: string;
-	categoryId?: string | null;
-	description?: string | null;
-	isActive?: boolean;
-}
-
-/**
- * サブスクリプション一覧取得クエリ
- */
-export interface GetSubscriptionsQuery extends PaginationQuery {
-	isActive?: boolean;
-	categoryId?: string;
-	billingCycle?: BillingCycle;
-}
-
-// =============================================================================
-// 取引関連型
-// =============================================================================
-
-/**
- * 取引タイプ
- */
-export type TransactionType = "expense" | "income";
-
-/**
- * 取引
- */
-export interface Transaction {
-	id: string;
-	amount: number;
-	type: TransactionType;
-	description: string | null;
-	date: string;
-	category: Category | null;
-	createdAt: string;
-	updatedAt: string;
-}
-
-/**
- * 取引作成リクエスト
- */
-export interface CreateTransactionRequest {
-	amount: number;
-	type: TransactionType;
-	description?: string | null;
-	date: string;
-	categoryId?: string | null;
-}
-
-/**
- * 取引更新リクエスト
- */
-export interface UpdateTransactionRequest {
-	amount?: number;
-	type?: TransactionType;
-	description?: string | null;
-	date?: string;
-	categoryId?: string | null;
-}
-
-/**
- * 取引一覧取得クエリ
- */
-export interface GetTransactionsQuery extends PaginationQuery {
-	type?: TransactionType;
-	categoryId?: string;
-	dateFrom?: string;
-	dateTo?: string;
-}
-
-// =============================================================================
-// 統計・集計関連型
+// サブスクリプション統計
 // =============================================================================
 
 /**
@@ -274,94 +178,6 @@ export interface BalanceSummary {
 	balance: number;
 	savingsRate: number;
 	trend: "positive" | "negative" | "neutral";
-}
-
-/**
- * BalanceSummaryの型ガード
- *
- * 設計意図: Matt Pocockのパターンに従い、ランタイムでの型安全性を保証
- * APIレスポンスの検証に使用し、不正なデータを早期に検出
- */
-export function isBalanceSummary(value: unknown): value is BalanceSummary {
-	return (
-		typeof value === "object" &&
-		value !== null &&
-		"income" in value &&
-		"expense" in value &&
-		"balance" in value &&
-		"savingsRate" in value &&
-		"trend" in value &&
-		typeof (value as BalanceSummary).income === "number" &&
-		typeof (value as BalanceSummary).expense === "number" &&
-		typeof (value as BalanceSummary).balance === "number" &&
-		typeof (value as BalanceSummary).savingsRate === "number" &&
-		isBalanceTrend((value as BalanceSummary).trend)
-	);
-}
-
-/**
- * BalanceSummaryのtrendフィールドの型ガード
- */
-function isBalanceTrend(value: unknown): value is BalanceSummary["trend"] {
-	return value === "positive" || value === "negative" || value === "neutral";
-}
-
-/**
- * BalanceSummaryのアサーション関数
- *
- * 設計意図: 型ガードでの検証が失敗した場合に明確なエラーをスロー
- * デバッグ時にエラーの原因を特定しやすくする
- */
-export function assertBalanceSummary(
-	value: unknown,
-): asserts value is BalanceSummary {
-	if (!isBalanceSummary(value)) {
-		const details = analyzeBalanceSummaryError(value);
-		throw new Error(`Value is not a valid BalanceSummary: ${details}`);
-	}
-}
-
-/**
- * BalanceSummary検証エラーの詳細分析
- *
- * 設計意図: どのフィールドが不正かを特定し、デバッグを容易にする
- */
-function analyzeBalanceSummaryError(value: unknown): string {
-	if (typeof value !== "object" || value === null) {
-		return `expected object, got ${typeof value}`;
-	}
-
-	const obj = value as Record<string, unknown>;
-	const errors: string[] = [];
-
-	// 必須フィールドのチェック
-	const requiredFields = [
-		"income",
-		"expense",
-		"balance",
-		"savingsRate",
-		"trend",
-	] as const;
-	for (const field of requiredFields) {
-		if (!(field in obj)) {
-			errors.push(`missing field: ${field}`);
-			continue;
-		}
-
-		// 数値フィールドの検証
-		if (field !== "trend" && typeof obj[field] !== "number") {
-			errors.push(`${field} must be number, got ${typeof obj[field]}`);
-		}
-	}
-
-	// trendフィールドの検証
-	if ("trend" in obj && !isBalanceTrend(obj.trend)) {
-		errors.push(
-			`trend must be 'positive', 'negative', or 'neutral', got ${obj.trend}`,
-		);
-	}
-
-	return errors.length > 0 ? errors.join(", ") : "unknown validation error";
 }
 
 /**
@@ -497,14 +313,6 @@ export type ListResponse<T> = T[];
  * 詳細レスポンス
  */
 export type DetailResponse<T> = T;
-
-/**
- * 削除レスポンス
- */
-export interface DeleteResponse {
-	message: string;
-	deletedId: string;
-}
 
 // =============================================================================
 // UIコンポーネント関連型（旧 types/subscription.ts から移動）
@@ -708,62 +516,91 @@ export function isPaginationInfo(value: unknown): value is PaginationInfo {
 }
 
 /**
- * カテゴリの型ガード
+ * BalanceSummaryの型ガード
+ *
+ * 設計意図: Matt Pocockのパターンに従い、ランタイムでの型安全性を保証
+ * APIレスポンスの検証に使用し、不正なデータを早期に検出
  */
-export function isCategory(value: unknown): value is Category {
-	if (typeof value !== "object" || value === null) return false;
-
-	const obj = value as Record<string, unknown>;
+export function isBalanceSummary(value: unknown): value is BalanceSummary {
 	return (
-		typeof obj.id === "string" &&
-		typeof obj.name === "string" &&
-		(obj.type === "expense" || obj.type === "income") &&
-		(obj.color === null || typeof obj.color === "string") &&
-		typeof obj.createdAt === "string" &&
-		typeof obj.updatedAt === "string"
+		typeof value === "object" &&
+		value !== null &&
+		"income" in value &&
+		"expense" in value &&
+		"balance" in value &&
+		"savingsRate" in value &&
+		"trend" in value &&
+		typeof (value as BalanceSummary).income === "number" &&
+		typeof (value as BalanceSummary).expense === "number" &&
+		typeof (value as BalanceSummary).balance === "number" &&
+		typeof (value as BalanceSummary).savingsRate === "number" &&
+		isBalanceTrend((value as BalanceSummary).trend)
 	);
 }
 
 /**
- * 取引の型ガード
+ * BalanceSummaryのtrendフィールドの型ガード
  */
-export function isTransaction(value: unknown): value is Transaction {
-	if (typeof value !== "object" || value === null) return false;
-
-	const obj = value as Record<string, unknown>;
-	return (
-		typeof obj.id === "string" &&
-		typeof obj.amount === "number" &&
-		(obj.type === "expense" || obj.type === "income") &&
-		(obj.description === null || typeof obj.description === "string") &&
-		typeof obj.date === "string" &&
-		(obj.category === null || isCategory(obj.category)) &&
-		typeof obj.createdAt === "string" &&
-		typeof obj.updatedAt === "string"
-	);
+function isBalanceTrend(value: unknown): value is BalanceSummary["trend"] {
+	return value === "positive" || value === "negative" || value === "neutral";
 }
 
 /**
- * サブスクリプションの型ガード
+ * BalanceSummaryのアサーション関数
+ *
+ * 設計意図: 型ガードでの検証が失敗した場合に明確なエラーをスロー
+ * デバッグ時にエラーの原因を特定しやすくする
  */
-export function isSubscription(value: unknown): value is Subscription {
-	if (typeof value !== "object" || value === null) return false;
+export function assertBalanceSummary(
+	value: unknown,
+): asserts value is BalanceSummary {
+	if (!isBalanceSummary(value)) {
+		const details = analyzeBalanceSummaryError(value);
+		throw new Error(`Value is not a valid BalanceSummary: ${details}`);
+	}
+}
+
+/**
+ * BalanceSummary検証エラーの詳細分析
+ *
+ * 設計意図: どのフィールドが不正かを特定し、デバッグを容易にする
+ */
+function analyzeBalanceSummaryError(value: unknown): string {
+	if (typeof value !== "object" || value === null) {
+		return `expected object, got ${typeof value}`;
+	}
 
 	const obj = value as Record<string, unknown>;
-	return (
-		typeof obj.id === "string" &&
-		typeof obj.name === "string" &&
-		typeof obj.amount === "number" &&
-		(obj.billingCycle === "monthly" ||
-			obj.billingCycle === "yearly" ||
-			obj.billingCycle === "weekly") &&
-		typeof obj.nextBillingDate === "string" &&
-		(obj.description === null || typeof obj.description === "string") &&
-		typeof obj.isActive === "boolean" &&
-		(obj.category === null || isCategory(obj.category)) &&
-		typeof obj.createdAt === "string" &&
-		typeof obj.updatedAt === "string"
-	);
+	const errors: string[] = [];
+
+	// 必須フィールドのチェック
+	const requiredFields = [
+		"income",
+		"expense",
+		"balance",
+		"savingsRate",
+		"trend",
+	] as const;
+	for (const field of requiredFields) {
+		if (!(field in obj)) {
+			errors.push(`missing field: ${field}`);
+			continue;
+		}
+
+		// 数値フィールドの検証
+		if (field !== "trend" && typeof obj[field] !== "number") {
+			errors.push(`${field} must be number, got ${typeof obj[field]}`);
+		}
+	}
+
+	// trendフィールドの検証
+	if ("trend" in obj && !isBalanceTrend(obj.trend)) {
+		errors.push(
+			`trend must be 'positive', 'negative', or 'neutral', got ${obj.trend}`,
+		);
+	}
+
+	return errors.length > 0 ? errors.join(", ") : "unknown validation error";
 }
 
 /**
@@ -784,23 +621,10 @@ function createAssertFunction<T>(
 	};
 }
 
-/**
- * 各型のアサーション関数
- */
-export const assertCategory = createAssertFunction(isCategory, "Category");
-export const assertTransaction = createAssertFunction(
-	isTransaction,
-	"Transaction",
-);
-export const assertSubscription = createAssertFunction(
-	isSubscription,
-	"Subscription",
-);
 export const assertPaginationInfo = createAssertFunction(
 	isPaginationInfo,
 	"PaginationInfo",
 );
-// BalanceSummaryは独自の詳細なエラー分析を持つため、assertBalanceSummaryは既に定義済み
 
 // =============================================================================
 // レポート関連型の再エクスポート

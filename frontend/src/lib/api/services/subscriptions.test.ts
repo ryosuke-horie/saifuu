@@ -64,7 +64,8 @@ const mockSubscription: Subscription = {
 	nextBillingDate: "2024-08-01",
 	description: "動画配信サービス",
 	isActive: true,
-	category: null,
+	categoryId: "cat1",
+	startDate: "2024-01-01",
 	createdAt: "2024-07-01T00:00:00Z",
 	updatedAt: "2024-07-01T00:00:00Z",
 };
@@ -79,7 +80,8 @@ const mockSubscriptions: Subscription[] = [
 		nextBillingDate: "2024-08-15",
 		description: "音楽配信サービス",
 		isActive: false,
-		category: null,
+		categoryId: "cat1",
+		startDate: "2024-01-01",
 		createdAt: "2024-07-15T00:00:00Z",
 		updatedAt: "2024-07-15T00:00:00Z",
 	},
@@ -90,6 +92,7 @@ const mockCreateRequest: CreateSubscriptionRequest = {
 	amount: 850,
 	categoryId: "cat2",
 	billingCycle: "monthly",
+	startDate: "2024-07-20",
 	nextBillingDate: "2024-08-20",
 	description: "チームコミュニケーション",
 };
@@ -112,8 +115,8 @@ const mockStatsResponse: SubscriptionStatsResponse = {
 };
 
 const mockDeleteResponse: DeleteResponse = {
+	success: true,
 	message: "削除が完了しました",
-	deletedId: "sub1",
 };
 
 describe("subscriptions service", () => {

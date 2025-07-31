@@ -1,7 +1,7 @@
+import { INCOME_CATEGORIES } from "@shared/config/categories";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { INCOME_CATEGORIES } from "../../../../../shared/config/categories";
 import { createMockCategories } from "../../../test-utils/categoryHelpers";
 import type { IncomeFormData, IncomeFormProps } from "../../../types/income";
 import { IncomeForm } from "../IncomeForm";

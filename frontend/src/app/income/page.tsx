@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useIncomes } from "@/hooks/useIncomes";
 import { fetchCategories } from "@/lib/api/categories/api";
-import type { Transaction } from "@/lib/api/types";
+import type { TransactionWithCategory } from "@/lib/api/types";
 import type { Category } from "@/types/category";
 import type { IncomeFormData } from "@/types/income";
 import { DeleteConfirmDialog } from "../../components/income/DeleteConfirmDialog";
@@ -30,7 +30,8 @@ export default function IncomePage() {
 
 	// UI状態の管理
 	const [categories, setCategories] = useState<Category[]>([]);
-	const [editingIncome, setEditingIncome] = useState<Transaction | null>(null);
+	const [editingIncome, setEditingIncome] =
+		useState<TransactionWithCategory | null>(null);
 	const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
 	// カテゴリデータの取得
@@ -80,7 +81,7 @@ export default function IncomePage() {
 	};
 
 	// 編集ハンドラー
-	const handleEdit = (transaction: Transaction) => {
+	const handleEdit = (transaction: TransactionWithCategory) => {
 		setEditingIncome(transaction);
 	};
 
@@ -122,7 +123,7 @@ export default function IncomePage() {
 									type: "income" as const,
 									date: editingIncome.date,
 									description: editingIncome.description || "",
-									categoryId: editingIncome.category?.id || "",
+									categoryId: editingIncome.categoryId || "",
 								}
 							: undefined
 					}

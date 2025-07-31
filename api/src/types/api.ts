@@ -1,19 +1,39 @@
 /**
  * API共通の型定義
- * Matt Pocockの型定義方針に従い、型安全性を確保
+ * 共有型定義を再エクスポート
  */
 
-// 取引レスポンスの型定義
-export interface TransactionResponse {
+// 共有型定義から必要な型をインポート
+import type {
+	// Category型
+	Category,
+	CreateTransactionRequest,
+	DeleteResponse,
+	GetTransactionsQuery,
+	// Transaction型
+	Transaction,
+	UpdateTransactionRequest,
+} from '@shared/types'
+
+// 型ガード関数もインポート
+import { isCategory, isTransaction } from '@shared/types'
+
+// 再エクスポート
+export type {
+	Transaction,
+	CreateTransactionRequest,
+	UpdateTransactionRequest,
+	GetTransactionsQuery,
+	Category,
+	DeleteResponse,
+}
+
+export { isTransaction, isCategory }
+
+// APIレスポンス用の型エイリアス（互換性のため）
+export type TransactionResponse = Transaction & {
 	id: number
-	amount: number
-	type: 'income' | 'expense'
-	categoryId?: number
 	categoryName?: string
-	description?: string
-	date: string
-	createdAt: string
-	updatedAt: string
 }
 
 // 統計情報レスポンスの型定義
@@ -47,18 +67,9 @@ export interface ErrorResponse {
 
 // Type Guards
 export function isTransactionResponse(value: unknown): value is TransactionResponse {
-	return (
-		(typeof value === 'object' &&
-			value !== null &&
-			'id' in value &&
-			'amount' in value &&
-			'type' in value &&
-			'date' in value &&
-			'createdAt' in value &&
-			'updatedAt' in value &&
-			(value as TransactionResponse).type === 'income') ||
-		(value as TransactionResponse).type === 'expense'
-	)
+	if (!isTransaction(value)) return false
+	const transaction = value as unknown as Record<string, unknown>
+	return typeof transaction.id === 'number'
 }
 
 export function isStatsResponse(value: unknown): value is StatsResponse {

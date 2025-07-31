@@ -72,14 +72,7 @@ const mockTransaction: Transaction = {
 	type: "expense",
 	date: "2024-07-15",
 	description: "ランチ代",
-	category: {
-		id: "cat1",
-		name: "食費",
-		type: "expense",
-		color: "#FF6B6B",
-		createdAt: "2024-01-01T00:00:00Z",
-		updatedAt: "2024-01-01T00:00:00Z",
-	},
+	categoryId: "cat1",
 	createdAt: "2024-07-15T12:00:00Z",
 	updatedAt: "2024-07-15T12:00:00Z",
 };
@@ -90,14 +83,7 @@ const mockHighExpenseTransaction: Transaction = {
 	type: "expense",
 	date: "2024-07-01",
 	description: "家賃",
-	category: {
-		id: "cat2",
-		name: "家賃",
-		type: "expense",
-		color: "#4ECDC4",
-		createdAt: "2024-01-01T00:00:00Z",
-		updatedAt: "2024-01-01T00:00:00Z",
-	},
+	categoryId: "cat2",
 	createdAt: "2024-07-01T09:00:00Z",
 	updatedAt: "2024-07-01T09:00:00Z",
 };
@@ -162,8 +148,8 @@ const mockMonthlyStats: MonthlyStats[] = [
 ];
 
 const mockDeleteResponse: DeleteResponse = {
+	success: true,
 	message: "削除が完了しました",
-	deletedId: "txn1",
 };
 
 describe("transactions service", () => {
@@ -187,8 +173,8 @@ describe("transactions service", () => {
 			const query: GetTransactionsQuery = {
 				type: "expense",
 				categoryId: "cat1",
-				dateFrom: "2024-07-01",
-				dateTo: "2024-07-31",
+				startDate: "2024-07-01",
+				endDate: "2024-07-31",
 			};
 			mockApiClient.get.mockResolvedValue([mockTransaction]);
 
@@ -202,16 +188,16 @@ describe("transactions service", () => {
 				expect.stringContaining("categoryId=cat1"),
 			);
 			expect(mockApiClient.get).toHaveBeenCalledWith(
-				expect.stringContaining("dateFrom=2024-07-01"),
+				expect.stringContaining("startDate=2024-07-01"),
 			);
 			expect(mockApiClient.get).toHaveBeenCalledWith(
-				expect.stringContaining("dateTo=2024-07-31"),
+				expect.stringContaining("endDate=2024-07-31"),
 			);
 		});
 
-		it("ページネーション付きで取得する", async () => {
+		it("オフセット付きで取得する", async () => {
 			const query: GetTransactionsQuery = {
-				page: 2,
+				offset: 40,
 				limit: 20,
 			};
 			mockApiClient.get.mockResolvedValue(mockTransactions);
@@ -220,7 +206,7 @@ describe("transactions service", () => {
 
 			expect(result).toEqual(mockTransactions);
 			expect(mockApiClient.get).toHaveBeenCalledWith(
-				expect.stringContaining("page=2"),
+				expect.stringContaining("offset=40"),
 			);
 			expect(mockApiClient.get).toHaveBeenCalledWith(
 				expect.stringContaining("limit=20"),
@@ -334,10 +320,10 @@ describe("transactions service", () => {
 
 			expect(result).toEqual(mockStats);
 			expect(mockApiClient.get).toHaveBeenCalledWith(
-				expect.stringContaining("dateFrom=2024-07-01"),
+				expect.stringContaining("startDate=2024-07-01"),
 			);
 			expect(mockApiClient.get).toHaveBeenCalledWith(
-				expect.stringContaining("dateTo=2024-07-31"),
+				expect.stringContaining("endDate=2024-07-31"),
 			);
 		});
 	});

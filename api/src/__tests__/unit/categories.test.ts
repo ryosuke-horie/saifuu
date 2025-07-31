@@ -73,7 +73,7 @@ describe('Categories API - Unit Tests', () => {
 				expect(category).toHaveProperty('type')
 				expect(category).toHaveProperty('createdAt')
 				expect(category).toHaveProperty('updatedAt')
-				expect(typeof category.id).toBe('number')
+				expect(typeof category.id).toBe('string')
 				expect(typeof category.name).toBe('string')
 				expect(['income', 'expense']).toContain(category.type)
 			})
@@ -88,23 +88,23 @@ describe('Categories API - Unit Tests', () => {
 			expect(data).toEqual(
 				expect.arrayContaining([
 					expect.objectContaining({
-						id: 1,
+						id: '1',
 						name: '家賃・水道・光熱・通信費',
 						type: 'expense',
 					}),
 					expect.objectContaining({
-						id: 6,
+						id: '6',
 						name: 'システム関係費',
 						type: 'expense',
 					}),
 					expect.objectContaining({
-						id: 8,
+						id: '8',
 						name: '書籍代',
 						type: 'expense',
 					}),
 					// Issue #297: 娯楽カテゴリの追加
 					expect.objectContaining({
-						id: 18,
+						id: '18',
 						name: '娯楽',
 						type: 'expense',
 					}),

@@ -1,11 +1,11 @@
 // フロントエンドでZodスキーマを活用するためのバリデーション関数
 
-import { getCategoryById } from "../../../../shared/config/categories";
+import { getCategoryById } from "@shared/config/categories";
 import {
 	incomeCreateSchema,
 	subscriptionCreateSchema,
 	transactionCreateSchema,
-} from "../../../../shared/src/validation/zod-schemas";
+} from "@shared/validation/zod-schemas";
 import type { SubscriptionFormData } from "../../lib/api/types";
 import type { ExpenseFormData } from "../../types/expense";
 import type { IncomeFormData } from "../../types/income";

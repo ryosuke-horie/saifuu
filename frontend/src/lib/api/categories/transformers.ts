@@ -18,7 +18,7 @@ export function transformApiCategoryToFrontend(
 		id: apiCategory.id.toString(), // number -> string変換
 		name: apiCategory.name,
 		type: "expense", // デフォルトとして expense を設定
-		color: null, // デフォルトでは null
+		color: undefined, // 省略可能フィールドとして undefined
 		createdAt: apiCategory.createdAt,
 		updatedAt: apiCategory.updatedAt,
 	};

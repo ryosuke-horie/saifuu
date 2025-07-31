@@ -103,7 +103,8 @@ export async function getSubscriptionsByCategory(
 export async function getSubscriptionsByBillingCycle(
 	billingCycle: "monthly" | "yearly" | "weekly",
 ): Promise<Subscription[]> {
-	return getSubscriptions({ billingCycle });
+	const subscriptions = await getSubscriptions();
+	return subscriptions.filter((sub) => sub.billingCycle === billingCycle);
 }
 
 /**

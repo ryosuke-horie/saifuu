@@ -15,14 +15,7 @@ describe("convertTransactionToFormData", () => {
 			type: "expense",
 			description: "昼食代",
 			date: "2024-01-15",
-			category: {
-				id: "cat-1",
-				name: "食費",
-				type: "expense",
-				color: "#FF0000",
-				createdAt: "2024-01-01T00:00:00Z",
-				updatedAt: "2024-01-01T00:00:00Z",
-			},
+			categoryId: "cat-1",
 			createdAt: "2024-01-15T12:00:00Z",
 			updatedAt: "2024-01-15T12:00:00Z",
 		};
@@ -48,7 +41,7 @@ describe("convertTransactionToFormData", () => {
 			type: "income" as any, // 意図的にincomeタイプをテスト
 			description: "臨時収入",
 			date: "2024-01-20",
-			category: null,
+			categoryId: undefined,
 			createdAt: "2024-01-20T10:00:00Z",
 			updatedAt: "2024-01-20T10:00:00Z",
 		};
@@ -72,16 +65,9 @@ describe("convertTransactionToFormData", () => {
 			id: "3",
 			amount: 2000,
 			type: "expense",
-			description: null,
+			description: undefined,
 			date: "2024-01-25",
-			category: {
-				id: "cat-2",
-				name: "交通費",
-				type: "expense",
-				color: "#0000FF",
-				createdAt: "2024-01-01T00:00:00Z",
-				updatedAt: "2024-01-01T00:00:00Z",
-			},
+			categoryId: "cat-2",
 			createdAt: "2024-01-25T08:00:00Z",
 			updatedAt: "2024-01-25T08:00:00Z",
 		};
@@ -107,7 +93,7 @@ describe("convertTransactionToFormData", () => {
 			type: "expense",
 			description: "",
 			date: "2024-01-30",
-			category: null,
+			categoryId: undefined,
 			createdAt: "2024-01-30T14:00:00Z",
 			updatedAt: "2024-01-30T14:00:00Z",
 		};

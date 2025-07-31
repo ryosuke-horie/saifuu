@@ -1,6 +1,6 @@
+import { INCOME_CATEGORIES } from "@shared/config/categories";
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
-import { INCOME_CATEGORIES } from "../../../../shared/config/categories";
 import { createMockCategories } from "../../test-utils/categoryHelpers";
 import { IncomeForm } from "./IncomeForm";
 

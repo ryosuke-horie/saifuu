@@ -5,7 +5,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { HttpResponse, http } from "msw";
 import { useState } from "react";
-import type { Category, Transaction } from "../../lib/api/types";
+import type { Category, TransactionWithCategory } from "../../lib/api/types";
 import { EditExpenseDialog } from "./EditExpenseDialog";
 
 // モックカテゴリデータ
@@ -37,13 +37,14 @@ const mockCategories: Category[] = [
 ];
 
 // モック取引データ
-const mockTransaction: Transaction = {
+const mockTransaction: TransactionWithCategory = {
 	id: "tx-1",
 	amount: 1500,
 	type: "expense",
 	description: "昼食代",
 	date: "2024-01-15",
 	category: mockCategories[0],
+	categoryId: mockCategories[0].id,
 	createdAt: "2024-01-15T12:00:00Z",
 	updatedAt: "2024-01-15T12:00:00Z",
 };
@@ -148,7 +149,8 @@ export const WithoutCategory: Story = {
 		transaction: {
 			...mockTransaction,
 			category: null,
-		},
+			categoryId: null,
+		} as TransactionWithCategory,
 	},
 };
 
@@ -257,6 +259,7 @@ export const LargeAmountTransaction: Story = {
 			description: "会議費",
 			amount: 5000,
 			category: mockCategories[0],
-		},
+			categoryId: mockCategories[0].id,
+		} as TransactionWithCategory,
 	},
 };

@@ -5,11 +5,11 @@
  * ExpenseListコンポーネントのStorybookとテストで使用
  */
 
-import type { Transaction } from "../../../src/lib/api/types";
+import type { TransactionWithCategory } from "../../../src/lib/api/types";
 import { mockCategories } from "./categories";
 
 // 支出・収入データのモック
-export const mockTransactions: Transaction[] = [
+export const mockTransactions: TransactionWithCategory[] = [
 	{
 		id: "txn-1",
 		amount: 1000,
@@ -17,6 +17,7 @@ export const mockTransactions: Transaction[] = [
 		description: "昼食代（コンビニ弁当）",
 		date: "2025-07-09",
 		category: mockCategories.find((cat) => cat.name === "その他") || null,
+		categoryId: mockCategories.find((cat) => cat.name === "その他")?.id || null,
 		createdAt: "2025-07-09T12:30:00Z",
 		updatedAt: "2025-07-09T12:30:00Z",
 	},
@@ -27,6 +28,7 @@ export const mockTransactions: Transaction[] = [
 		description: "書籍代",
 		date: "2025-07-01",
 		category: mockCategories.find((cat) => cat.name === "その他") || null,
+		categoryId: mockCategories.find((cat) => cat.name === "その他")?.id || null,
 		createdAt: "2025-07-01T09:00:00Z",
 		updatedAt: "2025-07-01T09:00:00Z",
 	},
@@ -37,6 +39,7 @@ export const mockTransactions: Transaction[] = [
 		description: "電車代（通勤）",
 		date: "2025-07-08",
 		category: mockCategories.find((cat) => cat.name === "その他") || null,
+		categoryId: mockCategories.find((cat) => cat.name === "その他")?.id || null,
 		createdAt: "2025-07-08T08:15:00Z",
 		updatedAt: "2025-07-08T08:15:00Z",
 	},
@@ -47,6 +50,7 @@ export const mockTransactions: Transaction[] = [
 		description: "映画チケット",
 		date: "2025-07-07",
 		category: mockCategories.find((cat) => cat.name === "その他") || null,
+		categoryId: mockCategories.find((cat) => cat.name === "その他")?.id || null,
 		createdAt: "2025-07-07T19:30:00Z",
 		updatedAt: "2025-07-07T19:30:00Z",
 	},
@@ -58,6 +62,8 @@ export const mockTransactions: Transaction[] = [
 		date: "2025-07-05",
 		category:
 			mockCategories.find((cat) => cat.name === "仕事・ビジネス") || null,
+		categoryId:
+			mockCategories.find((cat) => cat.name === "仕事・ビジネス")?.id || null,
 		createdAt: "2025-07-05T14:20:00Z",
 		updatedAt: "2025-07-05T14:20:00Z",
 	},

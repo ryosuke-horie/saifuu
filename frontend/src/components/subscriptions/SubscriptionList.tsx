@@ -1,5 +1,8 @@
 import type { FC } from "react";
-import type { Subscription, SubscriptionListProps } from "../../lib/api/types";
+import type {
+	SubscriptionListProps,
+	SubscriptionWithCategory,
+} from "../../lib/api/types";
 import { LoadingState, Spinner } from "../ui";
 
 /**
@@ -18,7 +21,7 @@ import { LoadingState, Spinner } from "../ui";
 /**
  * 単一のサブスクリプション行コンポーネント
  */
-const SubscriptionRow: FC<{ subscription: Subscription }> = ({
+const SubscriptionRow: FC<{ subscription: SubscriptionWithCategory }> = ({
 	subscription,
 }) => {
 	// 料金を日本円形式でフォーマット
@@ -35,7 +38,7 @@ const SubscriptionRow: FC<{ subscription: Subscription }> = ({
 	};
 
 	// カテゴリを表示用に変換
-	const formatCategory = (subscription: Subscription): string => {
+	const formatCategory = (subscription: SubscriptionWithCategory): string => {
 		// 新しい API 構造では category は Category オブジェクトまたは null
 		if (subscription.category && typeof subscription.category === "object") {
 			return subscription.category.name;
@@ -83,7 +86,9 @@ const SubscriptionRow: FC<{ subscription: Subscription }> = ({
 				{formatCategory(subscription)}
 			</td>
 			<td className="px-4 py-3 text-sm text-gray-700">
-				{formatDate(subscription.nextBillingDate)}
+				{subscription.nextBillingDate
+					? formatDate(subscription.nextBillingDate)
+					: "---"}
 			</td>
 		</tr>
 	);

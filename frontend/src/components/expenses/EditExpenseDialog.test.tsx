@@ -5,7 +5,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { Category, Transaction } from "../../lib/api/types";
+import type { Category, TransactionWithCategory } from "../../lib/api/types";
 import { EditExpenseDialog } from "./EditExpenseDialog";
 
 // モックカテゴリデータ
@@ -29,13 +29,14 @@ const mockCategories: Category[] = [
 ];
 
 // モック取引データ
-const mockTransaction: Transaction = {
+const mockTransaction: TransactionWithCategory = {
 	id: "tx-1",
 	amount: 1000,
 	type: "expense",
 	description: "昼食代",
 	date: "2024-01-15",
 	category: mockCategories[0],
+	categoryId: mockCategories[0].id,
 	createdAt: "2024-01-15T12:00:00Z",
 	updatedAt: "2024-01-15T12:00:00Z",
 };
