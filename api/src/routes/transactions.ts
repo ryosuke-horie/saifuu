@@ -1,3 +1,4 @@
+import { ALL_CATEGORIES } from '@shared/config/categories'
 import { and, count, eq, gte, lte, sum } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { type AnyDatabase, type Env } from '../db'
@@ -12,6 +13,151 @@ import {
 	validateTransactionCreateWithZod,
 	validateTransactionUpdateWithZod,
 } from '../validation/zod-validators'
+
+/**
+ * 収入統計情報のレスポンス型定義
+ */
+interface IncomeStatsResponse {
+	currentMonth: number
+	lastMonth: number
+	currentYear: number
+	monthOverMonth: number
+	categoryBreakdown: Array<{
+		categoryId: number
+		name: string
+		amount: number
+		percentage: number
+	}>
+}
+
+/**
+ * 収入統計を処理するヘルパー関数
+ * SQL集計関数を使用してパフォーマンス最適化
+ * @param db - データベースインスタンス
+ * @param requestLogger - リクエストロガー
+ * @param c - Honoコンテキスト
+ */
+async function handleIncomeStats(
+	db: AnyDatabase,
+	requestLogger: ReturnType<typeof createRequestLogger>,
+	c: { json: (object: unknown) => Response }
+): Promise<Response> {
+	const now = new Date()
+	const currentYear = now.getFullYear()
+	const currentMonth = now.getMonth() + 1
+	const lastMonth = currentMonth === 1 ? 12 : currentMonth - 1
+	const lastMonthYear = currentMonth === 1 ? currentYear - 1 : currentYear
+
+	// 日付範囲の計算
+	const currentMonthStart = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`
+	const currentMonthEnd = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`
+	const lastMonthStart = `${lastMonthYear}-${String(lastMonth).padStart(2, '0')}-01`
+	const lastMonthEnd = `${lastMonthYear}-${String(lastMonth).padStart(2, '0')}-31`
+	const currentYearStart = `${currentYear}-01-01`
+	const currentYearEnd = `${currentYear}-12-31`
+
+	// SQL集計クエリを並列実行してパフォーマンス最適化
+	const [currentMonthStats, lastMonthStats, currentYearStats, categoryStats] = await Promise.all([
+		// 今月の収入統計
+		db
+			.select({
+				totalAmount: sum(transactions.amount),
+			})
+			.from(transactions)
+			.where(
+				and(
+					eq(transactions.type, 'income'),
+					gte(transactions.date, currentMonthStart),
+					lte(transactions.date, currentMonthEnd)
+				)
+			),
+
+		// 先月の収入統計
+		db
+			.select({
+				totalAmount: sum(transactions.amount),
+			})
+			.from(transactions)
+			.where(
+				and(
+					eq(transactions.type, 'income'),
+					gte(transactions.date, lastMonthStart),
+					lte(transactions.date, lastMonthEnd)
+				)
+			),
+
+		// 今年の収入統計
+		db
+			.select({
+				totalAmount: sum(transactions.amount),
+			})
+			.from(transactions)
+			.where(
+				and(
+					eq(transactions.type, 'income'),
+					gte(transactions.date, currentYearStart),
+					lte(transactions.date, currentYearEnd)
+				)
+			),
+
+		// 今月のカテゴリ別収入統計
+		db
+			.select({
+				categoryId: transactions.categoryId,
+				totalAmount: sum(transactions.amount),
+			})
+			.from(transactions)
+			.where(
+				and(
+					eq(transactions.type, 'income'),
+					gte(transactions.date, currentMonthStart),
+					lte(transactions.date, currentMonthEnd)
+				)
+			)
+			.groupBy(transactions.categoryId),
+	])
+
+	// 統計データの集計
+	const currentMonthTotal = Number(currentMonthStats[0]?.totalAmount || 0)
+	const lastMonthTotal = Number(lastMonthStats[0]?.totalAmount || 0)
+	const currentYearTotal = Number(currentYearStats[0]?.totalAmount || 0)
+
+	// 前月比増減率の計算（先月が0の場合は0を返す）
+	const monthOverMonth =
+		lastMonthTotal === 0 ? 0 : ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
+
+	// カテゴリ別内訳の処理
+	const categoryBreakdown = categoryStats
+		.filter((stat) => stat.categoryId && stat.totalAmount)
+		.map((stat) => {
+			const category = ALL_CATEGORIES.find((cat) => cat.numericId === stat.categoryId)
+			const amount = Number(stat.totalAmount)
+			const percentage = currentMonthTotal === 0 ? 0 : (amount / currentMonthTotal) * 100
+
+			return {
+				categoryId: stat.categoryId!,
+				name: category?.name || '不明なカテゴリ',
+				amount,
+				percentage: Math.round(percentage * 10) / 10, // 小数点第1位で四捨五入
+			}
+		})
+		.sort((a, b) => b.amount - a.amount) // 金額の降順でソート
+
+	const incomeStats: IncomeStatsResponse = {
+		currentMonth: currentMonthTotal,
+		lastMonth: lastMonthTotal,
+		currentYear: currentYearTotal,
+		monthOverMonth: Math.round(monthOverMonth * 10) / 10, // 小数点第1位で四捨五入
+		categoryBreakdown,
+	}
+
+	requestLogger.success({
+		...incomeStats,
+		categoriesCount: categoryBreakdown.length,
+	})
+
+	return c.json(incomeStats)
+}
 
 /**
  * 取引APIのファクトリ関数
@@ -148,13 +294,23 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 	/**
 	 * 取引統計情報を取得するエンドポイント（SQL集計関数使用で最適化済み）
 	 * @route GET /api/transactions/stats
-	 * @returns {object} 取引統計情報
+	 * @query {string} [type] - 統計タイプ（income: 収入統計、指定なし: 全体統計）
+	 * @returns {object} 取引統計情報 - typeパラメータによって形式が変わる
+	 *
+	 * 全体統計（typeなし）のレスポンス:
 	 * @returns {number} totalExpense - 総支出額
 	 * @returns {number} totalIncome - 総収入額
 	 * @returns {number} balance - 収支バランス
 	 * @returns {number} transactionCount - 総取引件数
 	 * @returns {number} expenseCount - 支出取引件数
 	 * @returns {number} incomeCount - 収入取引件数
+	 *
+	 * 収入統計（type=income）のレスポンス:
+	 * @returns {number} currentMonth - 今月の収入合計
+	 * @returns {number} lastMonth - 先月の収入合計
+	 * @returns {number} currentYear - 今年の収入合計
+	 * @returns {number} monthOverMonth - 前月比増減率（%）
+	 * @returns {Array} categoryBreakdown - カテゴリ別内訳
 	 */
 	app.get('/stats', async (c) => {
 		const requestLogger = createRequestLogger(c, {
@@ -164,7 +320,26 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 
 		try {
 			const db = options.testDatabase || c.get('db')
+			const queryParams = c.req.query()
+			const type = queryParams.type as string | undefined
 
+			// typeパラメータのバリデーション
+			if (type && !['income', 'expense'].includes(type)) {
+				requestLogger.warn('無効な統計タイプ', {
+					validationError: 'invalid_stats_type',
+					providedType: type,
+				})
+				throw new BadRequestError(
+					'Invalid type parameter. Allowed values are "income" or "expense"'
+				)
+			}
+
+			// 収入統計の場合
+			if (type === 'income') {
+				return await handleIncomeStats(db, requestLogger, c)
+			}
+
+			// 全体統計（従来のロジック）
 			// SQL集計関数を使用してパフォーマンス最適化
 			const [expenseStats, incomeStats, totalStats] = await Promise.all([
 				// 支出統計
