@@ -1,4 +1,3 @@
-import { ALL_CATEGORIES } from '@shared/config/categories'
 import { and, count, eq, gte, lte, sum } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { type AnyDatabase, type Env } from '../db'
@@ -7,6 +6,7 @@ import { BadRequestError, errorHandler, handleError } from '../lib/error-handler
 import { createRequestLogger } from '../lib/logger'
 import { createCrudHandlers } from '../lib/route-factory'
 import { type LoggingVariables } from '../middleware/logging'
+import { IncomeStatisticsService } from '../services/income-statistics.service'
 import { addCategoryInfo, type TransactionWithCategory } from '../utils/transaction-utils'
 import {
 	validateIdWithZod,
@@ -15,24 +15,60 @@ import {
 } from '../validation/zod-validators'
 
 /**
- * 収入統計情報のレスポンス型定義
+ * 統計タイプの定数定義
+ * Matt Pocock方針：const assertionで型安全性を保証
  */
-interface IncomeStatsResponse {
-	currentMonth: number
-	lastMonth: number
-	currentYear: number
-	monthOverMonth: number
-	categoryBreakdown: Array<{
-		categoryId: number
-		name: string
-		amount: number
-		percentage: number
-	}>
+const STATISTICS_TYPES = ['income', 'expense'] as const
+type StatisticsType = (typeof STATISTICS_TYPES)[number]
+
+/**
+ * 取引タイプの定数定義
+ * バリデーションで使用する有効な取引タイプ
+ */
+const TRANSACTION_TYPES = ['income', 'expense'] as const
+type TransactionType = (typeof TRANSACTION_TYPES)[number]
+
+/**
+ * 取引タイプの型ガード関数
+ * Matt Pocock方針：type guardで型安全性を保証
+ * @param value - 検証対象の値
+ * @returns 有効な取引タイプかどうか
+ */
+function isValidTransactionType(value: string): value is TransactionType {
+	return TRANSACTION_TYPES.includes(value as TransactionType)
+}
+
+/**
+ * 統計タイプの型ガード関数
+ * @param value - 検証対象の値
+ * @returns 有効な統計タイプかどうか
+ */
+function isValidStatisticsType(value: string): value is StatisticsType {
+	return STATISTICS_TYPES.includes(value as StatisticsType)
+}
+
+/**
+ * 取引タイプの検証とキャスト
+ * @param type - 検証対象の文字列
+ * @returns 有効な取引タイプまたはundefined
+ */
+function validateTransactionType(type: string | undefined): TransactionType | undefined {
+	return type && isValidTransactionType(type) ? type : undefined
+}
+
+/**
+ * 統計タイプの検証とキャスト
+ * @param type - 検証対象の文字列
+ * @returns 有効な統計タイプまたはundefined
+ */
+function validateStatisticsType(type: string | undefined): StatisticsType | undefined {
+	return type && isValidStatisticsType(type) ? type : undefined
 }
 
 /**
  * 収入統計を処理するヘルパー関数
- * SQL集計関数を使用してパフォーマンス最適化
+ * リファクタリング：IncomeStatisticsServiceに処理を委譲
+ * 単一責任の原則に従い、ルーティング層はHTTPハンドリングのみに集中
  * @param db - データベースインスタンス
  * @param requestLogger - リクエストロガー
  * @param c - Honoコンテキスト
@@ -42,121 +78,86 @@ async function handleIncomeStats(
 	requestLogger: ReturnType<typeof createRequestLogger>,
 	c: { json: (object: unknown) => Response }
 ): Promise<Response> {
-	const now = new Date()
-	const currentYear = now.getFullYear()
-	const currentMonth = now.getMonth() + 1
-	const lastMonth = currentMonth === 1 ? 12 : currentMonth - 1
-	const lastMonthYear = currentMonth === 1 ? currentYear - 1 : currentYear
+	// 依存性注入パターンでサービスを初期化
+	const incomeStatsService = new IncomeStatisticsService(db)
 
-	// 日付範囲の計算
-	const currentMonthStart = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`
-	const currentMonthEnd = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`
-	const lastMonthStart = `${lastMonthYear}-${String(lastMonth).padStart(2, '0')}-01`
-	const lastMonthEnd = `${lastMonthYear}-${String(lastMonth).padStart(2, '0')}-31`
-	const currentYearStart = `${currentYear}-01-01`
-	const currentYearEnd = `${currentYear}-12-31`
+	// ビジネスロジックをサービス層に委譲
+	const incomeStats = await incomeStatsService.calculateIncomeStatistics()
 
-	// SQL集計クエリを並列実行してパフォーマンス最適化
-	const [currentMonthStats, lastMonthStats, currentYearStats, categoryStats] = await Promise.all([
-		// 今月の収入統計
-		db
-			.select({
-				totalAmount: sum(transactions.amount),
-			})
-			.from(transactions)
-			.where(
-				and(
-					eq(transactions.type, 'income'),
-					gte(transactions.date, currentMonthStart),
-					lte(transactions.date, currentMonthEnd)
-				)
-			),
-
-		// 先月の収入統計
-		db
-			.select({
-				totalAmount: sum(transactions.amount),
-			})
-			.from(transactions)
-			.where(
-				and(
-					eq(transactions.type, 'income'),
-					gte(transactions.date, lastMonthStart),
-					lte(transactions.date, lastMonthEnd)
-				)
-			),
-
-		// 今年の収入統計
-		db
-			.select({
-				totalAmount: sum(transactions.amount),
-			})
-			.from(transactions)
-			.where(
-				and(
-					eq(transactions.type, 'income'),
-					gte(transactions.date, currentYearStart),
-					lte(transactions.date, currentYearEnd)
-				)
-			),
-
-		// 今月のカテゴリ別収入統計
-		db
-			.select({
-				categoryId: transactions.categoryId,
-				totalAmount: sum(transactions.amount),
-			})
-			.from(transactions)
-			.where(
-				and(
-					eq(transactions.type, 'income'),
-					gte(transactions.date, currentMonthStart),
-					lte(transactions.date, currentMonthEnd)
-				)
-			)
-			.groupBy(transactions.categoryId),
-	])
-
-	// 統計データの集計
-	const currentMonthTotal = Number(currentMonthStats[0]?.totalAmount || 0)
-	const lastMonthTotal = Number(lastMonthStats[0]?.totalAmount || 0)
-	const currentYearTotal = Number(currentYearStats[0]?.totalAmount || 0)
-
-	// 前月比増減率の計算（先月が0の場合は0を返す）
-	const monthOverMonth =
-		lastMonthTotal === 0 ? 0 : ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
-
-	// カテゴリ別内訳の処理
-	const categoryBreakdown = categoryStats
-		.filter((stat) => stat.categoryId && stat.totalAmount)
-		.map((stat) => {
-			const category = ALL_CATEGORIES.find((cat) => cat.numericId === stat.categoryId)
-			const amount = Number(stat.totalAmount)
-			const percentage = currentMonthTotal === 0 ? 0 : (amount / currentMonthTotal) * 100
-
-			return {
-				categoryId: stat.categoryId!,
-				name: category?.name || '不明なカテゴリ',
-				amount,
-				percentage: Math.round(percentage * 10) / 10, // 小数点第1位で四捨五入
-			}
-		})
-		.sort((a, b) => b.amount - a.amount) // 金額の降順でソート
-
-	const incomeStats: IncomeStatsResponse = {
-		currentMonth: currentMonthTotal,
-		lastMonth: lastMonthTotal,
-		currentYear: currentYearTotal,
-		monthOverMonth: Math.round(monthOverMonth * 10) / 10, // 小数点第1位で四捨五入
-		categoryBreakdown,
-	}
-
+	// ログ出力（統計情報と追加メトリクス）
 	requestLogger.success({
 		...incomeStats,
-		categoriesCount: categoryBreakdown.length,
+		categoriesCount: incomeStats.categoryBreakdown.length,
 	})
 
 	return c.json(incomeStats)
+}
+
+/**
+ * 全体統計のレスポンス型定義
+ * Matt Pocock方針：明示的で具体的な型定義
+ */
+interface OverallStatisticsResponse {
+	readonly totalExpense: number
+	readonly totalIncome: number
+	readonly balance: number
+	readonly transactionCount: number
+	readonly expenseCount: number
+	readonly incomeCount: number
+}
+
+/**
+ * 全体統計を計算する関数
+ * 支出・収入・全体の統計データを並列で取得し集計
+ * @param db - データベースインスタンス
+ * @returns 全体統計データ
+ */
+async function calculateOverallStatistics(db: AnyDatabase): Promise<OverallStatisticsResponse> {
+	// SQL集計クエリを並列実行してパフォーマンス最適化
+	const [expenseStats, incomeStats, totalStats] = await Promise.all([
+		// 支出統計
+		db
+			.select({
+				totalAmount: sum(transactions.amount),
+				count: count(transactions.id),
+			})
+			.from(transactions)
+			.where(eq(transactions.type, 'expense')),
+
+		// 収入統計
+		db
+			.select({
+				totalAmount: sum(transactions.amount),
+				count: count(transactions.id),
+			})
+			.from(transactions)
+			.where(eq(transactions.type, 'income')),
+
+		// 全体統計
+		db
+			.select({
+				count: count(transactions.id),
+			})
+			.from(transactions),
+	] as const)
+
+	// SQLの結果から統計データを安全に抽出
+	const totalExpense = Number(expenseStats[0]?.totalAmount || 0)
+	const expenseCount = Number(expenseStats[0]?.count || 0)
+	const totalIncome = Number(incomeStats[0]?.totalAmount || 0)
+	const incomeCount = Number(incomeStats[0]?.count || 0)
+	const transactionCount = Number(totalStats[0]?.count || 0)
+	const balance = totalIncome - totalExpense
+
+	// satisfiesで型安全性を保証
+	return {
+		totalExpense,
+		totalIncome,
+		balance,
+		transactionCount,
+		expenseCount,
+		incomeCount,
+	} satisfies OverallStatisticsResponse
 }
 
 /**
@@ -212,13 +213,9 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 			// クエリパラメータを取得
 			const queryParams = c.req.query()
 
-			// 型安全なバリデーション（const assertionと配列includesを使用）
-			const validTypes = ['income', 'expense'] as const
-			type ValidType = (typeof validTypes)[number]
-
+			// 型安全なバリデーション（定数配列とtype guardを使用）
 			const type = queryParams.type as string | undefined
-			const validatedType: ValidType | undefined =
-				type && validTypes.includes(type as ValidType) ? (type as ValidType) : undefined
+			const validatedType: TransactionType | undefined = validateTransactionType(type)
 
 			// typeパラメータの検証
 			if (type && !validatedType) {
@@ -323,8 +320,11 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 			const queryParams = c.req.query()
 			const type = queryParams.type as string | undefined
 
+			// 型安全な統計タイプのバリデーション
+			const validatedStatsType: StatisticsType | undefined = validateStatisticsType(type)
+
 			// typeパラメータのバリデーション
-			if (type && !['income', 'expense'].includes(type)) {
+			if (type && !validatedStatsType) {
 				requestLogger.warn('無効な統計タイプ', {
 					validationError: 'invalid_stats_type',
 					providedType: type,
@@ -334,60 +334,17 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 				)
 			}
 
-			// 収入統計の場合
-			if (type === 'income') {
+			// 収入統計の場合（型安全にチェック）
+			if (validatedStatsType === 'income') {
 				return await handleIncomeStats(db, requestLogger, c)
 			}
 
-			// 全体統計（従来のロジック）
-			// SQL集計関数を使用してパフォーマンス最適化
-			const [expenseStats, incomeStats, totalStats] = await Promise.all([
-				// 支出統計
-				db
-					.select({
-						totalAmount: sum(transactions.amount),
-						count: count(transactions.id),
-					})
-					.from(transactions)
-					.where(eq(transactions.type, 'expense')),
+			// 全体統計の処理
+			const overallStats = await calculateOverallStatistics(db)
 
-				// 収入統計
-				db
-					.select({
-						totalAmount: sum(transactions.amount),
-						count: count(transactions.id),
-					})
-					.from(transactions)
-					.where(eq(transactions.type, 'income')),
+			requestLogger.success(overallStats)
 
-				// 全体統計
-				db
-					.select({
-						count: count(transactions.id),
-					})
-					.from(transactions),
-			])
-
-			// SQLの結果から統計データを構築
-			const totalExpense = Number(expenseStats[0]?.totalAmount || 0)
-			const expenseCount = Number(expenseStats[0]?.count || 0)
-			const totalIncome = Number(incomeStats[0]?.totalAmount || 0)
-			const incomeCount = Number(incomeStats[0]?.count || 0)
-			const transactionCount = Number(totalStats[0]?.count || 0)
-			const balance = totalIncome - totalExpense
-
-			const stats = {
-				totalExpense,
-				totalIncome,
-				balance,
-				transactionCount,
-				expenseCount,
-				incomeCount,
-			}
-
-			requestLogger.success(stats)
-
-			return c.json(stats)
+			return c.json(overallStats)
 		} catch (error) {
 			return handleError(c, error, 'transactions')
 		}
