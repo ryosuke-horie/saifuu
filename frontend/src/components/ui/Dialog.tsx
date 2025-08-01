@@ -2,6 +2,7 @@
 
 import { type FC, type ReactNode, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { handleFocusTrap } from "../../lib/utils/keyboard";
 
 /**
  * Dialogコンポーネント
@@ -65,6 +66,12 @@ export interface DialogProps {
 	 * ダイアログコンテナに適用される
 	 */
 	className?: string;
+
+	/**
+	 * カスタムキーボードショートカットハンドラー
+	 * ダイアログ上でキーが押された際に呼び出される
+	 */
+	onKeyDown?: (event: React.KeyboardEvent<HTMLDivElement>) => void;
 }
 
 export const Dialog: FC<DialogProps> = ({
@@ -75,9 +82,25 @@ export const Dialog: FC<DialogProps> = ({
 	closeOnOverlayClick = true,
 	closeOnEsc = true,
 	className = "",
+	onKeyDown,
 }) => {
 	const dialogRef = useRef<HTMLDivElement>(null);
 	const previousActiveElement = useRef<HTMLElement | null>(null);
+
+	// フォーカストラップのハンドラー（抽出されたユーティリティを使用）
+
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLDivElement>) => {
+			// カスタムキーダウンハンドラーを先に実行
+			onKeyDown?.(e);
+
+			// フォーカストラップ処理（抽出されたユーティリティを使用）
+			if (dialogRef.current) {
+				handleFocusTrap(e, dialogRef.current);
+			}
+		},
+		[onKeyDown],
+	);
 
 	// オーバーレイクリックのハンドラー
 	const handleOverlayClick = useCallback(
@@ -207,6 +230,7 @@ export const Dialog: FC<DialogProps> = ({
 				aria-modal="true"
 				aria-labelledby={title ? "dialog-title" : undefined}
 				tabIndex={-1}
+				onKeyDown={handleKeyDown}
 			>
 				{/* クローズボタン */}
 				<button

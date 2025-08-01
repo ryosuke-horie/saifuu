@@ -13,18 +13,79 @@
  * - SubscriptionListコンポーネントのパターンを踏襲
  */
 
+import dynamic from "next/dynamic";
 import type { FC } from "react";
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import type { ExpenseListProps } from "../../types/expense";
 import { EmptyState, ErrorState } from "../common/table";
 import { TransactionRow } from "../transactions";
 import { LoadingState } from "../ui";
+
+// 定数定義
+const VIRTUAL_SCROLL_THRESHOLD = 100; // 仮想スクロールを有効にする閾値
+
+// 仮想スクロールコンポーネントの動的インポート
+// SSR環境でのwindowエラーを回避するため、クライアントサイドでのみロード
+const VirtualizedExpenseList = dynamic(
+	() =>
+		import("./VirtualizedExpenseList").then(
+			(mod) => mod.VirtualizedExpenseList,
+		),
+	{
+		ssr: false,
+		loading: () => (
+			<div className="text-center py-8">
+				<p className="text-gray-500">読み込み中...</p>
+			</div>
+		),
+	},
+);
+
+// テーブルヘッダーの列定義
+const TABLE_COLUMNS = [
+	{ key: "date", label: "日付" },
+	{ key: "amount", label: "金額" },
+	{
+		key: "category",
+		label: (
+			<>
+				<span className="sm:hidden">カテ</span>
+				<span className="hidden sm:inline">カテゴリ</span>
+			</>
+		),
+	},
+	{ key: "description", label: "説明" },
+	{ key: "actions", label: "操作" },
+] as const;
+
+// 共通のヘッダーセルスタイル
+const HEADER_CELL_CLASS =
+	"px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-tighter sm:tracking-wider" as const;
+
+/**
+ * テーブルヘッダーコンポーネント
+ * 仮想スクロール版と通常版で共通化
+ */
+const TableHeader = memo(() => (
+	<thead className="bg-gray-50">
+		<tr>
+			{TABLE_COLUMNS.map((column) => (
+				<th key={column.key} scope="col" className={HEADER_CELL_CLASS}>
+					{column.label}
+				</th>
+			))}
+		</tr>
+	</thead>
+));
+
+TableHeader.displayName = "TableHeader";
 
 /**
  * 支出一覧コンポーネント
  *
  * React.memoでパフォーマンス最適化
  * useMemoでソート処理の最適化
+ * @tanstack/react-virtualで仮想スクロール実装（大量データ時のみ）
  */
 export const ExpenseList: FC<ExpenseListProps> = memo(
 	({
@@ -35,7 +96,8 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 		onDelete,
 		className = "",
 	}) => {
-		// 取引データを日付降順でソート（useMemoで最適化）
+		// 取引データを日付降順でソート
+		// 新しい取引が上に来るようにソート（実装の詳細: Date.getTime()で数値比較）
 		const sortedTransactions = useMemo(() => {
 			return [...transactions].sort((a, b) => {
 				const dateA = new Date(a.date).getTime();
@@ -44,9 +106,78 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 			});
 		}, [transactions]);
 
+		// SSR時は仮想スクロールを無効化し、クライアントサイドでのみ有効化
+		const [isClient, setIsClient] = useState(false);
+
+		// クライアントサイドでのみtrueになる
+		useEffect(() => {
+			setIsClient(true);
+		}, []);
+
+		// 仮想スクロールを使用するかの判定
+		// 大量データのパフォーマンス向上のため、閾値を超えたら有効化
+		// ただし、SSR時は必ず無効化する
+		const useVirtualScroll =
+			isClient && sortedTransactions.length >= VIRTUAL_SCROLL_THRESHOLD;
+
+		// ローディング状態の表示
+		if (isLoading) {
+			return (
+				<div className={`bg-white rounded-lg shadow ${className}`}>
+					<div className="px-4 py-4 border-b border-gray-200">
+						<div>
+							<h2 className="text-lg font-semibold text-gray-900">支出一覧</h2>
+							<p className="text-sm text-gray-600 mt-1">支出の履歴</p>
+						</div>
+					</div>
+					<div className="px-4 py-8">
+						<LoadingState />
+					</div>
+				</div>
+			);
+		}
+
+		// エラー状態の表示
+		if (error) {
+			return (
+				<div className={`bg-white rounded-lg shadow ${className}`}>
+					<div className="px-4 py-4 border-b border-gray-200">
+						<div>
+							<h2 className="text-lg font-semibold text-gray-900">支出一覧</h2>
+							<p className="text-sm text-gray-600 mt-1">支出の履歴</p>
+						</div>
+					</div>
+					<div className="px-4 py-8">
+						<ErrorState message={error} />
+					</div>
+				</div>
+			);
+		}
+
+		// 空状態の表示
+		if (sortedTransactions.length === 0) {
+			return (
+				<div className={`bg-white rounded-lg shadow ${className}`}>
+					<div className="px-4 py-4 border-b border-gray-200">
+						<div>
+							<h2 className="text-lg font-semibold text-gray-900">支出一覧</h2>
+							<p className="text-sm text-gray-600 mt-1">支出の履歴</p>
+						</div>
+					</div>
+					<div className="px-4 py-8">
+						<EmptyState
+							message="登録されている取引がありません"
+							subMessage="新規登録ボタンから追加してください"
+							icon="💰"
+						/>
+					</div>
+				</div>
+			);
+		}
+
 		return (
 			<div className={`bg-white rounded-lg shadow ${className}`}>
-				{/* テーブルヘッダー */}
+				{/* コンポーネントヘッダー */}
 				<div className="px-4 py-4 border-b border-gray-200">
 					<div>
 						<h2 className="text-lg font-semibold text-gray-900">支出一覧</h2>
@@ -56,61 +187,25 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 
 				{/* テーブル本体 */}
 				<div className="overflow-x-auto">
-					<table className="min-w-full divide-y divide-gray-200">
-						<thead className="bg-gray-50">
-							<tr>
-								<th
-									scope="col"
-									className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-tighter sm:tracking-wider"
-								>
-									日付
-								</th>
-								<th
-									scope="col"
-									className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-tighter sm:tracking-wider"
-								>
-									金額
-								</th>
-								<th
-									scope="col"
-									className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-tighter sm:tracking-wider"
-								>
-									<span className="sm:hidden">カテ</span>
-									<span className="hidden sm:inline">カテゴリ</span>
-								</th>
-								<th
-									scope="col"
-									className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-tighter sm:tracking-wider"
-								>
-									説明
-								</th>
-								<th
-									scope="col"
-									className="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-tighter sm:tracking-wider"
-								>
-									操作
-								</th>
-							</tr>
-						</thead>
-						<tbody className="bg-white divide-y divide-gray-200">
-							{isLoading && (
-								<tr>
-									<td colSpan={5} className="px-4 py-8">
-										<LoadingState />
-									</td>
-								</tr>
-							)}
-							{error && <ErrorState message={error} />}
-							{!isLoading && !error && sortedTransactions.length === 0 && (
-								<EmptyState
-									message="登録されている取引がありません"
-									subMessage="新規登録ボタンから追加してください"
-									icon="💰"
-								/>
-							)}
-							{!isLoading &&
-								!error &&
-								sortedTransactions.map((transaction) => (
+					{useVirtualScroll ? (
+						// 仮想スクロール版（大量データ対応）
+						<>
+							<table className="min-w-full divide-y divide-gray-200">
+								<TableHeader />
+							</table>
+							{/* 仮想スクロールコンポーネント（動的インポート） */}
+							<VirtualizedExpenseList
+								transactions={sortedTransactions}
+								onEdit={onEdit}
+								onDelete={onDelete}
+							/>
+						</>
+					) : (
+						// 通常版（少量データ対応）
+						<table className="min-w-full divide-y divide-gray-200">
+							<TableHeader />
+							<tbody className="bg-white divide-y divide-gray-200">
+								{sortedTransactions.map((transaction) => (
 									<TransactionRow
 										key={transaction.id}
 										transaction={transaction}
@@ -119,8 +214,9 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 										showSign={true}
 									/>
 								))}
-						</tbody>
-					</table>
+							</tbody>
+						</table>
+					)}
 				</div>
 			</div>
 		);

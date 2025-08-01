@@ -103,12 +103,14 @@ describe("IncomePage", () => {
 		vi.mocked(useIncomes).mockReturnValue(defaultUseIncomesMock);
 	});
 
-	it("収入管理ページのタイトルが表示される", () => {
+	it("収入管理ページのタイトルが表示される", async () => {
 		render(<IncomePage />);
 
-		expect(
-			screen.getByRole("heading", { name: /収入管理/i }),
-		).toBeInTheDocument();
+		await waitFor(() => {
+			expect(
+				screen.getByRole("heading", { name: /収入管理/i }),
+			).toBeInTheDocument();
+		});
 	});
 
 	it("収入登録フォームが表示される", async () => {

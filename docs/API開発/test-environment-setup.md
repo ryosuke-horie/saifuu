@@ -84,10 +84,10 @@ api/src/__tests__/
 4. **Improve Error Handling**: Better error responses and status codes
 5. **Add Integration Tests**: Full database integration testing
 
-### 9. Coverage Goals
-- **Unit Tests**: 80% coverage minimum
-- **Integration Tests**: Major user flows
-- **Error Scenarios**: Comprehensive error handling
+### 9. Testing Focus Areas
+- **Unit Tests**: Core business logic and utility functions
+- **Integration Tests**: Major user flows and database interactions
+- **Error Scenarios**: Comprehensive error handling and edge cases
 
 ### 10. Testing Best Practices Implemented
 - Isolated test environments

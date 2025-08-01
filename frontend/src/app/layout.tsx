@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout";
+import { QueryProvider } from "@/components/providers";
 import { LoggedErrorBoundary, NextjsLoggerProvider } from "@/lib/logger";
 
 const geistSans = Geist({
@@ -117,10 +118,12 @@ export default function RootLayout({
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
 				<NextjsLoggerProvider config={loggerConfig}>
-					<LoggedErrorBoundary>
-						<Header />
-						{children}
-					</LoggedErrorBoundary>
+					<QueryProvider>
+						<LoggedErrorBoundary>
+							<Header />
+							{children}
+						</LoggedErrorBoundary>
+					</QueryProvider>
 				</NextjsLoggerProvider>
 			</body>
 		</html>

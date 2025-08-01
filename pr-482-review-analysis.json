@@ -1,0 +1,119 @@
+{
+  "pr_info": {
+    "number": 482,
+    "title": "[収入管理画面実装] Phase 3-2: トランザクション共通抽象化層の実装",
+    "state": "OPEN",
+    "url": "https://github.com/ryosuke-horie/saifuu/pull/482"
+  },
+  "total_unresolved_comments": 14,
+  "comments": [
+    {
+      "id": "PRRC_kwDOPDomwM6FonUY",
+      "thread_id": "PRRT_kwDOPDomwM5WFlQJ",
+      "file": "frontend/package.json",
+      "line": 38,
+      "type": "bug",
+      "priority": "critical",
+      "content": "**依存関係の不整合**\n\n`@hookform/resolvers`を追加していますが、`react-hook-form`自体が依存関係に含まれていません。",
+      "suggestion": "```json\n\"react-hook-form\": \"^7.60.0\",\n\"@hookform/resolvers\": \"^5.2.1\",\n```\n\nまたは、既存の実装パターンに合わせてReact Hook Formを使わずに標準のReactフォーム処理を使用",
+      "is_resolved": false,
+      "requires_response": true,
+      "duplicate_comments": ["PRRC_kwDOPDomwM6Fw1lB"]
+    },
+    {
+      "id": "PRRC_kwDOPDomwM6Fona8",
+      "thread_id": "PRRT_kwDOPDomwM5WFlUq",
+      "file": "frontend/src/hooks/useTransactions.ts",
+      "line": 25,
+      "type": "improvement",
+      "priority": "high",
+      "content": "**既存APIサービスとの重複実装**\n\n独自のfetch関数を定義していますが、既存のAPIサービス層との重複が発生しています。",
+      "suggestion": "既存のAPIサービス（`frontend/src/lib/api/`配下等）を使用するか、実際のAPIクライアントに合わせて調整",
+      "is_resolved": false,
+      "requires_response": true,
+      "duplicate_comments": ["PRRC_kwDOPDomwM6Fw1qg"]
+    },
+    {
+      "id": "PRRC_kwDOPDomwM6Fonhg",
+      "thread_id": "PRRT_kwDOPDomwM5WFlZV",
+      "file": "frontend/src/hooks/useTransactions.ts",
+      "line": 14,
+      "type": "improvement",
+      "priority": "medium",
+      "content": "**不適切な通知システム実装**\n\n`console.log`と`alert`を使った通知は本番環境には適していません。",
+      "suggestion": "既存の通知システムを使用するか、`sonner`等の適切なToastライブラリを使用",
+      "is_resolved": false,
+      "requires_response": true,
+      "duplicate_comments": ["PRRC_kwDOPDomwM6Fw1nd"]
+    },
+    {
+      "id": "PRRC_kwDOPDomwM6FonuO",
+      "thread_id": "PRRT_kwDOPDomwM5WFliG",
+      "file": "frontend/src/services/TransactionService.ts",
+      "line": 16,
+      "type": "improvement",
+      "priority": "high",
+      "content": "**バリデーションロジックの重複**\n\nTransactionServiceとTransactionFormコンポーネントで同じバリデーションロジックが重複しています。",
+      "suggestion": "Zodスキーマをサービス層に移動し、フォームとサービスで共用、またはTransactionServiceのバリデーションを削除してZodスキーマのみを使用",
+      "is_resolved": false,
+      "requires_response": true,
+      "duplicate_comments": ["PRRC_kwDOPDomwM6Fw1z5"]
+    },
+    {
+      "id": "PRRC_kwDOPDomwM6Fonzw",
+      "thread_id": "PRRT_kwDOPDomwM5WFlmC",
+      "file": "frontend/src/components/transactions/TransactionForm.tsx",
+      "line": 6,
+      "type": "bug",
+      "priority": "critical",
+      "content": "**未インストールのライブラリへの依存**\n\n`@hookform/resolvers/zod`をインポートしていますが、必要な依存関係が不足しています。",
+      "suggestion": "```bash\npnpm add react-hook-form zod @hookform/resolvers\n```\n\nまたは、CLAUDE.mdで推奨されている既存のパターンを踏襲",
+      "is_resolved": false,
+      "requires_response": true,
+      "duplicate_comments": ["PRRC_kwDOPDomwM6Fw1uP"]
+    },
+    {
+      "id": "PRRC_kwDOPDomwM6Fon5j",
+      "thread_id": "PRRT_kwDOPDomwM5WFlqD",
+      "file": "frontend/src/components/transactions/TransactionList.tsx",
+      "line": 11,
+      "type": "style",
+      "priority": "low",
+      "content": "**ハードコードされたSVGアイコン**\n\nSVGアイコンが直接コンポーネント内にハードコードされています。",
+      "suggestion": "既存のアイコンライブラリ（`lucide-react`等）を使用するか、共通のアイコンコンポーネントとして分離",
+      "is_resolved": false,
+      "requires_response": true,
+      "duplicate_comments": ["PRRC_kwDOPDomwM6Fw1wZ"]
+    },
+    {
+      "id": "PRRC_kwDOPDomwM6Fon-Y",
+      "thread_id": "PRRT_kwDOPDomwM5WFltr",
+      "file": "frontend/src/services/__tests__/TransactionService.test.ts",
+      "line": 54,
+      "type": "bug",
+      "priority": "low",
+      "content": "**テストデータの不整合**\n\nモックデータの`description`に誤字があります。`\"月絳\"` は `\"月給\"` の間違いと思われます。",
+      "suggestion": "```typescript\ndescription: \"月給\", // \"月絳\" → \"月給\"\n```",
+      "is_resolved": false,
+      "requires_response": false,
+      "duplicate_comments": ["PRRC_kwDOPDomwM6Fw12L"]
+    }
+  ],
+  "summary": {
+    "critical_issues": 2,
+    "high_priority_issues": 2,
+    "medium_priority_issues": 1,
+    "low_priority_issues": 2,
+    "categories": {
+      "dependency_issues": ["@hookform/resolvers without react-hook-form", "Missing zod dependency"],
+      "code_quality": ["API service duplication", "Validation logic duplication", "Hardcoded SVG icons"],
+      "ux_issues": ["Inappropriate notification system using alert()"],
+      "typos": ["月絳 -> 月給"]
+    },
+    "main_concerns": [
+      "Missing critical dependencies (react-hook-form, zod) that will cause build errors",
+      "Code duplication in API services and validation logic",
+      "Use of alert() for notifications which is poor UX"
+    ]
+  }
+}

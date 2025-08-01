@@ -28,7 +28,7 @@ export default defineConfig({
 	// 共通設定
 	use: {
 		// ベースURL（開発サーバー）
-		baseURL: "http://localhost:3001",
+		baseURL: "http://localhost:3000",
 
 		// 失敗時のスクリーンショット
 		screenshot: "only-on-failure",
@@ -57,13 +57,13 @@ export default defineConfig({
 	// webServer設定をコメントアウト
 	// webServer: [
 	// 	{
-	// 		command: "cd ../frontend && npm run dev",
+	// 		command: "cd ../frontend && pnpm run dev",
 	// 		url: "http://localhost:3000",
 	// 		reuseExistingServer: true,
 	// 		timeout: 120 * 1000,
 	// 	},
 	// 	{
-	// 		command: "cd ../api && npm run dev",
+	// 		command: "cd ../api && pnpm run dev",
 	// 		url: "http://localhost:5173/api/health",
 	// 		reuseExistingServer: true,
 	// 		timeout: 120 * 1000,

@@ -7,7 +7,7 @@
 import type { Category, Transaction, TransactionType } from "../lib/api/types";
 
 // 基本型をre-export
-export type { TransactionType } from "../lib/api/types";
+export type { Category, TransactionType } from "../lib/api/types";
 
 /**
  * 支出・収入フォームデータ
@@ -53,6 +53,11 @@ export interface ExpenseFormProps {
 	 * キャンセル時のコールバック
 	 */
 	onCancel: () => void;
+
+	/**
+	 * Escapeキー押下時のコールバック（オプション）
+	 */
+	onEscape?: () => void;
 
 	/**
 	 * 送信中の状態

@@ -1,5 +1,6 @@
 "use client";
 
+import { BalanceSummary } from "../components/dashboard/BalanceSummary";
 import { ErrorSection } from "../components/dashboard/ErrorSection";
 import { NavigationCard } from "../components/dashboard/NavigationCard";
 import { SubscriptionSummaryCard } from "../components/dashboard/SubscriptionSummaryCard";
@@ -56,7 +57,7 @@ export default function Home() {
 			<ErrorSection errors={errors} />
 
 			{/* サマリーセクション */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
 				{/* 支出サマリー */}
 				<SummaryCard
 					title="今月の支出"
@@ -79,6 +80,11 @@ export default function Home() {
 					stats={subscriptionStats?.stats}
 					isLoading={subscriptionLoading}
 				/>
+			</div>
+
+			{/* 収支バランスセクション */}
+			<div className="mb-8">
+				<BalanceSummary />
 			</div>
 
 			{/* ナビゲーションカード */}

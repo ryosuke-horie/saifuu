@@ -26,6 +26,15 @@ export interface StatsResponse {
 	incomeCount: number
 }
 
+// 収支サマリーレスポンスの型定義
+export interface BalanceSummaryResponse {
+	income: number
+	expense: number
+	balance: number
+	savingsRate: number
+	trend: 'positive' | 'negative' | 'neutral'
+}
+
 // エラーレスポンスの型定義
 export interface ErrorResponse {
 	error: string
@@ -62,6 +71,23 @@ export function isStatsResponse(value: unknown): value is StatsResponse {
 		'transactionCount' in value &&
 		'expenseCount' in value &&
 		'incomeCount' in value
+	)
+}
+
+export function isBalanceSummaryResponse(value: unknown): value is BalanceSummaryResponse {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		'income' in value &&
+		'expense' in value &&
+		'balance' in value &&
+		'savingsRate' in value &&
+		'trend' in value &&
+		typeof (value as BalanceSummaryResponse).income === 'number' &&
+		typeof (value as BalanceSummaryResponse).expense === 'number' &&
+		typeof (value as BalanceSummaryResponse).balance === 'number' &&
+		typeof (value as BalanceSummaryResponse).savingsRate === 'number' &&
+		['positive', 'negative', 'neutral'].includes((value as BalanceSummaryResponse).trend)
 	)
 }
 
