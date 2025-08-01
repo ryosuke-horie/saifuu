@@ -6,6 +6,20 @@ import {
 } from '../income-statistics.service'
 
 /**
+ * データベースクエリ結果の型定義
+ * 実際のDrizzle ORMのselect結果型を模倣
+ * Matt Pocock方針：明示的で再利用可能な型定義
+ */
+interface TotalAmountResult {
+	readonly totalAmount: string | null
+}
+
+interface CategoryStatisticsResult {
+	readonly categoryId: number | null
+	readonly totalAmount: string | null
+}
+
+/**
  * IncomeStatisticsServiceのユニットテスト
  * TDD方針：Red → Green → Refactor サイクルに従った実装テスト
  * Mock使用によりデータベース依存を排除し、ビジネスロジックに集中
@@ -28,39 +42,39 @@ describe('IncomeStatisticsService', () => {
 
 	describe('calculateIncomeStatistics', () => {
 		it('正常系：収入統計データを正しく計算して返す', async () => {
-			// Arrange: モックデータの設定
-			const mockCurrentMonthStats = [{ totalAmount: '50000' }]
-			const mockLastMonthStats = [{ totalAmount: '40000' }]
-			const mockCurrentYearStats = [{ totalAmount: '500000' }]
-			const mockCategoryStats = [
+			// Arrange: モックデータの設定（型安全な定義）
+			const mockCurrentMonthStats: TotalAmountResult[] = [{ totalAmount: '50000' }]
+			const mockLastMonthStats: TotalAmountResult[] = [{ totalAmount: '40000' }]
+			const mockCurrentYearStats: TotalAmountResult[] = [{ totalAmount: '500000' }]
+			const mockCategoryStats: CategoryStatisticsResult[] = [
 				{ categoryId: 1, totalAmount: '30000' },
 				{ categoryId: 2, totalAmount: '20000' },
 			]
 
-			// クエリメソッドのモック設定
+			// クエリメソッドのモック設定（型安全で実用的な実装）
 			vi.mocked(mockDb.select)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockResolvedValue(mockCurrentMonthStats),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockResolvedValue(mockLastMonthStats),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockResolvedValue(mockCurrentYearStats),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockReturnValue({
 							groupBy: vi.fn().mockResolvedValue(mockCategoryStats),
 						}),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 
 			// Act: テスト対象メソッドの実行
 			const result = await service.calculateIncomeStatistics()
@@ -87,36 +101,38 @@ describe('IncomeStatisticsService', () => {
 		})
 
 		it('エッジケース：先月が0円の場合、前月比が0%になる', async () => {
-			// Arrange: 先月が0円のモックデータ
-			const mockCurrentMonthStats = [{ totalAmount: '30000' }]
-			const mockLastMonthStats = [{ totalAmount: null }] // null = 0円
-			const mockCurrentYearStats = [{ totalAmount: '30000' }]
-			const mockCategoryStats = [{ categoryId: 1, totalAmount: '30000' }]
+			// Arrange: 先月が0円のモックデータ（型安全な定義）
+			const mockCurrentMonthStats: TotalAmountResult[] = [{ totalAmount: '30000' }]
+			const mockLastMonthStats: TotalAmountResult[] = [{ totalAmount: null }] // null = 0円
+			const mockCurrentYearStats: TotalAmountResult[] = [{ totalAmount: '30000' }]
+			const mockCategoryStats: CategoryStatisticsResult[] = [
+				{ categoryId: 1, totalAmount: '30000' },
+			]
 
-			// モック設定（簡略化）
+			// モック設定（型安全で実用的な実装）
 			vi.mocked(mockDb.select)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockResolvedValue(mockCurrentMonthStats),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockResolvedValue(mockLastMonthStats),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockResolvedValue(mockCurrentYearStats),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockReturnValue({
 							groupBy: vi.fn().mockResolvedValue(mockCategoryStats),
 						}),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 
 			// Act
 			const result = await service.calculateIncomeStatistics()
@@ -127,36 +143,36 @@ describe('IncomeStatisticsService', () => {
 		})
 
 		it('エッジケース：今月が0円の場合、カテゴリ別割合が0%になる', async () => {
-			// Arrange: 今月が0円のモックデータ
-			const mockCurrentMonthStats = [{ totalAmount: null }] // null = 0円
-			const mockLastMonthStats = [{ totalAmount: '10000' }]
-			const mockCurrentYearStats = [{ totalAmount: '10000' }]
-			const mockCategoryStats: any[] = [] // 空配列
+			// Arrange: 今月が0円のモックデータ（型安全な定義）
+			const mockCurrentMonthStats: TotalAmountResult[] = [{ totalAmount: null }] // null = 0円
+			const mockLastMonthStats: TotalAmountResult[] = [{ totalAmount: '10000' }]
+			const mockCurrentYearStats: TotalAmountResult[] = [{ totalAmount: '10000' }]
+			const mockCategoryStats: CategoryStatisticsResult[] = [] // 空配列（型安全）
 
-			// モック設定
+			// モック設定（型安全で実用的な実装）
 			vi.mocked(mockDb.select)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockResolvedValue(mockCurrentMonthStats),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockResolvedValue(mockLastMonthStats),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockResolvedValue(mockCurrentYearStats),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockReturnValue({
 							groupBy: vi.fn().mockResolvedValue(mockCategoryStats),
 						}),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 
 			// Act
 			const result = await service.calculateIncomeStatistics()
@@ -168,41 +184,41 @@ describe('IncomeStatisticsService', () => {
 		})
 
 		it('異常系：無効なカテゴリIDとnull金額をフィルタリングする', async () => {
-			// Arrange: 無効データを含むモックデータ
-			const mockCurrentMonthStats = [{ totalAmount: '40000' }]
-			const mockLastMonthStats = [{ totalAmount: '30000' }]
-			const mockCurrentYearStats = [{ totalAmount: '400000' }]
-			const mockCategoryStats = [
+			// Arrange: 無効データを含むモックデータ（型安全な定義）
+			const mockCurrentMonthStats: TotalAmountResult[] = [{ totalAmount: '40000' }]
+			const mockLastMonthStats: TotalAmountResult[] = [{ totalAmount: '30000' }]
+			const mockCurrentYearStats: TotalAmountResult[] = [{ totalAmount: '400000' }]
+			const mockCategoryStats: CategoryStatisticsResult[] = [
 				{ categoryId: 1, totalAmount: '20000' }, // 有効
 				{ categoryId: null, totalAmount: '10000' }, // 無効：categoryIdがnull
 				{ categoryId: 2, totalAmount: null }, // 無効：totalAmountがnull
 				{ categoryId: 3, totalAmount: '20000' }, // 有効
 			]
 
-			// モック設定
+			// モック設定（型安全で実用的な実装）
 			vi.mocked(mockDb.select)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockResolvedValue(mockCurrentMonthStats),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockResolvedValue(mockLastMonthStats),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockResolvedValue(mockCurrentYearStats),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 				.mockReturnValueOnce({
 					from: vi.fn().mockReturnValue({
 						where: vi.fn().mockReturnValue({
 							groupBy: vi.fn().mockResolvedValue(mockCategoryStats),
 						}),
 					}),
-				} as any)
+				} as unknown as ReturnType<AnyDatabase['select']>)
 
 			// Act
 			const result = await service.calculateIncomeStatistics()
