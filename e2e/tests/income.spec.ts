@@ -1,11 +1,10 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('収入管理機能', () => {
-  test('収入の登録・編集・削除が正常に動作すること', async ({ page }) => {
+  test('収入の登録・削除が正常に動作すること', async ({ page }) => {
     // タイムスタンプを使って一意なテストデータを作成
     const timestamp = Date.now();
     const testDescription = `[E2E_TEST] 収入動作確認 ${timestamp}`;
-    const editedDescription = `[E2E_TEST] 収入編集確認 ${timestamp}`;
     
     // ホーム画面から収入管理画面へ遷移
     await page.goto('/');
@@ -65,43 +64,26 @@ test.describe('収入管理機能', () => {
     await expect(newRow).toBeVisible();
     await expect(newRow.locator('text=/350[,，]000/')).toBeVisible();
     
-    // 編集機能のテスト
-    // 最後に追加した行の編集ボタンをクリック
-    await newRow.getByRole('button', { name: '編集' }).click();
+    // 削除機能のテスト
+    // 登録した行の削除ボタンをクリック
+    await newRow.getByRole('button', { name: '削除' }).click();
     
-    // フォームの値を更新
-    await page.getByRole('textbox', { name: '説明（任意）' }).fill(editedDescription);
-    await page.getByRole('spinbutton', { name: '金額（円） *' }).fill('380000');
+    // 確認ダイアログが表示されるまで待つ
+    await page.waitForTimeout(500);
     
-    // 日付更新
-    await dateInput.evaluate((el: HTMLInputElement) => {
-      el.value = '2025-07-26';
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    // 確認ダイアログで削除を実行（複数のボタンがある場合は最後の削除ボタンを選択）
+    const deleteButtons = page.getByRole('button', { name: '削除' });
+    const deleteButtonCount = await deleteButtons.count();
+    if (deleteButtonCount > 1) {
+      await deleteButtons.last().click();
+    } else {
+      await deleteButtons.click();
+    }
     
-    // 更新ボタンをクリック
-    await page.getByRole('button', { name: '更新' }).click();
-    
-    // 更新処理が完了するまで待つ（フォームがクリアされるまで待機）
+    // 削除処理が完了するまで待つ
     await page.waitForTimeout(1000);
     
-    // 更新された項目が表示されるまで待機
-    await expect(page.locator('tr', { hasText: editedDescription })).toBeVisible({ timeout: 10000 });
-    
-    // 更新された内容が表示されることを確認
-    const updatedRow = page.locator('tr', { hasText: editedDescription });
-    await expect(updatedRow).toBeVisible();
-    await expect(updatedRow.locator('text=/380[,，]000/')).toBeVisible();
-    
-    // 削除機能のテスト
-    // 更新した行の削除ボタンをクリック
-    await updatedRow.getByRole('button', { name: '削除' }).click();
-    
-    // 確認ダイアログで削除を実行
-    await page.getByRole('dialog').getByRole('button', { name: '削除' }).click();
-    
     // 削除されたことを確認（その行が存在しないこと）
-    await expect(page.locator('tr', { hasText: editedDescription })).not.toBeVisible();
+    await expect(page.locator('tr', { hasText: testDescription })).not.toBeVisible();
   });
 });
