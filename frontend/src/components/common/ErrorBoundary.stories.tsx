@@ -169,6 +169,7 @@ export const CustomFallback: Story = {
 					</h2>
 					<p className="text-red-600 mb-6">{error.message}</p>
 					<button
+						type="button"
 						onClick={onRetry}
 						className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700"
 					>
