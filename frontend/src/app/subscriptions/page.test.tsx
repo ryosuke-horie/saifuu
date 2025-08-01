@@ -3,7 +3,7 @@ import { vi } from "vitest";
 import { mockCategories } from "../../../.storybook/mocks/data/categories";
 import { mockSubscriptions } from "../../../.storybook/mocks/data/subscriptions";
 import type { Subscription } from "../../lib/api/types";
-import SubscriptionsPage from "./page";
+import SubscriptionsPage from "./page.client";
 
 /**
  * SubscriptionsPageコンポーネントのテスト

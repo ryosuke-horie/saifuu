@@ -6,7 +6,7 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import ExpensesPage from "./page";
+import ExpensesPage from "./page.client";
 
 // フックのモック
 vi.mock("../../hooks", () => ({

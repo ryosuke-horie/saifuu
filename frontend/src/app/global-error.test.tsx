@@ -57,7 +57,7 @@ describe("GlobalError", () => {
 			// コンポーネント内にhtml要素が含まれることを確認
 			// 注: jsdomの制限により、実際のhtml/bodyタグの検証は困難だが
 			// コンポーネントがレンダリングされることを確認
-			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
+			expect(screen.getByText("システムエラー")).toBeInTheDocument();
 
 			unmount();
 		});
@@ -68,7 +68,7 @@ describe("GlobalError", () => {
 			renderGlobalError(defaultError, mockReset);
 
 			// タイトル
-			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
+			expect(screen.getByText("システムエラー")).toBeInTheDocument();
 
 			// 説明文
 			expect(
@@ -101,6 +101,7 @@ describe("GlobalError", () => {
 				"items-center",
 				"justify-center",
 				"bg-gray-50",
+				"p-4",
 			);
 
 			// クリーンアップ
@@ -121,15 +122,17 @@ describe("GlobalError", () => {
 			renderGlobalError(defaultError, mockReset);
 
 			// 開発環境では、エラー詳細が表示される
-			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
+			expect(screen.getByText("システムエラー")).toBeInTheDocument();
 			expect(
 				screen.getByText(
 					"予期しないエラーが発生しました。しばらく待ってから再度お試しください。",
 				),
 			).toBeInTheDocument();
 
-			// 開発環境なので、エラーメッセージが表示される
-			expect(screen.getByText("テストエラー")).toBeInTheDocument();
+			// 開発環境なので、詳細表示ボタンがある
+			expect(
+				screen.getByRole("button", { name: "エラー詳細を表示" }),
+			).toBeInTheDocument();
 		});
 
 		it("エラーダイジェストがある場合は表示される", () => {
@@ -224,6 +227,121 @@ describe("GlobalError", () => {
 		});
 	});
 
+	describe("エラータイプ別表示", () => {
+		it("ネットワークエラーを適切に表示する", () => {
+			const networkError = new Error("Network Error") as Error & {
+				digest?: string;
+			};
+			networkError.name = "NetworkError";
+			renderGlobalError(networkError, mockReset);
+
+			expect(screen.getByText("ネットワークエラー")).toBeInTheDocument();
+			expect(
+				screen.getByText("インターネット接続を確認してください。"),
+			).toBeInTheDocument();
+		});
+
+		it("認証エラーを適切に表示する", () => {
+			const authError = new Error("Unauthorized") as Error & {
+				digest?: string;
+			};
+			authError.name = "AuthenticationError";
+			renderGlobalError(authError, mockReset);
+
+			expect(screen.getByText("認証エラー")).toBeInTheDocument();
+			expect(
+				screen.getByText("再度ログインしてください。"),
+			).toBeInTheDocument();
+		});
+
+		it("一般的なエラーを適切に表示する", () => {
+			renderGlobalError(defaultError, mockReset);
+
+			expect(screen.getByText("システムエラー")).toBeInTheDocument();
+			expect(
+				screen.getByText(
+					"予期しないエラーが発生しました。しばらく待ってから再度お試しください。",
+				),
+			).toBeInTheDocument();
+		});
+	});
+
+	describe("エラーレポート機能", () => {
+		it("エラーレポートボタンが表示される", () => {
+			renderGlobalError(defaultError, mockReset);
+
+			expect(
+				screen.getByRole("button", { name: "エラーを報告" }),
+			).toBeInTheDocument();
+		});
+
+		it("エラーレポートボタンをクリックするとエラー情報がコピーされる", async () => {
+			// ClipboardAPIのモック
+			Object.assign(navigator, {
+				clipboard: {
+					writeText: vi.fn().mockResolvedValue(undefined),
+				},
+			});
+
+			const user = userEvent.setup();
+			renderGlobalError(defaultError, mockReset);
+
+			const reportButton = screen.getByRole("button", { name: "エラーを報告" });
+			await user.click(reportButton);
+
+			await waitFor(() => {
+				expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+					expect.stringContaining("エラー情報"),
+				);
+			});
+		});
+	});
+
+	describe("詳細エラー情報（開発環境）", () => {
+		beforeEach(() => {
+			vi.stubEnv("NODE_ENV", "development");
+		});
+
+		afterEach(() => {
+			vi.unstubAllEnvs();
+		});
+
+		it("エラースタックトレースが表示される", () => {
+			const errorWithStack = new Error("テストエラー") as Error & {
+				digest?: string;
+			};
+			errorWithStack.stack = "Error: テストエラー\n    at test.tsx:10:5";
+			renderGlobalError(errorWithStack, mockReset);
+
+			expect(screen.getByText(/Error: テストエラー/)).toBeInTheDocument();
+			expect(screen.getByText(/at test.tsx:10:5/)).toBeInTheDocument();
+		});
+
+		it("エラー詳細の展開・折りたたみ機能", async () => {
+			const user = userEvent.setup();
+			const errorWithStack = new Error("テストエラー") as Error & {
+				digest?: string;
+			};
+			errorWithStack.stack = "Error: テストエラー\n    at test.tsx:10:5";
+			renderGlobalError(errorWithStack, mockReset);
+
+			const toggleButton = screen.getByRole("button", {
+				name: "エラー詳細を表示",
+			});
+			expect(toggleButton).toBeInTheDocument();
+
+			// 初期状態では詳細は非表示
+			expect(screen.queryByText(/at test.tsx:10:5/)).not.toBeInTheDocument();
+
+			// クリックで詳細を表示
+			await user.click(toggleButton);
+			expect(screen.getByText(/at test.tsx:10:5/)).toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: "エラー詳細を非表示" }),
+			).toBeInTheDocument();
+		});
+	});
+
 	describe("アクセシビリティ", () => {
 		it("ボタンとリンクが適切なロールを持つ", () => {
 			renderGlobalError(defaultError, mockReset);
@@ -233,6 +351,9 @@ describe("GlobalError", () => {
 
 			const homeLink = screen.getByRole("link", { name: "ホームに戻る" });
 			expect(homeLink.tagName).toBe("A");
+
+			const reportButton = screen.getByRole("button", { name: "エラーを報告" });
+			expect(reportButton).toHaveAttribute("type", "button");
 		});
 
 		it("キーボード操作でアクセス可能", async () => {
@@ -247,6 +368,28 @@ describe("GlobalError", () => {
 			await user.tab();
 			const homeLink = screen.getByRole("link", { name: "ホームに戻る" });
 			expect(homeLink).toHaveFocus();
+
+			await user.tab();
+			const reportButton = screen.getByRole("button", { name: "エラーを報告" });
+			expect(reportButton).toHaveFocus();
+		});
+
+		it("エラーメッセージにaria-liveが設定される", () => {
+			renderGlobalError(defaultError, mockReset);
+
+			const errorMessage = screen
+				.getByText("システムエラー")
+				.closest('[role="alert"]');
+			expect(errorMessage).toBeInTheDocument();
+			expect(errorMessage).toHaveAttribute("aria-live", "assertive");
+		});
+
+		it("スキップリンクが提供される", () => {
+			renderGlobalError(defaultError, mockReset);
+
+			const skipLink = screen.getByText("メインコンテンツにスキップ");
+			expect(skipLink).toBeInTheDocument();
+			expect(skipLink).toHaveAttribute("href", "#main-content");
 		});
 	});
 });

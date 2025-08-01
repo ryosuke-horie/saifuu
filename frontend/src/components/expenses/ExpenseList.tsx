@@ -13,7 +13,8 @@
  * - SubscriptionListコンポーネントのパターンを踏襲
  */
 
-import dynamic from "next/dynamic";
+// TODO: dynamic importは仮想スクロール無効化により一時的に不要
+// import dynamic from "next/dynamic";
 import type { FC } from "react";
 import { memo, useEffect, useMemo, useState } from "react";
 import type { ExpenseListProps } from "../../types/expense";
@@ -22,24 +23,25 @@ import { TransactionRow } from "../transactions";
 import { LoadingState } from "../ui";
 
 // 定数定義
-const VIRTUAL_SCROLL_THRESHOLD = 100; // 仮想スクロールを有効にする閾値
+// TODO: 仮想スクロール機能無効化により一時的に未使用
+// const VIRTUAL_SCROLL_THRESHOLD = 100; // 仮想スクロールを有効にする閾値
 
-// 仮想スクロールコンポーネントの動的インポート
-// SSR環境でのwindowエラーを回避するため、クライアントサイドでのみロード
-const VirtualizedExpenseList = dynamic(
-	() =>
-		import("./VirtualizedExpenseList").then(
-			(mod) => mod.VirtualizedExpenseList,
-		),
-	{
-		ssr: false,
-		loading: () => (
-			<div className="text-center py-8">
-				<p className="text-gray-500">読み込み中...</p>
-			</div>
-		),
-	},
-);
+// TODO: 仮想スクロール機能は現在無効化（@tanstack/react-virtual依存関係不足のため）
+// 後で必要に応じて@tanstack/react-virtualをインストールして有効化
+// const VirtualizedExpenseList = dynamic(
+// 	() =>
+// 		import("./VirtualizedExpenseList").then(
+// 			(mod) => mod.VirtualizedExpenseList,
+// 		),
+// 	{
+// 		ssr: false,
+// 		loading: () => (
+// 			<div className="text-center py-8">
+// 				<p className="text-gray-500">読み込み中...</p>
+// 			</div>
+// 		),
+// 	},
+// );
 
 // テーブルヘッダーの列定義
 const TABLE_COLUMNS = [
@@ -107,7 +109,7 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 		}, [transactions]);
 
 		// SSR時は仮想スクロールを無効化し、クライアントサイドでのみ有効化
-		const [isClient, setIsClient] = useState(false);
+		const [_isClient, setIsClient] = useState(false);
 
 		// クライアントサイドでのみtrueになる
 		useEffect(() => {
@@ -117,8 +119,8 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 		// 仮想スクロールを使用するかの判定
 		// 大量データのパフォーマンス向上のため、閾値を超えたら有効化
 		// ただし、SSR時は必ず無効化する
-		const useVirtualScroll =
-			isClient && sortedTransactions.length >= VIRTUAL_SCROLL_THRESHOLD;
+		// TODO: 現在は@tanstack/react-virtual依存関係不足のため無効化
+		const useVirtualScroll = false; // isClient && sortedTransactions.length >= VIRTUAL_SCROLL_THRESHOLD;
 
 		// ローディング状態の表示
 		if (isLoading) {
@@ -188,18 +190,10 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 				{/* テーブル本体 */}
 				<div className="overflow-x-auto">
 					{useVirtualScroll ? (
-						// 仮想スクロール版（大量データ対応）
-						<>
-							<table className="min-w-full divide-y divide-gray-200">
-								<TableHeader />
-							</table>
-							{/* 仮想スクロールコンポーネント（動的インポート） */}
-							<VirtualizedExpenseList
-								transactions={sortedTransactions}
-								onEdit={onEdit}
-								onDelete={onDelete}
-							/>
-						</>
+						// TODO: 仮想スクロール版（大量データ対応）- 現在無効化
+						<div className="text-center py-8">
+							<p className="text-gray-500">仮想スクロール機能は準備中です</p>
+						</div>
 					) : (
 						// 通常版（少量データ対応）
 						<table className="min-w-full divide-y divide-gray-200">

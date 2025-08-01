@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import ReportsPage from "../page";
+import ReportsPage from "../page.client";
 
-// モックデータの定義
+// モックデータの定義: Matt Pocock方針に従い型安全性を確保
 const mockMonthlyReports = [
 	{
 		month: "2025-01",
@@ -12,12 +12,17 @@ const mockMonthlyReports = [
 		balance: 200000,
 		savingsRate: 40,
 		categories: [
-			{ categoryId: "1", categoryName: "食費", amount: 50000, type: "expense" },
+			{
+				categoryId: "1",
+				categoryName: "食費",
+				amount: 50000,
+				type: "expense" as const,
+			},
 			{
 				categoryId: "101",
 				categoryName: "給与",
 				amount: 400000,
-				type: "income",
+				type: "income" as const,
 			},
 		],
 	},
@@ -28,12 +33,17 @@ const mockMonthlyReports = [
 		balance: 170000,
 		savingsRate: 37.8,
 		categories: [
-			{ categoryId: "1", categoryName: "食費", amount: 45000, type: "expense" },
+			{
+				categoryId: "1",
+				categoryName: "食費",
+				amount: 45000,
+				type: "expense" as const,
+			},
 			{
 				categoryId: "101",
 				categoryName: "給与",
 				amount: 400000,
-				type: "income",
+				type: "income" as const,
 			},
 		],
 	},
@@ -55,55 +65,74 @@ const mockCategoryBreakdown = {
 	],
 };
 
-// モック関数の定義
-const mockExportCSV = vi.fn();
-
-// 動的に変更可能なモックデータ
-let mockUseMonthlyReportsReturn: {
-	reports: typeof mockMonthlyReports;
-	isLoading: boolean;
-	error: Error | null;
-} = {
-	reports: mockMonthlyReports,
-	isLoading: false,
-	error: null,
-};
-
-let mockUseCategoryBreakdownReturn: {
-	breakdown: typeof mockCategoryBreakdown;
-	isLoading: boolean;
-	error: Error | null;
-} = {
-	breakdown: mockCategoryBreakdown,
-	isLoading: false,
-	error: null,
-};
-
 // モックの設定
-vi.mock("../../../lib/api/hooks/useReports", () => ({
-	useMonthlyReports: () => mockUseMonthlyReportsReturn,
-	useCategoryBreakdown: () => mockUseCategoryBreakdownReturn,
-	useExportReport: () => ({
-		exportCSV: mockExportCSV,
-		isExporting: false,
-		error: null,
-	}),
+const mockExportCSV = vi.fn();
+const _mockUseMonthlyReports = vi.fn();
+const _mockUseCategoryBreakdown = vi.fn();
+const _mockUseExportReport = vi.fn();
+
+vi.mock("@/lib/api/hooks/useReports", () => ({
+	useMonthlyReports: vi.fn(),
+	useCategoryBreakdown: vi.fn(),
+	useExportReport: vi.fn(),
+}));
+
+// Rechartsコンポーネントのモック
+vi.mock("recharts", () => ({
+	ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="responsive-container">{children}</div>
+	),
+	LineChart: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="line-chart">{children}</div>
+	),
+	PieChart: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="pie-chart">{children}</div>
+	),
+	AreaChart: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="area-chart">{children}</div>
+	),
+	BarChart: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="bar-chart">{children}</div>
+	),
+	CartesianGrid: () => <div data-testid="cartesian-grid" />,
+	XAxis: () => <div data-testid="x-axis" />,
+	YAxis: () => <div data-testid="y-axis" />,
+	Tooltip: () => <div data-testid="tooltip" />,
+	Legend: () => <div data-testid="legend" />,
+	Line: () => <div data-testid="line" />,
+	Pie: () => <div data-testid="pie" />,
+	Cell: () => <div data-testid="cell" />,
+	Area: () => <div data-testid="area" />,
+	Bar: () => <div data-testid="bar" />,
 }));
 
 describe("ReportsPage", () => {
-	beforeEach(() => {
-		// 各テストの前にモックをリセット
-		mockUseMonthlyReportsReturn = {
+	beforeEach(async () => {
+		// モックをリセット
+		vi.clearAllMocks();
+
+		// モックされたフックを取得
+		const { useMonthlyReports, useCategoryBreakdown, useExportReport } =
+			await import("@/lib/api/hooks/useReports");
+
+		// デフォルトの戻り値を設定
+		vi.mocked(useMonthlyReports).mockReturnValue({
 			reports: mockMonthlyReports,
 			isLoading: false,
 			error: null,
-		};
-		mockUseCategoryBreakdownReturn = {
+		});
+
+		vi.mocked(useCategoryBreakdown).mockReturnValue({
 			breakdown: mockCategoryBreakdown,
 			isLoading: false,
 			error: null,
-		};
-		mockExportCSV.mockClear();
+		});
+
+		vi.mocked(useExportReport).mockReturnValue({
+			exportCSV: mockExportCSV,
+			isExporting: false,
+			error: null,
+		});
 	});
 
 	it("ページタイトルが表示される", () => {
@@ -179,25 +208,27 @@ describe("ReportsPage", () => {
 		});
 	});
 
-	it("ローディング状態が正しく表示される", () => {
+	it("ローディング状態が正しく表示される", async () => {
 		// ローディング状態に設定
-		mockUseMonthlyReportsReturn = {
+		const { useMonthlyReports } = await import("@/lib/api/hooks/useReports");
+		vi.mocked(useMonthlyReports).mockReturnValue({
 			reports: [],
 			isLoading: true,
 			error: null,
-		};
+		});
 
 		render(<ReportsPage />);
 		expect(screen.getByText("読み込み中...")).toBeInTheDocument();
 	});
 
-	it("エラー状態が正しく表示される", () => {
+	it("エラー状態が正しく表示される", async () => {
 		// エラー状態に設定
-		mockUseMonthlyReportsReturn = {
+		const { useMonthlyReports } = await import("@/lib/api/hooks/useReports");
+		vi.mocked(useMonthlyReports).mockReturnValue({
 			reports: [],
 			isLoading: false,
 			error: new Error("データの取得に失敗しました"),
-		};
+		});
 
 		render(<ReportsPage />);
 		expect(screen.getByText("データの取得に失敗しました")).toBeInTheDocument();
