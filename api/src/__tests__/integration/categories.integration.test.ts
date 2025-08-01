@@ -23,7 +23,7 @@ import testProductionApp from '../helpers/test-production-app'
 
 // カテゴリレスポンスの型定義
 interface CategoryResponse {
-	id: number
+	id: string
 	name: string
 	type: 'income' | 'expense'
 	color: string
@@ -61,7 +61,7 @@ function isCategoryResponse(value: unknown): value is CategoryResponse {
 	const obj = value as { [key: string]: unknown }
 
 	// idの型チェック
-	if (typeof obj.id !== 'number' || !Number.isInteger(obj.id) || obj.id <= 0) {
+	if (typeof obj.id !== 'string' || obj.id.length === 0) {
 		return false
 	}
 
@@ -138,7 +138,7 @@ describe('Categories API - Integration Tests', () => {
 			// 最初のカテゴリを詳細に検証
 			const firstCategory = data[0]
 			const firstConfigCategory = ALL_CATEGORIES[0]
-			expect(firstCategory.id).toBe(firstConfigCategory.numericId)
+			expect(firstCategory.id).toBe(firstConfigCategory.numericId.toString())
 			expect(firstCategory.name).toBe(firstConfigCategory.name)
 			expect(firstCategory.type).toBe(firstConfigCategory.type)
 			expect(firstCategory.color).toBe(firstConfigCategory.color)
@@ -157,7 +157,7 @@ describe('Categories API - Integration Tests', () => {
 
 				if (isCategoryResponse(category)) {
 					// 型が保証されているため、安全にプロパティアクセス可能
-					expect(category.id).toBeGreaterThan(0)
+					expect(category.id.length).toBeGreaterThan(0)
 					expect(category.name.length).toBeGreaterThan(0)
 					expect(['income', 'expense']).toContain(category.type)
 					expect(category.color).toMatch(/^#[0-9A-F]{6}$/i)
@@ -177,7 +177,7 @@ describe('Categories API - Integration Tests', () => {
 			})
 			expect(systemFee).toBeDefined()
 			if (isCategoryResponse(systemFee)) {
-				expect(systemFee.id).toBe(getCategoryIdByName('システム関係費'))
+				expect(systemFee.id).toBe(getCategoryIdByName('システム関係費').toString())
 				expect(systemFee.type).toBe('expense')
 			}
 
@@ -186,7 +186,7 @@ describe('Categories API - Integration Tests', () => {
 			})
 			expect(books).toBeDefined()
 			if (isCategoryResponse(books)) {
-				expect(books.id).toBe(getCategoryIdByName('書籍代'))
+				expect(books.id).toBe(getCategoryIdByName('書籍代').toString())
 				expect(books.type).toBe('expense')
 			}
 
@@ -195,7 +195,7 @@ describe('Categories API - Integration Tests', () => {
 			})
 			expect(utilities).toBeDefined()
 			if (isCategoryResponse(utilities)) {
-				expect(utilities.id).toBe(getCategoryIdByName('家賃・水道・光熱・通信費'))
+				expect(utilities.id).toBe(getCategoryIdByName('家賃・水道・光熱・通信費').toString())
 				expect(utilities.type).toBe('expense')
 			}
 		})
@@ -328,7 +328,7 @@ describe('Categories API - Integration Tests', () => {
 			data.forEach((category: unknown, index: number) => {
 				if (isCategoryResponse(category)) {
 					const configCategory = ALL_CATEGORIES[index]
-					expect(category.id).toBe(configCategory.numericId)
+					expect(category.id).toBe(configCategory.numericId.toString())
 					expect(category.name).toBe(configCategory.name)
 				}
 			})
@@ -739,7 +739,7 @@ describe('Categories API - Integration Tests', () => {
 			const expenseByCategory = new Map<string, number>()
 			for (const tx of testTransactions) {
 				const category = categories.find((cat: unknown) => {
-					return isCategoryResponse(cat) && cat.id === tx.categoryId
+					return isCategoryResponse(cat) && cat.id === tx.categoryId.toString()
 				})
 				if (isCategoryResponse(category)) {
 					const current = expenseByCategory.get(category.name) || 0
@@ -778,7 +778,7 @@ describe('Categories API - Integration Tests', () => {
 					amount: 2000,
 					billingCycle: 'monthly',
 					nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-					categoryId: systemCategory.id,
+					categoryId: Number(systemCategory.id),
 					description: 'クラウドサービス月額',
 					isActive: true,
 				})
@@ -787,10 +787,10 @@ describe('Categories API - Integration Tests', () => {
 				const savedSubscriptions = await db
 					.select()
 					.from(subscriptions)
-					.where(eq(subscriptions.categoryId, systemCategory.id))
+					.where(eq(subscriptions.categoryId, Number(systemCategory.id)))
 
 				expect(savedSubscriptions.length).toBeGreaterThan(0)
-				expect(savedSubscriptions[0].categoryId).toBe(systemCategory.id)
+				expect(savedSubscriptions[0].categoryId).toBe(Number(systemCategory.id))
 			}
 		})
 	})
@@ -883,7 +883,7 @@ describe('Categories API - Integration Tests', () => {
 			const checkResponse = await createTestRequest(testProductionApp, 'GET', '/api/categories')
 			const categories = await getResponseJson(checkResponse)
 			const unchangedCategory = categories.find((cat: unknown) => {
-				return isCategoryResponse(cat) && cat.id === systemCategory.numericId
+				return isCategoryResponse(cat) && cat.id === systemCategory.numericId.toString()
 			})
 
 			if (isCategoryResponse(unchangedCategory)) {
