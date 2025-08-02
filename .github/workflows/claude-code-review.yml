@@ -19,28 +19,7 @@ jobs:
       id-token: write
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # PR全体の変更を取得するため
-
-      # PR情報を取得してブランチをチェックアウト
-      - name: Get PR branch
-        id: pr-info
-        run: |
-          PR_NUMBER=${{ github.event.issue.number }}
-          PR_DATA=$(gh pr view $PR_NUMBER --json headRefName,headRepository --jq '{branch: .headRefName, repo: (.headRepository.owner.login + "/" + .headRepository.name)}')
-          echo "branch=$(echo $PR_DATA | jq -r .branch)" >> $GITHUB_OUTPUT
-          echo "repo=$(echo $PR_DATA | jq -r .repo)" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Checkout PR branch
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ steps.pr-info.outputs.repo }}
-          ref: ${{ steps.pr-info.outputs.branch }}
-          fetch-depth: 0
+      # チェックアウトは不要 - GitHub MCPが直接差分を取得
 
       # 過去のレビューコメントを取得
       - name: Get previous review comments
@@ -104,14 +83,16 @@ jobs:
           # コメントトリガーによるレビュー用のプロンプト
           direct_prompt: |
             ユーザーから @claude メンションでレビューが要求されました。
+            PR番号: ${{ github.event.issue.number }}
+            リポジトリ: ${{ github.repository }}
             
             ${{ env.REVIEW_HISTORY }}
             
             このプルリクエスト（PR）をレビューし、GitHub のレビュー機能を使ってフィードバックをしてください。作業は次の手順に沿って進めてください：
             
             1.  **過去のレビューを確認する:** `mcp__github__get_pull_request_comments` を使って、このPRの既存のレビューコメントを取得し、既に指摘された内容を把握します。上記のレビュー履歴も参考にしてください。
-            2.  **レビューを開始する:** `mcp__github__create_pending_pull_request_review` を使って、保留中のレビューを開始します。
-            3.  **変更内容を確認する:** `mcp__github__get_pull_request_diff` を使って、コードの変更点や行番号を把握します。
+            2.  **変更内容を確認する:** `mcp__github__get_pull_request_diff` を使って、PR #${{ github.event.issue.number }} のコードの変更点や行番号を把握します。
+            3.  **レビューを開始する:** `mcp__github__create_pending_pull_request_review` を使って、保留中のレビューを開始します。
             4.  **インラインコメントを追加する:** 改善点や懸念事項があるコードの行には `mcp__github__add_pull_request_review_comment_to_pending_review` を使ってコメントを追加してください。修正方針が明確な場合には積極的にsuggestionを利用してください。
             5.  **レビューを提出する:** `mcp__github__submit_pending_pull_request_review` を使って、イベントタイプを「COMMENT」に設定してレビューを提出してください。まとめコメントは空文字列("")で構いません（※「REQUEST_CHANGES」は使わないでください）。
 
