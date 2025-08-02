@@ -33,8 +33,11 @@ export class TransactionService {
 		if (!data.date) {
 			errors.date = "日付を入力してください";
 		} else {
-			const selectedDate = new Date(data.date);
+			// 日付文字列をローカルタイムゾーンで解析し、日付部分のみを比較
+			const [year, month, day] = data.date.split("-").map(Number);
+			const selectedDate = new Date(year, month - 1, day, 0, 0, 0, 0);
 			const today = new Date();
+			// 今日の日付の終わり（23:59:59.999）に設定
 			today.setHours(23, 59, 59, 999);
 
 			if (selectedDate > today) {
@@ -155,12 +158,16 @@ export class TransactionService {
 		startDate: string,
 		endDate: string,
 	): Transaction[] {
-		const start = new Date(startDate);
-		const end = new Date(endDate);
-		end.setHours(23, 59, 59, 999);
+		// 日付文字列をローカルタイムゾーンで解析
+		const [startYear, startMonth, startDay] = startDate.split("-").map(Number);
+		const start = new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0);
+
+		const [endYear, endMonth, endDay] = endDate.split("-").map(Number);
+		const end = new Date(endYear, endMonth - 1, endDay, 23, 59, 59, 999);
 
 		return transactions.filter((t) => {
-			const date = new Date(t.date);
+			const [year, month, day] = t.date.split("-").map(Number);
+			const date = new Date(year, month - 1, day, 0, 0, 0, 0);
 			return date >= start && date <= end;
 		});
 	}
