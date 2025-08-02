@@ -119,7 +119,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 
 			// Mac用のショートカット (Cmd+Enter)
 			await user.keyboard("{Meta>}{Enter}{/Meta}");
-			
+
 			// 少し待機してから検証
 			await waitFor(() => {
 				expect(mockOnSubmit).toHaveBeenCalled();
