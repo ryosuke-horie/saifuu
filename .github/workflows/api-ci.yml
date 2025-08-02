@@ -68,6 +68,11 @@ jobs:
         with:
           version: 10.12.1
       
+      - name: Add pnpm to PATH
+        run: |
+          echo "$PNPM_HOME" >> $GITHUB_PATH
+          echo "PATH=$PNPM_HOME:$PATH" >> $GITHUB_ENV
+      
       - name: Install dependencies
         run: |
           # セルフホストランナーではキャッシュを使用しない
