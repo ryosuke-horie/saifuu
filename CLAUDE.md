@@ -408,12 +408,6 @@ cd api && pnpm run db:setup:dev
 
 ### 開発サーバー
 ```bash
-# フロントエンド（別ターミナル）
-pnpm run dev  # http://localhost:3000
-
-# API（別ターミナル）
-cd api && pnpm run dev  # http://localhost:5173
-
 # バックグラウンド実行（Ghost使用）
 ghost run pnpm run dev
 ghost run pnpm run storybook
@@ -430,10 +424,6 @@ cd api && pnpm run check:fix
 ```bash
 # ユニットテスト
 pnpm run test:unit
-
-# E2Eテスト（ローカルのみ）
-pnpm run test:e2e
-pnpm run test:e2e:ui  # UIモード
 ```
 
 ### データベース操作
