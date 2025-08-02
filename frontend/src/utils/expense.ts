@@ -22,8 +22,8 @@ export function convertTransactionToFormData(
 	return {
 		amount: transaction.amount,
 		type: transaction.type,
-		description: transaction.description || undefined,
+		description: transaction.description ?? undefined,
 		date: transaction.date,
-		categoryId: transaction.categoryId || undefined,
+		categoryId: transaction.categoryId ?? undefined,
 	};
 }
