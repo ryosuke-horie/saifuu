@@ -132,7 +132,7 @@ describe("TransactionService", () => {
 			const month = String(futureDate.getMonth() + 1).padStart(2, "0");
 			const day = String(futureDate.getDate()).padStart(2, "0");
 			const futureDateString = `${year}-${month}-${day}`;
-			
+
 			const invalidData: Partial<TransactionFormData> = {
 				amount: 1000,
 				type: "expense",
