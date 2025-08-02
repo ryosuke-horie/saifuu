@@ -61,8 +61,6 @@ const mockCategories: Category[] = [
  * - 送信中の状態管理
  * - ダイアログの開閉ロジック
  * - バリデーションとのインテグレーション
- *
- * 注: UI表示・インタラクションテストはStorybookに移行済み
  */
 
 // createPortalのモック

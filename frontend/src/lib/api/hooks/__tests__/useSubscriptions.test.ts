@@ -29,10 +29,6 @@ import {
 } from "../useSubscriptions";
 
 // subscriptionServiceをモック化
-// TODO: プロジェクトガイドラインに従い、MSW 2.10.2へ移行する
-// 優先度: 中、実装予定: APIモックの統一化時に一括対応
-// 設計方針: MSWハンドラーを.storybook/mocks/に統一管理し、
-// テストとStorybookで共通利用できるようにする
 vi.mock("../../services/subscriptions", () => ({
 	subscriptionService: {
 		getSubscriptions: vi.fn(),

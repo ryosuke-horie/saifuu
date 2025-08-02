@@ -49,9 +49,6 @@ pnpm run test:e2e          # E2Eテスト（ローカルのみ）
 # ビルド
 pnpm run build             # フロントエンド
 cd api && pnpm run build   # API
-
-# Storybook
-pnpm run storybook         # コンポーネント開発環境
 ```
 
 ## 詳細ドキュメント

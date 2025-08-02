@@ -5,8 +5,6 @@
  * - 送信処理とエラーハンドリング（重点）
  * - カテゴリデータのインテグレーション
  * - 送信中の状態管理
- *
- * 注: UI表示・インタラクションテストはStorybookに移行済み
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";

@@ -61,8 +61,6 @@ const mockCategories: Category[] = [
  * - 送信処理とエラーハンドリング
  * - 編集モードのデータ処理
  * - アクセシビリティ要素
- *
- * 注: UI表示・インタラクションテストはStorybookに移行
  */
 
 describe("SubscriptionForm", () => {

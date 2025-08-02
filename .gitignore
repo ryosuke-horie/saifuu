@@ -61,13 +61,6 @@ next-env.d.ts
 # Playwright
 **/playwright-report
 
-# storybook
-*storybook.log
-storybook-static
-chromatic-*
-.storybook/cache
-**/.storybook/*.css
-
 # visual regression testing
 **/__screenshots__/
 # ベースライン画像は管理対象（削除）

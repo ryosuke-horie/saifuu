@@ -309,10 +309,6 @@ describe("BrowserLogger", () => {
 			expect(prodConfig.level).toBe("info");
 			expect(prodConfig.enableConsole).toBe(false);
 			expect(prodConfig.bufferSize).toBe(100);
-
-			const storybookConfig = getDefaultConfig("storybook");
-			expect(storybookConfig.level).toBe("warn");
-			expect(storybookConfig.enableConsole).toBe(true);
 		});
 
 		it("設定検証が正しく動作する", () => {

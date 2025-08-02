@@ -26,7 +26,6 @@ export {
 	getLogLevelValue,
 	isDevelopment,
 	isProduction,
-	isStorybook,
 	mergeConfigs,
 	optimizeConfigForBrowser,
 	serializeConfig,
@@ -126,18 +125,6 @@ export {
 	useNextjsLogger,
 	withPageLogging,
 } from "./nextjs-integration";
-
-// Storybook統合
-export {
-	createStorybookConfig,
-	createStorybookLogger,
-	createStorybookPerformanceMonitor,
-	handleStorybookError,
-	isStorybookEnvironment,
-	logStorybookAction,
-	type StorybookLoggerConfig,
-	validateStorybookConfig,
-} from "./storybook-integration";
 
 // =============================================================================
 // 初期化ヘルパー

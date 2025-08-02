@@ -3,15 +3,13 @@
 	"entry": [
 		"src/app/**/*.{ts,tsx}",
 		"src/middleware.ts",
-		".storybook/main.ts",
-		".storybook/preview.ts",
 		"vitest.config.ts",
 		"vitest.setup.ts",
 		"next.config.ts",
 		"postcss.config.mjs",
 		"open-next.config.ts"
 	],
-	"project": ["src/**/*.{ts,tsx}", ".storybook/**/*.{ts,tsx}"],
+	"project": ["src/**/*.{ts,tsx}"],
 	"ignore": [
 		"**/*.test.{ts,tsx}",
 		"**/*.stories.{ts,tsx}",
@@ -19,9 +17,7 @@
 		"src/tests/**",
 		"src/__tests__/**",
 		"**/__tests__/**",
-		".storybook/mocks/**",
 		"public/mockServiceWorker.js",
-		"storybook-static/**",
 		"e2e-configs/**",
 		"playwright-report/**",
 		"test-results/**",
@@ -33,9 +29,6 @@
 		"@tailwindcss/postcss",
 		"tailwindcss",
 		"@playwright/test",
-		"@storybook/*",
-		"storybook",
-		"msw-storybook-addon",
 		"@vitest/*",
 		"vitest",
 		"@testing-library/*",
@@ -69,8 +62,5 @@
 	},
 	"vitest": {
 		"entry": ["vitest.config.ts", "vitest.setup.ts"]
-	},
-	"storybook": {
-		"entry": [".storybook/main.ts", ".storybook/preview.ts"]
 	}
 }

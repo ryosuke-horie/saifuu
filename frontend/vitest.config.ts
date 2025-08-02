@@ -3,13 +3,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-	plugins: [
-		react(),
-		// ビジュアルテスト用プラグイン
-		{
-			name: "storybook-addon-vis",
-		},
-	],
+	plugins: [react()],
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "./src"),
@@ -57,7 +51,6 @@ export default defineConfig({
 				"**/types/**",
 				"**/*.d.ts",
 				".next/**",
-				"storybook-static/**",
 			],
 			include: ["src/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 			thresholds: {

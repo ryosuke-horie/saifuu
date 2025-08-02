@@ -478,15 +478,4 @@ export const ErrorBoundaryPresets = {
 		maxRetries: 3,
 		resetOnPropsChange: false,
 	},
-
-	/**
-	 * Storybook環境用プリセット
-	 * 詳細なエラー情報、即座にリセット
-	 */
-	storybook: {
-		logLevel: "warn" as const,
-		enableRetry: true,
-		maxRetries: 1,
-		resetOnPropsChange: true,
-	},
 } as const;

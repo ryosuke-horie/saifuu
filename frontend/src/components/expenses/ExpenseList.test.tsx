@@ -6,13 +6,6 @@
  * - 編集・削除コールバック処理
  * - パフォーマンス（大量データ処理）
  * - アクセシビリティ要素
- *
- * 注: UI表示・レスポンシブデザインテストはStorybookに移行
- *
- * Issue #237で指摘された低価値テストは、Issue #310で既に削除済み:
- * - テーブルヘッダーの単純な文字列確認テスト（削除済み）
- * - roleの存在確認のみのARIA属性テスト（削除済み）
- * - DOM属性のカスタムクラス名テスト（削除済み）
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
