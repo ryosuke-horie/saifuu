@@ -11,6 +11,7 @@ import type {
 	ValidationResult,
 } from "@/types/transaction";
 
+// biome-ignore lint/complexity/noStaticOnlyClass: Service pattern with static methods for organization
 export class TransactionService {
 	// トランザクションデータのバリデーション
 	static validate(data: Partial<TransactionFormData>): ValidationResult {

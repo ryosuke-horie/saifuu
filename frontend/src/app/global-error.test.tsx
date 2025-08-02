@@ -3,8 +3,20 @@
 
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ErrorType } from "@/components/common/ErrorBoundary";
 import { render, screen, waitFor } from "@/test-utils";
 import GlobalError from "./global-error";
+
+// classifyError関数のモック
+vi.mock("@/components/common/ErrorBoundary", () => ({
+	ErrorType: {
+		NETWORK: "NETWORK",
+		VALIDATION: "VALIDATION",
+		SERVER: "SERVER",
+		UNKNOWN: "UNKNOWN",
+	},
+	classifyError: vi.fn(() => "UNKNOWN"),
+}));
 
 // html/bodyタグを含む実際のコンポーネントをテストするためのヘルパー関数
 const renderGlobalError = (
@@ -37,6 +49,8 @@ describe("GlobalError", () => {
 
 	beforeEach(() => {
 		mockReset.mockClear();
+		// alert関数をモック
+		global.alert = vi.fn();
 	});
 
 	afterEach(() => {
@@ -45,44 +59,24 @@ describe("GlobalError", () => {
 		document.body.innerHTML = "";
 	});
 
-	describe("HTMLドキュメント構造", () => {
-		it("html要素とbody要素が正しくレンダリングされる", () => {
-			// 実際のGlobalErrorコンポーネントをテスト
-			const container = document.createElement("div");
-			container.innerHTML = `<html lang="ja"><body></body></html>`;
-
-			// GlobalErrorが独自のhtml/bodyタグを持つことを確認
-			const { unmount } = renderGlobalError(defaultError, mockReset);
-
-			// コンポーネント内にhtml要素が含まれることを確認
-			// 注: jsdomの制限により、実際のhtml/bodyタグの検証は困難だが
-			// コンポーネントがレンダリングされることを確認
-			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
-
-			unmount();
-		});
-	});
-
 	describe("基本レンダリング", () => {
 		it("エラーページの基本要素が表示される", () => {
 			renderGlobalError(defaultError, mockReset);
 
-			// タイトル
-			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
+			// タイトル（デフォルトはUNKNOWNエラー）
+			expect(screen.getByText("予期しないエラー")).toBeInTheDocument();
 
 			// 説明文
 			expect(
-				screen.getByText(
-					"予期しないエラーが発生しました。しばらく待ってから再度お試しください。",
-				),
+				screen.getByText(/申し訳ございません。予期しないエラーが発生しました/),
 			).toBeInTheDocument();
 
 			// アイコン
-			expect(screen.getByText("⚠")).toBeInTheDocument();
+			expect(screen.getByLabelText("Error icon")).toBeInTheDocument();
 
 			// ボタン
 			expect(
-				screen.getByRole("button", { name: "再試行" }),
+				screen.getByRole("button", { name: /再試行/ }),
 			).toBeInTheDocument();
 			expect(
 				screen.getByRole("link", { name: "ホームに戻る" }),
@@ -92,7 +86,7 @@ describe("GlobalError", () => {
 		it("メインコンテナの構造が正しく設定される", () => {
 			const { unmount } = renderGlobalError(defaultError, mockReset);
 
-			// html/bodyタグ内のメインコンテナの構造を確認
+			// グラデーション背景を持つコンテナの構造を確認
 			const mainContainer = document.querySelector(".min-h-screen");
 			expect(mainContainer).toBeInTheDocument();
 			expect(mainContainer).toHaveClass(
@@ -100,11 +94,60 @@ describe("GlobalError", () => {
 				"flex",
 				"items-center",
 				"justify-center",
-				"bg-gray-50",
 			);
+
+			// カード要素の確認
+			const card = document.querySelector(".max-w-lg");
+			expect(card).toBeInTheDocument();
+			expect(card).toHaveClass("bg-white", "rounded-xl", "shadow-lg");
 
 			// クリーンアップ
 			unmount();
+		});
+	});
+
+	describe("エラータイプ別表示", () => {
+		it("ネットワークエラーの場合の表示", async () => {
+			const { classifyError } = await import(
+				"@/components/common/ErrorBoundary"
+			);
+			(classifyError as any).mockReturnValueOnce(ErrorType.NETWORK);
+
+			renderGlobalError(defaultError, mockReset);
+
+			expect(screen.getByText("ネットワークエラー")).toBeInTheDocument();
+			expect(
+				screen.getByText(/インターネット接続を確認してください/),
+			).toBeInTheDocument();
+			expect(screen.getByText("📡")).toBeInTheDocument();
+		});
+
+		it("検証エラーの場合の表示", async () => {
+			const { classifyError } = await import(
+				"@/components/common/ErrorBoundary"
+			);
+			(classifyError as any).mockReturnValueOnce(ErrorType.VALIDATION);
+
+			renderGlobalError(defaultError, mockReset);
+
+			expect(screen.getByText("入力エラー")).toBeInTheDocument();
+			expect(screen.getByText(/入力内容に問題があります/)).toBeInTheDocument();
+			expect(screen.getByText("📝")).toBeInTheDocument();
+		});
+
+		it("サーバーエラーの場合の表示", async () => {
+			const { classifyError } = await import(
+				"@/components/common/ErrorBoundary"
+			);
+			(classifyError as any).mockReturnValueOnce(ErrorType.SERVER);
+
+			renderGlobalError(defaultError, mockReset);
+
+			expect(screen.getByText("サーバーエラー")).toBeInTheDocument();
+			expect(
+				screen.getByText(/サーバーで問題が発生しました/),
+			).toBeInTheDocument();
+			expect(screen.getByText("🖥️")).toBeInTheDocument();
 		});
 	});
 
@@ -117,37 +160,66 @@ describe("GlobalError", () => {
 			vi.unstubAllEnvs();
 		});
 
-		it("開発環境ではエラーメッセージが表示される", () => {
+		it("開発環境ではエラー詳細ボタンが表示される", () => {
 			renderGlobalError(defaultError, mockReset);
 
-			// 開発環境では、エラー詳細が表示される
-			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
-			expect(
-				screen.getByText(
-					"予期しないエラーが発生しました。しばらく待ってから再度お試しください。",
-				),
-			).toBeInTheDocument();
-
-			// 開発環境なので、エラーメッセージが表示される
-			expect(screen.getByText("テストエラー")).toBeInTheDocument();
+			// エラー詳細ボタンの確認
+			const detailsButton = screen.getByRole("button", { name: /エラー詳細/ });
+			expect(detailsButton).toBeInTheDocument();
 		});
 
-		it("エラーダイジェストがある場合は表示される", () => {
+		it("エラー詳細を展開するとエラー情報が表示される", async () => {
+			const user = userEvent.setup();
 			renderGlobalError(errorWithDigest, mockReset);
 
-			// 開発環境では、エラー詳細が表示される
-			expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
-			expect(
-				screen.getByText(
-					"予期しないエラーが発生しました。しばらく待ってから再度お試しください。",
-				),
-			).toBeInTheDocument();
+			// エラー詳細ボタンをクリック
+			const detailsButton = screen.getByRole("button", { name: /エラー詳細/ });
+			await user.click(detailsButton);
 
-			// 開発環境なので、エラーメッセージとダイジェストが表示される
+			// エラータイプ
+			expect(screen.getByText("Error Type")).toBeInTheDocument();
+			expect(screen.getByText("UNKNOWN")).toBeInTheDocument();
+
+			// エラーメッセージ
+			expect(screen.getByText("Error Message")).toBeInTheDocument();
 			expect(screen.getByText("ダイジェスト付きエラー")).toBeInTheDocument();
-			expect(
-				screen.getByText("Error ID: error-digest-123"),
-			).toBeInTheDocument();
+
+			// エラーダイジェスト
+			expect(screen.getByText("Error Digest")).toBeInTheDocument();
+			expect(screen.getByText("error-digest-123")).toBeInTheDocument();
+
+			// タイムスタンプ
+			expect(screen.getByText("Timestamp")).toBeInTheDocument();
+		});
+
+		it("エラー報告ボタンが表示される", () => {
+			renderGlobalError(defaultError, mockReset);
+
+			const reportButton = screen.getByRole("button", { name: "エラーを報告" });
+			expect(reportButton).toBeInTheDocument();
+		});
+
+		it("エラー報告ボタンをクリックすると報告処理が実行される", async () => {
+			const user = userEvent.setup();
+			const consoleSpy = vi.spyOn(console, "log");
+
+			renderGlobalError(defaultError, mockReset);
+
+			const reportButton = screen.getByRole("button", { name: "エラーを報告" });
+			await user.click(reportButton);
+
+			// 送信中の表示確認
+			expect(screen.getByText("送信中...")).toBeInTheDocument();
+
+			// 報告完了を待つ
+			await waitFor(() => {
+				expect(global.alert).toHaveBeenCalledWith(
+					"エラーレポートを送信しました。ご協力ありがとうございます。",
+				);
+			});
+
+			// console.logが呼ばれたことを確認
+			expect(consoleSpy).toHaveBeenCalled();
 		});
 	});
 
@@ -160,19 +232,29 @@ describe("GlobalError", () => {
 			vi.unstubAllEnvs();
 		});
 
-		it("本番環境ではエラーメッセージが表示されない", () => {
+		it("本番環境ではエラー詳細ボタンが表示されない", () => {
 			renderGlobalError(defaultError, mockReset);
 
-			expect(screen.queryByText("テストエラー")).not.toBeInTheDocument();
+			expect(
+				screen.queryByRole("button", { name: /エラー詳細/ }),
+			).not.toBeInTheDocument();
+		});
+
+		it("本番環境ではエラー報告ボタンが表示されない", () => {
+			renderGlobalError(defaultError, mockReset);
+
+			expect(
+				screen.queryByRole("button", { name: "エラーを報告" }),
+			).not.toBeInTheDocument();
 		});
 	});
 
-	describe("インタラクション", () => {
+	describe("再試行機能", () => {
 		it("再試行ボタンをクリックするとreset関数が呼ばれる", async () => {
 			const user = userEvent.setup();
 			renderGlobalError(defaultError, mockReset);
 
-			const resetButton = screen.getByRole("button", { name: "再試行" });
+			const resetButton = screen.getByRole("button", { name: /再試行/ });
 			await user.click(resetButton);
 
 			await waitFor(() => {
@@ -180,6 +262,57 @@ describe("GlobalError", () => {
 			});
 		});
 
+		it("再試行回数が表示される", async () => {
+			const user = userEvent.setup();
+			renderGlobalError(defaultError, mockReset);
+
+			const resetButton = screen.getByRole("button", { name: /再試行/ });
+
+			// 1回目の再試行
+			await user.click(resetButton);
+			await waitFor(() => {
+				expect(screen.getByText("再試行回数: 1/3")).toBeInTheDocument();
+			});
+
+			// 2回目の再試行
+			await user.click(resetButton);
+			await waitFor(() => {
+				expect(screen.getByText("再試行回数: 2/3")).toBeInTheDocument();
+			});
+
+			// 3回目の再試行
+			await user.click(resetButton);
+			await waitFor(() => {
+				expect(screen.getByText("再試行回数: 3/3")).toBeInTheDocument();
+			});
+		});
+
+		it("再試行上限に達するとボタンが無効化される", async () => {
+			const user = userEvent.setup();
+			renderGlobalError(defaultError, mockReset);
+
+			const resetButton = screen.getByRole("button", { name: /再試行/ });
+
+			// 3回クリック
+			await user.click(resetButton);
+			await user.click(resetButton);
+			await user.click(resetButton);
+
+			// 3回目のクリック後、ボタンが無効化されて表示が変わる
+			await waitFor(() => {
+				expect(screen.getByText("再試行回数: 3/3")).toBeInTheDocument();
+			});
+
+			// ボタンが無効化されている
+			expect(screen.getByText("再試行の上限に達しました")).toBeInTheDocument();
+			expect(resetButton).toBeDisabled();
+
+			// reset関数が3回呼ばれたことを確認
+			expect(mockReset).toHaveBeenCalledTimes(3);
+		});
+	});
+
+	describe("インタラクション", () => {
 		it("ホームに戻るリンクが正しいhref属性を持つ", () => {
 			renderGlobalError(defaultError, mockReset);
 
@@ -192,18 +325,15 @@ describe("GlobalError", () => {
 		it("再試行ボタンに適切なクラスが適用される", () => {
 			renderGlobalError(defaultError, mockReset);
 
-			const resetButton = screen.getByRole("button", { name: "再試行" });
+			const resetButton = screen.getByRole("button", { name: /再試行/ });
 			expect(resetButton).toHaveClass(
-				"inline-block",
 				"w-full",
 				"px-6",
 				"py-3",
 				"bg-blue-600",
 				"text-white",
 				"font-medium",
-				"rounded-md",
-				"hover:bg-blue-700",
-				"transition-colors",
+				"rounded-lg",
 			);
 		});
 
@@ -212,15 +342,41 @@ describe("GlobalError", () => {
 
 			const homeLink = screen.getByRole("link", { name: "ホームに戻る" });
 			expect(homeLink).toHaveClass(
-				"inline-block",
+				"block",
 				"w-full",
 				"px-6",
 				"py-3",
-				"bg-gray-200",
+				"bg-gray-100",
 				"text-gray-700",
 				"font-medium",
-				"rounded-md",
+				"rounded-lg",
 			);
+		});
+
+		it("エラータイプに応じて適切な色のヘッダーが表示される", async () => {
+			const { classifyError } = await import(
+				"@/components/common/ErrorBoundary"
+			);
+
+			// ネットワークエラー（オレンジ）
+			(classifyError as any).mockReturnValueOnce(ErrorType.NETWORK);
+			const { unmount: unmount1 } = renderGlobalError(defaultError, mockReset);
+			let header = document.querySelector(".border-b-4");
+			expect(header).toHaveClass("bg-orange-100", "text-orange-600");
+			unmount1();
+
+			// サーバーエラー（赤）
+			(classifyError as any).mockReturnValueOnce(ErrorType.SERVER);
+			const { unmount: unmount2 } = renderGlobalError(defaultError, mockReset);
+			header = document.querySelector(".border-b-4");
+			expect(header).toHaveClass("bg-red-100", "text-red-600");
+			unmount2();
+
+			// 検証エラー（黄色）
+			(classifyError as any).mockReturnValueOnce(ErrorType.VALIDATION);
+			renderGlobalError(defaultError, mockReset);
+			header = document.querySelector(".border-b-4");
+			expect(header).toHaveClass("bg-yellow-100", "text-yellow-600");
 		});
 	});
 
@@ -228,7 +384,7 @@ describe("GlobalError", () => {
 		it("ボタンとリンクが適切なロールを持つ", () => {
 			renderGlobalError(defaultError, mockReset);
 
-			const resetButton = screen.getByRole("button", { name: "再試行" });
+			const resetButton = screen.getByRole("button", { name: /再試行/ });
 			expect(resetButton).toHaveAttribute("type", "button");
 
 			const homeLink = screen.getByRole("link", { name: "ホームに戻る" });
@@ -241,12 +397,20 @@ describe("GlobalError", () => {
 
 			// Tabキーでフォーカス移動
 			await user.tab();
-			const resetButton = screen.getByRole("button", { name: "再試行" });
+			const resetButton = screen.getByRole("button", { name: /再試行/ });
 			expect(resetButton).toHaveFocus();
 
 			await user.tab();
 			const homeLink = screen.getByRole("link", { name: "ホームに戻る" });
 			expect(homeLink).toHaveFocus();
+		});
+
+		it("アイコンに適切なaria-labelが設定される", () => {
+			renderGlobalError(defaultError, mockReset);
+
+			const icon = screen.getByLabelText("Error icon");
+			expect(icon).toHaveAttribute("role", "img");
+			expect(icon).toHaveAttribute("aria-label", "Error icon");
 		});
 	});
 });
