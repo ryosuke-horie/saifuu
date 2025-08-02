@@ -19,7 +19,28 @@ jobs:
       id-token: write
     
     steps:
-      # チェックアウトは不要 - GitHub MCPが直接差分を取得
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # PR全体の変更を取得するため
+
+      # PR情報を取得してブランチをチェックアウト
+      - name: Get PR branch
+        id: pr-info
+        run: |
+          PR_NUMBER=${{ github.event.issue.number }}
+          PR_DATA=$(gh pr view $PR_NUMBER --json headRefName,headRepository --jq '{branch: .headRefName, repo: (.headRepository.owner.login + "/" + .headRepository.name)}')
+          echo "branch=$(echo $PR_DATA | jq -r .branch)" >> $GITHUB_OUTPUT
+          echo "repo=$(echo $PR_DATA | jq -r .repo)" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.pr-info.outputs.repo }}
+          ref: ${{ steps.pr-info.outputs.branch }}
+          fetch-depth: 0
 
       # 過去のレビューコメントを取得
       - name: Get previous review comments
