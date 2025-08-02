@@ -1,6 +1,6 @@
 /**
  * IncomeFiltersコンポーネントのテスト
- * 
+ *
  * 収入データのフィルタリング機能を検証
  * 期間、カテゴリ、金額範囲によるフィルタリングをテスト
  */
@@ -11,7 +11,7 @@ import userEvent from "@testing-library/user-event";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { describe, expect, it, vi } from "vitest";
 import { createMockCategories } from "../../../test-utils/categoryHelpers";
-import type { IncomeFiltersProps, IncomeFiltersState } from "../../../types/income";
+import type { IncomeFiltersProps } from "../../../types/income";
 import { IncomeFilters } from "../IncomeFilters";
 
 // Next.js のルーター機能をモック
@@ -34,9 +34,15 @@ describe("IncomeFilters", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		(useRouter as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
-		(useSearchParams as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockSearchParams);
-		(usePathname as unknown as ReturnType<typeof vi.fn>).mockReturnValue("/income");
+		(useRouter as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+			mockRouter,
+		);
+		(useSearchParams as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+			mockSearchParams,
+		);
+		(usePathname as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+			"/income",
+		);
 	});
 
 	it("収入フィルターコンポーネントが正しくレンダリングされること", () => {
@@ -48,7 +54,9 @@ describe("IncomeFilters", () => {
 		expect(screen.getByText("カテゴリ")).toBeInTheDocument();
 		expect(screen.getByLabelText("最小金額")).toBeInTheDocument();
 		expect(screen.getByLabelText("最大金額")).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "リセット" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "リセット" }),
+		).toBeInTheDocument();
 	});
 
 	it("期間フィルターが正しく動作すること", async () => {
@@ -56,21 +64,21 @@ describe("IncomeFilters", () => {
 		render(<IncomeFilters {...defaultProps} />);
 
 		const periodSelect = screen.getByLabelText("期間");
-		
+
 		// 今月を選択
 		await user.selectOptions(periodSelect, "thisMonth");
-		
+
 		await waitFor(() => {
 			expect(mockOnFiltersChange).toHaveBeenCalledWith(
 				expect.objectContaining({
 					period: "thisMonth",
-				})
+				}),
 			);
 		});
 
 		// カスタム期間を選択
 		await user.selectOptions(periodSelect, "custom");
-		
+
 		// カスタム期間の日付入力フィールドが表示される
 		await waitFor(() => {
 			expect(screen.getByLabelText("開始日")).toBeInTheDocument();
@@ -99,7 +107,7 @@ describe("IncomeFilters", () => {
 					period: "custom",
 					startDate: "2025-01-01",
 					endDate: "2025-01-31",
-				})
+				}),
 			);
 		});
 	});
@@ -120,7 +128,7 @@ describe("IncomeFilters", () => {
 			expect(mockOnFiltersChange).toHaveBeenCalledWith(
 				expect.objectContaining({
 					categories: ["101", "102"],
-				})
+				}),
 			);
 		});
 	});
@@ -140,7 +148,7 @@ describe("IncomeFilters", () => {
 				expect.objectContaining({
 					minAmount: 10000,
 					maxAmount: 500000,
-				})
+				}),
 			);
 		});
 	});
@@ -153,7 +161,9 @@ describe("IncomeFilters", () => {
 		await user.type(minAmountInput, "-1000");
 
 		await waitFor(() => {
-			expect(screen.getByText("金額は0以上の数値を入力してください")).toBeInTheDocument();
+			expect(
+				screen.getByText("金額は0以上の数値を入力してください"),
+			).toBeInTheDocument();
 		});
 	});
 
@@ -193,12 +203,16 @@ describe("IncomeFilters", () => {
 			maxAmount: "500000",
 		});
 
-		(useSearchParams as unknown as ReturnType<typeof vi.fn>).mockReturnValue(searchParams);
+		(useSearchParams as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+			searchParams,
+		);
 
 		render(<IncomeFilters {...defaultProps} />);
 
 		// 期間が選択されている
-		const periodSelect = screen.getByLabelText("期間") as unknown as HTMLSelectElement;
+		const periodSelect = screen.getByLabelText(
+			"期間",
+		) as unknown as HTMLSelectElement;
 		expect(periodSelect.value).toBe("thisMonth");
 
 		// カテゴリがチェックされている
@@ -208,8 +222,12 @@ describe("IncomeFilters", () => {
 		expect(bonusCheckbox.checked).toBe(true);
 
 		// 金額が入力されている
-		const minAmountInput = screen.getByLabelText("最小金額") as HTMLInputElement;
-		const maxAmountInput = screen.getByLabelText("最大金額") as HTMLInputElement;
+		const minAmountInput = screen.getByLabelText(
+			"最小金額",
+		) as HTMLInputElement;
+		const maxAmountInput = screen.getByLabelText(
+			"最大金額",
+		) as HTMLInputElement;
 		expect(minAmountInput.value).toBe("10000");
 		expect(maxAmountInput.value).toBe("500000");
 	});
@@ -223,7 +241,7 @@ describe("IncomeFilters", () => {
 
 		await waitFor(() => {
 			expect(mockRouter.replace).toHaveBeenCalledWith(
-				expect.stringContaining("period=lastMonth")
+				expect.stringContaining("period=lastMonth"),
 			);
 		});
 	});
@@ -301,10 +319,10 @@ describe("IncomeFilters", () => {
 		render(<IncomeFilters {...defaultProps} />);
 
 		const container = screen.getByLabelText("収入フィルター");
-		
+
 		// 緑系統のクラスが適用されている
 		expect(container.className).toContain("bg-green-50");
-		
+
 		// カテゴリの色が緑系統
 		const salaryLabel = screen.getByText("給与");
 		expect(salaryLabel.style.color).toMatch(/#10b981|rgb\(16,\s*185,\s*129\)/);

@@ -4,7 +4,11 @@
  * APIレスポンスにカテゴリ情報を含む場合の型定義
  */
 
-import type { Category as BaseCategory, Subscription, Transaction } from "@shared/types";
+import type {
+	Category as BaseCategory,
+	Subscription,
+	Transaction,
+} from "@shared/types";
 
 /**
  * フロントエンド用の拡張カテゴリ型

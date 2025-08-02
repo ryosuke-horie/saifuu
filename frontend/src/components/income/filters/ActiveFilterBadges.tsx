@@ -1,6 +1,6 @@
 /**
  * ActiveFilterBadgesコンポーネント
- * 
+ *
  * 選択中のフィルターをバッジ形式で表示
  * 視覚的にアクティブなフィルターを確認可能
  */
@@ -86,28 +86,24 @@ const getActiveFilterBadges = (
 /**
  * ActiveFilterBadgesコンポーネント
  */
-export const ActiveFilterBadges = React.memo<ActiveFilterBadgesProps>(({
-	filters,
-	categories,
-}) => {
-	const badges = getActiveFilterBadges(filters, categories);
+export const ActiveFilterBadges = React.memo<ActiveFilterBadgesProps>(
+	({ filters, categories }) => {
+		const badges = getActiveFilterBadges(filters, categories);
 
-	if (badges.length === 0) {
-		return null;
-	}
+		if (badges.length === 0) {
+			return null;
+		}
 
-	return (
-		<div className="flex flex-wrap gap-2" role="status" aria-live="polite">
-			{badges.map((badge) => (
-				<span
-					key={badge.key}
-					className={FILTER_STYLES.BADGE}
-				>
-					{badge.label}
-				</span>
-			))}
-		</div>
-	);
-});
+		return (
+			<div className="flex flex-wrap gap-2" role="status" aria-live="polite">
+				{badges.map((badge) => (
+					<span key={badge.key} className={FILTER_STYLES.BADGE}>
+						{badge.label}
+					</span>
+				))}
+			</div>
+		);
+	},
+);
 
 ActiveFilterBadges.displayName = "ActiveFilterBadges";

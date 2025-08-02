@@ -1,6 +1,6 @@
 /**
  * useMediaQuery カスタムフック
- * 
+ *
  * メディアクエリの状態を監視し、レスポンシブデザインを実現
  * ウィンドウサイズの変更に応じて動的に状態を更新
  */
@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 
 /**
  * useMediaQuery カスタムフック
- * 
+ *
  * @param query - メディアクエリ文字列（例: "(max-width: 768px)"）
  * @returns メディアクエリがマッチするかどうか
  */
@@ -29,7 +29,7 @@ export const useMediaQuery = (query: string): boolean => {
 		}
 
 		const mediaQuery = window.matchMedia(query);
-		
+
 		// 初期値を設定
 		setMatches(mediaQuery.matches);
 

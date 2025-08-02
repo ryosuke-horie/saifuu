@@ -4,7 +4,7 @@
  * 収入の絞り込み機能を提供するフィルタリングコンポーネント
  * 期間指定、カテゴリ絞り込み、金額範囲指定の機能を提供
  * URLパラメータとの双方向バインディングをサポート
- * 
+ *
  * リファクタリング実装:
  * - 定数の外部化
  * - カスタムフックによる状態管理
@@ -14,7 +14,8 @@
  * - アクセシビリティの改善
  */
 
-import React, { useCallback, useMemo } from "react";
+import type React from "react";
+import { useCallback, useMemo } from "react";
 import { ARIA_LABELS, FILTER_STYLES } from "../../constants/incomeFilters";
 import { useIncomeFilters } from "../../hooks/useIncomeFilters";
 import { useIsMobile } from "../../hooks/useMediaQuery";
@@ -100,10 +101,7 @@ export const IncomeFilters: React.FC<IncomeFiltersProps> = ({
 			aria-label={ARIA_LABELS.CONTAINER}
 		>
 			{/* アクティブフィルターのバッジ表示 */}
-			<ActiveFilterBadges
-				filters={filters}
-				categories={categories}
-			/>
+			<ActiveFilterBadges filters={filters} categories={categories} />
 
 			{/* 期間フィルター */}
 			<PeriodFilter

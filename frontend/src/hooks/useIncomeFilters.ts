@@ -1,6 +1,6 @@
 /**
  * useIncomeFilters カスタムフック
- * 
+ *
  * 収入フィルターの状態管理とURLパラメータとの同期を行う
  * フィルター状態の変更、リセット、URLとの双方向バインディングを提供
  */
@@ -63,9 +63,7 @@ const parseFiltersFromURL = (
 /**
  * 期間タイプのバリデーション
  */
-const isValidPeriod = (
-	period: string | null,
-): period is IncomePeriodType => {
+const isValidPeriod = (period: string | null): period is IncomePeriodType => {
 	return (
 		period === "thisMonth" ||
 		period === "lastMonth" ||
@@ -112,7 +110,7 @@ const buildURLParams = (filters: IncomeFiltersState): string => {
  */
 const cleanFilters = (filters: IncomeFiltersState): IncomeFiltersState => {
 	const cleaned = { ...filters };
-	
+
 	Object.keys(cleaned).forEach((key) => {
 		const value = cleaned[key as keyof IncomeFiltersState];
 		if (
@@ -171,7 +169,7 @@ export const useIncomeFilters = ({
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const pathname = usePathname();
-	
+
 	const [filters, setFilters] = useState<IncomeFiltersState>(() => {
 		if (!disableUrlSync) {
 			return { ...initialFilters, ...parseFiltersFromURL(searchParams) };
@@ -198,7 +196,8 @@ export const useIncomeFilters = ({
 	useEffect(() => {
 		const cleanedFilters = cleanFilters({
 			...filters,
-			categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+			categories:
+				selectedCategories.length > 0 ? selectedCategories : undefined,
 		});
 
 		// コールバックを実行
@@ -210,7 +209,14 @@ export const useIncomeFilters = ({
 			const newURL = queryString ? `${pathname}?${queryString}` : pathname;
 			router.replace(newURL);
 		}
-	}, [filters, selectedCategories, onFiltersChange, router, pathname, disableUrlSync]);
+	}, [
+		filters,
+		selectedCategories,
+		onFiltersChange,
+		router,
+		pathname,
+		disableUrlSync,
+	]);
 
 	// フィルターを更新
 	const updateFilter = useCallback(
@@ -224,18 +230,15 @@ export const useIncomeFilters = ({
 	);
 
 	// 複数のフィルターを一括更新
-	const updateFilters = useCallback(
-		(updates: Partial<IncomeFiltersState>) => {
-			setFilters((prev) => ({ ...prev, ...updates }));
-		},
-		[],
-	);
+	const updateFilters = useCallback((updates: Partial<IncomeFiltersState>) => {
+		setFilters((prev) => ({ ...prev, ...updates }));
+	}, []);
 
 	// フィルターをリセット
 	const resetFilters = useCallback(() => {
 		setFilters({});
 		setSelectedCategories([]);
-		
+
 		if (!disableUrlSync) {
 			router.replace(pathname);
 		}

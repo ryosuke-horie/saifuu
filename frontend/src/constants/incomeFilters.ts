@@ -1,6 +1,6 @@
 /**
  * 収入フィルター関連の定数定義
- * 
+ *
  * IncomeFiltersコンポーネントで使用される定数を一元管理
  * 再利用可能な設定値とメッセージを定義
  */
@@ -38,28 +38,34 @@ export const VALIDATION_MESSAGES = {
 export const FILTER_STYLES = {
 	// コンテナ
 	CONTAINER: "bg-green-50 p-4 rounded-lg shadow-sm space-y-4",
-	
+
 	// バッジ
-	BADGE: "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800",
-	
+	BADGE:
+		"inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800",
+
 	// フォーム要素
-	INPUT: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500",
-	SELECT: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500",
-	CHECKBOX: "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded",
-	
+	INPUT:
+		"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500",
+	SELECT:
+		"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500",
+	CHECKBOX:
+		"h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded",
+
 	// ラベル
 	LABEL: "block text-sm font-medium text-gray-700 mb-1",
-	
+
 	// ボタン
-	RESET_BUTTON: "px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500",
-	
+	RESET_BUTTON:
+		"px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500",
+
 	// エラー
 	ERROR_MESSAGE: "mt-1 text-sm text-red-600",
-	
+
 	// カテゴリ
-	CATEGORY_ITEM: "flex items-center space-x-2 cursor-pointer hover:bg-green-100 p-2 rounded",
+	CATEGORY_ITEM:
+		"flex items-center space-x-2 cursor-pointer hover:bg-green-100 p-2 rounded",
 	CATEGORY_GRID: "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2",
-	
+
 	// レイアウト
 	FLEX_MOBILE: "flex flex-col gap-4",
 	FLEX_DESKTOP: "flex flex-row gap-4",
