@@ -270,9 +270,12 @@ describe("IncomeFilters", () => {
 
 		// アクティブフィルターのバッジが表示される
 		await waitFor(() => {
-			expect(screen.getByText("今月")).toBeInTheDocument();
-			expect(screen.getByText("給与")).toBeInTheDocument();
-			expect(screen.getByText("¥10,000以上")).toBeInTheDocument();
+			// バッジ内のテキストを特定のクラスで検索
+			const badges = document.querySelectorAll(".bg-green-100");
+			const badgeTexts = Array.from(badges).map((el) => el.textContent);
+			expect(badgeTexts).toContain("今月");
+			expect(badgeTexts).toContain("給与");
+			expect(badgeTexts).toContain("¥10,000以上");
 		});
 	});
 
