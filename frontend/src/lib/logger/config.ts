@@ -1,7 +1,7 @@
 /**
  * フロントエンドロガー 設定システム
  *
- * 3環境（development, production, storybook）対応の設定管理
+ * 2環境（development, production）対応の設定管理
  * 環境変数とデフォルト値の統合、セキュリティ考慮した設定システム
  */
 
@@ -26,7 +26,6 @@ interface EnvironmentVariables {
 	NEXT_PUBLIC_LOG_ENABLE_CONSOLE?: string;
 	NEXT_PUBLIC_LOG_ENABLE_TRACKING?: string;
 	NEXT_PUBLIC_VERSION?: string;
-	STORYBOOK?: string;
 	[key: string]: string | undefined;
 }
 
@@ -75,26 +74,6 @@ const defaultConfigs: Record<Environment, BrowserLoggerConfig> = {
 		maskSensitiveData: true,
 		sensitiveFields: ["password", "token", "secret", "email", "phone"],
 	},
-	storybook: {
-		environment: "storybook",
-		level: "warn",
-		version: "1.0.0",
-		bufferSize: 5,
-		flushInterval: 500, // 0.5秒
-		maxRetries: 1,
-		enableConsole: true,
-		enableLocalStorage: false,
-		enableBeacon: false,
-		apiTimeout: 3000,
-		enablePerformanceTracking: false,
-		enableUserTracking: false,
-		enableNetworkTracking: false,
-		enableErrorTracking: true,
-		sessionTimeout: 10 * 60 * 1000, // 10分
-		persistSession: false,
-		maskSensitiveData: false,
-		sensitiveFields: [],
-	},
 };
 
 /**
@@ -104,14 +83,6 @@ const defaultConfigs: Record<Environment, BrowserLoggerConfig> = {
  */
 export const detectEnvironment = (env?: EnvironmentVariables): Environment => {
 	const envVars = env || {};
-
-	// Storybook環境の検出
-	if (
-		envVars.STORYBOOK === "true" ||
-		(typeof window !== "undefined" && (window as any).__STORYBOOK_ADDONS)
-	) {
-		return "storybook";
-	}
 
 	// Next.js環境の検出
 	const nodeEnv =
@@ -409,4 +380,3 @@ export const defaultConfig = getDefaultConfig();
 // 使用頻度の高い環境判定関数のエクスポート
 export const isDevelopment = () => detectEnvironment() === "development";
 export const isProduction = () => detectEnvironment() === "production";
-export const isStorybook = () => detectEnvironment() === "storybook";

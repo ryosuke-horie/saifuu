@@ -18,9 +18,8 @@ export type LogLevel = "debug" | "info" | "warn" | "error";
  * 実行環境の定義
  * development: 開発環境
  * production: 本番環境
- * storybook: Storybook環境
  */
-export type Environment = "development" | "production" | "storybook";
+export type Environment = "development" | "production";
 
 /**
  * フロントエンド固有のログメタデータ
@@ -60,10 +59,6 @@ export interface FrontendLogMeta {
 	error?: string;
 	stack?: string;
 	errorBoundary?: string;
-
-	// Storybook固有情報
-	storyId?: string;
-	storyName?: string;
 
 	// 拡張可能な追加データ
 	data?: Record<string, unknown>;
@@ -261,7 +256,6 @@ export interface LogSendResult {
 export interface EnvironmentConfig {
 	development?: Partial<BrowserLoggerConfig>;
 	production?: Partial<BrowserLoggerConfig>;
-	storybook?: Partial<BrowserLoggerConfig>;
 }
 
 /**

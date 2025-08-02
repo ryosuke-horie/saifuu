@@ -32,9 +32,8 @@
 - **開発環境**: ローカルSQLite（dev.db）
 
 ### テストツール
-- **Vitest 3.2.4** - ユニットテスト
+- **Vitest 3.2.4** - ユニットテスト・コンポーネントテスト
 - **Playwright 1.53.1** - E2Eテスト（ローカルのみ）
-- **Storybook 8.6.14** - コンポーネント開発
 - **MSW 2.10.2** - APIモック
 
 **詳細**: [技術スタック](./docs/技術スタック.md)
@@ -229,16 +228,15 @@ git commit -m "chore: ESLintからBiomeに移行"
 - E2Eテストは基本的に正常系の最小限のテストケースを実装します。
 - DBが中心ですが外部のI/Oに関連するようなテストケースは統合テストを実装します。
 - テスト環境のDBと開発環境のDBと本番環境のDBは明確に分割する必要があります。
-- Playwright, MSWやVitest, Storybookを利用します。
+- Playwright, MSWやVitestを利用します。
 - タスクが進むごとに細かくテストを実施し検証します。特にPRを更新する前に確認します。
 - PRはテストが失敗する限りマージされることはありません。
 
 #### テスト戦略（2025年1月〜）
 
-VRT(Visual Regression Testing)システムを削除し、以下の3層構造による効率的な品質担保に移行：
+VRT(Visual Regression Testing)システムを削除し、以下の2層構造による効率的な品質担保に移行：
 
-- **Storybookコンポーネントテスト**: UIの状態・インタラクション確認
-- **ユニットテスト**: ロジック・バリデーション・エラーハンドリング
+- **ユニットテスト**: ロジック・バリデーション・エラーハンドリング・UIコンポーネント
 - **最小限のE2Eテスト**: 正常系の主要ユーザーフロー
 
 **詳細**: [ADR-001: VRTシステムの削除](./docs/adr/001-remove-vrt-system.md)、[テストガイド](./docs/テスト/テストガイド.md)
@@ -330,14 +328,12 @@ docs/
 ├── API開発/                  # API関連ドキュメント
 │   ├── README.md
 │   └── setup.md
-└── storybook/                # Storybook関連ドキュメント
-    ├── 実装詳細.md
-    └── 使用方法ガイド.md
+└── README.md                  # ドキュメント目次
 ```
 
 - **内容**: 日本語で記載し、技術的な背景や設計意図を含める
 - **更新**: ドキュメントは実装と同時に更新し、常に最新状態を保つ
-- **禁止事項**: `frontend/docs/`、`api/docs/`、`.storybook/`等の分散配置は行わない
+- **禁止事項**: `frontend/docs/`、`api/docs/`等の分散配置は行わない
 
 #### ドキュメント管理方針
 
@@ -414,8 +410,6 @@ ghost run pnpm run dev  # http://localhost:3000
 # API（Ghost使用）
 ghost run "cd api && pnpm run dev"  # http://localhost:5173
 
-# Storybook（Ghost使用）
-ghost run pnpm run storybook
 ```
 
 ### コード品質チェック
@@ -462,7 +456,7 @@ saifuu/
 │   │   ├── components/   # UIコンポーネント
 │   │   ├── hooks/        # カスタムフック
 │   │   └── lib/          # ユーティリティ
-│   └── .storybook/       # Storybook設定
+│   └── __tests__/        # テスト
 ├── e2e/                  # E2Eテスト（Playwright）
 ├── shared/               # 共有設定
 ├── docs/                 # 詳細ドキュメント
@@ -471,133 +465,20 @@ saifuu/
 
 **詳細**: [プロジェクト構造](./docs/プロジェクト構造.md)
 
-## Storybook コンポーネント開発
+## テスト戦略
 
-### 概要
-Storybookを使用したコンポーネント駆動開発により、UIコンポーネントの品質向上と開発効率化を実現します。
-
-### 基本方針
-- **コンポーネント分離開発** - アプリケーションロジックから独立したコンポーネント開発
-- **ストーリー駆動設計** - 使用パターンを明確化したストーリー作成
-- **MSWによるAPIモック** - 実際のAPIに依存しない開発環境
-- **包括的テストパターン** - 正常系・異常系・エッジケースの網羅
-
-### ストーリー作成ガイドライン
-
-#### 1. ファイル配置
-```bash
-# ストーリーファイルはコンポーネントと同じディレクトリに配置
-app/components/[category]/[component-name].stories.tsx
-```
-
-#### 2. 基本的なストーリー構造
-```typescript
-// app/components/example/example.stories.tsx
-import type { Meta, StoryObj } from "@storybook/react";
-import { ExampleComponent } from "./example";
-
-const meta: Meta<typeof ExampleComponent> = {
-  title: "Components/ExampleComponent",
-  component: ExampleComponent,
-  parameters: {
-    layout: "padded",
-    docs: {
-      description: {
-        component: "コンポーネントの説明とユースケース"
-      }
-    }
-  },
-  argTypes: {
-    // プロパティ制御の定義
-  },
-  args: {
-    // デフォルト値
-  },
-  tags: ["autodocs"],
-};
-
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-// 基本ストーリー
-export const Default: Story = {};
-
-// バリエーション
-export const Loading: Story = { ... };
-export const Error: Story = { ... };
-export const Empty: Story = { ... };
-```
-
-#### 3. 必須ストーリーパターン
-- **Default**: 基本的な使用状態
-- **Loading**: ローディング状態（該当する場合）
-- **Error**: エラー状態（該当する場合）
-- **Empty**: 空データ状態（該当する場合）
-- **Edge Cases**: 境界値・特殊ケース
-
-#### 4. APIモックの使用
-```typescript
-// MSWを使用したAPIモック
-export const WithApiData: Story = {
-  parameters: {
-    msw: {
-      handlers: [
-        http.get("/api/endpoint", () => {
-          return HttpResponse.json({ data: "mock data" });
-        }),
-      ],
-    },
-  },
-};
-```
-
-#### 5. インタラクションテスト
-```typescript
-import { expect, userEvent, within } from "@storybook/test";
-
-export const InteractionTest: Story = {
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    
-    // ユーザー操作
-    await userEvent.click(canvas.getByRole("button"));
-    
-    // 結果検証
-    await expect(canvas.getByText("期待される結果")).toBeInTheDocument();
-  },
-};
-```
-
-### コンポーネント分類
-
-#### Components/ (汎用コンポーネント)
-- **Forms/** - フォーム関連コンポーネント
-- **Display/** - 表示専用コンポーネント
-- **Navigation/** - ナビゲーション関連
-- **Feedback/** - フィードバック・通知
-
-#### [Feature]/ (機能固有コンポーネント)
-- **Dashboard/** - ダッシュボード固有
-- **Transactions/** - 取引機能固有
-- **Subscriptions/** - サブスク機能固有
-
-### テスト戦略
-
-#### 1. テストピラミッド統合
+### テストピラミッド
 ```
 E2Eテスト (Playwright)          # 正常系のみ・最小限
     ↑
-ストーリーテスト (Storybook)      # コンポーネントテスト  
-    ↑
-ユニットテスト (Vitest)          # 単体テスト・エラー系
+ユニットテスト (Vitest)          # 単体テスト・コンポーネントテスト・エラー系
 ```
 
-#### 2. 責務分担
-- **Vitest**: ロジック・ユーティリティ関数・バリデーション・エラーハンドリング
-- **Storybook**: コンポーネント表示・インタラクション・レスポンシブ
+### 責務分担
+- **Vitest**: ロジック・ユーティリティ関数・バリデーション・エラーハンドリング・UIコンポーネント
 - **Playwright**: 正常系の主要ユーザーフローのみ
 
-#### 3. E2Eテスト制限方針（重要）
+### E2Eテスト制限方針（重要）
 GitHub Actions無料枠を効率的に使用するため、E2Eテストは最小限に制限：
 
 - **対象**: 正常系の主要ユーザーフローのみ
@@ -605,57 +486,16 @@ GitHub Actions無料枠を効率的に使用するため、E2Eテストは最小
 - **テストケース**: 基本的な取引登録・確認フローのみ
 - **除外項目**: エラーハンドリング、レスポンシブ、パフォーマンス
 
-#### 4. E2E以外での品質担保
+### E2E以外での品質担保
 - **エラーハンドリング**: ユニットテスト・統合テストで検証
-- **レスポンシブデザイン**: Storybookでの視覚的確認・ユニットテスト
+- **レスポンシブデザイン**: ユニットテストでの検証
 - **パフォーマンス**: ローカル環境での手動確認・Lighthouse等
 - **バリデーション**: ユニットテスト・統合テスト
 
-#### 5. MSWモック戦略
-- **共通データ**: `.storybook/mocks/data/` で統一管理
+### MSWモック戦略
+- **共通データ**: テストファイル内で管理
 - **ハンドラー分離**: API別にハンドラーを分割
 - **エラーパターン**: ネットワーク・サーバーエラーの包括的対応
-
-### 開発ワークフロー
-
-#### 1. 新コンポーネント開発
-```bash
-1. コンポーネント設計・実装
-2. 基本ストーリー作成
-3. Storybookで動作確認
-4. エッジケース・エラーパターン追加
-5. インタラクションテスト追加
-6. ドキュメント更新
-```
-
-#### 2. 既存コンポーネント修正
-```bash
-1. 既存ストーリーで影響確認
-2. 必要に応じて新ストーリー追加
-3. インタラクションテスト更新
-4. 全ストーリーで動作確認
-```
-
-### ベストプラクティス
-
-#### 1. ストーリー命名
-- **意味のある名前**: 状態や用途が明確
-- **一貫した命名**: プロジェクト全体で統一
-- **階層化**: カテゴリ・サブカテゴリで整理
-
-#### 2. モックデータ設計
-- **現実的なデータ**: 実際の使用パターンに即したデータ
-- **エッジケース**: 境界値・特殊ケースのカバー
-- **パフォーマンス**: 適切なデータ量での動作確認
-
-#### 3. アクセシビリティ
-- **a11y アドオン**: 自動アクセシビリティチェック
-- **セマンティックHTML**: 適切なHTML要素の使用
-- **キーボード操作**: Tab・Enter等での操作確認
-
-### 詳細ドキュメント
-- **実装詳細**: `.storybook/IMPLEMENTATION.md`
-- **使用方法**: `.storybook/USAGE.md`
 
 ## セルフホストランナー運用ルール
 
@@ -685,8 +525,7 @@ GitHub Actions無料枠を効率的に使用するため、E2Eテストは最小
 - **テストデータ**: E2E専用データベースで独立実行
 
 ### 品質担保戦略
-- **ユニットテスト**: Vitest によるロジック・ユーティリティのテスト
-- **コンポーネントテスト**: Storybook によるUI確認とインタラクションテスト
+- **ユニットテスト**: Vitest によるロジック・ユーティリティ・コンポーネントのテスト
 - **E2Eテスト**: ローカル環境での統合動作確認
 - **型チェック・リント**: 自動化されたコード品質チェック
 
@@ -756,9 +595,9 @@ E2Eテスト関連のタスクを実行する際は、必要に応じてSub Agen
 
 1. 新機能開発時は、まず設計意図をコメントで記載
 2. **専門エージェントが自動的に適切なTDDサイクルで実装**
-3. **Storybookでコンポーネント分離開発**（frontend-developerが担当）
+3. **Vitestでコンポーネントテスト開発**（frontend-developerが担当）
 4. 小さな単位で実装し、都度 `pnpm run check:fix` を実行
-5. テストを書く（Storybook・ユニット・E2E）
+5. テストを書く（ユニット・E2E）
 6. **実装完了時のE2E確認**: 機能実装が完了したら `pnpm run test:e2e` で動作確認
 7. **シナリオ変更時の確認**: E2Eテストシナリオを変更した場合は必ずユーザーに確認を取る
 8. 機能の完成度に応じて頻繁にコミット

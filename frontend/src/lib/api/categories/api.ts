@@ -5,7 +5,7 @@
  * 設定ファイルから直接カテゴリを取得するように変更
  */
 
-import { ALL_CATEGORIES, type CategoryConfig } from "@shared/config/categories";
+import { ALL_CATEGORIES, type CategoryConfig } from "@shared/config";
 // 共有型定義のCategoryを使用
 import type { Category } from "../types";
 

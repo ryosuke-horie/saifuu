@@ -1,6 +1,6 @@
 // フロントエンドでZodスキーマを活用するためのバリデーション関数
 
-import { getCategoryById } from "@shared/config/categories";
+import { getCategoryById } from "@shared/config";
 import {
 	incomeCreateSchema,
 	subscriptionCreateSchema,

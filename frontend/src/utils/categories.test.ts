@@ -2,7 +2,7 @@ import {
 	EXPENSE_CATEGORIES,
 	getCategoryById,
 	getCategoryByName,
-} from "@shared/config/categories";
+} from "@shared/config";
 import { describe, expect, it } from "vitest";
 
 describe("カテゴリ設定", () => {

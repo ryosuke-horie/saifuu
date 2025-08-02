@@ -25,6 +25,6 @@ export function convertTransactionToFormData(
 		description:
 			transaction.description === null ? undefined : transaction.description,
 		date: transaction.date,
-		categoryId: transaction.categoryId || undefined,
+		categoryId: transaction.categoryId ?? undefined,
 	};
 }

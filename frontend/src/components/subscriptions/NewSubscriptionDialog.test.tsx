@@ -1,9 +1,57 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { mockCategories } from "../../../.storybook/mocks/data/categories";
-import type { NewSubscriptionDialogProps } from "../../lib/api/types";
+import type { Category, NewSubscriptionDialogProps } from "../../lib/api/types";
 import { NewSubscriptionDialog } from "./NewSubscriptionDialog";
+
+// モックデータの定義
+const mockCategories: Category[] = [
+	{
+		id: "1",
+		name: "交通費",
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z",
+	},
+	{
+		id: "2",
+		name: "光熱費",
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z",
+	},
+	{
+		id: "3",
+		name: "食費",
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z",
+	},
+	{
+		id: "4",
+		name: "その他",
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z",
+	},
+	{
+		id: "5",
+		name: "仕事・ビジネス",
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z",
+	},
+];
 
 /**
  * NewSubscriptionDialogコンポーネントのテスト
@@ -13,8 +61,6 @@ import { NewSubscriptionDialog } from "./NewSubscriptionDialog";
  * - 送信中の状態管理
  * - ダイアログの開閉ロジック
  * - バリデーションとのインテグレーション
- *
- * 注: UI表示・インタラクションテストはStorybookに移行済み
  */
 
 // createPortalのモック

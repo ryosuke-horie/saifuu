@@ -202,9 +202,6 @@ ghost run --cwd /path/to/frontend pnpm run dev
 # APIサーバーを起動
 ghost run --cwd /path/to/api pnpm run dev
 
-# Storybookを起動
-ghost run pnpm run storybook
-
 # すべてのサービスを確認
 ghost list --status running
 ```

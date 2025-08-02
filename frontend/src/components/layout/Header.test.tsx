@@ -14,8 +14,6 @@ vi.mock("next/navigation", () => ({
  * - プロパティの適用（title, className）
  * - アクセシビリティ要素
  * - エッジケース処理
- *
- * 注: UI表示・スタイリングテストはStorybookに移行
  */
 describe("Header", () => {
 	describe("プロパティテスト", () => {

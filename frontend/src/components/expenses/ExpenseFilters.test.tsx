@@ -6,8 +6,6 @@
  * - 複合フィルターのロジック
  * - カスタム期間の処理
  * - 金額範囲の妥当性検証
- *
- * 注: UI表示・インタラクションテストはStorybookに移行
  */
 
 import { render, screen, waitFor } from "@testing-library/react";

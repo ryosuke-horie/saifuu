@@ -52,13 +52,7 @@
 - [テスト実装リファレンス](./ロギング/フロントエンド/テスト実装リファレンス.md) - テスト実装のクイックリファレンス
 
 ## 🎨 フロントエンド開発
-<!-- tags: frontend, react, nextjs, storybook, logger, components, ui -->
-
-### Storybook
-
-- [Storybook実装詳細](./storybook/実装詳細.md) - Storybookの実装詳細
-- [Storybook使用方法ガイド](./storybook/使用方法ガイド.md) - Storybookの使い方
-
+<!-- tags: frontend, react, nextjs, logger, components, ui -->
 
 ## 🧪 テスト
 <!-- tags: testing, unit-test, integration-test, e2e, vitest, playwright, coverage -->

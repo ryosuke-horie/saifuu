@@ -49,7 +49,7 @@ npm run docs:search frontend --verbose
 
 ### 開発領域別
 - **API・バックエンド**: `api`, `backend`, `hono`, `cloudflare`, `d1`, `database`, `logger`, `migration`
-- **フロントエンド**: `frontend`, `react`, `nextjs`, `storybook`, `components`, `ui`
+- **フロントエンド**: `frontend`, `react`, `nextjs`, `components`, `ui`
 - **テスト**: `testing`, `unit-test`, `integration-test`, `e2e`, `vitest`, `playwright`, `coverage`
 
 ### 機能・技術別
@@ -89,8 +89,8 @@ npm run docs:search frontend
 # React または Next.js に関するドキュメント
 npm run docs:search react nextjs --or
 
-# Storybook とテストの組み合わせ
-npm run docs:search storybook testing
+# コンポーネントとテストの組み合わせ
+npm run docs:search components testing
 ```
 
 ### 3. テスト関連ドキュメントを探す

@@ -7,11 +7,6 @@
 **/test-results/**/*.png binary
 **/playwright-report/**/*.png binary
 
-# Storybook静的ファイル
-**/storybook-static/**/*.png binary
-**/storybook-static/**/*.jpg binary
-**/storybook-static/**/*.jpeg binary
-
 # PWAアイコンファイル
 **/public/**/*.png binary
 **/public/**/*.ico binary

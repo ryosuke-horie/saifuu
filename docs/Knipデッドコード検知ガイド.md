@@ -27,7 +27,6 @@ Next.js 15のApp Routerパターンに完全対応し、以下のファイルを
 以下のファイル・ディレクトリは自動的に除外されます：
 
 - テストファイル（`*.test.ts`, `*.test.tsx`）
-- Storybookストーリー（`*.stories.tsx`）
 - テストユーティリティ
 - MSWモック
 - 各種設定ファイル
@@ -91,7 +90,7 @@ const module = await import(`./modules/${moduleName}`);
 
 #### ビルドツールの依存関係
 
-Next.js、Tailwind CSS、Storybookなどのフレームワーク・ツールが未使用として検出される場合：
+Next.js、Tailwind CSSなどのフレームワーク・ツールが未使用として検出される場合：
 
 対処法：`ignoreDependencies`に追加済み
 

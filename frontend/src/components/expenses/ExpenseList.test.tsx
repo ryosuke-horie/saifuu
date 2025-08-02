@@ -6,19 +6,73 @@
  * - 編集・削除コールバック処理
  * - パフォーマンス（大量データ処理）
  * - アクセシビリティ要素
- *
- * 注: UI表示・レスポンシブデザインテストはStorybookに移行
- *
- * Issue #237で指摘された低価値テストは、Issue #310で既に削除済み:
- * - テーブルヘッダーの単純な文字列確認テスト（削除済み）
- * - roleの存在確認のみのARIA属性テスト（削除済み）
- * - DOM属性のカスタムクラス名テスト（削除済み）
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { mockTransactions } from "../../../.storybook/mocks/data/transactions";
 import { ExpenseList } from "./ExpenseList";
+
+// モックデータの定義 - TransactionWithCategoryとして使用
+const mockTransactions: any[] = [
+	// any型で定義し、ExpenseListに渡す際にTransactionWithCategoryとして扱う
+	{
+		id: "t1",
+		amount: 1000,
+		type: "expense",
+		category: {
+			id: "1",
+			name: "食費",
+			type: "expense",
+			color: null,
+			description: null,
+			createdAt: "2024-01-01T00:00:00Z",
+			updatedAt: "2024-01-01T00:00:00Z",
+		},
+		categoryId: "1",
+		description: "コーヒー",
+		date: "2025-07-09",
+		createdAt: "2025-07-09T10:00:00Z",
+		updatedAt: "2025-07-09T10:00:00Z",
+	},
+	{
+		id: "t2",
+		amount: 2500,
+		type: "expense",
+		category: {
+			id: "2",
+			name: "交通費",
+			type: "expense",
+			color: null,
+			description: null,
+			createdAt: "2024-01-01T00:00:00Z",
+			updatedAt: "2024-01-01T00:00:00Z",
+		},
+		categoryId: "2",
+		description: "電車代",
+		date: "2025-07-08",
+		createdAt: "2025-07-08T09:00:00Z",
+		updatedAt: "2025-07-08T09:00:00Z",
+	},
+	{
+		id: "t3",
+		amount: 15000,
+		type: "expense",
+		category: {
+			id: "3",
+			name: "光熱費",
+			type: "expense",
+			color: null,
+			description: null,
+			createdAt: "2024-01-01T00:00:00Z",
+			updatedAt: "2024-01-01T00:00:00Z",
+		},
+		categoryId: "3",
+		description: "電気代",
+		date: "2025-07-01",
+		createdAt: "2025-07-01T10:00:00Z",
+		updatedAt: "2025-07-01T10:00:00Z",
+	},
+];
 
 describe("ExpenseList", () => {
 	describe("インタラクション", () => {

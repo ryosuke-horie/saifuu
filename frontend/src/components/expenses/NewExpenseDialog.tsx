@@ -1,6 +1,6 @@
 "use client";
 
-import { ALL_CATEGORIES } from "@shared/config/categories";
+import { ALL_CATEGORIES } from "@shared/config";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import type { Category } from "../../lib/api/types";
 import type {

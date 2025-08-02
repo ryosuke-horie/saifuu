@@ -1,9 +1,57 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
-import { mockCategories } from "../../../.storybook/mocks/data/categories";
-import type { SubscriptionFormData } from "../../lib/api/types";
+import type { Category, SubscriptionFormData } from "../../lib/api/types";
 import { SubscriptionForm } from "./SubscriptionForm";
+
+// モックデータの定義
+const mockCategories: Category[] = [
+	{
+		id: "1",
+		name: "交通費",
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z",
+	},
+	{
+		id: "2",
+		name: "光熱費",
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z",
+	},
+	{
+		id: "3",
+		name: "食費",
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z",
+	},
+	{
+		id: "4",
+		name: "その他",
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z",
+	},
+	{
+		id: "5",
+		name: "仕事・ビジネス",
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z",
+	},
+];
 
 /**
  * SubscriptionFormコンポーネントのテスト
@@ -13,8 +61,6 @@ import { SubscriptionForm } from "./SubscriptionForm";
  * - 送信処理とエラーハンドリング
  * - 編集モードのデータ処理
  * - アクセシビリティ要素
- *
- * 注: UI表示・インタラクションテストはStorybookに移行
  */
 
 describe("SubscriptionForm", () => {

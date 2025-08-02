@@ -21,8 +21,6 @@
 			"!**/db/migrations/**/*.sql",
 			"!**/db/migrations/meta/**/*.json",
 			"!**/*.css",
-			"!**/storybook-static/**",
-			"!**/stories/**",
 			"!**/.next/**",
 			"!**/.open-next/**",
 			"!**/test-results/**",

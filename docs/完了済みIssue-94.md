@@ -20,12 +20,6 @@ Issue #94「feat: issue-85 ナビゲーション拡張 - 支出管理項目追�
 - ✅ アクセシビリティ対応（`aria-current`属性）
 - ✅ 既存のナビゲーションパターンを踏襲
 
-### 3. Storybookストーリー
-以下のアクティブ状態確認用ストーリーを追加：
-- `HomeActive`: ホームページがアクティブな状態
-- `ExpensesActive`: 支出管理ページがアクティブな状態
-- `SubscriptionsActive`: サブスク管理ページがアクティブな状態
-
 ### 4. 支出管理ページ
 - `/expenses` ページも実装済み（`frontend/src/app/expenses/page.tsx`）
 - 支出・収入の一覧表示、統計情報、新規登録、削除機能を含む

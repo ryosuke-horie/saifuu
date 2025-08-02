@@ -21,7 +21,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			id: "1",
 			name: "エンタメ",
 			type: "expense",
-			color: null,
+			color: undefined,
 			createdAt: "2024-01-01T00:00:00Z",
 			updatedAt: "2024-01-01T00:00:00Z",
 		},
@@ -29,7 +29,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			id: "2",
 			name: "仕事",
 			type: "expense",
-			color: null,
+			color: undefined,
 			createdAt: "2024-01-01T00:00:00Z",
 			updatedAt: "2024-01-01T00:00:00Z",
 		},
@@ -108,14 +108,12 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			// 必須フィールドを入力
 			await user.type(screen.getByLabelText(/サービス名/), "Netflix");
 			await user.type(screen.getByLabelText(/料金/), "1480");
-			await user.type(screen.getByLabelText(/次回請求日/), "2025-08-01");
+			await user.type(screen.getByLabelText(/次回請求日/), "2025-09-01");
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "1");
 
-			// フォーム要素にフォーカスしてからキーボードショートカットを実行
-			const form = document.querySelector("form");
-			if (form) {
-				form.focus();
-			}
+			// 説明フィールドにフォーカスしてからキーボードショートカットを実行
+			const descriptionField = screen.getByLabelText(/説明/);
+			descriptionField.focus();
 
 			// Mac用のショートカット (Cmd+Enter)
 			await user.keyboard("{Meta>}{Enter}{/Meta}");
@@ -129,7 +127,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 				expect.objectContaining({
 					name: "Netflix",
 					amount: 1480,
-					nextBillingDate: "2025-08-01",
+					nextBillingDate: "2025-09-01",
 					categoryId: "1",
 				}),
 			);
@@ -147,16 +145,15 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			);
 
 			// 必須フィールドを入力
-			await user.type(screen.getByLabelText(/サービス名/), "Spotify");
+			const nameInput = screen.getByLabelText(/サービス名/);
+			await user.type(nameInput, "Spotify");
 			await user.type(screen.getByLabelText(/料金/), "980");
 			await user.type(screen.getByLabelText(/次回請求日/), "2025-08-15");
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "2");
 
-			// フォーム要素にフォーカスしてからキーボードショートカットを実行
-			const form = document.querySelector("form");
-			if (form) {
-				form.focus();
-			}
+			// いずれかのフィールドからCtrl+Enterを実行
+			// フォーカスをnameInputに維持したまま
+			nameInput.focus();
 
 			// Windows/Linux用のショートカット (Ctrl+Enter)
 			await user.keyboard("{Control>}{Enter}{/Control}");
