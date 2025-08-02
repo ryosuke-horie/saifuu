@@ -691,6 +691,83 @@ GitHub Actions無料枠を効率的に使用するため、E2Eテストは最小
 - **E2Eテスト**: ローカル環境での統合動作確認
 - **型チェック・リント**: 自動化されたコード品質チェック
 
+## E2Eテスト実行時のルール
+
+### 開発サーバー管理（Ghost必須）
+
+**重要**: E2Eテストを実行する際は、必ず以下のルールに従うこと
+
+#### 1. Ghostツールによるサーバー起動
+```bash
+# ❌ 禁止: 通常のコマンドでサーバーを起動しない
+pnpm run dev
+pnpm run dev &
+
+# ✅ 必須: Ghostを使用してバックグラウンドで起動
+ghost run pnpm run dev
+```
+
+#### 2. 修正後のサーバー再起動
+- **コード修正後は必ずサーバーを再起動する**
+- 特にAPI・フロントエンドのコードを変更した場合は必須
+- ホットリロードが効かない変更もあるため、確実に再起動すること
+
+```bash
+# 現在のプロセスを確認
+ghost list
+
+# 該当のプロセスを停止
+ghost stop <task-id>
+
+# 新しくサーバーを起動
+ghost run pnpm run dev
+```
+
+#### 3. E2Eテスト実行フロー
+```bash
+# 1. 開発サーバーをGhostで起動
+ghost run pnpm run dev
+
+# 2. APIサーバーも起動（別ターミナル相当）
+ghost run "cd api && pnpm run dev"
+
+# 3. E2Eテストを実行
+pnpm run test:e2e
+
+# 4. コード修正後は必ずサーバーを再起動
+ghost list
+ghost stop <frontend-task-id>
+ghost stop <api-task-id>
+ghost run pnpm run dev
+ghost run "cd api && pnpm run dev"
+
+# 5. 再度E2Eテストを実行
+pnpm run test:e2e
+```
+
+### Sub Agent作成時のルール
+
+E2Eテスト関連のタスクを実行する際は、必要に応じてSub Agentを作成して並列処理を行う：
+
+1. **テスト実行Agent**: E2Eテストの実行と結果確認
+2. **修正Agent**: テスト失敗時の修正対応
+3. **サーバー管理Agent**: Ghostによるサーバー起動・再起動管理
+
+### Windows環境でのGhostセットアップ
+
+Windows環境でGhostツールを使用する場合の注意事項：
+
+1. **PowerShell/WSL推奨**: Windows環境ではPowerShellまたはWSL2を使用
+2. **パス区切り文字**: Windowsパスの場合は `\` ではなく `/` を使用
+3. **権限設定**: 管理者権限が必要な場合があるため注意
+
+```powershell
+# Windows PowerShellでの例
+ghost run "pnpm run dev"
+ghost list
+ghost stop 1
+```
+
 ## 開発の進め方
 
 1. 新機能開発時は、まず設計意図をコメントで記載
