@@ -191,13 +191,13 @@ function assertTransaction(value: unknown): asserts value is Transaction {
 // 代替案: 日次集計も検討したが、UIの要件から月次で十分と判断
 ```
 
-### 2. 型チェック・リント
+### 3. 型チェック・リント
 - 何か追加・修正する前や修正後、Commit前に適宜ローカルで `pnpm run check:fix` を実行し型エラーやフォーマットを検証する
 - 必ず `pnpm run check:fix` を実行してから作業を終える
 - 型エラーとリントエラーを放置しない
 - Biomeの設定に従う
 
-### 3. コミット規約
+### 4. コミット規約
 - 頻繁にコミットする（機能の小さな単位で）
 - コミットメッセージは必ずプレフィックスから始まるワンライン形式とし、日本語で記載する
 - 使用するプレフィックス：
@@ -218,11 +218,11 @@ git commit -m "chore: ESLintからBiomeに移行"
 
 **重要**: コミットメッセージは必ず1行（ワンライン）で記述する。詳細な説明が必要な場合はPRの説明欄に記載する。
 
-### 4. 署名設定
+### 5. 署名設定
 - コミット時の署名は必ず `ryosuke-horie` のみとする
 - Co-Authoredは設定しない
 
-### 5. テスト
+### 6. テスト
 
 - t-wadaやKent C dodds. の提唱するTDDに従って実装を進めます。
 - Red, Green, refacotring
@@ -243,7 +243,7 @@ VRT(Visual Regression Testing)システムを削除し、以下の3層構造に�
 
 **詳細**: [ADR-001: VRTシステムの削除](./docs/adr/001-remove-vrt-system.md)、[テストガイド](./docs/テスト/テストガイド.md)
 
-### 6. TDD（テスト駆動開発）とTidy Firstの原則
+### 7. TDD（テスト駆動開発）とTidy Firstの原則
 
 #### 基本理念
 Kent BeckのTDD（Test-Driven Development）とTidy Firstの原則に厳密に従って開発を進めます。これにより、高品質で保守性の高いコードベースを維持します。
@@ -307,12 +307,12 @@ Kent BeckのTDD（Test-Driven Development）とTidy Firstの原則に厳密に�
 7. 機能完成まで繰り返す
 ```
 
-### 7. 技術スタックに関連した最新情報の取得
+### 8. 技術スタックに関連した最新情報の取得
 
 - Context7 MCPを利用して最新情報を取得する
 - 特にNextjs, React, Drizzle, Cloudflare, honoは更新が早いため最新情報からデータを取得する必要がある。
 
-### 8. ドキュメント作成規約
+### 9. ドキュメント作成規約
 
 **重要**: すべてのプロジェクトドキュメントは**日本語ファイル名のMarkdownファイル**として**docs/ディレクトリ以下**に作成する
 
@@ -356,7 +356,7 @@ docs/
   - インフラ・CI/CD: DevOpsチーム
 - **アーカイブ戦略**: 完了済みタスクのドキュメントは四半期ごとに `docs/archive/` ディレクトリへ移動する
 
-### 9. バックグラウンドプロセス管理（Ghost）
+### 10. バックグラウンドプロセス管理（Ghost）
 
 **重要**: 開発サーバの起動などセッションを占有するプロセスは、`ghost` ツールを使用してバックグラウンドで実行すること
 
@@ -408,8 +408,13 @@ cd api && pnpm run db:setup:dev
 
 ### 開発サーバー
 ```bash
-# バックグラウンド実行（Ghost使用）
-ghost run pnpm run dev
+# フロントエンド（Ghost使用）
+ghost run pnpm run dev  # http://localhost:3000
+
+# API（Ghost使用）
+ghost run "cd api && pnpm run dev"  # http://localhost:5173
+
+# Storybook（Ghost使用）
 ghost run pnpm run storybook
 ```
 
@@ -424,6 +429,10 @@ cd api && pnpm run check:fix
 ```bash
 # ユニットテスト
 pnpm run test:unit
+
+# E2Eテスト（ローカルのみ）
+pnpm run test:e2e
+pnpm run test:e2e:ui  # UIモード
 ```
 
 ### データベース操作
