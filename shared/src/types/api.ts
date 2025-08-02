@@ -64,6 +64,47 @@ export interface DeleteResponse {
 	message?: string
 }
 
+// APIレスポンス型
+export interface TransactionResponse extends BaseTransaction {
+	categoryName?: string
+}
+
+// 統計情報レスポンス
+export interface StatsResponse {
+	totalExpense: number
+	totalIncome: number
+	balance: number
+	transactionCount: number
+	expenseCount: number
+	incomeCount: number
+}
+
+// 収支サマリーレスポンス
+export interface BalanceSummaryResponse {
+	income: number
+	expense: number
+	balance: number
+	savingsRate: number
+	trend: 'positive' | 'negative' | 'neutral'
+}
+
+// エラーレスポンス
+export interface ErrorResponse {
+	error: string
+	details?: Array<{
+		field: string
+		message: string
+		code?: string
+	}>
+}
+
+// バリデーションエラー
+export interface ValidationError {
+	field: string
+	message: string
+	code?: string
+}
+
 // クエリパラメータ型
 export interface GetTransactionsQuery {
 	type?: 'income' | 'expense'

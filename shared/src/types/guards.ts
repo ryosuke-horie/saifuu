@@ -1,6 +1,14 @@
 // 型ガードとアサーション関数
 
-import type { Category, Subscription, Transaction } from './api'
+import type {
+	BalanceSummaryResponse,
+	Category,
+	ErrorResponse,
+	StatsResponse,
+	Subscription,
+	Transaction,
+	TransactionResponse,
+} from './api'
 import type { BillingCycle, CategoryType, TransactionType } from './base'
 
 // 基本的な型ガード
@@ -111,4 +119,48 @@ export function assertSubscription(
 	if (!isSubscription(value)) {
 		throw new Error('Value is not a valid Subscription')
 	}
+}
+
+// レスポンス型ガード
+export function isTransactionResponse(value: unknown): value is TransactionResponse {
+	return isTransaction(value)
+}
+
+export function isStatsResponse(value: unknown): value is StatsResponse {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		'totalExpense' in value &&
+		'totalIncome' in value &&
+		'balance' in value &&
+		'transactionCount' in value &&
+		'expenseCount' in value &&
+		'incomeCount' in value
+	)
+}
+
+export function isBalanceSummaryResponse(value: unknown): value is BalanceSummaryResponse {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		'income' in value &&
+		'expense' in value &&
+		'balance' in value &&
+		'savingsRate' in value &&
+		'trend' in value &&
+		typeof (value as BalanceSummaryResponse).income === 'number' &&
+		typeof (value as BalanceSummaryResponse).expense === 'number' &&
+		typeof (value as BalanceSummaryResponse).balance === 'number' &&
+		typeof (value as BalanceSummaryResponse).savingsRate === 'number' &&
+		['positive', 'negative', 'neutral'].includes((value as BalanceSummaryResponse).trend)
+	)
+}
+
+export function isErrorResponse(value: unknown): value is ErrorResponse {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		'error' in value &&
+		typeof (value as ErrorResponse).error === 'string'
+	)
 }

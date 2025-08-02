@@ -1,5 +1,6 @@
 // Zodを使用した共通バリデーションスキーマ
 import { z } from 'zod'
+import type { ValidationError } from '../types/api'
 
 // 共通バリデーション定数（既存のものを再利用）
 export const VALIDATION_LIMITS = {
@@ -355,12 +356,7 @@ export function zodToValidationResult<T>(
 	return { success: false, errors }
 }
 
-// バリデーションエラーの型定義
-export interface ValidationError {
-	field: string
-	message: string
-	code?: string
-}
+// バリデーションエラーの型はshared/src/types/api.tsから使用
 
 // 型エクスポート（既存コードとの互換性のため）
 export type TransactionCreateInput = z.infer<typeof transactionCreateSchema>

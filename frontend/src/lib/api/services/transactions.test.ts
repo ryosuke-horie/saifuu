@@ -113,7 +113,6 @@ const mockStats: TransactionStats = {
 	transactionCount: 11,
 	expenseCount: 8,
 	incomeCount: 3,
-	avgTransaction: 4818,
 	categoryBreakdown: [
 		{
 			categoryId: "cat1",

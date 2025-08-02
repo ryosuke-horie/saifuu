@@ -7,27 +7,42 @@
  */
 
 import type {
+	// 基本型
 	BillingCycle,
 	BaseCategory as Category,
 	CategoryType,
-	CreateCategoryRequest,
-	CreateSubscriptionRequest,
-	// リクエスト型
-	CreateTransactionRequest,
-	// レスポンス型
-	DeleteResponse,
-	GetCategoriesQuery,
-	GetSubscriptionsQuery,
-	// クエリ型
-	GetTransactionsQuery,
-	BaseSubscription as Subscription,
+	TransactionType,
 	// エンティティ型
 	BaseTransaction as Transaction,
-	// 基本型
-	TransactionType,
+	BaseSubscription as Subscription,
+	// リクエスト型
+	CreateCategoryRequest,
+	CreateSubscriptionRequest,
+	CreateTransactionRequest,
 	UpdateCategoryRequest,
 	UpdateSubscriptionRequest,
 	UpdateTransactionRequest,
+	// レスポンス型
+	DeleteResponse,
+	BalanceSummaryResponse as BalanceSummary,
+	StatsResponse as TransactionStats,
+	ErrorResponse as ApiErrorResponse,
+	ValidationError,
+	// クエリ型
+	GetCategoriesQuery,
+	GetSubscriptionsQuery,
+	GetTransactionsQuery,
+	// ユーティリティ型
+	HttpMethod,
+	SortOrder,
+	DateRange,
+	PaginationInfo,
+	PaginatedResponse,
+	PaginationQuery,
+	SortConfig,
+	FilterConfig,
+	SearchQuery,
+	ApiResponse,
 } from "@shared/types";
 
 // 共有型定義から必要な型を再エクスポート
@@ -48,6 +63,20 @@ export type {
 	GetCategoriesQuery,
 	GetSubscriptionsQuery,
 	DeleteResponse,
+	BalanceSummary,
+	TransactionStats,
+	ApiErrorResponse,
+	ValidationError,
+	HttpMethod,
+	SortOrder,
+	DateRange,
+	PaginationInfo,
+	PaginatedResponse,
+	PaginationQuery,
+	SortConfig,
+	FilterConfig,
+	SearchQuery,
+	ApiResponse,
 };
 
 // 型ガード関数も再エクスポート
@@ -55,6 +84,8 @@ export {
 	isCategory,
 	isSubscription,
 	isTransaction,
+	isBalanceSummaryResponse as isBalanceSummary,
+	isErrorResponse,
 } from "@shared/types";
 
 // フロントエンド固有の拡張型
@@ -67,47 +98,13 @@ export type {
 // フロントエンド固有の型定義
 // =============================================================================
 
-/**
- * APIリクエストのHTTPメソッド
- */
-export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-
-/**
- * APIレスポンスの基本構造
- */
-export interface ApiResponse<T = unknown> {
-	data?: T;
-	error?: string;
-	message?: string;
-}
-
-/**
- * ページネーション情報
- */
-export interface PaginationInfo {
-	page: number;
-	limit: number;
-	total: number;
-	totalPages: number;
-	hasNext: boolean;
-	hasPrev: boolean;
-}
-
-/**
- * ページネーション付きレスポンス
- */
-export interface PaginatedResponse<T> {
-	data: T[];
-	pagination: PaginationInfo;
-}
-
-/**
- * ページネーションクエリパラメーター
- */
-export interface PaginationQuery {
-	page?: number;
-	limit?: number;
-}
+// 注意: 以下の型は共有型定義に移動済み
+// - HttpMethod
+// - ApiResponse
+// - PaginationInfo
+// - PaginatedResponse
+// - PaginationQuery
+// これらはshared/src/types/utility.tsから再エクスポートされています
 
 // =============================================================================
 // サブスクリプション統計
@@ -149,36 +146,10 @@ export interface SubscriptionStatsResponse {
 	upcomingBillings: UpcomingBilling[];
 }
 
-/**
- * 取引統計
- */
-export interface TransactionStats {
-	totalExpense: number;
-	totalIncome: number;
-	balance: number;
-	transactionCount: number;
-	expenseCount: number;
-	incomeCount: number;
-	avgTransaction?: number;
-	categoryBreakdown?: Array<{
-		categoryId: string;
-		categoryName: string;
-		type: TransactionType;
-		count: number;
-		totalAmount: number;
-	}>;
-}
-
-/**
- * 収支サマリー
- */
-export interface BalanceSummary {
-	income: number;
-	expense: number;
-	balance: number;
-	savingsRate: number;
-	trend: "positive" | "negative" | "neutral";
-}
+// 注意: TransactionStatsとBalanceSummaryは共有型定義から使用
+// これらの型はshared/src/types/api.tsに移動済み
+// StatsResponse -> TransactionStats
+// BalanceSummaryResponse -> BalanceSummary として再エクスポート
 
 /**
  * 月別統計
@@ -190,13 +161,8 @@ export interface MonthlyStats {
 	subscriptionCost: number;
 }
 
-/**
- * 日付範囲指定
- */
-export interface DateRange {
-	from: string; // YYYY-MM-DD format
-	to: string; // YYYY-MM-DD format
-}
+// 注意: DateRangeは共有型定義から使用
+// この型はshared/src/types/utility.tsに移動済み
 
 // =============================================================================
 // API設定関連型
@@ -236,57 +202,16 @@ export interface RetryConfig {
 // エラー関連型（errors.tsと連携）
 // =============================================================================
 
-/**
- * バリデーションエラーの詳細
- */
-export interface ValidationError {
-	field: string;
-	message: string;
-	code?: string;
-}
-
-/**
- * API エラーレスポンス
- */
-export interface ApiErrorResponse {
-	error: string;
-	details?: string;
-	code?: string;
-	fields?: Record<string, string[]>;
-}
+// 注意: ValidationErrorとApiErrorResponseは共有型定義から使用
+// ValidationErrorはshared/src/types/api.tsに移動済み
+// ErrorResponse -> ApiErrorResponse として再エクスポート
 
 // =============================================================================
 // フィルター・ソート関連型
 // =============================================================================
 
-/**
- * ソート順序
- */
-export type SortOrder = "asc" | "desc";
-
-/**
- * ソート設定
- */
-export interface SortConfig<T = string> {
-	field: T;
-	order: SortOrder;
-}
-
-/**
- * フィルター設定
- */
-export interface FilterConfig {
-	[key: string]: unknown;
-}
-
-/**
- * 検索・フィルター・ソート付きクエリ
- */
-export interface SearchQuery extends PaginationQuery {
-	search?: string;
-	filters?: FilterConfig;
-	sort?: SortConfig;
-}
+// 注意: ソート・フィルター関連の型は共有型定義から使用
+// これらの型はshared/src/types/utility.tsに移動済み
 
 // =============================================================================
 // ユーティリティ型
@@ -515,35 +440,8 @@ export function isPaginationInfo(value: unknown): value is PaginationInfo {
 	);
 }
 
-/**
- * BalanceSummaryの型ガード
- *
- * 設計意図: Matt Pocockのパターンに従い、ランタイムでの型安全性を保証
- * APIレスポンスの検証に使用し、不正なデータを早期に検出
- */
-export function isBalanceSummary(value: unknown): value is BalanceSummary {
-	return (
-		typeof value === "object" &&
-		value !== null &&
-		"income" in value &&
-		"expense" in value &&
-		"balance" in value &&
-		"savingsRate" in value &&
-		"trend" in value &&
-		typeof (value as BalanceSummary).income === "number" &&
-		typeof (value as BalanceSummary).expense === "number" &&
-		typeof (value as BalanceSummary).balance === "number" &&
-		typeof (value as BalanceSummary).savingsRate === "number" &&
-		isBalanceTrend((value as BalanceSummary).trend)
-	);
-}
-
-/**
- * BalanceSummaryのtrendフィールドの型ガード
- */
-function isBalanceTrend(value: unknown): value is BalanceSummary["trend"] {
-	return value === "positive" || value === "negative" || value === "neutral";
-}
+// 注意: BalanceSummaryの型ガードは共有型定義から使用
+// isBalanceSummaryResponse -> isBalanceSummary として再エクスポート済み
 
 /**
  * BalanceSummaryのアサーション関数
@@ -555,52 +453,8 @@ export function assertBalanceSummary(
 	value: unknown,
 ): asserts value is BalanceSummary {
 	if (!isBalanceSummary(value)) {
-		const details = analyzeBalanceSummaryError(value);
-		throw new Error(`Value is not a valid BalanceSummary: ${details}`);
+		throw new Error(`Value is not a valid BalanceSummary`);
 	}
-}
-
-/**
- * BalanceSummary検証エラーの詳細分析
- *
- * 設計意図: どのフィールドが不正かを特定し、デバッグを容易にする
- */
-function analyzeBalanceSummaryError(value: unknown): string {
-	if (typeof value !== "object" || value === null) {
-		return `expected object, got ${typeof value}`;
-	}
-
-	const obj = value as Record<string, unknown>;
-	const errors: string[] = [];
-
-	// 必須フィールドのチェック
-	const requiredFields = [
-		"income",
-		"expense",
-		"balance",
-		"savingsRate",
-		"trend",
-	] as const;
-	for (const field of requiredFields) {
-		if (!(field in obj)) {
-			errors.push(`missing field: ${field}`);
-			continue;
-		}
-
-		// 数値フィールドの検証
-		if (field !== "trend" && typeof obj[field] !== "number") {
-			errors.push(`${field} must be number, got ${typeof obj[field]}`);
-		}
-	}
-
-	// trendフィールドの検証
-	if ("trend" in obj && !isBalanceTrend(obj.trend)) {
-		errors.push(
-			`trend must be 'positive', 'negative', or 'neutral', got ${obj.trend}`,
-		);
-	}
-
-	return errors.length > 0 ? errors.join(", ") : "unknown validation error";
 }
 
 /**
