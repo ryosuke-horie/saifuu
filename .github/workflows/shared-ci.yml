@@ -65,7 +65,6 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.12.1
-          dest: ~/setup-pnpm-${{ github.run_id }}
       
       - name: Install dependencies
         run: |
@@ -73,7 +72,6 @@ jobs:
           pnpm config set store-dir /tmp/pnpm-store-${{ github.run_id }}
           pnpm install --frozen-lockfile --prefer-offline false
           # クリーンアップ
-          rm -rf ~/setup-pnpm-${{ github.run_id }} || true
       
       - name: Type check
         run: pnpm run typecheck
