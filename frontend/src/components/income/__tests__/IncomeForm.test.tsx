@@ -1,4 +1,4 @@
-import { INCOME_CATEGORIES } from "@shared/config/categories";
+import { INCOME_CATEGORIES } from "@shared/config";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";

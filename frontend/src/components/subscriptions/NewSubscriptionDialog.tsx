@@ -1,6 +1,6 @@
 "use client";
 
-import { getCategoriesByType } from "@shared/config/categories";
+import { getCategoriesByType } from "@shared/config";
 import { type FC, useCallback, useMemo, useState } from "react";
 import type {
 	Category,

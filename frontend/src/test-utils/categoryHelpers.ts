@@ -4,7 +4,7 @@
  * テストで使用するカテゴリデータ生成ユーティリティ
  */
 
-import type { CategoryConfig } from "@shared/config/categories";
+import type { CategoryConfig } from "@shared/config";
 import type { Category } from "../lib/api/types";
 
 /**
