@@ -319,7 +319,7 @@ describe("subscriptions service", () => {
 			it("特定の請求サイクルのサブスクリプションを取得する", async () => {
 				// getSubscriptionsByBillingCycleはクライアントサイドでフィルタリングする
 				mockApiClient.get.mockResolvedValue(mockSubscriptions);
-				
+
 				const result = await getSubscriptionsByBillingCycle("monthly");
 
 				expect(result).toEqual(mockSubscriptions);
@@ -332,7 +332,7 @@ describe("subscriptions service", () => {
 			it("年次請求サイクルのサブスクリプションを取得する", async () => {
 				// yearlyのサブスクリプションがないため空配列を返す
 				mockApiClient.get.mockResolvedValue(mockSubscriptions);
-				
+
 				const result = await getSubscriptionsByBillingCycle("yearly");
 
 				expect(result).toEqual([]);
@@ -344,7 +344,7 @@ describe("subscriptions service", () => {
 			it("週次請求サイクルのサブスクリプションを取得する", async () => {
 				// weeklyのサブスクリプションがないため空配列を返す
 				mockApiClient.get.mockResolvedValue(mockSubscriptions);
-				
+
 				const result = await getSubscriptionsByBillingCycle("weekly");
 
 				expect(result).toEqual([]);
