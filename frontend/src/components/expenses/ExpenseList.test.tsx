@@ -17,23 +17,23 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { Transaction } from "../../lib/api/types";
 import { ExpenseList } from "./ExpenseList";
 
 // モックデータの定義 - TransactionWithCategoryとして使用
-const mockTransactions: any[] = [  // any型で定義し、ExpenseListに渡す際にTransactionWithCategoryとして扱う
+const mockTransactions: any[] = [
+	// any型で定義し、ExpenseListに渡す際にTransactionWithCategoryとして扱う
 	{
 		id: "t1",
 		amount: 1000,
 		type: "expense",
-		category: { 
-			id: "1", 
-			name: "食費", 
+		category: {
+			id: "1",
+			name: "食費",
 			type: "expense",
 			color: null,
 			description: null,
 			createdAt: "2024-01-01T00:00:00Z",
-			updatedAt: "2024-01-01T00:00:00Z"
+			updatedAt: "2024-01-01T00:00:00Z",
 		},
 		categoryId: "1",
 		description: "コーヒー",
@@ -45,14 +45,14 @@ const mockTransactions: any[] = [  // any型で定義し、ExpenseListに渡す�
 		id: "t2",
 		amount: 2500,
 		type: "expense",
-		category: { 
-			id: "2", 
-			name: "交通費", 
+		category: {
+			id: "2",
+			name: "交通費",
 			type: "expense",
 			color: null,
 			description: null,
 			createdAt: "2024-01-01T00:00:00Z",
-			updatedAt: "2024-01-01T00:00:00Z"
+			updatedAt: "2024-01-01T00:00:00Z",
 		},
 		categoryId: "2",
 		description: "電車代",
@@ -64,14 +64,14 @@ const mockTransactions: any[] = [  // any型で定義し、ExpenseListに渡す�
 		id: "t3",
 		amount: 15000,
 		type: "expense",
-		category: { 
-			id: "3", 
-			name: "光熱費", 
+		category: {
+			id: "3",
+			name: "光熱費",
 			type: "expense",
 			color: null,
 			description: null,
 			createdAt: "2024-01-01T00:00:00Z",
-			updatedAt: "2024-01-01T00:00:00Z"
+			updatedAt: "2024-01-01T00:00:00Z",
 		},
 		categoryId: "3",
 		description: "電気代",

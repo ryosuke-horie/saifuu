@@ -1,57 +1,58 @@
 import { render, screen } from "@testing-library/react";
-import type { Category, Subscription } from "../../lib/api/types";
+import type { Category } from "../../lib/api/types";
 import { SubscriptionList } from "./SubscriptionList";
 
 // モックデータの定義 - SubscriptionWithCategoryとして使用
 const mockCategories: Category[] = [
-	{ 
-		id: "1", 
-		name: "交通費", 
+	{
+		id: "1",
+		name: "交通費",
 		type: "expense",
 		color: null,
 		description: null,
 		createdAt: "2024-01-01T00:00:00Z",
-		updatedAt: "2024-01-01T00:00:00Z"
+		updatedAt: "2024-01-01T00:00:00Z",
 	},
-	{ 
-		id: "2", 
-		name: "光熱費", 
+	{
+		id: "2",
+		name: "光熱費",
 		type: "expense",
 		color: null,
 		description: null,
 		createdAt: "2024-01-01T00:00:00Z",
-		updatedAt: "2024-01-01T00:00:00Z"
+		updatedAt: "2024-01-01T00:00:00Z",
 	},
-	{ 
-		id: "3", 
-		name: "食費", 
+	{
+		id: "3",
+		name: "食費",
 		type: "expense",
 		color: null,
 		description: null,
 		createdAt: "2024-01-01T00:00:00Z",
-		updatedAt: "2024-01-01T00:00:00Z"
+		updatedAt: "2024-01-01T00:00:00Z",
 	},
-	{ 
-		id: "4", 
-		name: "その他", 
+	{
+		id: "4",
+		name: "その他",
 		type: "expense",
 		color: null,
 		description: null,
 		createdAt: "2024-01-01T00:00:00Z",
-		updatedAt: "2024-01-01T00:00:00Z"
+		updatedAt: "2024-01-01T00:00:00Z",
 	},
-	{ 
-		id: "5", 
-		name: "仕事・ビジネス", 
+	{
+		id: "5",
+		name: "仕事・ビジネス",
 		type: "expense",
 		color: null,
 		description: null,
 		createdAt: "2024-01-01T00:00:00Z",
-		updatedAt: "2024-01-01T00:00:00Z"
+		updatedAt: "2024-01-01T00:00:00Z",
 	},
 ];
 
-const mockSubscriptions: any[] = [  // any型で定義し、SubscriptionListに渡す際にSubscriptionWithCategoryとして扱う
+const mockSubscriptions: any[] = [
+	// any型で定義し、SubscriptionListに渡す際にSubscriptionWithCategoryとして扱う
 	{
 		id: "sub1",
 		name: "Netflix",
