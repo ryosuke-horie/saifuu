@@ -26,7 +26,8 @@
 			"!**/test-results/**",
 			"!**/playwright-report/**",
 			"!**/cloudflare-env.d.ts",
-			"!**/next-env.d.ts"
+			"!**/next-env.d.ts",
+			"!**/storybook-static/**"
 		]
 	},
 	"formatter": {

@@ -6,6 +6,8 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'shared/**'
+      - '!shared/**/*.md'
+      - '!shared/docs/**'
       - '.github/workflows/shared-ci.yml'
   # mainブランチへのpushは引き続き自動実行
   push:
@@ -13,6 +15,8 @@ on:
       - main
     paths:
       - 'shared/**'
+      - '!shared/**/*.md'
+      - '!shared/docs/**'
       - '.github/workflows/shared-ci.yml'
   # 手動トリガー（デバッグ用に残す）
   workflow_dispatch:

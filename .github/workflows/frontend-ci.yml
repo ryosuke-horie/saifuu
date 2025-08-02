@@ -6,6 +6,10 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'frontend/**'
+      - '!frontend/**/*.md'
+      - '!frontend/docs/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
       - '.github/workflows/frontend-ci.yml'
   # mainブランチへのpushは引き続き自動実行
   push:
@@ -13,6 +17,10 @@ on:
       - main
     paths:
       - 'frontend/**'
+      - '!frontend/**/*.md'
+      - '!frontend/docs/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
       - '.github/workflows/frontend-ci.yml'
   # 手動トリガー（デバッグ用に残す）
   workflow_dispatch:

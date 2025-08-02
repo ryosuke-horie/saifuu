@@ -125,24 +125,19 @@ describe("TransactionService", () => {
 		});
 
 		it("未来の日付の場合、エラーを返す", () => {
-			// ローカルタイムゾーンで明日の日付を確実に作成
-			const today = new Date();
-			const tomorrow = new Date(
-				today.getFullYear(),
-				today.getMonth(),
-				today.getDate() + 1,
-			);
-			// YYYY-MM-DD形式に変換（ローカルタイムゾーン）
-			const year = tomorrow.getFullYear();
-			const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
-			const day = String(tomorrow.getDate()).padStart(2, "0");
-			const tomorrowStr = `${year}-${month}-${day}`;
+			// 確実に未来の日付を作成（2日後）
+			const futureDate = new Date();
+			futureDate.setDate(futureDate.getDate() + 2);
+			const year = futureDate.getFullYear();
+			const month = String(futureDate.getMonth() + 1).padStart(2, "0");
+			const day = String(futureDate.getDate()).padStart(2, "0");
+			const futureDateString = `${year}-${month}-${day}`;
 
 			const invalidData: Partial<TransactionFormData> = {
 				amount: 1000,
 				type: "expense",
 				categoryId: "1",
-				date: tomorrowStr,
+				date: futureDateString,
 			};
 
 			const result = TransactionService.validate(invalidData);

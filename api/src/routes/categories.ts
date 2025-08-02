@@ -22,7 +22,7 @@ app.get('/', async (c) => {
 	try {
 		// 設定ファイルからカテゴリを取得し、API形式に変換
 		const result = ALL_CATEGORIES.map((category) => ({
-			id: category.numericId, // 数値IDを返す（後方互換性のため）
+			id: category.numericId.toString(), // 文字列として返す（APIレスポンスの一貫性のため）
 			name: category.name,
 			type: category.type,
 			color: category.color,
