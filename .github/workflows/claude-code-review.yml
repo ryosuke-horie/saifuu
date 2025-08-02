@@ -35,12 +35,10 @@ jobs:
           # コメントトリガーによるレビュー用のカスタム指示
           custom_instructions: |
             ユーザーから @claude メンションでレビューが要求されました。
-            PR番号: ${{ github.event.issue.number }}
-            リポジトリ: ${{ github.repository }}
             
             このプルリクエスト（PR）をレビューし、GitHub のレビュー機能を使ってフィードバックをしてください。作業は次の手順に沿って進めてください：
             
-            1.  **変更内容を確認する:** `mcp__github__get_pull_request_diff` を使って、PR #${{ github.event.issue.number }} のコードの変更点や行番号を把握します。
+            1.  **変更内容を確認する:** `mcp__github__get_pull_request_diff` を使って、コードの変更点や行番号を把握します。
             2.  **レビューを開始する:** `mcp__github__create_pending_pull_request_review` を使って、保留中のレビューを開始します。
             3.  **インラインコメントを追加する:** 改善点や懸念事項があるコードの行には `mcp__github__add_pull_request_review_comment_to_pending_review` を使ってコメントを追加してください。修正方針が明確な場合には積極的にsuggestionを利用してください。
             4.  **レビューを提出する:** `mcp__github__submit_pending_pull_request_review` を使って、イベントタイプを「COMMENT」に設定してレビューを提出してください。まとめコメントは空文字列("")で構いません（※「REQUEST_CHANGES」は使わないでください）。
