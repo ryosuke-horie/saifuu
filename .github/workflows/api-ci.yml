@@ -55,16 +55,25 @@ jobs:
           # cache: 'pnpm'
           # cache-dependency-path: api/pnpm-lock.yaml
       
+      - name: Clean pnpm setup directory
+        run: |
+          # pnpm/action-setupのデフォルトディレクトリをクリーンアップ
+          rm -rf ~/setup-pnpm || true
+          rm -rf /home/runner-user/setup-pnpm || true
+      
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 10.12.1
+          dest: ~/setup-pnpm-${{ github.run_id }}
       
       - name: Install dependencies
         run: |
           # セルフホストランナーではキャッシュを使用しない
           pnpm config set store-dir /tmp/pnpm-store-${{ github.run_id }}
           pnpm install --frozen-lockfile --prefer-offline false
+          # クリーンアップ
+          rm -rf ~/setup-pnpm-${{ github.run_id }} || true
       
       - name: Rebuild better-sqlite3
         working-directory: .
