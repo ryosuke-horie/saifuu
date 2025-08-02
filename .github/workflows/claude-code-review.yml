@@ -42,57 +42,6 @@ jobs:
           ref: ${{ steps.pr-info.outputs.branch }}
           fetch-depth: 0
 
-      # 過去のレビューコメントを取得
-      - name: Get previous review comments
-        id: previous-reviews
-        run: |
-          PR_NUMBER=${{ github.event.issue.number }}
-          
-          # PRのレビューコメントを取得
-          echo "Fetching review comments for PR #$PR_NUMBER..."
-          REVIEW_COMMENTS=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER/comments --paginate || echo "[]")
-          
-          # 通常のPRコメントも取得
-          echo "Fetching issue comments for PR #$PR_NUMBER..."
-          ISSUE_COMMENTS=$(gh api repos/${{ github.repository }}/issues/$PR_NUMBER/comments --paginate || echo "[]")
-          
-          # Claude Code Action のコメントを識別（botユーザーまたは特定の形式を持つコメント）
-          # sticky comment の識別パターンも含む
-          echo "$REVIEW_COMMENTS" > review_comments.json
-          echo "$ISSUE_COMMENTS" > issue_comments.json
-          
-          # レビュー履歴サマリーを作成
-          REVIEW_HISTORY="以前のレビュー履歴："
-          
-          # Claude関連のコメントを抽出して履歴に追加
-          CLAUDE_REVIEW_COMMENTS=$(jq -r '.[] | select(.user.type == "Bot" or .body | contains("Claude Code Action") or .body | contains("<!-- claude-code-sticky-comment")) | "- " + (.created_at | split("T")[0]) + ": " + (.body | split("\n")[0:3] | join(" "))' review_comments.json 2>/dev/null || echo "")
-          CLAUDE_ISSUE_COMMENTS=$(jq -r '.[] | select(.user.type == "Bot" or .body | contains("Claude Code Action") or .body | contains("<!-- claude-code-sticky-comment")) | "- " + (.created_at | split("T")[0]) + ": " + (.body | split("\n")[0:3] | join(" "))' issue_comments.json 2>/dev/null || echo "")
-          
-          # 履歴を環境変数として保存（複数行対応）
-          if [ -n "$CLAUDE_REVIEW_COMMENTS" ] || [ -n "$CLAUDE_ISSUE_COMMENTS" ]; then
-            {
-              echo "REVIEW_HISTORY<<EOF"
-              echo "$REVIEW_HISTORY"
-              if [ -n "$CLAUDE_REVIEW_COMMENTS" ]; then
-                echo "$CLAUDE_REVIEW_COMMENTS"
-              fi
-              if [ -n "$CLAUDE_ISSUE_COMMENTS" ]; then
-                echo "$CLAUDE_ISSUE_COMMENTS"
-              fi
-              echo "EOF"
-            } >> $GITHUB_ENV
-            echo "has_previous_reviews=true" >> $GITHUB_OUTPUT
-          else
-            {
-              echo "REVIEW_HISTORY<<EOF"  
-              echo "レビュー履歴なし"
-              echo "EOF"
-            } >> $GITHUB_ENV
-            echo "has_previous_reviews=false" >> $GITHUB_OUTPUT
-          fi
-        env:
-          GH_TOKEN: ${{ github.token }}
-
       - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@v0.0.45
@@ -107,11 +56,9 @@ jobs:
             PR番号: ${{ github.event.issue.number }}
             リポジトリ: ${{ github.repository }}
             
-            ${{ env.REVIEW_HISTORY }}
-            
             このプルリクエスト（PR）をレビューし、GitHub のレビュー機能を使ってフィードバックをしてください。作業は次の手順に沿って進めてください：
             
-            1.  **過去のレビューを確認する:** `mcp__github__get_pull_request_comments` を使って、このPRの既存のレビューコメントを取得し、既に指摘された内容を把握します。上記のレビュー履歴も参考にしてください。
+            1.  **過去のレビューを確認する:** `mcp__github__get_pull_request_comments` を使って、このPRの既存のレビューコメントを取得し、既に指摘された内容を把握します。
             2.  **変更内容を確認する:** `mcp__github__get_pull_request_diff` を使って、PR #${{ github.event.issue.number }} のコードの変更点や行番号を把握します。
             3.  **レビューを開始する:** `mcp__github__create_pending_pull_request_review` を使って、保留中のレビューを開始します。
             4.  **インラインコメントを追加する:** 改善点や懸念事項があるコードの行には `mcp__github__add_pull_request_review_comment_to_pending_review` を使ってコメントを追加してください。修正方針が明確な場合には積極的にsuggestionを利用してください。
@@ -122,11 +69,6 @@ jobs:
             * **重複を避ける:** 過去のレビューで既に指摘された内容については、以下の場合を除き再度指摘しないでください：
                 * 指摘に対する修正が不十分または誤っている場合
                 * 新しい変更により以前の指摘が再び該当するようになった場合
-                
-            * **対応状況の考慮:** 過去の指摘事項に対して：
-                * 対応済みの項目は肯定的に評価（ただしインラインコメントでは言及しない）
-                * 未対応の項目で依然として重要なものは、優先度を明確にして再度指摘
-                * 部分的に対応された項目は、残りの改善点を具体的に示す
 
             **コメントの書き方に関する重要事項**
 
@@ -160,7 +102,6 @@ jobs:
             3. スティッキーコメントが自動更新されるため、それ以外の総括的なコメントは不要
             4. 各インラインコメントでは結論を先に述べ、その後に理由と具体的な修正案を提示する
             5. CLAUDE.mdのガイドラインに従っているかを必ず確認する
-            6. 過去のレビュー履歴を考慮し、重複した指摘を避ける
             
             すべてのフィードバックは日本語で、建設的かつ実用的な内容にしてください。
 
