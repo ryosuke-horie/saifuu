@@ -29,7 +29,7 @@ jobs:
         id: pr-info
         run: |
           PR_NUMBER=${{ github.event.issue.number }}
-          PR_DATA=$(gh pr view $PR_NUMBER --json headRefName,headRepository --jq '{branch: .headRefName, repo: .headRepository.owner.login + "/" + .headRepository.name}')
+          PR_DATA=$(gh pr view $PR_NUMBER --json headRefName,headRepository --jq '{branch: .headRefName, repo: (.headRepository.owner.login + "/" + .headRepository.name)}')
           echo "branch=$(echo $PR_DATA | jq -r .branch)" >> $GITHUB_OUTPUT
           echo "repo=$(echo $PR_DATA | jq -r .repo)" >> $GITHUB_OUTPUT
         env:
