@@ -11,7 +11,6 @@
 
 ### 🎨 UI/UX開発
 - [スタイリング](./スタイリング.md) - CSS/Tailwindの使用方針
-- [Storybook](./storybook/) - コンポーネント開発環境
 
 ### 📊 品質管理
 - [テスト方針](./テスト方針.md) - テスト戦略とガイドライン
@@ -33,7 +32,7 @@ ghost run npm run dev
 
 ### 2. 開発フロー
 1. 機能要件の確認（Issue、仕様書）
-2. コンポーネント設計とStorybook作成
+2. コンポーネント設計
 3. 実装とテスト
 4. コードレビューとPR
 
@@ -43,7 +42,7 @@ ghost run npm run dev
 - **UI ライブラリ**: React 19
 - **スタイリング**: Tailwind CSS v4
 - **状態管理**: カスタムフック + Context API
-- **開発環境**: Storybook, Vitest
+- **テスト環境**: Vitest, Playwright
 - **型安全**: TypeScript
 
 ## 主要ディレクトリ構造
@@ -56,8 +55,7 @@ frontend/
 │   ├── hooks/        # カスタムフック
 │   ├── lib/          # ユーティリティ関数
 │   └── types/        # 型定義
-├── public/           # 静的ファイル
-└── .storybook/       # Storybook設定
+└── public/           # 静的ファイル
 ```
 
 ## 関連ドキュメント
