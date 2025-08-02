@@ -32,8 +32,12 @@ export class TransactionService {
 		if (!data.date) {
 			errors.date = "日付を入力してください";
 		} else {
-			const selectedDate = new Date(data.date);
+			// 日付文字列を年月日に分割してローカルタイムゾーンで日付を作成
+			const [year, month, day] = data.date.split("-").map(Number);
+			const selectedDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+			
 			const today = new Date();
+			// 今日の日付の終わり（23:59:59.999）を設定
 			today.setHours(23, 59, 59, 999);
 
 			if (selectedDate > today) {
