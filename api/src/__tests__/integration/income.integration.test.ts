@@ -1,19 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { transactions } from '../../db/schema'
 import type { TransactionResponse } from '../../types/api'
 import { createTestRequest, getResponseJson } from '../helpers/test-app'
-import { cleanupTestDatabase, createTestDatabase, setupTestDatabase } from '../helpers/test-db'
+import { cleanupTestDatabase, setupTestDatabase } from '../helpers/test-db'
 import testProductionApp from '../helpers/test-production-app'
 
 /**
  * 収入管理機能の統合テスト
- * 
+ *
  * 収入の編集機能に焦点を当てたテストスイート
  * E2Eテストで発見された編集機能の問題を検証
  */
 describe('Income Management Integration Tests', () => {
 	const app = testProductionApp
-	const db = createTestDatabase()
 
 	beforeEach(async () => {
 		await setupTestDatabase()
@@ -249,12 +247,7 @@ describe('Income Management Integration Tests', () => {
 				description: '昇給後の月給',
 			}
 
-			await createTestRequest(
-				app,
-				'PUT',
-				`/api/transactions/${createdIncomes[0].id}`,
-				updateData
-			)
+			await createTestRequest(app, 'PUT', `/api/transactions/${createdIncomes[0].id}`, updateData)
 
 			// 収入一覧を取得
 			const listRes = await createTestRequest(app, 'GET', '/api/transactions?type=income')
