@@ -1,8 +1,7 @@
 // 共有型定義からCategory型をインポート（型安全性向上のため）
 
-import { ALL_CATEGORIES } from '@shared/config/categories'
-import type { Category } from '@shared/types'
 import { Hono } from 'hono'
+import { ALL_CATEGORIES } from '../../../shared/src/config/categories'
 import type { Env } from '../db'
 import { type LoggingVariables, logWithContext } from '../middleware/logging'
 
@@ -22,8 +21,8 @@ app.get('/', async (c) => {
 
 	try {
 		// 設定ファイルからカテゴリを取得し、API形式に変換
-		const result: Category[] = ALL_CATEGORIES.map((category) => ({
-			id: category.numericId.toString(), // Category型はstring IDを期待
+		const result = ALL_CATEGORIES.map((category) => ({
+			id: category.numericId, // 数値IDを返す（後方互換性のため）
 			name: category.name,
 			type: category.type,
 			color: category.color,

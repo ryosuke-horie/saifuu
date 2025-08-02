@@ -26,7 +26,7 @@ describe("IncomePage", () => {
 			description: "1月給与",
 			type: "income" as const,
 			category: {
-				id: "salary",
+				id: "101", // 給与カテゴリのnumericId
 				name: "給与",
 				type: "income" as const,
 				color: "#10b981",
@@ -44,7 +44,7 @@ describe("IncomePage", () => {
 			description: "冬季ボーナス",
 			type: "income" as const,
 			category: {
-				id: "bonus",
+				id: "102", // ボーナスカテゴリのnumericId
 				name: "ボーナス",
 				type: "income" as const,
 				color: "#059669",
@@ -234,7 +234,7 @@ describe("IncomePage", () => {
 			expect(mockUpdateIncomeMutation).toHaveBeenCalledWith("1", {
 				amount: 350000,
 				date: "2024-01-25",
-				categoryId: "salary",
+				categoryId: "salary", // 給与カテゴリのID
 				description: "1月給与",
 			});
 		});

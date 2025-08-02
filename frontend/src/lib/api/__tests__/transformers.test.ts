@@ -36,7 +36,7 @@ describe("Categories Transformers", () => {
 				id: "1", // number -> string変換
 				name: "エンターテイメント",
 				type: "expense", // デフォルト値
-				color: undefined, // デフォルト値
+				color: undefined, // デフォルト値（実装に合わせて修正）
 				createdAt: "2025-07-05T07:06:39Z",
 				updatedAt: "2025-07-05T07:06:39Z",
 			});
@@ -138,7 +138,7 @@ describe("Subscriptions Transformers", () => {
 				id: "1",
 				name: "Netflix",
 				amount: 1980,
-				categoryId: "1", // categoryIdフィールドを使用
+				categoryId: "1", // categoryオブジェクトではなくcategoryIdを返す
 				billingCycle: "monthly",
 				startDate: "2025-07-05", // createdAtから日付部分を抽出
 				nextBillingDate: "2025-08-01", // YYYY-MM-DD形式に変換される
@@ -187,7 +187,7 @@ describe("Subscriptions Transformers", () => {
 				mockCategories,
 			);
 
-			expect(result.description).toBeUndefined(); // nullはundefinedに変換される
+			expect(result.description).toBeUndefined(); // nullの場合はundefinedに変換される
 		});
 	});
 

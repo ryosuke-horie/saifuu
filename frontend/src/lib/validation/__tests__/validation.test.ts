@@ -205,7 +205,7 @@ describe("Zodバリデーション関数のテスト", () => {
 				type: "income",
 				date: "2024-01-25",
 				description: "1月分給与",
-				categoryId: "salary",
+				categoryId: "101",
 			};
 
 			const result = validateIncomeFormWithZod(data);
@@ -236,7 +236,7 @@ describe("Zodバリデーション関数のテスト", () => {
 				type: "income",
 				date: "2024-01-01",
 				description: "",
-				categoryId: "salary",
+				categoryId: "101",
 			};
 
 			const result = validateIncomeFormWithZod(data);
@@ -252,7 +252,7 @@ describe("Zodバリデーション関数のテスト", () => {
 				type: "income",
 				date: "2024-01-01",
 				description: "a".repeat(501),
-				categoryId: "salary",
+				categoryId: "101",
 			};
 
 			const result = validateIncomeFormWithZod(data);
@@ -264,11 +264,11 @@ describe("Zodバリデーション関数のテスト", () => {
 
 		it("カテゴリIDが適切にマッピングされる", () => {
 			const testCases = [
-				{ categoryId: "salary", expectedNumericId: 101 },
-				{ categoryId: "bonus", expectedNumericId: 102 },
-				{ categoryId: "side_business", expectedNumericId: 103 },
-				{ categoryId: "investment", expectedNumericId: 104 },
-				{ categoryId: "other_income", expectedNumericId: 105 },
+				{ categoryId: "101", expectedNumericId: 101 },
+				{ categoryId: "102", expectedNumericId: 102 },
+				{ categoryId: "103", expectedNumericId: 103 },
+				{ categoryId: "104", expectedNumericId: 104 },
+				{ categoryId: "105", expectedNumericId: 105 },
 			];
 
 			testCases.forEach(({ categoryId }) => {
