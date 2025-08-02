@@ -22,7 +22,7 @@ export function convertTransactionToFormData(
 	return {
 		amount: transaction.amount,
 		type: transaction.type,
-		description: transaction.description,
+		description: transaction.description === null ? undefined : transaction.description,
 		date: transaction.date,
 		categoryId: transaction.categoryId || undefined,
 	};
