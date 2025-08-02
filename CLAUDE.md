@@ -753,21 +753,6 @@ E2Eテスト関連のタスクを実行する際は、必要に応じてSub Agen
 2. **修正Agent**: テスト失敗時の修正対応
 3. **サーバー管理Agent**: Ghostによるサーバー起動・再起動管理
 
-### Windows環境でのGhostセットアップ
-
-Windows環境でGhostツールを使用する場合の注意事項：
-
-1. **PowerShell/WSL推奨**: Windows環境ではPowerShellまたはWSL2を使用
-2. **パス区切り文字**: Windowsパスの場合は `\` ではなく `/` を使用
-3. **権限設定**: 管理者権限が必要な場合があるため注意
-
-```powershell
-# Windows PowerShellでの例
-ghost run "pnpm run dev"
-ghost list
-ghost stop 1
-```
-
 ## 開発の進め方
 
 1. 新機能開発時は、まず設計意図をコメントで記載
