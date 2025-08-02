@@ -62,6 +62,15 @@
 - **専門領域**: Hono、Drizzle ORM、Cloudflare D1、型安全なAPI設計
 - **開発原則**: クリーンアーキテクチャ、TDD、RESTful設計
 
+#### documentation-writer
+- **自動選択条件**:
+  - 技術仕様書・設計書の作成
+  - 開発ガイド・APIドキュメントの更新
+  - ADR（Architecture Decision Record）の記録
+  - テストドキュメントの作成・更新
+- **専門領域**: Markdownドキュメント作成、日本語技術文書、ドキュメント体系管理
+- **開発原則**: docs/ディレクトリ集約、日本語ファイル名、実装との一貫性維持
+
 ### エージェントとの連携
 
 1. **自動選択**: 作業内容に基づいて適切なエージェントが自動的に選択されます
@@ -69,6 +78,7 @@
    ```
    "frontend-developerで支出登録フォームを実装して"
    "backend-developerで収入APIエンドポイントを作成"
+   "documentation-writerで新機能の仕様書を作成して"
    ```
 
 3. **コンテキスト共有**: エージェントには以下の情報が自動的に渡されます
@@ -607,13 +617,14 @@ E2Eテスト関連のタスクを実行する際は、必要に応じてSub Agen
 ### エージェントによる実装の流れ
 
 1. **要件理解**: Issueやタスクの内容を分析
-2. **エージェント選択**: frontend-developer/backend-developerが自動選択
-3. **TDD実行**:
+2. **エージェント選択**: frontend-developer/backend-developer/documentation-writerが自動選択
+3. **TDD実行**（開発エージェントの場合）:
    - **Red**: 失敗するテストを作成
    - **Green**: 最小限の実装（専門エージェントが担当）
    - **Refactor**: コード品質の改善
 4. **型安全性確保**: Matt Pocockの方針に従った型定義
-5. **検証**: すべてのテストが通ることを確認
+5. **ドキュメント作成**: documentation-writerが仕様書・ガイドを作成・更新
+6. **検証**: すべてのテストが通ることを確認
 
 ### E2Eシナリオ変更時のルール
 
