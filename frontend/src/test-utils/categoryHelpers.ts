@@ -18,6 +18,7 @@ export function createMockCategory(config: CategoryConfig): Category {
 		name: config.name,
 		type: config.type,
 		color: config.color,
+		numericId: config.numericId, // numericIdも保持
 		createdAt: now,
 		updatedAt: now,
 	};

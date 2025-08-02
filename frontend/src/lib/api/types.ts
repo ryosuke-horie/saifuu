@@ -8,7 +8,6 @@
 
 import type {
 	BillingCycle,
-	BaseCategory as Category,
 	CategoryType,
 	CreateCategoryRequest,
 	CreateSubscriptionRequest,
@@ -36,7 +35,6 @@ export type {
 	CategoryType,
 	BillingCycle,
 	Transaction,
-	Category,
 	Subscription,
 	CreateTransactionRequest,
 	UpdateTransactionRequest,
@@ -58,7 +56,10 @@ export {
 } from "@shared/types";
 
 // フロントエンド固有の拡張型
+// Category型を先にインポート（他の型定義で使用するため）
+import type { Category } from "./types/extended";
 export type {
+	Category,
 	SubscriptionWithCategory,
 	TransactionWithCategory,
 } from "./types/extended";
