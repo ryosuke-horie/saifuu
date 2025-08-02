@@ -1,8 +1,8 @@
 // 共有型定義からCategory型をインポート（型安全性向上のため）
 
+import { Hono } from 'hono'
 import { ALL_CATEGORIES } from '../../../shared/src/config/categories'
 import type { Category } from '../../../shared/src/types'
-import { Hono } from 'hono'
 import type { Env } from '../db'
 import { type LoggingVariables, logWithContext } from '../middleware/logging'
 

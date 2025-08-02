@@ -1,6 +1,6 @@
-import { ALL_CATEGORIES, getCategoryByName } from '../../../../shared/src/config/categories'
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { ALL_CATEGORIES, getCategoryByName } from '../../../../shared/src/config/categories'
 import { subscriptions, transactions } from '../../db/schema'
 import { createTestRequest, getResponseJson } from '../helpers/test-app'
 import { cleanupTestDatabase, createTestDatabase, setupTestDatabase } from '../helpers/test-db'

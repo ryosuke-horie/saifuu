@@ -1,5 +1,5 @@
-import { ALL_CATEGORIES } from '../../../shared/src/config/categories'
 import { Hono } from 'hono'
+import { ALL_CATEGORIES } from '../../../shared/src/config/categories'
 import { type AnyDatabase, type Env } from '../db'
 import { type NewSubscription, type Subscription, subscriptions } from '../db/schema'
 import { createCrudHandlers } from '../lib/route-factory'
