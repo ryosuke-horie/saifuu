@@ -320,10 +320,10 @@ describe("transactions service", () => {
 
 			expect(result).toEqual(mockStats);
 			expect(mockApiClient.get).toHaveBeenCalledWith(
-				expect.stringContaining("dateFrom=2024-07-01"),
+				expect.stringContaining("startDate=2024-07-01"),
 			);
 			expect(mockApiClient.get).toHaveBeenCalledWith(
-				expect.stringContaining("dateTo=2024-07-31"),
+				expect.stringContaining("endDate=2024-07-31"),
 			);
 		});
 	});

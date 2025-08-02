@@ -317,39 +317,39 @@ describe("subscriptions service", () => {
 
 		describe("getSubscriptionsByBillingCycle", () => {
 			it("特定の請求サイクルのサブスクリプションを取得する", async () => {
-				// getSubscriptionsByBillingCycleはクライアントサイドでフィルタリングする
+				// サーバー側でフィルタリングされた結果を返す
 				mockApiClient.get.mockResolvedValue(mockSubscriptions);
 
 				const result = await getSubscriptionsByBillingCycle("monthly");
 
 				expect(result).toEqual(mockSubscriptions);
-				// billingCycleパラメータは送信されず、全サブスクリプションを取得してフィルタリング
+				// billingCycleパラメータがクエリパラメータとして送信される
 				expect(mockApiClient.get).toHaveBeenCalledWith(
-					endpoints.subscriptions.list,
+					expect.stringContaining("billingCycle=monthly"),
 				);
 			});
 
 			it("年次請求サイクルのサブスクリプションを取得する", async () => {
-				// yearlyのサブスクリプションがないため空配列を返す
-				mockApiClient.get.mockResolvedValue(mockSubscriptions);
+				// サーバー側でフィルタリングされ、yearlyのサブスクがないため空配列を返す
+				mockApiClient.get.mockResolvedValue([]);
 
 				const result = await getSubscriptionsByBillingCycle("yearly");
 
 				expect(result).toEqual([]);
 				expect(mockApiClient.get).toHaveBeenCalledWith(
-					endpoints.subscriptions.list,
+					expect.stringContaining("billingCycle=yearly"),
 				);
 			});
 
 			it("週次請求サイクルのサブスクリプションを取得する", async () => {
-				// weeklyのサブスクリプションがないため空配列を返す
-				mockApiClient.get.mockResolvedValue(mockSubscriptions);
+				// サーバー側でフィルタリングされ、weeklyのサブスクがないため空配列を返す
+				mockApiClient.get.mockResolvedValue([]);
 
 				const result = await getSubscriptionsByBillingCycle("weekly");
 
 				expect(result).toEqual([]);
 				expect(mockApiClient.get).toHaveBeenCalledWith(
-					endpoints.subscriptions.list,
+					expect.stringContaining("billingCycle=weekly"),
 				);
 			});
 		});
