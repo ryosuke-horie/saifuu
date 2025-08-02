@@ -180,7 +180,7 @@ describe("Subscriptions API", () => {
 			expect(mockGet).toHaveBeenCalledWith("/subscriptions/1");
 			expect(result.id).toBe("1");
 			expect(result.name).toBe("Netflix");
-			expect(result.category).toEqual(mockCategories[0]);
+			expect(result.categoryId).toEqual(mockCategories[0].id);
 		});
 	});
 

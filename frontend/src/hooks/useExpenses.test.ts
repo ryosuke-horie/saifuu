@@ -13,7 +13,7 @@ import {
 	type Mock,
 	vi,
 } from "vitest";
-import type { Category, Transaction } from "../lib/api/types";
+import type { Category, TransactionWithCategory } from "../lib/api/types";
 import { useExpenses } from "./useExpenses";
 
 // API サービスのモック
@@ -52,7 +52,7 @@ describe("useExpenses", () => {
 		},
 	];
 
-	const mockExpenses: Transaction[] = [
+	const mockExpenses: TransactionWithCategory[] = [
 		{
 			id: "1",
 			amount: 1500,
@@ -60,6 +60,7 @@ describe("useExpenses", () => {
 			description: "ランチ",
 			date: "2025-01-15",
 			category: mockCategories[0],
+			categoryId: mockCategories[0].id,
 			createdAt: "2025-01-15T00:00:00Z",
 			updatedAt: "2025-01-15T00:00:00Z",
 		},
@@ -70,6 +71,7 @@ describe("useExpenses", () => {
 			description: "電車",
 			date: "2025-01-15",
 			category: mockCategories[1],
+			categoryId: mockCategories[1].id,
 			createdAt: "2025-01-15T00:00:00Z",
 			updatedAt: "2025-01-15T00:00:00Z",
 		},
@@ -150,6 +152,7 @@ describe("useExpenses", () => {
 				...newExpense,
 				id: "3",
 				category: mockCategories[0],
+				categoryId: mockCategories[0].id,
 				createdAt: "2025-01-16T00:00:00Z",
 				updatedAt: "2025-01-16T00:00:00Z",
 			};

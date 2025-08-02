@@ -10,6 +10,9 @@
     ],
     "types": ["vite/client", "@cloudflare/workers-types", "@types/better-sqlite3", "@types/node"],
     "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx"
+    "jsxImportSource": "hono/jsx",
+    "paths": {
+      "@shared/*": ["../shared/src/*"]
+    }
   },
 }

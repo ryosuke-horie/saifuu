@@ -3,7 +3,7 @@ import { userEvent } from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useIncomes } from "@/hooks/useIncomes";
 import { fetchCategories } from "@/lib/api/categories/api";
-import type { Transaction } from "@/lib/api/types";
+import type { TransactionWithCategory } from "@/lib/api/types";
 import IncomePage from "../page";
 
 // APIモック
@@ -18,7 +18,7 @@ vi.mock("@/hooks/useIncomes", () => ({
 
 describe("IncomePage", () => {
 	// モックデータ
-	const mockIncomes: Transaction[] = [
+	const mockIncomes: TransactionWithCategory[] = [
 		{
 			id: "1",
 			amount: 300000,
@@ -33,6 +33,7 @@ describe("IncomePage", () => {
 				createdAt: "2024-01-01T00:00:00.000Z",
 				updatedAt: "2024-01-01T00:00:00.000Z",
 			},
+			categoryId: "salary",
 			createdAt: "2024-01-25T00:00:00Z",
 			updatedAt: "2024-01-25T00:00:00Z",
 		},
@@ -50,6 +51,7 @@ describe("IncomePage", () => {
 				createdAt: "2024-01-01T00:00:00.000Z",
 				updatedAt: "2024-01-01T00:00:00.000Z",
 			},
+			categoryId: "bonus",
 			createdAt: "2024-01-15T00:00:00Z",
 			updatedAt: "2024-01-15T00:00:00Z",
 		},

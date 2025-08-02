@@ -11,7 +11,7 @@
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Transaction } from "../../../lib/api/types";
+import type { TransactionWithCategory } from "../../../lib/api/types";
 import { IncomeList } from "../IncomeList";
 
 describe("IncomeList", () => {
@@ -20,7 +20,7 @@ describe("IncomeList", () => {
 	});
 
 	// テスト用のダミー収入データ
-	const mockIncomeTransactions: Transaction[] = [
+	const mockIncomeTransactions: TransactionWithCategory[] = [
 		{
 			id: "1",
 			amount: 300000,
@@ -35,6 +35,7 @@ describe("IncomeList", () => {
 				createdAt: "2024-01-01T00:00:00Z",
 				updatedAt: "2024-01-01T00:00:00Z",
 			},
+			categoryId: "salary",
 			createdAt: "2024-12-25T00:00:00Z",
 			updatedAt: "2024-12-25T00:00:00Z",
 		},
@@ -52,6 +53,7 @@ describe("IncomeList", () => {
 				createdAt: "2024-01-01T00:00:00Z",
 				updatedAt: "2024-01-01T00:00:00Z",
 			},
+			categoryId: "bonus",
 			createdAt: "2024-12-10T00:00:00Z",
 			updatedAt: "2024-12-10T00:00:00Z",
 		},
@@ -69,6 +71,7 @@ describe("IncomeList", () => {
 				createdAt: "2024-01-01T00:00:00Z",
 				updatedAt: "2024-01-01T00:00:00Z",
 			},
+			categoryId: "side_business",
 			createdAt: "2024-12-01T00:00:00Z",
 			updatedAt: "2024-12-01T00:00:00Z",
 		},
@@ -190,7 +193,7 @@ describe("IncomeList", () => {
 	});
 
 	it("説明がない収入データも正しく表示する（null）", () => {
-		const transactionsWithoutDescription: Transaction[] = [
+		const transactionsWithoutDescription: TransactionWithCategory[] = [
 			{
 				...mockIncomeTransactions[0],
 				description: null,
@@ -205,7 +208,7 @@ describe("IncomeList", () => {
 	});
 
 	it("説明がない収入データも正しく表示する（undefined）", () => {
-		const transactionsWithoutDescription: Transaction[] = [
+		const transactionsWithoutDescription: TransactionWithCategory[] = [
 			{
 				...mockIncomeTransactions[0],
 				description: undefined as any,
@@ -220,7 +223,7 @@ describe("IncomeList", () => {
 	});
 
 	it("説明がない収入データも正しく表示する（空文字）", () => {
-		const transactionsWithoutDescription: Transaction[] = [
+		const transactionsWithoutDescription: TransactionWithCategory[] = [
 			{
 				...mockIncomeTransactions[0],
 				description: "",

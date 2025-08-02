@@ -7,6 +7,7 @@
 
 import { addQueryParams, apiClient } from "../client";
 import { endpoints } from "../config";
+// 共有型定義を使用
 import type {
 	CreateTransactionRequest,
 	DateRange,
@@ -112,12 +113,12 @@ export async function getTransactionsByCategory(
  */
 export async function getTransactionsByDateRange(
 	dateRange: DateRange,
-	query?: Omit<GetTransactionsQuery, "dateFrom" | "dateTo">,
+	query?: Omit<GetTransactionsQuery, "startDate" | "endDate">,
 ): Promise<Transaction[]> {
 	return getTransactions({
 		...query,
-		dateFrom: dateRange.from,
-		dateTo: dateRange.to,
+		startDate: dateRange.from,
+		endDate: dateRange.to,
 	});
 }
 
@@ -177,7 +178,7 @@ export async function getMonthlyStats(year?: number): Promise<MonthlyStats[]> {
 export async function getRecentTransactions(
 	limit = 10,
 ): Promise<Transaction[]> {
-	return getTransactions({ limit, page: 1 });
+	return getTransactions({ limit, offset: 0 });
 }
 
 /**

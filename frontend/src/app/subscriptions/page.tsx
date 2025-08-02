@@ -11,7 +11,10 @@ import {
 	useCreateSubscription,
 	useSubscriptions,
 } from "../../lib/api/hooks/useSubscriptions";
-import type { CreateSubscriptionRequest } from "../../lib/api/types";
+import type {
+	CreateSubscriptionRequest,
+	SubscriptionFormData,
+} from "../../lib/api/types";
 
 /**
  * サブスクリプション管理ページ
@@ -62,10 +65,15 @@ const SubscriptionsPage: FC = () => {
 
 	// 新規サブスクリプション登録処理
 	const handleSubmitNewSubscription = useCallback(
-		async (data: CreateSubscriptionRequest) => {
+		async (data: SubscriptionFormData) => {
 			try {
+				// SubscriptionFormDataをCreateSubscriptionRequestに変換
+				const requestData: CreateSubscriptionRequest = {
+					...data,
+					startDate: new Date().toISOString().split("T")[0], // 今日の日付を開始日とする
+				};
 				// API経由でサブスクリプションを作成
-				const result = await createSubscriptionMutation(data);
+				const result = await createSubscriptionMutation(requestData);
 
 				// 成功時のみダイアログを閉じる
 				if (result) {
@@ -182,7 +190,11 @@ const SubscriptionsPage: FC = () => {
 												const nextBillingDates = activeSubscriptions.map(
 													(s) => s.nextBillingDate,
 												);
-												const earliestDate = nextBillingDates.sort()[0];
+												const validDates = nextBillingDates.filter(
+													(date): date is string => date != null,
+												);
+												if (validDates.length === 0) return "---";
+												const earliestDate = validDates.sort()[0];
 
 												// ISO文字列から月日を抽出
 												const datePart = earliestDate.split("T")[0];

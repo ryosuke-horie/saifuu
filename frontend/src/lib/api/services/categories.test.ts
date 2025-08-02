@@ -157,13 +157,14 @@ describe("Categories Service", () => {
 		const createRequest: CreateCategoryRequest = {
 			name: "新しいカテゴリ",
 			type: "expense",
-			color: "#FF5733",
+			description: "新しいカテゴリの説明",
 		};
 
 		const createdCategory: Category = {
 			id: "99",
 			...createRequest,
-			color: createRequest.color ?? null,
+			color: "#FF5733",
+			description: createRequest.description,
 			createdAt: "2024-01-01T00:00:00.000Z",
 			updatedAt: "2024-01-01T00:00:00.000Z",
 		};
@@ -229,13 +230,14 @@ describe("Categories Service", () => {
 	describe("updateCategory", () => {
 		const updateRequest: UpdateCategoryRequest = {
 			name: "更新されたカテゴリ",
-			color: "#00FF00",
+			description: "更新された説明",
 		};
 
 		const updatedCategory: Category = {
 			...mockCategory,
 			...updateRequest,
-			color: updateRequest.color ?? mockCategory.color,
+			color: "#00FF00",
+			description: updateRequest.description,
 			updatedAt: "2024-02-01T00:00:00.000Z",
 		};
 
@@ -312,8 +314,8 @@ describe("Categories Service", () => {
 
 	describe("deleteCategory", () => {
 		const deleteResponse: DeleteResponse = {
+			success: true,
 			message: "カテゴリが削除されました",
-			deletedId: "1",
 		};
 
 		it("カテゴリを削除する", async () => {

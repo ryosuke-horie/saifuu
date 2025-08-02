@@ -1,8 +1,8 @@
-import type { Subscription } from "../../../src/lib/api/types";
+import type { SubscriptionWithCategory } from "../../../src/lib/api/types";
 import { mockCategories } from "./categories";
 
 // サブスクリプションデータのモック
-export const mockSubscriptions: Subscription[] = [
+export const mockSubscriptions: SubscriptionWithCategory[] = [
 	{
 		id: "1",
 		name: "Netflix",
@@ -10,6 +10,8 @@ export const mockSubscriptions: Subscription[] = [
 		billingCycle: "monthly" as const,
 		nextBillingDate: "2025-07-01",
 		category: mockCategories[3], // その他
+		categoryId: mockCategories[3]?.id || null,
+		startDate: "2025-01-01",
 		isActive: true,
 		description: "動画ストリーミングサービス",
 		createdAt: "2025-01-01T00:00:00Z",
@@ -22,6 +24,8 @@ export const mockSubscriptions: Subscription[] = [
 		billingCycle: "monthly" as const,
 		nextBillingDate: "2025-07-15",
 		category: mockCategories[3], // その他
+		categoryId: mockCategories[3]?.id || null,
+		startDate: "2025-01-01",
 		isActive: true,
 		description: "音楽ストリーミングサービス",
 		createdAt: "2025-01-02T00:00:00Z",
@@ -34,6 +38,8 @@ export const mockSubscriptions: Subscription[] = [
 		billingCycle: "monthly" as const,
 		nextBillingDate: "2025-07-10",
 		category: mockCategories[1], // 仕事・ビジネス
+		categoryId: mockCategories[1]?.id || null,
+		startDate: "2025-01-01",
 		isActive: true,
 		description: "デザイン・動画編集ソフトウェア",
 		createdAt: "2025-01-03T00:00:00Z",

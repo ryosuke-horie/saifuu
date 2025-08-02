@@ -1,4 +1,4 @@
-import { ALL_CATEGORIES } from '../../../shared/config/categories'
+import { ALL_CATEGORIES } from '@shared/config/categories'
 
 /**
  * 取引データの型定義

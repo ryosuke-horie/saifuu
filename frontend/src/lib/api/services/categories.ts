@@ -11,6 +11,7 @@ import {
 } from "../categories/api";
 import { apiClient } from "../client";
 import { endpoints } from "../config";
+// 共有型定義を使用
 import type {
 	Category,
 	CreateCategoryRequest,

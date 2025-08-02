@@ -12,7 +12,7 @@
 
 import type { FC } from "react";
 import { memo, useCallback } from "react";
-import type { Transaction } from "../../lib/api/types";
+import type { TransactionWithCategory } from "../../lib/api/types";
 import {
 	formatCategoryName,
 	formatCurrency,
@@ -21,9 +21,9 @@ import {
 
 export interface TransactionRowProps {
 	/** 表示する取引データ */
-	transaction: Transaction;
+	transaction: TransactionWithCategory;
 	/** 編集時のコールバック */
-	onEdit?: (transaction: Transaction) => void;
+	onEdit?: (transaction: TransactionWithCategory) => void;
 	/** 削除時のコールバック */
 	onDelete?: (transactionId: string) => void;
 	/**
@@ -80,7 +80,7 @@ export const TransactionRow: FC<TransactionRowProps> = memo(
 					{formatCurrency(transaction.amount, showSign)}
 				</td>
 				<td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700 max-w-[80px] sm:max-w-none truncate">
-					{formatCategoryName(transaction.category)}
+					{formatCategoryName(transaction.category || null)}
 				</td>
 				<td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700 max-w-[120px] sm:max-w-none truncate">
 					{transaction.description || ""}

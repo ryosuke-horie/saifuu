@@ -17,7 +17,7 @@
  * - カテゴリを削除する場合でも、IDの再利用は絶対に行わないでください
  */
 
-export type CategoryType = 'expense' | 'income'
+import type { CategoryType } from '../types'
 
 export interface CategoryConfig {
 	id: string

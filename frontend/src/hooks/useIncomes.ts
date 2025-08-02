@@ -147,10 +147,7 @@ export function useIncomes(): UseIncomesReturn {
 
 		try {
 			setState((prev) => ({ ...prev, operationLoading: true, error: null }));
-			const updatedIncome = await updateTransaction(id, {
-				...formData,
-				type: "income",
-			});
+			const updatedIncome = await updateTransaction(id, formData);
 
 			setState((prev) => ({
 				...prev,

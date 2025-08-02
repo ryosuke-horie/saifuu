@@ -22,9 +22,8 @@ export function convertTransactionToFormData(
 	return {
 		amount: transaction.amount,
 		type: transaction.type,
-		description:
-			transaction.description === null ? undefined : transaction.description,
+		description: transaction.description || undefined,
 		date: transaction.date,
-		categoryId: transaction.category?.id,
+		categoryId: transaction.categoryId || undefined,
 	};
 }

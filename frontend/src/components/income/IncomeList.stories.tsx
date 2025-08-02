@@ -12,7 +12,7 @@
 
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
-import type { Transaction } from "../../lib/api/types";
+import type { TransactionWithCategory } from "../../lib/api/types";
 import { IncomeList } from "./IncomeList";
 
 const meta: Meta<typeof IncomeList> = {
@@ -52,7 +52,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 // モックデータ
-const mockIncomeData: Transaction[] = [
+const mockIncomeData: TransactionWithCategory[] = [
 	{
 		id: "1",
 		amount: 300000,
@@ -67,6 +67,7 @@ const mockIncomeData: Transaction[] = [
 			createdAt: "2024-01-01T00:00:00Z",
 			updatedAt: "2024-01-01T00:00:00Z",
 		},
+		categoryId: "salary",
 		createdAt: "2024-12-25T00:00:00Z",
 		updatedAt: "2024-12-25T00:00:00Z",
 	},
@@ -165,6 +166,7 @@ export const ManyItems: Story = {
 				.toISOString()
 				.split("T")[0],
 			category: mockIncomeData[i % 4].category,
+			categoryId: mockIncomeData[i % 4].categoryId,
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
 		})),
@@ -175,7 +177,7 @@ export const ManyItems: Story = {
 export const Interactive: Story = {
 	args: {
 		transactions: mockIncomeData,
-		onEdit: (transaction: Transaction) => {
+		onEdit: (transaction: TransactionWithCategory) => {
 			console.log("Edit clicked:", transaction);
 		},
 		onDelete: (id: string) => {
