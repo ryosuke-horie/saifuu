@@ -151,6 +151,11 @@ export function validateIncomeFormWithZod(data: IncomeFormData): {
 		formErrors.description = "説明は500文字以内で入力してください";
 	}
 
+	// カテゴリのバリデーション（収入では必須）
+	if (!data.categoryId) {
+		formErrors.categoryId = "カテゴリを選択してください";
+	}
+
 	// フォームエラーがある場合は早期リターン
 	if (Object.keys(formErrors).length > 0) {
 		return { success: false, errors: formErrors };
@@ -187,6 +192,21 @@ export function validateIncomeFormWithZod(data: IncomeFormData): {
 			zodError.message.includes("500文字以下")
 		) {
 			errors[field] = "説明は500文字以内で入力してください";
+		} else if (field === "categoryId") {
+			// カテゴリIDのエラーメッセージを日本語化
+			if (
+				zodError.message.includes("101から105") ||
+				zodError.message.includes("範囲")
+			) {
+				errors[field] = "有効なカテゴリを選択してください";
+			} else if (
+				zodError.message.includes("required") ||
+				zodError.message.includes("必須")
+			) {
+				errors[field] = "カテゴリを選択してください";
+			} else {
+				errors[field] = "有効なカテゴリを選択してください";
+			}
 		} else {
 			errors[field] = zodError.message;
 		}
@@ -217,6 +237,10 @@ export function validateIncomeFieldWithZod(
 		const desc = String(value || "");
 		if (desc.length > 500) {
 			return "説明は500文字以内で入力してください";
+		}
+	} else if (field === "categoryId") {
+		if (!value) {
+			return "カテゴリを選択してください";
 		}
 	}
 

@@ -97,8 +97,9 @@ describe("Subscriptions API", () => {
 				id: "1",
 				name: "Netflix",
 				amount: 1980,
-				category: mockCategories[0], // カテゴリ連携の確認
+				categoryId: "1", // categoryIdを使用
 				billingCycle: "monthly",
+				startDate: "2025-07-05", // createdAtから日付部分を抽出
 				nextBillingDate: "2025-08-01", // YYYY-MM-DD形式に変換される
 				isActive: true,
 				description: "動画ストリーミング",
@@ -111,11 +112,12 @@ describe("Subscriptions API", () => {
 				id: "2",
 				name: "GitHub Pro",
 				amount: 400,
-				category: mockCategories[1], // カテゴリ連携の確認
+				categoryId: "2", // categoryIdを使用
 				billingCycle: "monthly",
+				startDate: "2025-07-05", // createdAtから日付部分を抽出
 				nextBillingDate: "2025-08-01", // YYYY-MM-DD形式に変換される
 				isActive: true,
-				description: null, // null のまま
+				description: undefined, // undefinedに変換される
 				createdAt: "2025-07-05T07:06:39Z",
 				updatedAt: "2025-07-05T07:06:39Z",
 			});

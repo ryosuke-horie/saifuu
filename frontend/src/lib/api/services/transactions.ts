@@ -78,8 +78,8 @@ export async function getTransactionStats(
 ): Promise<TransactionStats> {
 	const query = dateRange
 		? {
-				dateFrom: dateRange.from,
-				dateTo: dateRange.to,
+				startDate: dateRange.from,
+				endDate: dateRange.to,
 			}
 		: undefined;
 
