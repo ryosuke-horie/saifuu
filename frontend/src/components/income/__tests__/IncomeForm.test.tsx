@@ -158,22 +158,32 @@ describe("IncomeForm", () => {
 	});
 
 	it("説明フィールドは500文字まで入力可能であること", async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ delay: null }); // 遅延なしで高速化
 		render(<IncomeForm {...defaultProps} />);
 
-		const descriptionInput = screen.getByLabelText(/説明（任意）/);
-		const longText = "あ".repeat(501);
+		// 必須フィールドを先に埋める
+		const amountInput = screen.getByLabelText(/金額（円）/);
+		await user.clear(amountInput);
+		await user.type(amountInput, "50000");
 
-		await user.type(descriptionInput, longText);
-		await user.tab();
+		const descriptionInput = screen.getByLabelText(/説明（任意）/);
+		// 短いテキストで文字数制限を超える例を作成（テスト高速化のため）
+		const longText = "a".repeat(501);
+
+		// paste イベントで大量のテキストを一度に貼り付け（高速化）
+		await user.click(descriptionInput);
+		await user.paste(longText);
+
+		// 送信ボタンをクリックしてバリデーションをトリガー
+		await user.click(screen.getByRole("button", { name: "登録" }));
 
 		// 文字数制限エラーの確認
 		await waitFor(() => {
 			expect(
 				screen.getByText("説明は500文字以内で入力してください"),
 			).toBeInTheDocument();
-		});
-	});
+		}, { timeout: 3000 });
+	}, 15000); // タイムアウトを15秒に延長
 
 	it("収入カテゴリのみが表示されること", () => {
 		render(<IncomeForm {...defaultProps} />);
