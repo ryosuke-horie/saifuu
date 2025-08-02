@@ -10,6 +10,37 @@ import type { Category, Transaction } from "../lib/api/types";
 export type { TransactionType } from "../lib/api/types";
 
 /**
+ * カテゴリ別収入内訳
+ */
+export interface CategoryBreakdown {
+	readonly categoryId: number;
+	readonly name: string;
+	readonly amount: number;
+	readonly percentage: number;
+}
+
+/**
+ * 収入統計レスポンスの型定義
+ * APIから返される収入統計データの構造
+ */
+export interface IncomeStatistics {
+	readonly currentMonth: number;
+	readonly lastMonth: number;
+	readonly currentYear: number;
+	readonly monthOverMonth: number;
+	readonly categoryBreakdown: readonly CategoryBreakdown[];
+}
+
+/**
+ * IncomeStatsコンポーネントのプロパティ型
+ */
+export interface IncomeStatsProps {
+	stats: IncomeStatistics;
+	isLoading?: boolean;
+	error?: Error | null;
+}
+
+/**
  * 収入フォームデータ
  * フォーム入力時に使用する型（カテゴリはIDで管理）
  */
