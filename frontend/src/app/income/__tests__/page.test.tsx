@@ -234,7 +234,7 @@ describe("IncomePage", () => {
 			expect(mockUpdateIncomeMutation).toHaveBeenCalledWith("1", {
 				amount: 350000,
 				date: "2024-01-25",
-				categoryId: "101", // 給与カテゴリのnumericId
+				categoryId: "salary", // 給与カテゴリのID
 				description: "1月給与",
 			});
 		});
