@@ -1,9 +1,61 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
-import { mockCategories } from "../../../.storybook/mocks/data/categories";
-import { mockSubscriptions } from "../../../.storybook/mocks/data/subscriptions";
-import type { Subscription } from "../../lib/api/types";
+import type { Category, Subscription } from "../../lib/api/types";
 import SubscriptionsPage from "./page";
+
+// モックデータの定義
+const mockCategories: Category[] = [
+	{ id: "1", name: "交通費", type: "expense" },
+	{ id: "2", name: "光熱費", type: "expense" },
+	{ id: "3", name: "食費", type: "expense" },
+	{ id: "4", name: "その他", type: "expense" },
+	{ id: "5", name: "仕事・ビジネス", type: "expense" },
+];
+
+const mockSubscriptions: Subscription[] = [
+	{
+		id: "sub1",
+		name: "Netflix",
+		amount: 1480,
+		billingCycle: "monthly",
+		nextBillingDate: "2025-07-01",
+		category: mockCategories[3],
+		categoryId: mockCategories[3].id,
+		startDate: "2024-01-01",
+		isActive: true,
+		description: "動画配信サービス",
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z",
+	},
+	{
+		id: "sub2",
+		name: "Spotify",
+		amount: 980,
+		billingCycle: "monthly",
+		nextBillingDate: "2025-07-15",
+		category: mockCategories[3],
+		categoryId: mockCategories[3].id,
+		startDate: "2024-02-01",
+		isActive: true,
+		description: "音楽配信サービス",
+		createdAt: "2024-02-01T00:00:00Z",
+		updatedAt: "2024-02-01T00:00:00Z",
+	},
+	{
+		id: "sub3",
+		name: "Adobe Creative Suite",
+		amount: 5680,
+		billingCycle: "monthly",
+		nextBillingDate: "2025-07-20",
+		category: mockCategories[4],
+		categoryId: mockCategories[4].id,
+		startDate: "2024-03-01",
+		isActive: true,
+		description: "デザインツール",
+		createdAt: "2024-03-01T00:00:00Z",
+		updatedAt: "2024-03-01T00:00:00Z",
+	},
+];
 
 /**
  * SubscriptionsPageコンポーネントのテスト
