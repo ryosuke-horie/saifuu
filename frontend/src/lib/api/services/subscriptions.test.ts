@@ -277,9 +277,7 @@ describe("subscriptions service", () => {
 				if (endpoint.includes("categoryId=cat1")) {
 					return Promise.resolve([mockSubscription]);
 				}
-				if (endpoint.includes("billingCycle=monthly")) {
-					return Promise.resolve(mockSubscriptions);
-				}
+				// billingCycleはクライアントサイドでフィルタリングされるため、パラメータとしては送信されない
 				return Promise.resolve(mockSubscriptions);
 			});
 		});
@@ -319,27 +317,39 @@ describe("subscriptions service", () => {
 
 		describe("getSubscriptionsByBillingCycle", () => {
 			it("特定の請求サイクルのサブスクリプションを取得する", async () => {
+				// getSubscriptionsByBillingCycleはクライアントサイドでフィルタリングする
+				mockApiClient.get.mockResolvedValue(mockSubscriptions);
+				
 				const result = await getSubscriptionsByBillingCycle("monthly");
 
 				expect(result).toEqual(mockSubscriptions);
+				// billingCycleパラメータは送信されず、全サブスクリプションを取得してフィルタリング
 				expect(mockApiClient.get).toHaveBeenCalledWith(
-					expect.stringContaining("billingCycle=monthly"),
+					endpoints.subscriptions.list,
 				);
 			});
 
 			it("年次請求サイクルのサブスクリプションを取得する", async () => {
-				const _result = await getSubscriptionsByBillingCycle("yearly");
+				// yearlyのサブスクリプションがないため空配列を返す
+				mockApiClient.get.mockResolvedValue(mockSubscriptions);
+				
+				const result = await getSubscriptionsByBillingCycle("yearly");
 
+				expect(result).toEqual([]);
 				expect(mockApiClient.get).toHaveBeenCalledWith(
-					expect.stringContaining("billingCycle=yearly"),
+					endpoints.subscriptions.list,
 				);
 			});
 
 			it("週次請求サイクルのサブスクリプションを取得する", async () => {
-				const _result = await getSubscriptionsByBillingCycle("weekly");
+				// weeklyのサブスクリプションがないため空配列を返す
+				mockApiClient.get.mockResolvedValue(mockSubscriptions);
+				
+				const result = await getSubscriptionsByBillingCycle("weekly");
 
+				expect(result).toEqual([]);
 				expect(mockApiClient.get).toHaveBeenCalledWith(
-					expect.stringContaining("billingCycle=weekly"),
+					endpoints.subscriptions.list,
 				);
 			});
 		});
