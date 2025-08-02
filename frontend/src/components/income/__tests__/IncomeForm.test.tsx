@@ -178,11 +178,14 @@ describe("IncomeForm", () => {
 		await user.click(screen.getByRole("button", { name: "登録" }));
 
 		// 文字数制限エラーの確認
-		await waitFor(() => {
-			expect(
-				screen.getByText("説明は500文字以内で入力してください"),
-			).toBeInTheDocument();
-		}, { timeout: 3000 });
+		await waitFor(
+			() => {
+				expect(
+					screen.getByText("説明は500文字以内で入力してください"),
+				).toBeInTheDocument();
+			},
+			{ timeout: 3000 },
+		);
 	}, 15000); // タイムアウトを15秒に延長
 
 	it("収入カテゴリのみが表示されること", () => {
