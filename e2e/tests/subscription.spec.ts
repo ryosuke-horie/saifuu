@@ -20,7 +20,13 @@ test.describe('サブスクリプション管理機能', () => {
     // フォームに入力（一意なデータ）
     await page.getByRole('textbox', { name: 'サービス名 *' }).fill(testServiceName);
     await page.getByRole('spinbutton', { name: '料金（円） *' }).fill('1500');
-    await page.getByRole('textbox', { name: '次回請求日 *' }).fill('2025-08-01');
+    
+    // 7日後の日付を動的に生成
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 7);
+    const dateString = futureDate.toISOString().split('T')[0];
+    await page.getByRole('textbox', { name: '次回請求日 *' }).fill(dateString);
+    
     await page.getByLabel('カテゴリ *').selectOption('6'); // system_feeのnumericId
     await page.getByRole('textbox', { name: '説明（任意）' }).fill('E2Eテスト用のサブスクリプション');
     
