@@ -1,7 +1,103 @@
 import { render, screen } from "@testing-library/react";
-import { mockSubscriptions } from "../../../.storybook/mocks/data/subscriptions";
-import type { Subscription } from "../../lib/api/types";
+import type { Category, Subscription } from "../../lib/api/types";
 import { SubscriptionList } from "./SubscriptionList";
+
+// モックデータの定義 - SubscriptionWithCategoryとして使用
+const mockCategories: Category[] = [
+	{ 
+		id: "1", 
+		name: "交通費", 
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z"
+	},
+	{ 
+		id: "2", 
+		name: "光熱費", 
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z"
+	},
+	{ 
+		id: "3", 
+		name: "食費", 
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z"
+	},
+	{ 
+		id: "4", 
+		name: "その他", 
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z"
+	},
+	{ 
+		id: "5", 
+		name: "仕事・ビジネス", 
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z"
+	},
+];
+
+const mockSubscriptions: any[] = [  // any型で定義し、SubscriptionListに渡す際にSubscriptionWithCategoryとして扱う
+	{
+		id: "sub1",
+		name: "Netflix",
+		amount: 1480,
+		billingCycle: "monthly",
+		nextBillingDate: "2025-07-01",
+		category: mockCategories[3],
+		categoryId: mockCategories[3].id,
+		startDate: "2024-01-01",
+		endDate: null,
+		isActive: true,
+		description: "動画配信サービス",
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z",
+	},
+	{
+		id: "sub2",
+		name: "Spotify",
+		amount: 980,
+		billingCycle: "monthly",
+		nextBillingDate: "2025-07-15",
+		category: mockCategories[3],
+		categoryId: mockCategories[3].id,
+		startDate: "2024-02-01",
+		endDate: null,
+		isActive: true,
+		description: "音楽配信サービス",
+		createdAt: "2024-02-01T00:00:00Z",
+		updatedAt: "2024-02-01T00:00:00Z",
+	},
+	{
+		id: "sub3",
+		name: "Adobe Creative Suite",
+		amount: 5680,
+		billingCycle: "monthly",
+		nextBillingDate: "2025-07-20",
+		category: mockCategories[4],
+		categoryId: mockCategories[4].id,
+		startDate: "2024-03-01",
+		endDate: null,
+		isActive: true,
+		description: "デザインツール",
+		createdAt: "2024-03-01T00:00:00Z",
+		updatedAt: "2024-03-01T00:00:00Z",
+	},
+];
 
 /**
  * SubscriptionListコンポーネントのテスト
@@ -186,7 +282,7 @@ describe("SubscriptionList", () => {
 
 	describe("データ処理", () => {
 		it("単一アイテムが正しく表示されること", () => {
-			const singleSubscription: Subscription[] = [mockSubscriptions[0]];
+			const singleSubscription: any[] = [mockSubscriptions[0]];
 			render(
 				<SubscriptionList
 					subscriptions={singleSubscription}

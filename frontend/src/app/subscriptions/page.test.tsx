@@ -5,13 +5,54 @@ import SubscriptionsPage from "./page";
 
 // モックデータの定義
 const mockCategories: Category[] = [
-	{ id: "1", name: "交通費", type: "expense" },
-	{ id: "2", name: "光熱費", type: "expense" },
-	{ id: "3", name: "食費", type: "expense" },
-	{ id: "4", name: "その他", type: "expense" },
-	{ id: "5", name: "仕事・ビジネス", type: "expense" },
+	{ 
+		id: "1", 
+		name: "交通費", 
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z"
+	},
+	{ 
+		id: "2", 
+		name: "光熱費", 
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z"
+	},
+	{ 
+		id: "3", 
+		name: "食費", 
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z"
+	},
+	{ 
+		id: "4", 
+		name: "その他", 
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z"
+	},
+	{ 
+		id: "5", 
+		name: "仕事・ビジネス", 
+		type: "expense",
+		color: null,
+		description: null,
+		createdAt: "2024-01-01T00:00:00Z",
+		updatedAt: "2024-01-01T00:00:00Z"
+	},
 ];
 
+// SubscriptionWithCategoryではなく、基本のSubscription型として定義
 const mockSubscriptions: Subscription[] = [
 	{
 		id: "sub1",
@@ -19,9 +60,9 @@ const mockSubscriptions: Subscription[] = [
 		amount: 1480,
 		billingCycle: "monthly",
 		nextBillingDate: "2025-07-01",
-		category: mockCategories[3],
 		categoryId: mockCategories[3].id,
 		startDate: "2024-01-01",
+		endDate: null,
 		isActive: true,
 		description: "動画配信サービス",
 		createdAt: "2024-01-01T00:00:00Z",
@@ -33,9 +74,9 @@ const mockSubscriptions: Subscription[] = [
 		amount: 980,
 		billingCycle: "monthly",
 		nextBillingDate: "2025-07-15",
-		category: mockCategories[3],
 		categoryId: mockCategories[3].id,
 		startDate: "2024-02-01",
+		endDate: null,
 		isActive: true,
 		description: "音楽配信サービス",
 		createdAt: "2024-02-01T00:00:00Z",
@@ -47,9 +88,9 @@ const mockSubscriptions: Subscription[] = [
 		amount: 5680,
 		billingCycle: "monthly",
 		nextBillingDate: "2025-07-20",
-		category: mockCategories[4],
 		categoryId: mockCategories[4].id,
 		startDate: "2024-03-01",
+		endDate: null,
 		isActive: true,
 		description: "デザインツール",
 		createdAt: "2024-03-01T00:00:00Z",
@@ -198,9 +239,9 @@ describe("SubscriptionsPage", () => {
 					amount: 12000, // 年額12,000円
 					billingCycle: "yearly" as const,
 					nextBillingDate: "2025-07-01",
-					category: mockCategories[0],
 					categoryId: mockCategories[0].id,
 					startDate: "2025-01-01",
+					endDate: null,
 					isActive: true,
 					description: null,
 					createdAt: "2025-01-01T00:00:00Z",
@@ -230,9 +271,9 @@ describe("SubscriptionsPage", () => {
 					amount: 1000,
 					billingCycle: "monthly" as const,
 					nextBillingDate: "2025-07-20",
-					category: mockCategories[0],
 					categoryId: mockCategories[0].id,
 					startDate: "2025-01-01",
+					endDate: null,
 					isActive: false,
 					description: null,
 					createdAt: "2025-01-01T00:00:00Z",
