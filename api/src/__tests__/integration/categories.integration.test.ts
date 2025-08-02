@@ -1,4 +1,4 @@
-import { ALL_CATEGORIES, getCategoryByName } from '@shared/config/categories'
+import { ALL_CATEGORIES, getCategoryByName } from '../../../../shared/src/config/categories'
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { subscriptions, transactions } from '../../db/schema'

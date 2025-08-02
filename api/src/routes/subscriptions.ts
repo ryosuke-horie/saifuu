@@ -1,4 +1,4 @@
-import { ALL_CATEGORIES } from '@shared/config/categories'
+import { ALL_CATEGORIES } from '../../../shared/src/config/categories'
 import { Hono } from 'hono'
 import { type AnyDatabase, type Env } from '../db'
 import { type NewSubscription, type Subscription, subscriptions } from '../db/schema'

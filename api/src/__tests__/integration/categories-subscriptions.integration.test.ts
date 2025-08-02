@@ -1,4 +1,4 @@
-import { ALL_CATEGORIES } from '@shared/config/categories'
+import { ALL_CATEGORIES } from '../../../../shared/src/config/categories'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { testSubscriptions, testTransactions } from '../helpers/fixtures'
 import { createTestRequest, getResponseJson } from '../helpers/test-app'

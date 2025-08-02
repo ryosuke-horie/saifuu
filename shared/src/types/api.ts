@@ -81,4 +81,5 @@ export interface GetCategoriesQuery {
 export interface GetSubscriptionsQuery {
   isActive?: boolean;
   categoryId?: string;
+  billingCycle?: "monthly" | "yearly" | "weekly";
 }
