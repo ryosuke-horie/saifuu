@@ -30,21 +30,20 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           
-          allowed_tools: "mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff,mcp__github__get_pull_request_comments"
+          allowed_tools: "mcp__github__create_pending_pull_request_review,mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__submit_pending_pull_request_review,mcp__github__get_pull_request_diff"
           
-          # コメントトリガーによるレビュー用のプロンプト
-          direct_prompt: |
+          # コメントトリガーによるレビュー用のカスタム指示
+          custom_instructions: |
             ユーザーから @claude メンションでレビューが要求されました。
             PR番号: ${{ github.event.issue.number }}
             リポジトリ: ${{ github.repository }}
             
             このプルリクエスト（PR）をレビューし、GitHub のレビュー機能を使ってフィードバックをしてください。作業は次の手順に沿って進めてください：
             
-            1.  **過去のレビューを確認する:** `mcp__github__get_pull_request_comments` を使って、このPRの既存のレビューコメントを取得し、既に指摘された内容を把握します。
-            2.  **変更内容を確認する:** `mcp__github__get_pull_request_diff` を使って、PR #${{ github.event.issue.number }} のコードの変更点や行番号を把握します。
-            3.  **レビューを開始する:** `mcp__github__create_pending_pull_request_review` を使って、保留中のレビューを開始します。
-            4.  **インラインコメントを追加する:** 改善点や懸念事項があるコードの行には `mcp__github__add_pull_request_review_comment_to_pending_review` を使ってコメントを追加してください。修正方針が明確な場合には積極的にsuggestionを利用してください。
-            5.  **レビューを提出する:** `mcp__github__submit_pending_pull_request_review` を使って、イベントタイプを「COMMENT」に設定してレビューを提出してください。まとめコメントは空文字列("")で構いません（※「REQUEST_CHANGES」は使わないでください）。
+            1.  **変更内容を確認する:** `mcp__github__get_pull_request_diff` を使って、PR #${{ github.event.issue.number }} のコードの変更点や行番号を把握します。
+            2.  **レビューを開始する:** `mcp__github__create_pending_pull_request_review` を使って、保留中のレビューを開始します。
+            3.  **インラインコメントを追加する:** 改善点や懸念事項があるコードの行には `mcp__github__add_pull_request_review_comment_to_pending_review` を使ってコメントを追加してください。修正方針が明確な場合には積極的にsuggestionを利用してください。
+            4.  **レビューを提出する:** `mcp__github__submit_pending_pull_request_review` を使って、イベントタイプを「COMMENT」に設定してレビューを提出してください。まとめコメントは空文字列("")で構いません（※「REQUEST_CHANGES」は使わないでください）。
 
             **レビュー時の重要事項**
             
