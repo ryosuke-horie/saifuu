@@ -19,7 +19,7 @@ import { useCallback, useMemo } from "react";
 import { ARIA_LABELS, FILTER_STYLES } from "../../constants/incomeFilters";
 import { useIncomeFilters } from "../../hooks/useIncomeFilters";
 import { useIsMobile } from "../../hooks/useMediaQuery";
-import type { IncomeFiltersProps } from "../../types/income";
+import type { IncomeFiltersProps, IncomePeriodType } from "../../types/income";
 import { ActiveFilterBadges } from "./filters/ActiveFilterBadges";
 import { AmountRangeFilter } from "./filters/AmountRangeFilter";
 import { CategoryFilter } from "./filters/CategoryFilter";
@@ -53,8 +53,9 @@ export const IncomeFilters: React.FC<IncomeFiltersProps> = ({
 
 	// コールバック関数のメモ化
 	const handlePeriodChange = useCallback(
-		(period: Parameters<typeof updateFilter>[1]) => {
-			updateFilter("period", period as any);
+		(period: IncomePeriodType | "") => {
+			// 空文字列の場合はundefinedを設定してフィルターをクリア
+			updateFilter("period", period === "" ? undefined : period);
 		},
 		[updateFilter],
 	);
