@@ -20,6 +20,18 @@ export interface CategoryBreakdown {
 }
 
 /**
+ * カテゴリ別グラフ用のデータ型
+ * チャートコンポーネントで使用
+ */
+export interface IncomeCategoryData {
+	categoryId: number;
+	name: string;
+	amount: number;
+	percentage: number;
+	color: string;
+}
+
+/**
  * 収入統計レスポンスの型定義
  * APIから返される収入統計データの構造
  */
