@@ -51,6 +51,9 @@ pnpm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# storybook
+storybook-static/
+
 # OpenNext
 **/.open-next
 
