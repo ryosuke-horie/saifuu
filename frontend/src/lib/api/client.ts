@@ -368,7 +368,60 @@ class ApiClient {
  * ロガー機能を統合したAPIクライアント
  */
 const baseApiClient = new ApiClient();
-export const apiClient = withApiLogging(baseApiClient);
+const loggedApiClient = withApiLogging(baseApiClient);
+
+// transactionsサービスを追加（ページネーション対応）
+import type {
+	GetTransactionsQuery,
+	PaginationResponse,
+	Transaction,
+} from "./types";
+
+interface TransactionsListParams extends GetTransactionsQuery {
+	page?: number;
+	limit?: number;
+	sort?: "date" | "amount";
+	order?: "asc" | "desc";
+}
+
+interface TransactionsListResponse {
+	data: Transaction[];
+	pagination?: PaginationResponse;
+}
+
+export const apiClient = Object.assign(loggedApiClient, {
+	transactions: {
+		list: async (
+			params?: TransactionsListParams,
+		): Promise<TransactionsListResponse> => {
+			const endpoint = addQueryParams(
+				"/transactions",
+				params as Record<string, unknown>,
+			);
+			// skipTypeCheckをtrueにして、ApiResponseのラップ処理を回避
+			const response = await loggedApiClient.get<any>(endpoint, {
+				skipTypeCheck: true,
+			});
+
+			// レスポンスの形式を正規化
+			// テストのモックレスポンスは既に { data: [], pagination: {...} } の形式で返ってくる
+			// APIが直接配列を返す場合は { data: [...] } に変換
+			if (response && typeof response === "object") {
+				// 既に正しい形式の場合はそのまま返す
+				if ("data" in response) {
+					return response as TransactionsListResponse;
+				}
+				// 配列の場合はdataでラップ
+				if (Array.isArray(response)) {
+					return { data: response };
+				}
+			}
+
+			// フォールバック
+			return { data: [] };
+		},
+	},
+});
 
 /**
  * クエリパラメーターをURLに追加するユーティリティ

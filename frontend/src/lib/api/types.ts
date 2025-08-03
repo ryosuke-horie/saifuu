@@ -96,6 +96,17 @@ export interface PaginationInfo {
 }
 
 /**
+ * ページネーションレスポンス（簡易版）
+ * APIテストで使用する型定義
+ */
+export interface PaginationResponse {
+	currentPage: number;
+	totalPages: number;
+	totalItems: number;
+	itemsPerPage: number;
+}
+
+/**
  * ページネーション付きレスポンス
  */
 export interface PaginatedResponse<T> {
@@ -109,6 +120,17 @@ export interface PaginatedResponse<T> {
 export interface PaginationQuery {
 	page?: number;
 	limit?: number;
+}
+
+/**
+ * ページネーションパラメータ（完全版）
+ * API呼び出し時に使用する型定義
+ */
+export interface PaginationParams {
+	page: number;
+	limit: number;
+	sort?: "date" | "amount";
+	order?: "asc" | "desc";
 }
 
 // =============================================================================
