@@ -270,7 +270,7 @@ describe("IncomeFilters", () => {
 		// 2. カテゴリフィルターを設定（給与: numericId=101）
 		const salaryCheckbox = screen.getByLabelText("給与");
 		await user.click(salaryCheckbox);
-		
+
 		// チェックボックスが選択されたことを確認
 		await waitFor(() => {
 			expect(salaryCheckbox).toBeChecked();
@@ -283,20 +283,23 @@ describe("IncomeFilters", () => {
 		// 最終的にonFiltersChangeが正しいパラメータで呼ばれたことを確認
 		await waitFor(() => {
 			// 最後の呼び出しを確認
-			const lastCall = mockOnFiltersChange.mock.calls[mockOnFiltersChange.mock.calls.length - 1];
+			const lastCall =
+				mockOnFiltersChange.mock.calls[
+					mockOnFiltersChange.mock.calls.length - 1
+				];
 			expect(lastCall[0]).toEqual(
 				expect.objectContaining({
 					period: "thisMonth",
 					categories: ["101"], // 給与のnumericId
 					minAmount: 10000,
-				})
+				}),
 			);
 		});
 
 		// バッジが表示されていることを視覚的に確認（role="status"のコンテナが存在）
 		const statusContainer = screen.getByRole("status");
 		expect(statusContainer).toBeInTheDocument();
-		
+
 		// バッジコンテナに期待される要素が含まれていることを確認
 		const badges = statusContainer.querySelectorAll("span");
 		expect(badges.length).toBeGreaterThan(0);
