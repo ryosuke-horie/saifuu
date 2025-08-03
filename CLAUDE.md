@@ -242,6 +242,30 @@ git commit -m "chore: ESLintからBiomeに移行"
 - タスクが進むごとに細かくテストを実施し検証します。特にPRを更新する前に確認します。
 - PRはテストが失敗する限りマージされることはありません。
 
+#### Vitestの実行ルール
+
+**重要**: npxやnpmから直接Vitestを起動することを禁止します。
+
+- **禁止事項**: 
+  - `npx vitest` や `npm run vitest` を直接実行しない
+  - watchモードがデフォルトで有効になりCPUを占有してしまうため
+  
+- **正しい実行方法**:
+  ```bash
+  # ユニットテスト実行（watchモード無効）
+  pnpm run test:unit
+  
+  # 特定のファイルをテスト
+  pnpm run test:unit -- src/app/income/__tests__/page.test.tsx
+  
+  # カバレッジ付きテスト
+  pnpm run test:coverage
+  ```
+
+- **package.jsonに定義されたスクリプトを必ず使用する**
+  - すべてのテストコマンドはpackage.jsonに定義済み
+  - watchモードを無効化した設定で実行される
+
 #### テスト戦略（2025年1月〜）
 
 VRT(Visual Regression Testing)システムを削除し、以下の2層構造による効率的な品質担保に移行：
