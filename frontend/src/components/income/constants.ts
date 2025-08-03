@@ -85,3 +85,80 @@ export const STYLES = {
 	CATEGORY_AMOUNT: "text-gray-900 font-semibold",
 	CATEGORY_PERCENTAGE: "text-gray-500 text-sm",
 } as const;
+
+/**
+ * アニメーション関連の定数
+ */
+export const ANIMATION = {
+	TRANSITION_DURATION: 500,
+} as const;
+
+/**
+ * 収入カテゴリチャート用の定数定義
+ * 収入表示に特化した緑系統のカラーパレットや設定値を管理
+ */
+
+// 収入用の緑系統のカラーパレット
+export const INCOME_COLORS = [
+	"#10b981", // emerald-500
+	"#059669", // emerald-600
+	"#34d399", // emerald-400
+	"#6ee7b7", // emerald-300
+	"#a7f3d0", // emerald-200
+] as const;
+
+// チャートタイプの定数
+export const CHART_TYPES = {
+	PIE: "pie",
+	BAR: "bar",
+} as const;
+
+// チャートタイプの型定義
+export type ChartType = (typeof CHART_TYPES)[keyof typeof CHART_TYPES];
+
+// チャートの高さ設定
+export const CHART_HEIGHT = 384; // 96 * 4 = 384px (h-96相当)
+export const PIE_OUTER_RADIUS = 120;
+
+// レスポンシブブレークポイント
+export const BREAKPOINTS = {
+	MOBILE: 768,
+} as const;
+
+// グラフのマージン設定
+export const BAR_CHART_MARGIN = {
+	top: 20,
+	right: 30,
+	left: 20,
+	bottom: 5,
+} as const;
+
+// チャートラベルの設定
+export const CHART_LABELS = {
+	title: "カテゴリ別収入",
+	toggleToPie: "円グラフ",
+	toggleToBar: "棒グラフ",
+	toggleButton: "グラフ切り替え",
+	chartAriaLabel: "カテゴリ別収入内訳",
+	noData: "データがありません",
+} as const;
+
+// チャート用スタイル設定
+export const CHART_STYLES = {
+	container: "bg-white rounded-lg shadow-md p-6",
+	containerMobile: "flex-col",
+	containerDesktop: "flex-row",
+	header: "flex justify-between items-center mb-4",
+	title: "text-xl font-semibold",
+	toggleButton:
+		"px-4 py-2 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition-colors",
+	chartArea: "h-96 w-full",
+	legendContainer: "mt-4 space-y-2",
+	legendItem: "flex items-center gap-2",
+	legendButton: "flex items-center gap-2 hover:opacity-80 transition-opacity",
+	legendDot: "w-4 h-4 rounded",
+	legendText: "text-sm",
+	legendDetail: "ml-auto flex gap-4 text-sm text-gray-600",
+	noDataContainer: "flex items-center justify-center h-64 text-gray-500",
+	srOnly: "sr-only",
+} as const;
