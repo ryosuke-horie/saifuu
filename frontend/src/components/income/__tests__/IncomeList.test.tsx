@@ -142,7 +142,7 @@ describe("IncomeList", () => {
 		render(<IncomeList transactions={[]} isLoading={true} />);
 
 		// LoadingStateコンポーネントが表示されることを確認
-		expect(screen.getByTestId("loading-state")).toBeInTheDocument();
+		expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
 	});
 
 	it("エラー状態を表示する", () => {
