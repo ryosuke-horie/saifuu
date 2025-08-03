@@ -451,11 +451,13 @@ describe("収入管理画面統合テスト", () => {
 		// 各APIエンドポイントが呼ばれていることを確認
 		const calledUrls = fetchSpy.mock.calls.map((call) => call[0]);
 		const urlStrings = calledUrls.map((url) => url.toString());
-		
+
 		// 取引APIが呼ばれている
-		expect(urlStrings.some(url => url.includes('/transactions'))).toBeTruthy();
-		// 統計APIが呼ばれている  
-		expect(urlStrings.some(url => url.includes('/stats'))).toBeTruthy();
+		expect(
+			urlStrings.some((url) => url.includes("/transactions")),
+		).toBeTruthy();
+		// 統計APIが呼ばれている
+		expect(urlStrings.some((url) => url.includes("/stats"))).toBeTruthy();
 
 		fetchSpy.mockRestore();
 	});

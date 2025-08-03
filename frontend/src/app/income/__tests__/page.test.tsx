@@ -18,7 +18,7 @@ vi.mock("next/navigation", () => ({
 	}),
 	useSearchParams: () => new URLSearchParams(),
 	usePathname: () => "/income",
-}))
+}));
 
 // APIモック
 vi.mock("@/lib/api/categories/api", () => ({
@@ -34,6 +34,7 @@ vi.mock("@/hooks/useIncomes", () => ({
 vi.mock("@/hooks/useIncomesWithPagination", () => ({
 	useIncomesWithPagination: vi.fn(() => ({
 		incomes: [],
+		items: [], // UsePaginationReturn互換性のため追加
 		loading: false,
 		error: null,
 		pagination: {
@@ -55,8 +56,7 @@ vi.mock("@/hooks/useIncomeStatsApi", () => ({
 		stats: null,
 		loading: false,
 		error: null,
-		refetch: vi.fn(),
-		refetchStats: vi.fn(),
+		refetch: vi.fn(), // refetchStatsではなくrefetchが正しい
 	})),
 }));
 
@@ -69,11 +69,11 @@ vi.mock("@/lib/api/client", () => ({
 			delete: vi.fn(),
 		},
 	},
-}))
+}));
 
+import { useIncomeStats } from "@/hooks/useIncomeStatsApi";
 // useIncomesWithPaginationフックのインポート
 import { useIncomesWithPagination } from "@/hooks/useIncomesWithPagination";
-import { useIncomeStats } from "@/hooks/useIncomeStatsApi";
 import { apiClient } from "@/lib/api/client";
 
 describe("IncomePage", () => {
@@ -166,6 +166,7 @@ describe("IncomePage", () => {
 		// デフォルトのuseIncomesWithPaginationモック
 		vi.mocked(useIncomesWithPagination).mockReturnValue({
 			incomes: [],
+			items: [], // UsePaginationReturn互換性のため追加
 			loading: false,
 			error: null,
 			pagination: {
@@ -184,8 +185,7 @@ describe("IncomePage", () => {
 			stats: null,
 			loading: false,
 			error: null,
-			refetch: vi.fn(),
-			refetchStats: vi.fn(),
+			refetch: vi.fn(), // refetchStatsではなくrefetchが正しい
 		});
 	});
 
@@ -216,6 +216,7 @@ describe("IncomePage", () => {
 	it("収入一覧テーブルが表示される", async () => {
 		vi.mocked(useIncomesWithPagination).mockReturnValue({
 			incomes: mockIncomes,
+			items: mockIncomes, // UsePaginationReturn互換性のため追加
 			loading: false,
 			error: null,
 			pagination: {
@@ -265,7 +266,9 @@ describe("IncomePage", () => {
 		const { container } = render(<IncomePage />);
 
 		// フォームに入力（IDで取得）
-		const amountInput = container.querySelector('#income-amount') as HTMLInputElement;
+		const amountInput = container.querySelector(
+			"#income-amount",
+		) as HTMLInputElement;
 		expect(amountInput).toBeTruthy();
 		await user.clear(amountInput);
 		await user.type(amountInput, "50000");
@@ -305,6 +308,7 @@ describe("IncomePage", () => {
 		vi.mocked(apiClient.transactions.update).mockImplementation(mockUpdate);
 		vi.mocked(useIncomesWithPagination).mockReturnValue({
 			incomes: mockIncomes,
+			items: mockIncomes, // UsePaginationReturn互換性のため追加
 			loading: false,
 			error: null,
 			pagination: {
@@ -331,10 +335,14 @@ describe("IncomePage", () => {
 
 		// 金額を変更（IDで取得）
 		await waitFor(() => {
-			const amountInput = container.querySelector('#income-amount') as HTMLInputElement;
+			const amountInput = container.querySelector(
+				"#income-amount",
+			) as HTMLInputElement;
 			expect(amountInput).toBeTruthy();
 		});
-		const amountInput = container.querySelector('#income-amount') as HTMLInputElement;
+		const amountInput = container.querySelector(
+			"#income-amount",
+		) as HTMLInputElement;
 		await user.clear(amountInput);
 		await user.type(amountInput, "350000");
 
@@ -358,6 +366,7 @@ describe("IncomePage", () => {
 		vi.mocked(apiClient.transactions.delete).mockImplementation(mockDelete);
 		vi.mocked(useIncomesWithPagination).mockReturnValue({
 			incomes: mockIncomes,
+			items: mockIncomes, // UsePaginationReturn互換性のため追加
 			loading: false,
 			error: null,
 			pagination: {
@@ -393,6 +402,7 @@ describe("IncomePage", () => {
 	it("エラー時に適切なエラーメッセージが表示される", async () => {
 		vi.mocked(useIncomesWithPagination).mockReturnValue({
 			incomes: [],
+			items: [], // UsePaginationReturn互換性のため追加
 			loading: false,
 			error: "データの取得に失敗しました",
 			pagination: null,
@@ -415,6 +425,7 @@ describe("IncomePage", () => {
 	it("ローディング中はローディング表示がされる", async () => {
 		vi.mocked(useIncomesWithPagination).mockReturnValue({
 			incomes: [],
+			items: [], // UsePaginationReturn互換性のため追加
 			loading: true,
 			error: null,
 			pagination: null,
