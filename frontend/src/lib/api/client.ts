@@ -420,6 +420,21 @@ export const apiClient = Object.assign(loggedApiClient, {
 			// フォールバック
 			return { data: [] };
 		},
+
+		create: async (data: Partial<Transaction>): Promise<Transaction> => {
+			return loggedApiClient.post<Transaction>("/transactions", data);
+		},
+
+		update: async (
+			id: string,
+			data: Partial<Transaction>,
+		): Promise<Transaction> => {
+			return loggedApiClient.put<Transaction>(`/transactions/${id}`, data);
+		},
+
+		delete: async (id: string): Promise<void> => {
+			await loggedApiClient.delete<void>(`/transactions/${id}`);
+		},
 	},
 });
 
