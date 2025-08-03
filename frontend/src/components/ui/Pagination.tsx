@@ -13,8 +13,8 @@ import { useMemo } from "react";
 import {
 	ITEMS_PER_PAGE_OPTIONS,
 	PAGINATION_CONFIG,
-	PAGINATION_STYLES,
 } from "../../constants/pagination";
+import { PAGINATION_STYLES } from "../../styles/pagination";
 import type { PaginationProps } from "../../types/pagination";
 import { generatePageNumbers } from "../../utils/pagination";
 import { ChevronLeftIcon, ChevronRightIcon } from "../icons";
