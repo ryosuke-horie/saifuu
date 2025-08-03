@@ -140,3 +140,77 @@ export interface IncomeListProps {
 	 */
 	className?: string;
 }
+
+/**
+ * 収入フィルターの期間タイプ
+ */
+export type IncomePeriodType =
+	| "thisMonth"
+	| "lastMonth"
+	| "thisYear"
+	| "custom";
+
+/**
+ * 収入フィルターの状態
+ */
+export interface IncomeFiltersState {
+	/**
+	 * 期間タイプ
+	 */
+	period?: IncomePeriodType;
+
+	/**
+	 * カスタム期間の開始日（YYYY-MM-DD形式）
+	 */
+	startDate?: string;
+
+	/**
+	 * カスタム期間の終了日（YYYY-MM-DD形式）
+	 */
+	endDate?: string;
+
+	/**
+	 * カテゴリIDの配列（複数選択可能）
+	 */
+	categories?: string[];
+
+	/**
+	 * 最小金額
+	 */
+	minAmount?: number;
+
+	/**
+	 * 最大金額
+	 */
+	maxAmount?: number;
+}
+
+/**
+ * IncomeFiltersコンポーネントのプロパティ
+ */
+export interface IncomeFiltersProps {
+	/**
+	 * フィルター変更時のコールバック
+	 */
+	onFiltersChange: (filters: IncomeFiltersState) => void;
+
+	/**
+	 * カテゴリ一覧
+	 */
+	categories: Category[];
+
+	/**
+	 * 初期フィルター状態（オプション）
+	 */
+	initialFilters?: IncomeFiltersState;
+
+	/**
+	 * 追加のCSSクラス名
+	 */
+	className?: string;
+
+	/**
+	 * URLパラメータとの同期を無効化（オプション）
+	 */
+	disableUrlSync?: boolean;
+}
