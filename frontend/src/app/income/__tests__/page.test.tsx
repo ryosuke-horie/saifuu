@@ -6,6 +6,20 @@ import { fetchCategories } from "@/lib/api/categories/api";
 import type { TransactionWithCategory } from "@/lib/api/types";
 import IncomePage from "../page";
 
+// Next.js App Router のモック
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({
+		push: vi.fn(),
+		replace: vi.fn(),
+		refresh: vi.fn(),
+		back: vi.fn(),
+		forward: vi.fn(),
+		prefetch: vi.fn(),
+	}),
+	useSearchParams: () => new URLSearchParams(),
+	usePathname: () => "/income",
+}))
+
 // APIモック
 vi.mock("@/lib/api/categories/api", () => ({
 	fetchCategories: vi.fn(),
@@ -15,6 +29,52 @@ vi.mock("@/lib/api/categories/api", () => ({
 vi.mock("@/hooks/useIncomes", () => ({
 	useIncomes: vi.fn(),
 }));
+
+// useIncomesWithPaginationフックのモック
+vi.mock("@/hooks/useIncomesWithPagination", () => ({
+	useIncomesWithPagination: vi.fn(() => ({
+		incomes: [],
+		loading: false,
+		error: null,
+		pagination: {
+			currentPage: 1,
+			totalPages: 1,
+			totalItems: 0,
+			itemsPerPage: 10,
+		},
+		currentPage: 1,
+		onPageChange: vi.fn(),
+		onItemsPerPageChange: vi.fn(),
+		refetch: vi.fn(),
+	})),
+}));
+
+// useIncomeStatsフックのモック
+vi.mock("@/hooks/useIncomeStatsApi", () => ({
+	useIncomeStats: vi.fn(() => ({
+		stats: null,
+		loading: false,
+		error: null,
+		refetch: vi.fn(),
+		refetchStats: vi.fn(),
+	})),
+}));
+
+// APIクライアントのモック
+vi.mock("@/lib/api/client", () => ({
+	apiClient: {
+		transactions: {
+			create: vi.fn(),
+			update: vi.fn(),
+			delete: vi.fn(),
+		},
+	},
+}))
+
+// useIncomesWithPaginationフックのインポート
+import { useIncomesWithPagination } from "@/hooks/useIncomesWithPagination";
+import { useIncomeStats } from "@/hooks/useIncomeStatsApi";
+import { apiClient } from "@/lib/api/client";
 
 describe("IncomePage", () => {
 	// モックデータ
@@ -103,6 +163,30 @@ describe("IncomePage", () => {
 		vi.mocked(fetchCategories).mockResolvedValue(mockCategories);
 		// デフォルトのuseIncomesモック
 		vi.mocked(useIncomes).mockReturnValue(defaultUseIncomesMock);
+		// デフォルトのuseIncomesWithPaginationモック
+		vi.mocked(useIncomesWithPagination).mockReturnValue({
+			incomes: [],
+			loading: false,
+			error: null,
+			pagination: {
+				currentPage: 1,
+				totalPages: 1,
+				totalItems: 0,
+				itemsPerPage: 10,
+			},
+			currentPage: 1,
+			onPageChange: vi.fn(),
+			onItemsPerPageChange: vi.fn(),
+			refetch: vi.fn(),
+		});
+		// デフォルトのuseIncomeStatsモック
+		vi.mocked(useIncomeStats).mockReturnValue({
+			stats: null,
+			loading: false,
+			error: null,
+			refetch: vi.fn(),
+			refetchStats: vi.fn(),
+		});
 	});
 
 	it("収入管理ページのタイトルが表示される", async () => {
@@ -119,7 +203,9 @@ describe("IncomePage", () => {
 		render(<IncomePage />);
 
 		await waitFor(() => {
-			expect(screen.getByLabelText(/金額/i)).toBeInTheDocument();
+			// フォーム内のフィールドをテストIDで取得
+			const amountInput = document.getElementById("income-amount");
+			expect(amountInput).toBeInTheDocument();
 			expect(screen.getByLabelText(/日付/i)).toBeInTheDocument();
 			expect(screen.getByLabelText(/カテゴリ/i)).toBeInTheDocument();
 			expect(screen.getByLabelText(/説明/i)).toBeInTheDocument();
@@ -128,9 +214,20 @@ describe("IncomePage", () => {
 	});
 
 	it("収入一覧テーブルが表示される", async () => {
-		vi.mocked(useIncomes).mockReturnValue({
-			...defaultUseIncomesMock,
+		vi.mocked(useIncomesWithPagination).mockReturnValue({
 			incomes: mockIncomes,
+			loading: false,
+			error: null,
+			pagination: {
+				currentPage: 1,
+				totalPages: 1,
+				totalItems: 2,
+				itemsPerPage: 10,
+			},
+			currentPage: 1,
+			onPageChange: vi.fn(),
+			onItemsPerPageChange: vi.fn(),
+			refetch: vi.fn(),
 		});
 
 		render(<IncomePage />);
@@ -145,7 +242,7 @@ describe("IncomePage", () => {
 
 	it("収入を登録できる", async () => {
 		const user = userEvent.setup();
-		const mockCreateIncomeMutation = vi.fn().mockResolvedValue({
+		const mockCreate = vi.fn().mockResolvedValue({
 			id: "3",
 			amount: 50000,
 			date: "2024-01-20",
@@ -163,15 +260,13 @@ describe("IncomePage", () => {
 			updatedAt: "2024-01-20T00:00:00Z",
 		});
 
-		vi.mocked(useIncomes).mockReturnValue({
-			...defaultUseIncomesMock,
-			createIncomeMutation: mockCreateIncomeMutation,
-		});
+		vi.mocked(apiClient.transactions.create).mockImplementation(mockCreate);
 
-		render(<IncomePage />);
+		const { container } = render(<IncomePage />);
 
-		// フォームに入力
-		const amountInput = screen.getByLabelText(/金額/i);
+		// フォームに入力（IDで取得）
+		const amountInput = container.querySelector('#income-amount') as HTMLInputElement;
+		expect(amountInput).toBeTruthy();
 		await user.clear(amountInput);
 		await user.type(amountInput, "50000");
 		await user.type(screen.getByLabelText(/説明/i), "副業収入");
@@ -190,7 +285,8 @@ describe("IncomePage", () => {
 		await user.click(screen.getByRole("button", { name: /登録/i }));
 
 		await waitFor(() => {
-			expect(mockCreateIncomeMutation).toHaveBeenCalledWith({
+			expect(mockCreate).toHaveBeenCalledWith({
+				type: "income",
 				amount: 50000,
 				date: new Date().toISOString().split("T")[0], // 今日の日付をYYYY-MM-DD形式で
 				categoryId: "side_business", // 副業のカテゴリID（文字列型）
@@ -201,18 +297,29 @@ describe("IncomePage", () => {
 
 	it("収入を編集できる", async () => {
 		const user = userEvent.setup();
-		const mockUpdateIncomeMutation = vi.fn().mockResolvedValue({
+		const mockUpdate = vi.fn().mockResolvedValue({
 			...mockIncomes[0],
 			amount: 350000,
 		});
 
-		vi.mocked(useIncomes).mockReturnValue({
-			...defaultUseIncomesMock,
+		vi.mocked(apiClient.transactions.update).mockImplementation(mockUpdate);
+		vi.mocked(useIncomesWithPagination).mockReturnValue({
 			incomes: mockIncomes,
-			updateIncomeMutation: mockUpdateIncomeMutation,
+			loading: false,
+			error: null,
+			pagination: {
+				currentPage: 1,
+				totalPages: 1,
+				totalItems: 2,
+				itemsPerPage: 10,
+			},
+			currentPage: 1,
+			onPageChange: vi.fn(),
+			onItemsPerPageChange: vi.fn(),
+			refetch: vi.fn(),
 		});
 
-		render(<IncomePage />);
+		const { container } = render(<IncomePage />);
 
 		await waitFor(() => {
 			expect(screen.getByText("1月給与")).toBeInTheDocument();
@@ -222,8 +329,12 @@ describe("IncomePage", () => {
 		const editButtons = screen.getAllByRole("button", { name: /編集/i });
 		await user.click(editButtons[0]);
 
-		// 金額を変更
-		const amountInput = screen.getByLabelText(/金額/i);
+		// 金額を変更（IDで取得）
+		await waitFor(() => {
+			const amountInput = container.querySelector('#income-amount') as HTMLInputElement;
+			expect(amountInput).toBeTruthy();
+		});
+		const amountInput = container.querySelector('#income-amount') as HTMLInputElement;
 		await user.clear(amountInput);
 		await user.type(amountInput, "350000");
 
@@ -231,7 +342,7 @@ describe("IncomePage", () => {
 		await user.click(screen.getByRole("button", { name: /更新/i }));
 
 		await waitFor(() => {
-			expect(mockUpdateIncomeMutation).toHaveBeenCalledWith("1", {
+			expect(mockUpdate).toHaveBeenCalledWith("1", {
 				amount: 350000,
 				date: "2024-01-25",
 				categoryId: "salary", // 給与カテゴリのID
@@ -242,12 +353,23 @@ describe("IncomePage", () => {
 
 	it("収入を削除できる", async () => {
 		const user = userEvent.setup();
-		const mockDeleteIncomeMutation = vi.fn().mockResolvedValue(undefined);
+		const mockDelete = vi.fn().mockResolvedValue(undefined);
 
-		vi.mocked(useIncomes).mockReturnValue({
-			...defaultUseIncomesMock,
+		vi.mocked(apiClient.transactions.delete).mockImplementation(mockDelete);
+		vi.mocked(useIncomesWithPagination).mockReturnValue({
 			incomes: mockIncomes,
-			deleteIncomeMutation: mockDeleteIncomeMutation,
+			loading: false,
+			error: null,
+			pagination: {
+				currentPage: 1,
+				totalPages: 1,
+				totalItems: 2,
+				itemsPerPage: 10,
+			},
+			currentPage: 1,
+			onPageChange: vi.fn(),
+			onItemsPerPageChange: vi.fn(),
+			refetch: vi.fn(),
 		});
 
 		render(<IncomePage />);
@@ -264,15 +386,20 @@ describe("IncomePage", () => {
 		await user.click(screen.getByRole("button", { name: /削除を確定/i }));
 
 		await waitFor(() => {
-			expect(mockDeleteIncomeMutation).toHaveBeenCalledWith("1");
+			expect(mockDelete).toHaveBeenCalledWith("1");
 		});
 	});
 
 	it("エラー時に適切なエラーメッセージが表示される", async () => {
-		vi.mocked(useIncomes).mockReturnValue({
-			...defaultUseIncomesMock,
-			error: "データの取得に失敗しました",
+		vi.mocked(useIncomesWithPagination).mockReturnValue({
+			incomes: [],
 			loading: false,
+			error: "データの取得に失敗しました",
+			pagination: null,
+			currentPage: 1,
+			onPageChange: vi.fn(),
+			onItemsPerPageChange: vi.fn(),
+			refetch: vi.fn(),
 		});
 
 		render(<IncomePage />);
@@ -286,9 +413,15 @@ describe("IncomePage", () => {
 	});
 
 	it("ローディング中はローディング表示がされる", async () => {
-		vi.mocked(useIncomes).mockReturnValue({
-			...defaultUseIncomesMock,
+		vi.mocked(useIncomesWithPagination).mockReturnValue({
+			incomes: [],
 			loading: true,
+			error: null,
+			pagination: null,
+			currentPage: 1,
+			onPageChange: vi.fn(),
+			onItemsPerPageChange: vi.fn(),
+			refetch: vi.fn(),
 		});
 
 		render(<IncomePage />);

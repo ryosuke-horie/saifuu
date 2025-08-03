@@ -226,21 +226,17 @@ export default function IncomePage() {
 				<div className={gridClass}>
 					{/* フィルタ（左側 - 3列分） */}
 					<div className="lg:col-span-3">
-						<div data-testid="income-filters">
-							<IncomeFilters
-								onFiltersChange={handleFiltersChange}
-								categories={categories}
-								initialFilters={filters}
-								disableUrlSync={true} // URL同期を無効化
-							/>
-						</div>
+						<IncomeFilters
+							onFiltersChange={handleFiltersChange}
+							categories={categories}
+							initialFilters={filters}
+							disableUrlSync={true} // URL同期を無効化
+						/>
 					</div>
 
 					{/* カテゴリグラフ（右側 - 1列分） */}
 					<div className="lg:col-span-1">
-						<div data-testid="income-category-chart">
-							<IncomeCategoryChart data={categoryChartData} />
-						</div>
+						<IncomeCategoryChart data={categoryChartData} />
 					</div>
 				</div>
 
