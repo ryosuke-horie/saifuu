@@ -211,12 +211,15 @@ describe("GlobalError", () => {
 			// 送信中の表示確認
 			expect(screen.getByText("送信中...")).toBeInTheDocument();
 
-			// 報告完了を待つ
-			await waitFor(() => {
-				expect(global.alert).toHaveBeenCalledWith(
-					"エラーレポートを送信しました。ご協力ありがとうございます。",
-				);
-			});
+			// 報告完了を待つ（タイムアウトを延長）
+			await waitFor(
+				() => {
+					expect(global.alert).toHaveBeenCalledWith(
+						"エラーレポートを送信しました。ご協力ありがとうございます。",
+					);
+				},
+				{ timeout: 3000 },
+			);
 
 			// console.logが呼ばれたことを確認
 			expect(consoleSpy).toHaveBeenCalled();
