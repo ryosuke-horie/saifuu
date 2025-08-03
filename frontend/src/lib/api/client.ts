@@ -363,13 +363,6 @@ class ApiClient {
 	}
 }
 
-/**
- * APIクライアントのシングルトンインスタンス
- * ロガー機能を統合したAPIクライアント
- */
-const baseApiClient = new ApiClient();
-const loggedApiClient = withApiLogging(baseApiClient);
-
 // transactionsサービスを追加（ページネーション対応）
 import type {
 	GetTransactionsQuery,
@@ -389,53 +382,95 @@ interface TransactionsListResponse {
 	pagination?: PaginationResponse;
 }
 
-export const apiClient = Object.assign(loggedApiClient, {
-	transactions: {
-		list: async (
-			params?: TransactionsListParams,
-		): Promise<TransactionsListResponse> => {
-			const endpoint = addQueryParams(
-				"/transactions",
-				params as Record<string, unknown>,
-			);
-			// skipTypeCheckをtrueにして、ApiResponseのラップ処理を回避
-			const response = await loggedApiClient.get<any>(endpoint, {
-				skipTypeCheck: true,
-			});
+/**
+ * トランザクションサービスクラス
+ * APIクライアントを通じてトランザクション関連のAPI操作を提供
+ */
+class TransactionService {
+	constructor(private client: ApiClient) {}
 
-			// レスポンスの形式を正規化
-			// テストのモックレスポンスは既に { data: [], pagination: {...} } の形式で返ってくる
-			// APIが直接配列を返す場合は { data: [...] } に変換
-			if (response && typeof response === "object") {
-				// 既に正しい形式の場合はそのまま返す
-				if ("data" in response) {
-					return response as TransactionsListResponse;
-				}
-				// 配列の場合はdataでラップ
-				if (Array.isArray(response)) {
-					return { data: response };
-				}
+	/**
+	 * トランザクションリストを取得
+	 */
+	async list(
+		params?: TransactionsListParams,
+	): Promise<TransactionsListResponse> {
+		const endpoint = addQueryParams(
+			"/transactions",
+			params as Record<string, unknown>,
+		);
+		// skipTypeCheckをtrueにして、ApiResponseのラップ処理を回避
+		const response = await this.client.get<any>(endpoint, {
+			skipTypeCheck: true,
+		});
+
+		// レスポンスの形式を正規化
+		// テストのモックレスポンスは既に { data: [], pagination: {...} } の形式で返ってくる
+		// APIが直接配列を返す場合は { data: [...] } に変換
+		if (response && typeof response === "object") {
+			// 既に正しい形式の場合はそのまま返す
+			if ("data" in response) {
+				return response as TransactionsListResponse;
 			}
+			// 配列の場合はdataでラップ
+			if (Array.isArray(response)) {
+				return { data: response };
+			}
+		}
 
-			// フォールバック
-			return { data: [] };
-		},
+		// フォールバック
+		return { data: [] };
+	}
 
-		create: async (data: Partial<Transaction>): Promise<Transaction> => {
-			return loggedApiClient.post<Transaction>("/transactions", data);
-		},
+	/**
+	 * トランザクションを作成
+	 */
+	async create(data: Partial<Transaction>): Promise<Transaction> {
+		return this.client.post<Transaction>("/transactions", data);
+	}
 
-		update: async (
-			id: string,
-			data: Partial<Transaction>,
-		): Promise<Transaction> => {
-			return loggedApiClient.put<Transaction>(`/transactions/${id}`, data);
-		},
+	/**
+	 * トランザクションを更新
+	 */
+	async update(id: string, data: Partial<Transaction>): Promise<Transaction> {
+		return this.client.put<Transaction>(`/transactions/${id}`, data);
+	}
 
-		delete: async (id: string): Promise<void> => {
-			await loggedApiClient.delete<void>(`/transactions/${id}`);
-		},
-	},
+	/**
+	 * トランザクションを削除
+	 */
+	async delete(id: string): Promise<void> {
+		await this.client.delete<void>(`/transactions/${id}`);
+	}
+}
+
+/**
+ * 拡張APIクライアントクラス
+ * 基本的なAPIクライアント機能に加えて、ドメイン固有のサービスを提供
+ */
+class ExtendedApiClient extends ApiClient {
+	readonly transactions: TransactionService;
+
+	constructor() {
+		super();
+		// トランザクションサービスをインスタンス化
+		this.transactions = new TransactionService(this);
+	}
+}
+
+// ロギング機能付きの拡張クライアントインスタンスを作成
+const extendedClient = new ExtendedApiClient();
+
+// ロギングラッパーを適用
+const wrappedClient = withApiLogging(extendedClient);
+
+// トランザクションサービスをラップされたクライアントで再初期化
+// これにより、トランザクションサービスがロギング機能付きのメソッドを使用する
+const transactionService = new TransactionService(wrappedClient);
+
+// 最終的なAPIクライアントをエクスポート
+export const apiClient = Object.assign(wrappedClient, {
+	transactions: transactionService,
 });
 
 /**
