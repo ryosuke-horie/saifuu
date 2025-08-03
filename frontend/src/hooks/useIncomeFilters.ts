@@ -6,7 +6,8 @@
  */
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { debounce, throttle } from "../lib/performance";
 import type { IncomeFiltersState, IncomePeriodType } from "../types/income";
 
 /**
@@ -192,6 +193,27 @@ export const useIncomeFilters = ({
 		}
 	}, [searchParams, disableUrlSync]);
 
+	// URL更新関数をdebounceで最適化（300ms遅延）
+	// 頻繁なURL更新を防ぎ、パフォーマンスを向上
+	const debouncedUrlUpdate = useMemo(
+		() =>
+			debounce((cleanedFilters: IncomeFiltersState) => {
+				if (!disableUrlSync) {
+					const queryString = buildURLParams(cleanedFilters);
+					const newURL = queryString ? `${pathname}?${queryString}` : pathname;
+					router.replace(newURL);
+				}
+			}, 300),
+		[router, pathname, disableUrlSync],
+	);
+
+	// コールバック関数をthrottleで最適化（500ms間隔）
+	// 頻繁なコールバック実行を制限し、パフォーマンスを向上
+	const throttledCallback = useMemo(
+		() => (onFiltersChange ? throttle(onFiltersChange, 500) : undefined),
+		[onFiltersChange],
+	);
+
 	// フィルター変更時の処理
 	useEffect(() => {
 		const cleanedFilters = cleanFilters({
@@ -200,23 +222,12 @@ export const useIncomeFilters = ({
 				selectedCategories.length > 0 ? selectedCategories : undefined,
 		});
 
-		// コールバックを実行
-		onFiltersChange?.(cleanedFilters);
+		// スロットルされたコールバックを実行
+		throttledCallback?.(cleanedFilters);
 
-		// URLパラメータを更新
-		if (!disableUrlSync) {
-			const queryString = buildURLParams(cleanedFilters);
-			const newURL = queryString ? `${pathname}?${queryString}` : pathname;
-			router.replace(newURL);
-		}
-	}, [
-		filters,
-		selectedCategories,
-		onFiltersChange,
-		router,
-		pathname,
-		disableUrlSync,
-	]);
+		// デバウンスされたURL更新を実行
+		debouncedUrlUpdate(cleanedFilters);
+	}, [filters, selectedCategories, throttledCallback, debouncedUrlUpdate]);
 
 	// フィルターを更新
 	const updateFilter = useCallback(
