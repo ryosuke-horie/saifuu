@@ -85,10 +85,3 @@ export const STYLES = {
 	CATEGORY_AMOUNT: "text-gray-900 font-semibold",
 	CATEGORY_PERCENTAGE: "text-gray-500 text-sm",
 } as const;
-
-/**
- * アニメーション関連の定数
- */
-export const ANIMATION = {
-	TRANSITION_DURATION: 500,
-} as const;
