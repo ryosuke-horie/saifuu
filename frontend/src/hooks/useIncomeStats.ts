@@ -6,7 +6,7 @@
  */
 
 import { useMemo } from "react";
-import type { Transaction } from "../lib/api/types";
+import type { TransactionWithCategory } from "../lib/api/types";
 
 export interface IncomeStatsResult {
 	totalIncome: number;
@@ -20,7 +20,7 @@ export interface IncomeStatsResult {
  * @returns 計算された統計情報
  */
 export const useIncomeStats = (
-	incomes: Transaction[] | null,
+	incomes: TransactionWithCategory[] | null,
 	loading: boolean,
 ): IncomeStatsResult => {
 	return useMemo(() => {

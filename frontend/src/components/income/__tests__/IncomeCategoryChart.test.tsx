@@ -46,21 +46,21 @@ vi.mock("recharts", () => ({
 describe("IncomeCategoryChart", () => {
 	const mockData: IncomeCategoryData[] = [
 		{
-			categoryId: 101,
+			categoryId: "101",
 			name: "給与",
 			amount: 300000,
 			percentage: 60,
 			color: "#10b981",
 		},
 		{
-			categoryId: 102,
+			categoryId: "102",
 			name: "ボーナス",
 			amount: 150000,
 			percentage: 30,
 			color: "#059669",
 		},
 		{
-			categoryId: 103,
+			categoryId: "103",
 			name: "副業",
 			amount: 50000,
 			percentage: 10,

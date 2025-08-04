@@ -10,11 +10,11 @@ import type { ChartType } from "./constants";
  * 各収入カテゴリの金額と割合を表現
  */
 export type IncomeCategoryData = {
-	readonly categoryId: number;
+	readonly categoryId: string;
 	readonly name: string;
 	readonly amount: number;
 	readonly percentage: number;
-	readonly color: string;
+	readonly color?: string;
 };
 
 /**
@@ -29,7 +29,7 @@ export type IncomeCategoryChartProps = {
  */
 export type ChartState = {
 	readonly chartType: ChartType;
-	readonly selectedCategory: number | null;
+	readonly selectedCategory: string | null;
 };
 
 /**
@@ -45,12 +45,12 @@ export function isIncomeCategoryData(
 		"name" in value &&
 		"amount" in value &&
 		"percentage" in value &&
-		"color" in value &&
-		typeof (value as IncomeCategoryData).categoryId === "number" &&
+		typeof (value as IncomeCategoryData).categoryId === "string" &&
 		typeof (value as IncomeCategoryData).name === "string" &&
 		typeof (value as IncomeCategoryData).amount === "number" &&
 		typeof (value as IncomeCategoryData).percentage === "number" &&
-		typeof (value as IncomeCategoryData).color === "string"
+		(typeof (value as IncomeCategoryData).color === "string" ||
+			(value as IncomeCategoryData).color === undefined)
 	);
 }
 

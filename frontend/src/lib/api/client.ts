@@ -389,6 +389,21 @@ interface TransactionsListResponse {
 	pagination?: PaginationResponse;
 }
 
+interface TransactionCreateParams {
+	type: "income" | "expense";
+	amount: number;
+	date: string;
+	description?: string | null;
+	categoryId?: string | null;
+}
+
+interface TransactionUpdateParams {
+	amount: number;
+	date: string;
+	description?: string | null;
+	categoryId?: string | null;
+}
+
 export const apiClient = Object.assign(loggedApiClient, {
 	transactions: {
 		list: async (
@@ -419,6 +434,21 @@ export const apiClient = Object.assign(loggedApiClient, {
 
 			// フォールバック
 			return { data: [] };
+		},
+		create: async (params: TransactionCreateParams): Promise<Transaction> => {
+			return await loggedApiClient.post<Transaction>("/transactions", params);
+		},
+		update: async (
+			id: string,
+			params: TransactionUpdateParams,
+		): Promise<Transaction> => {
+			return await loggedApiClient.put<Transaction>(
+				`/transactions/${id}`,
+				params,
+			);
+		},
+		delete: async (id: string): Promise<void> => {
+			await loggedApiClient.delete<void>(`/transactions/${id}`);
 		},
 	},
 });
