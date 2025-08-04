@@ -20,9 +20,9 @@ interface CategoryBreakdownSectionProps {
  * 個々のカテゴリ情報を表示
  */
 const CategoryItem = React.memo<CategoryBreakdown>(
-	({ categoryId, name, amount, percentage }) => {
+	({ name, amount, percentage }) => {
 		return (
-			<div key={categoryId} className={STYLES.CATEGORY_ITEM}>
+			<div className={STYLES.CATEGORY_ITEM}>
 				<span className={STYLES.CATEGORY_NAME}>{name}</span>
 				<div className={STYLES.CATEGORY_VALUE_WRAPPER}>
 					<span className={STYLES.CATEGORY_AMOUNT}>
