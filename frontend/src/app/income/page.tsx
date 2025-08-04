@@ -28,7 +28,7 @@ import { Pagination } from "../../components/ui/Pagination";
  * useSearchParamsを使用するため、Suspenseでラップする必要がある
  * すべてのロジックとUIをこのコンポーネントに含める
  */
-export function IncomePageContent() {
+function IncomePageContent() {
 	// レスポンシブ対応
 	const isMobile = useIsMobile();
 
