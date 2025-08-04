@@ -3,7 +3,7 @@
  * 前月比の増減を判定し、適切なアイコンとスタイルを返す
  */
 
-import type { ReactElement } from "react";
+import { type ReactElement, useMemo } from "react";
 import { TREND_CONFIG } from "../constants";
 
 /**
@@ -22,38 +22,42 @@ type TrendInfo = {
  * @returns トレンド情報（アイコン、スタイル、テキスト）
  */
 export const useTrend = (percentage: number): TrendInfo => {
-	// 増加傾向の場合
-	if (percentage > 0) {
-		return {
-			icon: (
-				<span data-testid={TREND_CONFIG.UP.testId}>{TREND_CONFIG.UP.icon}</span>
-			),
-			className: TREND_CONFIG.UP.className,
-			text: `+${percentage}%`,
-		} satisfies TrendInfo;
-	}
+	return useMemo(() => {
+		// 増加傾向の場合
+		if (percentage > 0) {
+			return {
+				icon: (
+					<span data-testid={TREND_CONFIG.UP.testId}>
+						{TREND_CONFIG.UP.icon}
+					</span>
+				),
+				className: TREND_CONFIG.UP.className,
+				text: `+${percentage}%`,
+			} satisfies TrendInfo;
+		}
 
-	// 減少傾向の場合
-	if (percentage < 0) {
+		// 減少傾向の場合
+		if (percentage < 0) {
+			return {
+				icon: (
+					<span data-testid={TREND_CONFIG.DOWN.testId}>
+						{TREND_CONFIG.DOWN.icon}
+					</span>
+				),
+				className: TREND_CONFIG.DOWN.className,
+				text: `${percentage}%`,
+			} satisfies TrendInfo;
+		}
+
+		// 変化なしの場合
 		return {
 			icon: (
-				<span data-testid={TREND_CONFIG.DOWN.testId}>
-					{TREND_CONFIG.DOWN.icon}
+				<span data-testid={TREND_CONFIG.FLAT.testId}>
+					{TREND_CONFIG.FLAT.icon}
 				</span>
 			),
-			className: TREND_CONFIG.DOWN.className,
-			text: `${percentage}%`,
+			className: TREND_CONFIG.FLAT.className,
+			text: "0%",
 		} satisfies TrendInfo;
-	}
-
-	// 変化なしの場合
-	return {
-		icon: (
-			<span data-testid={TREND_CONFIG.FLAT.testId}>
-				{TREND_CONFIG.FLAT.icon}
-			</span>
-		),
-		className: TREND_CONFIG.FLAT.className,
-		text: "0%",
-	} satisfies TrendInfo;
+	}, [percentage]);
 };
