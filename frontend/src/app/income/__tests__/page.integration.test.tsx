@@ -105,9 +105,10 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 // インポート（モック後）
 import { fetchCategories } from "@/lib/api/categories/api";
 import { apiClient } from "@/lib/api/client";
-import IncomePage from "../page";
+// テストではSuspenseラップなしのコンテンツコンポーネントを直接使用
+import { IncomePageContent } from "../page";
 
-describe("IncomePage 統合テスト", () => {
+describe("IncomePageContent 統合テスト", () => {
 	// テストデータ（最小限）
 	const mockCategories: Category[] = [
 		{
@@ -220,7 +221,7 @@ describe("IncomePage 統合テスト", () => {
 
 	describe("コンポーネントレンダリング", () => {
 		it("すべての主要コンポーネントが表示される", async () => {
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				// ページタイトル
@@ -248,7 +249,7 @@ describe("IncomePage 統合テスト", () => {
 		});
 
 		it("収入データが一覧に表示される", async () => {
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				expect(screen.getByText("1月給与")).toBeInTheDocument();
@@ -265,7 +266,7 @@ describe("IncomePage 統合テスト", () => {
 				updateFilters: mockUpdateFilters,
 			});
 
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				expect(screen.getByText("絞り込み条件")).toBeInTheDocument();
@@ -287,7 +288,7 @@ describe("IncomePage 統合テスト", () => {
 			});
 
 			const user = userEvent.setup();
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				expect(screen.getByText("絞り込み条件")).toBeInTheDocument();
@@ -311,7 +312,7 @@ describe("IncomePage 統合テスト", () => {
 			});
 
 			const user = userEvent.setup();
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				expect(screen.getByText("絞り込み条件")).toBeInTheDocument();
@@ -333,7 +334,7 @@ describe("IncomePage 統合テスト", () => {
 
 	describe("CRUD操作", () => {
 		it("新規収入フォームが表示される", async () => {
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				expect(screen.getByText(/収入を登録/)).toBeInTheDocument();
@@ -363,7 +364,7 @@ describe("IncomePage 統合テスト", () => {
 			});
 
 			const user = userEvent.setup();
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				expect(screen.getByText(/収入を登録/)).toBeInTheDocument();
@@ -404,7 +405,7 @@ describe("IncomePage 統合テスト", () => {
 				amount: 350000,
 			});
 
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				expect(screen.getByText("1月給与")).toBeInTheDocument();
@@ -424,7 +425,7 @@ describe("IncomePage 統合テスト", () => {
 
 		it("削除確認ダイアログが表示される", async () => {
 			const user = userEvent.setup();
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				expect(screen.getByText("1月給与")).toBeInTheDocument();
@@ -456,7 +457,7 @@ describe("IncomePage 統合テスト", () => {
 				},
 			});
 
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				// ページ情報が表示されることを確認
@@ -485,7 +486,7 @@ describe("IncomePage 統合テスト", () => {
 			});
 
 			const user = userEvent.setup();
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				expect(screen.getByText(/15件/)).toBeInTheDocument();
@@ -515,7 +516,7 @@ describe("IncomePage 統合テスト", () => {
 			// モバイルモードに設定
 			(useIsMobile as Mock).mockReturnValue(true);
 
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				// モバイルではグリッドレイアウトではなく縦並びになる
@@ -532,7 +533,7 @@ describe("IncomePage 統合テスト", () => {
 			// デスクトップモードに設定
 			(useIsMobile as Mock).mockReturnValue(false);
 
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				// デスクトップではグリッドレイアウトになる
@@ -555,7 +556,7 @@ describe("IncomePage 統合テスト", () => {
 				pagination: null,
 			});
 
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				// エラーメッセージが表示される
@@ -570,7 +571,7 @@ describe("IncomePage 統合テスト", () => {
 				new Error("カテゴリ取得エラー"),
 			);
 
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			await waitFor(() => {
 				// ページタイトルは表示される
@@ -600,7 +601,7 @@ describe("IncomePage 統合テスト", () => {
 			});
 
 			const user = userEvent.setup();
-			render(<IncomePage />);
+			render(<IncomePageContent />);
 
 			// 1. 初期表示を確認
 			await waitFor(() => {
