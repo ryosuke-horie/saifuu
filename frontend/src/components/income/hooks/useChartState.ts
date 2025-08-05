@@ -11,9 +11,9 @@ import { CHART_TYPES, type ChartType } from "../constants";
  */
 type UseChartStateReturn = {
 	chartType: ChartType;
-	selectedCategory: number | null;
+	selectedCategory: string | null;
 	toggleChartType: () => void;
-	handleLegendItemClick: (categoryId: number) => void;
+	handleLegendItemClick: (categoryId: string) => void;
 	isBarChart: boolean;
 	isPieChart: boolean;
 };
@@ -24,7 +24,7 @@ type UseChartStateReturn = {
  */
 export function useChartState(): UseChartStateReturn {
 	const [chartType, setChartType] = useState<ChartType>(CHART_TYPES.PIE);
-	const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+	const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
 	// チャートタイプの切り替え処理
 	const toggleChartType = useCallback(() => {
@@ -34,7 +34,7 @@ export function useChartState(): UseChartStateReturn {
 	}, []);
 
 	// 凡例アイテムのクリック処理
-	const handleLegendItemClick = useCallback((categoryId: number) => {
+	const handleLegendItemClick = useCallback((categoryId: string) => {
 		setSelectedCategory((prev) => (prev === categoryId ? null : categoryId));
 	}, []);
 

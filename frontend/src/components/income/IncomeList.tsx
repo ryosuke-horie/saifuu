@@ -20,7 +20,7 @@ import {
 	SORT_CONFIG,
 } from "../../constants/pagination";
 import { useIncomesWithPagination } from "../../hooks/useIncomesWithPagination";
-import type { Transaction } from "../../lib/api/types";
+import type { TransactionWithCategory } from "../../lib/api/types";
 import { sortTransactions } from "../../utils/sorting";
 import { EmptyState, ErrorState } from "../common/table";
 import { TransactionRow } from "../transactions";
@@ -36,13 +36,13 @@ import { LoadingState, Pagination } from "../ui";
  */
 export interface IncomeListProps {
 	/** 取引データ（ページネーション無効時に使用） */
-	readonly transactions?: readonly Transaction[];
+	readonly transactions?: readonly TransactionWithCategory[];
 	/** ローディング状態（ページネーション無効時に使用） */
 	readonly isLoading?: boolean;
 	/** エラーメッセージ（ページネーション無効時に使用） */
 	readonly error?: string | null;
 	/** 編集ハンドラー */
-	readonly onEdit?: (transaction: Transaction) => void;
+	readonly onEdit?: (transaction: TransactionWithCategory) => void;
 	/** 削除ハンドラー */
 	readonly onDelete?: (id: string) => void;
 	/** 追加のCSSクラス */
@@ -102,7 +102,7 @@ export const IncomeList: FC<IncomeListProps> = memo(
 		// ページネーション有効時はAPIでソート済みなのでスキップ
 		const sortedTransactions = useMemo(() => {
 			if (enablePagination) {
-				return transactions as Transaction[]; // APIでソート済み
+				return transactions as TransactionWithCategory[]; // APIでソート済み
 			}
 			// ソート用ユーティリティ関数を使用して重複コードを削除
 			return sortTransactions(transactions, sortBy, sortOrder);

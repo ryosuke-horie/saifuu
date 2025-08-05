@@ -16,13 +16,13 @@ describe("IncomeStats", () => {
 		monthOverMonth: 7.1,
 		categoryBreakdown: [
 			{
-				categoryId: 101,
+				categoryId: "101",
 				name: "給与",
 				amount: 250000,
 				percentage: 83.3,
 			},
 			{
-				categoryId: 103,
+				categoryId: "103",
 				name: "副業",
 				amount: 50000,
 				percentage: 16.7,

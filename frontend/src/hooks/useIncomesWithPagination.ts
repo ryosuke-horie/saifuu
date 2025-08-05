@@ -13,7 +13,10 @@ import {
 	URL_PARAMS,
 } from "../constants/pagination";
 import { apiClient } from "../lib/api/client";
-import type { PaginationResponse, Transaction } from "../lib/api/types";
+import type {
+	PaginationResponse,
+	TransactionWithCategory,
+} from "../lib/api/types";
 import type {
 	UseIncomesWithPaginationReturn,
 	UsePaginationParams,
@@ -55,7 +58,9 @@ export function useIncomesWithPagination({
 	}, [syncWithUrl, itemsPerPage]);
 
 	// 状態管理（readonlyな配列として管理）
-	const [incomes, setIncomes] = useState<readonly Transaction[]>([]);
+	const [incomes, setIncomes] = useState<readonly TransactionWithCategory[]>(
+		[],
+	);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [pagination, setPagination] = useState<PaginationResponse | null>(null);
@@ -79,7 +84,7 @@ export function useIncomesWithPagination({
 					order: sortOrder,
 				});
 
-				setIncomes(response.data);
+				setIncomes(response.data as TransactionWithCategory[]);
 				setPagination(response.pagination || null);
 			} catch (err) {
 				const message =

@@ -13,7 +13,7 @@ export type { TransactionType } from "../lib/api/types";
  * カテゴリ別収入内訳
  */
 export interface CategoryBreakdown {
-	readonly categoryId: number;
+	readonly categoryId: string;
 	readonly name: string;
 	readonly amount: number;
 	readonly percentage: number;
@@ -38,6 +38,22 @@ export interface IncomeStatsProps {
 	readonly stats: IncomeStatistics;
 	readonly isLoading?: boolean;
 	readonly error?: Error | null;
+}
+
+/**
+ * IncomeStats型のエイリアス（後方互換性のため）
+ */
+export type IncomeStats = IncomeStatistics;
+
+/**
+ * カテゴリ別グラフデータ
+ */
+export interface IncomeCategoryData {
+	categoryId: string;
+	name: string;
+	amount: number;
+	percentage: number;
+	color?: string;
 }
 
 /**

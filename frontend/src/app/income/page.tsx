@@ -1,38 +1,178 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useIncomes } from "@/hooks/useIncomes";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useIncomeFilters } from "@/hooks/useIncomeFilters";
+import { useIncomeStats } from "@/hooks/useIncomeStats";
+import { useIncomesWithPagination } from "@/hooks/useIncomesWithPagination";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { fetchCategories } from "@/lib/api/categories/api";
+import { apiClient } from "@/lib/api/client";
 import type { TransactionWithCategory } from "@/lib/api/types";
 import type { Category } from "@/types/category";
-import type { IncomeFormData } from "@/types/income";
+import type {
+	IncomeCategoryData,
+	IncomeFormData,
+	IncomeStats,
+} from "@/types/income";
 import { DeleteConfirmDialog } from "../../components/income/DeleteConfirmDialog";
+import { IncomeCategoryChart } from "../../components/income/IncomeCategoryChart";
+import { IncomeFilters } from "../../components/income/IncomeFilters";
 import { IncomeForm } from "../../components/income/IncomeForm";
 import { IncomeList } from "../../components/income/IncomeList";
+import { IncomeStats as IncomeStatsComponent } from "../../components/income/IncomeStats";
+import { Pagination } from "../../components/ui/Pagination";
 
 /**
- * 収入管理メインページ
+ * 収入管理ページのメインコンテンツ
  *
- * 収入の一覧表示と登録・編集・削除機能を提供する統合ページ
- * 支出管理ページのパターンを踏襲し、収入に特化した実装
+ * useSearchParamsを使用するため、Suspenseでラップする必要がある
+ * すべてのロジックとUIをこのコンポーネントに含める
  */
-export default function IncomePage() {
-	// useIncomesフックを使用してデータ管理
+function IncomePageContent() {
+	// レスポンシブ対応
+	const isMobile = useIsMobile();
+
+	// ページネーション対応の収入データ取得
 	const {
 		incomes,
 		loading: isLoading,
 		error,
-		operationLoading,
-		createIncomeMutation,
-		updateIncomeMutation,
-		deleteIncomeMutation,
-	} = useIncomes();
+		pagination,
+		currentPage,
+		onPageChange,
+		onItemsPerPageChange,
+		refetch,
+	} = useIncomesWithPagination({
+		itemsPerPage: 10,
+		syncWithUrl: true,
+		sortBy: "date",
+		sortOrder: "desc",
+	});
 
 	// UI状態の管理
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [editingIncome, setEditingIncome] =
 		useState<TransactionWithCategory | null>(null);
 	const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+	const [operationLoading, setOperationLoading] = useState(false);
+
+	// 統計データの管理
+	const [statsData, setStatsData] = useState<IncomeStats | null>(null);
+	const [statsLoading, setStatsLoading] = useState(true);
+	const [allIncomes, setAllIncomes] = useState<TransactionWithCategory[]>([]);
+
+	// フィルタリング機能
+	const { filters, updateFilters } = useIncomeFilters({
+		disableUrlSync: false,
+		onFiltersChange: () => {
+			// フィルター変更時にデータを再取得
+			refetch();
+		},
+	});
+
+	// 収入統計の計算
+	const stats = useIncomeStats(allIncomes, statsLoading);
+
+	// 統計データの取得
+	const fetchStatsData = useCallback(async () => {
+		try {
+			setStatsLoading(true);
+			// 全収入データを取得して統計計算用に使用
+			// API は拡張された取引データ（カテゴリ情報付き）を返すはず
+			const response = await apiClient.transactions.list({
+				type: "income",
+				limit: 1000, // 統計計算のため全データ取得
+			});
+			// APIが既にカテゴリ情報を含む拡張データを返すことを想定
+			const incomesWithCategory = response.data as TransactionWithCategory[];
+			setAllIncomes(incomesWithCategory);
+
+			// 統計データの計算
+			const now = new Date();
+			const currentYear = now.getFullYear();
+			const currentMonth = now.getMonth();
+			const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+			const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+			// 今月の収入
+			const currentMonthIncomes = incomesWithCategory.filter((t) => {
+				const date = new Date(t.date);
+				return (
+					date.getFullYear() === currentYear && date.getMonth() === currentMonth
+				);
+			});
+			const currentMonthTotal = currentMonthIncomes.reduce(
+				(sum, t) => sum + t.amount,
+				0,
+			);
+
+			// 先月の収入
+			const lastMonthIncomes = incomesWithCategory.filter((t) => {
+				const date = new Date(t.date);
+				return (
+					date.getFullYear() === lastMonthYear && date.getMonth() === lastMonth
+				);
+			});
+			const lastMonthTotal = lastMonthIncomes.reduce(
+				(sum, t) => sum + t.amount,
+				0,
+			);
+
+			// 今年の収入
+			const currentYearIncomes = incomesWithCategory.filter((t) => {
+				const date = new Date(t.date);
+				return date.getFullYear() === currentYear;
+			});
+			const currentYearTotal = currentYearIncomes.reduce(
+				(sum, t) => sum + t.amount,
+				0,
+			);
+
+			// 前月比の計算
+			const monthOverMonth =
+				lastMonthTotal === 0
+					? currentMonthTotal > 0
+						? 100
+						: 0
+					: Math.round(
+							((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100,
+						);
+
+			// カテゴリ別内訳の計算
+			const categoryMap = new Map<string, { name: string; amount: number }>();
+			for (const income of currentMonthIncomes) {
+				if (income.categoryId && income.category) {
+					const existing = categoryMap.get(income.categoryId) || {
+						name: income.category.name,
+						amount: 0,
+					};
+					existing.amount += income.amount;
+					categoryMap.set(income.categoryId, existing);
+				}
+			}
+
+			const categoryBreakdown = Array.from(categoryMap.entries()).map(
+				([categoryId, data]) => ({
+					categoryId,
+					name: data.name,
+					amount: data.amount,
+					percentage: Math.round((data.amount / currentMonthTotal) * 100),
+				}),
+			);
+
+			setStatsData({
+				currentMonth: currentMonthTotal,
+				lastMonth: lastMonthTotal,
+				currentYear: currentYearTotal,
+				monthOverMonth,
+				categoryBreakdown,
+			});
+		} catch (err) {
+			console.error("統計データの取得に失敗しました", err);
+		} finally {
+			setStatsLoading(false);
+		}
+	}, []);
 
 	// カテゴリデータの取得
 	const fetchCategoriesData = useCallback(async () => {
@@ -48,26 +188,61 @@ export default function IncomePage() {
 		}
 	}, []);
 
+	// カテゴリ別グラフ用データの準備
+	const categoryChartData = useMemo<IncomeCategoryData[]>(() => {
+		if (!incomes || incomes.length === 0) return [];
+
+		const categoryMap = new Map<
+			string,
+			{ name: string; amount: number; color?: string }
+		>();
+		let totalAmount = 0;
+
+		for (const income of incomes) {
+			if (income.categoryId && income.category) {
+				const existing = categoryMap.get(income.categoryId) || {
+					name: income.category.name,
+					amount: 0,
+				};
+				existing.amount += income.amount;
+				categoryMap.set(income.categoryId, existing);
+				totalAmount += income.amount;
+			}
+		}
+
+		return Array.from(categoryMap.entries()).map(([categoryId, data]) => ({
+			categoryId,
+			name: data.name,
+			amount: data.amount,
+			percentage:
+				totalAmount > 0 ? Math.round((data.amount / totalAmount) * 100) : 0,
+			color: data.color,
+		}));
+	}, [incomes]);
+
 	// 初期データ取得
 	useEffect(() => {
 		fetchCategoriesData();
-	}, [fetchCategoriesData]);
+		fetchStatsData();
+	}, [fetchCategoriesData, fetchStatsData]);
 
 	// フォーム送信ハンドラー
 	const handleSubmit = async (data: IncomeFormData) => {
 		try {
+			setOperationLoading(true);
 			// typeフィールドを除外してAPIに渡す
 			const { type: _, ...apiData } = data;
 
 			if (editingIncome) {
-				await updateIncomeMutation(editingIncome.id, {
+				await apiClient.transactions.update(editingIncome.id, {
 					amount: apiData.amount,
 					date: apiData.date,
 					description: apiData.description || null,
 					categoryId: apiData.categoryId || null,
 				});
 			} else {
-				await createIncomeMutation({
+				await apiClient.transactions.create({
+					type: "income",
 					amount: apiData.amount,
 					date: apiData.date,
 					description: apiData.description || null,
@@ -75,8 +250,13 @@ export default function IncomePage() {
 				});
 			}
 			setEditingIncome(null);
+			// データを再取得
+			await refetch();
+			await fetchStatsData();
 		} catch (err) {
 			console.error("操作に失敗しました", err);
+		} finally {
+			setOperationLoading(false);
 		}
 	};
 
@@ -94,10 +274,16 @@ export default function IncomePage() {
 	const handleDeleteConfirm = async () => {
 		if (!deleteTargetId) return;
 		try {
-			await deleteIncomeMutation(deleteTargetId);
+			setOperationLoading(true);
+			await apiClient.transactions.delete(deleteTargetId);
 			setDeleteTargetId(null);
+			// データを再取得
+			await refetch();
+			await fetchStatsData();
 		} catch (err) {
 			console.error("削除に失敗しました", err);
+		} finally {
+			setOperationLoading(false);
 		}
 	};
 
@@ -110,8 +296,51 @@ export default function IncomePage() {
 		<div className="container mx-auto p-4">
 			<h1 className="text-2xl font-bold mb-6">収入管理</h1>
 
-			{/* 収入登録フォーム */}
+			{/* 収入統計カード（全幅） */}
 			<div className="mb-8">
+				<IncomeStatsComponent
+					stats={
+						statsData || {
+							currentMonth: stats.totalIncome,
+							lastMonth: 0,
+							currentYear: stats.totalIncome,
+							monthOverMonth: 0,
+							categoryBreakdown: [],
+						}
+					}
+					isLoading={statsLoading}
+					error={null}
+				/>
+			</div>
+
+			{/* フィルターとカテゴリチャートのグリッド配置 */}
+			<div
+				className={`mb-8 ${isMobile ? "space-y-6" : "grid grid-cols-2 gap-6"}`}
+			>
+				{/* フィルターセクション */}
+				<div className="bg-white rounded-lg shadow p-4">
+					<h2 className="text-lg font-semibold mb-4">絞り込み条件</h2>
+					<IncomeFilters
+						onFiltersChange={(newFilters) => {
+							updateFilters(newFilters);
+						}}
+						categories={categories}
+						initialFilters={filters}
+						disableUrlSync={false}
+					/>
+				</div>
+
+				{/* カテゴリ別グラフ */}
+				<div className="bg-white rounded-lg shadow p-4">
+					<IncomeCategoryChart data={categoryChartData} />
+				</div>
+			</div>
+
+			{/* 収入登録フォーム */}
+			<div className="mb-8 bg-white rounded-lg shadow p-6">
+				<h2 className="text-lg font-semibold mb-4">
+					{editingIncome ? "収入を編集" : "収入を登録"}
+				</h2>
 				<IncomeForm
 					onSubmit={handleSubmit}
 					onCancel={() => setEditingIncome(null)}
@@ -139,15 +368,35 @@ export default function IncomePage() {
 			{/* ローディング表示 */}
 			{isLoading && <div className="text-center py-8">読み込み中...</div>}
 
-			{/* 収入一覧 */}
+			{/* 収入一覧とページネーション */}
 			{!isLoading && (
-				<IncomeList
-					transactions={incomes}
-					isLoading={isLoading}
-					error={error || undefined}
-					onEdit={handleEdit}
-					onDelete={handleDelete}
-				/>
+				<div className="bg-white rounded-lg shadow">
+					<div className="p-6">
+						<h2 className="text-lg font-semibold mb-4">収入一覧</h2>
+						<IncomeList
+							transactions={incomes}
+							isLoading={isLoading}
+							error={error || undefined}
+							onEdit={handleEdit}
+							onDelete={handleDelete}
+						/>
+					</div>
+
+					{/* ページネーション */}
+					{pagination && (
+						<div className="border-t px-6 py-4">
+							<Pagination
+								currentPage={currentPage}
+								totalPages={pagination.totalPages}
+								totalItems={pagination.totalItems}
+								itemsPerPage={pagination.itemsPerPage}
+								onPageChange={onPageChange}
+								onItemsPerPageChange={onItemsPerPageChange}
+								isMobile={isMobile}
+							/>
+						</div>
+					)}
+				</div>
 			)}
 
 			{/* 削除確認ダイアログ */}
@@ -158,5 +407,52 @@ export default function IncomePage() {
 				isLoading={operationLoading}
 			/>
 		</div>
+	);
+}
+
+/**
+ * 収入管理ページのローディング表示
+ *
+ * Suspenseのfallback用コンポーネント
+ */
+function IncomePageLoading() {
+	return (
+		<div className="container mx-auto p-4">
+			<h1 className="text-2xl font-bold mb-6">収入管理</h1>
+			<div className="flex justify-center items-center min-h-[400px]">
+				<div className="text-center">
+					<div className="animate-pulse space-y-4">
+						<div className="h-32 bg-gray-200 rounded-lg" />
+						<div className="grid grid-cols-2 gap-6">
+							<div className="h-48 bg-gray-200 rounded-lg" />
+							<div className="h-48 bg-gray-200 rounded-lg" />
+						</div>
+						<div className="h-64 bg-gray-200 rounded-lg" />
+					</div>
+					<p className="mt-4 text-gray-600">データを読み込んでいます...</p>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+/**
+ * 収入管理メインページ
+ *
+ * 収入の一覧表示と登録・編集・削除機能を提供する統合ページ
+ * Phase 2の全コンポーネントを統合した完全版
+ * - 収入統計表示
+ * - フィルタリング機能
+ * - カテゴリ別グラフ表示
+ * - ページネーション付き一覧表示
+ *
+ * Next.js 15の要件に従い、useSearchParamsを使用するコンポーネントを
+ * Suspenseでラップしてレンダリング
+ */
+export default function IncomePage() {
+	return (
+		<Suspense fallback={<IncomePageLoading />}>
+			<IncomePageContent />
+		</Suspense>
 	);
 }

@@ -8,7 +8,7 @@
  * - ブランド型による型安全性の向上
  */
 
-import type { Transaction } from "../lib/api/types";
+import type { TransactionWithCategory } from "../lib/api/types";
 
 /**
  * ページ番号の型
@@ -114,18 +114,18 @@ export interface SortConfig {
  * 収入用のページネーションフック戻り値
  */
 export type UseIncomesWithPaginationReturn =
-	UsePaginationReturn<Transaction> & {
+	UsePaginationReturn<TransactionWithCategory> & {
 		/** 収入データ（エイリアス） */
-		readonly incomes: readonly Transaction[];
+		readonly incomes: readonly TransactionWithCategory[];
 	};
 
 /**
  * 支出用のページネーションフック戻り値
  */
 export type UseExpensesWithPaginationReturn =
-	UsePaginationReturn<Transaction> & {
+	UsePaginationReturn<TransactionWithCategory> & {
 		/** 支出データ（エイリアス） */
-		readonly expenses: readonly Transaction[];
+		readonly expenses: readonly TransactionWithCategory[];
 	};
 
 /**
