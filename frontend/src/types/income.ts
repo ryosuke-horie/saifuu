@@ -35,9 +35,9 @@ export interface IncomeStatistics {
  * IncomeStatsコンポーネントのプロパティ型
  */
 export interface IncomeStatsProps {
-	stats: IncomeStatistics;
-	isLoading?: boolean;
-	error?: Error | null;
+	readonly stats: IncomeStatistics;
+	readonly isLoading?: boolean;
+	readonly error?: Error | null;
 }
 
 /**
