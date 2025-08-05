@@ -112,14 +112,15 @@ const buildURLParams = (filters: IncomeFiltersState): string => {
 const cleanFilters = (filters: IncomeFiltersState): IncomeFiltersState => {
 	const cleaned = { ...filters };
 
-	Object.keys(cleaned).forEach((key) => {
-		const value = cleaned[key as keyof IncomeFiltersState];
+	// Matt Pocock方針に従った型安全なObject.keysの使用
+	(Object.keys(cleaned) as Array<keyof IncomeFiltersState>).forEach((key) => {
+		const value = cleaned[key];
 		if (
 			value === "" ||
 			value === undefined ||
 			(Array.isArray(value) && value.length === 0)
 		) {
-			delete cleaned[key as keyof IncomeFiltersState];
+			delete cleaned[key];
 		}
 	});
 
