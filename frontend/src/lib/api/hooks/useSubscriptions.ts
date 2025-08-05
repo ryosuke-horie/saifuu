@@ -1,51 +1,74 @@
 /**
- * サブスクリプション用Reactフック
+ * サブスクリプション用Reactフック（React Query版）
  *
  * サブスクリプションデータの取得・操作をReactコンポーネントで
  * 簡単に使用できるカスタムフックを提供
+ * React Queryを使用してキャッシュ管理とデータフェッチングを最適化
  */
 
-import { useCallback, useMemo, useState } from "react";
-import { handleApiError, subscriptionService } from "../index";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
+import { subscriptionService } from "../index";
 import type {
 	CreateSubscriptionRequest,
 	GetSubscriptionsQuery,
 	Subscription,
-	SubscriptionStatsResponse,
 } from "../types";
-import { useApiQuery } from "./useApiQuery";
 
-/**
- * ローディング状態とエラー状態を管理する基本型
- *
- * 作成・更新・削除操作などのミューテーション系フックで使用される
- */
-interface BaseState {
-	isLoading: boolean;
-	error: string | null;
-}
+// クエリキーの定義（Matt Pocock方針：as constで厳密な型）
+const QUERY_KEYS = {
+	subscriptions: (query?: GetSubscriptionsQuery) => ["subscriptions", query],
+	subscription: (id: string) => ["subscription", id],
+	subscriptionStats: ["subscriptionStats"],
+} as const;
+
+// キャッシュ設定の共通化
+const CACHE_CONFIG = {
+	staleTime: 0, // 常に新鮮なデータを取得
+	gcTime: 5 * 60 * 1000, // 5分間キャッシュを保持
+	retry: 1,
+	retryDelay: 1000,
+} as const satisfies {
+	staleTime: number;
+	gcTime: number;
+	retry: number;
+	retryDelay: number;
+};
 
 /**
  * サブスクリプション一覧を管理するフック
  *
- * useApiQueryを使用してコードの重複を解消し、
- * 統一されたAPIクエリパターンを適用
+ * React Queryを使用してキャッシュ管理とデータフェッチングを最適化
  */
 export function useSubscriptions(query?: GetSubscriptionsQuery) {
-	// queryの値を安定させるため、JSONで文字列化して比較
-	const stableQuery = useMemo(() => JSON.stringify(query || {}), [query]);
-
-	const { data, isLoading, error, refetch } = useApiQuery({
+	const {
+		data: subscriptions = [],
+		isLoading,
+		isError,
+		error,
+		refetch: queryRefetch,
+	} = useQuery({
+		queryKey: QUERY_KEYS.subscriptions(query),
 		queryFn: () => subscriptionService.getSubscriptions(query),
-		initialData: [] as Subscription[],
-		errorContext: "サブスクリプション一覧取得",
-		deps: [stableQuery],
+		...CACHE_CONFIG,
 	});
 
+	// refetch関数をPromise<void>型に適合させる
+	const refetch = useCallback(async () => {
+		await queryRefetch();
+	}, [queryRefetch]);
+
+	// エラーメッセージの整形
+	const formattedError = error
+		? error instanceof Error
+			? error.message
+			: "サブスクリプションデータの取得に失敗しました"
+		: null;
+
 	return {
-		subscriptions: data,
-		isLoading,
-		error,
+		subscriptions,
+		isLoading: isLoading && !isError, // エラー時はisLoadingをfalseに
+		error: formattedError,
 		refetch,
 	};
 }
@@ -53,22 +76,40 @@ export function useSubscriptions(query?: GetSubscriptionsQuery) {
 /**
  * サブスクリプション詳細を管理するフック
  *
- * useApiQueryを使用してコードの重複を解消し、
- * 統一されたAPIクエリパターンを適用
+ * React Queryを使用してキャッシュ管理とデータフェッチングを最適化
  */
 export function useSubscription(id: string | null) {
-	const { data, isLoading, error, refetch } = useApiQuery({
+	const {
+		data: subscription = null,
+		isLoading,
+		isError,
+		error,
+		refetch: queryRefetch,
+	} = useQuery({
+		queryKey: QUERY_KEYS.subscription(id || ""),
 		queryFn: () => subscriptionService.getSubscription(id!),
-		initialData: null as Subscription | null,
-		errorContext: "サブスクリプション詳細取得",
-		shouldFetch: !!id,
-		deps: [id || ""], // 安定した値にする
+		enabled: !!id,
+		...CACHE_CONFIG,
 	});
 
+	// refetch関数をPromise<void>型に適合させる
+	const refetch = useCallback(async () => {
+		if (id) {
+			await queryRefetch();
+		}
+	}, [id, queryRefetch]);
+
+	// エラーメッセージの整形
+	const formattedError = error
+		? error instanceof Error
+			? error.message
+			: "サブスクリプション詳細の取得に失敗しました"
+		: null;
+
 	return {
-		subscription: data,
-		isLoading,
-		error,
+		subscription,
+		isLoading: isLoading && !isError,
+		error: formattedError,
 		refetch: id ? refetch : undefined,
 	};
 }
@@ -77,52 +118,81 @@ export function useSubscription(id: string | null) {
  * サブスクリプション作成を管理するフック
  */
 export function useCreateSubscription() {
-	const [state, setState] = useState<BaseState>({
-		isLoading: false,
-		error: null,
+	const queryClient = useQueryClient();
+
+	// サブスクリプション作成のmutation
+	const createMutation = useMutation({
+		mutationFn: (data: CreateSubscriptionRequest) =>
+			subscriptionService.createSubscription(data),
+		onSuccess: () => {
+			// キャッシュを無効化して再取得
+			queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+			queryClient.invalidateQueries({ queryKey: ["subscriptionStats"] });
+		},
 	});
 
+	// ラッパー関数
 	const createSubscription = useCallback(
-		async (data: CreateSubscriptionRequest): Promise<Subscription | null> => {
-			setState({ isLoading: true, error: null });
-
-			try {
-				const subscription = await subscriptionService.createSubscription(data);
-				setState({ isLoading: false, error: null });
-				return subscription;
-			} catch (error) {
-				const apiError = handleApiError(error, "サブスクリプション作成");
-				setState({ isLoading: false, error: apiError.message });
-				return null;
-			}
+		async (data: CreateSubscriptionRequest): Promise<Subscription> => {
+			return await createMutation.mutateAsync(data);
 		},
-		[],
+		[createMutation],
 	);
 
+	// エラーメッセージの整形
+	const error = createMutation.error
+		? createMutation.error instanceof Error
+			? createMutation.error.message
+			: "サブスクリプション作成に失敗しました"
+		: null;
+
 	return {
-		...state,
+		isLoading: createMutation.isPending,
+		error,
 		createSubscription,
+	} satisfies {
+		isLoading: boolean;
+		error: string | null;
+		createSubscription: (
+			data: CreateSubscriptionRequest,
+		) => Promise<Subscription>;
 	};
 }
 
 /**
  * サブスクリプション統計を管理するフック
  *
- * useApiQueryを使用してコードの重複を解消し、
- * 統一されたAPIクエリパターンを適用
+ * React Queryを使用してキャッシュ管理とデータフェッチングを最適化
  */
 export function useSubscriptionStats() {
-	const { data, isLoading, error, refetch } = useApiQuery({
+	const {
+		data: stats = null,
+		isLoading,
+		isError,
+		error,
+		refetch: queryRefetch,
+	} = useQuery({
+		queryKey: QUERY_KEYS.subscriptionStats,
 		queryFn: () => subscriptionService.getSubscriptionStats(),
-		initialData: null as SubscriptionStatsResponse | null,
-		errorContext: "サブスクリプション統計取得",
-		deps: [],
+		...CACHE_CONFIG,
 	});
 
+	// refetch関数をPromise<void>型に適合させる
+	const refetch = useCallback(async () => {
+		await queryRefetch();
+	}, [queryRefetch]);
+
+	// エラーメッセージの整形
+	const formattedError = error
+		? error instanceof Error
+			? error.message
+			: "サブスクリプション統計の取得に失敗しました"
+		: null;
+
 	return {
-		stats: data,
-		isLoading,
-		error,
+		stats,
+		isLoading: isLoading && !isError,
+		error: formattedError,
 		refetch,
 	};
 }

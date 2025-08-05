@@ -1,17 +1,20 @@
 /**
- * API層useSubscriptionsフックのユニットテスト
+ * API層useSubscriptionsフックのユニットテスト（React Query版）
  *
  * テスト対象:
- * - useApiQueryを使用したリファクタリング後のuseSubscriptions
+ * - React Queryを使用したuseSubscriptions
  * - queryパラメータの依存関係
  * - エラーハンドリング
  * - 型定義の整合性
  * - useActiveSubscriptions、useInactiveSubscriptionsの動作
+ * - キャッシュ管理とmutation操作
  */
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, handleApiError } from "../../errors";
+import { ApiError } from "../../errors";
 import { subscriptionService } from "../../services/subscriptions";
 import type {
 	CreateSubscriptionRequest,
@@ -58,7 +61,27 @@ vi.mock("../../errors", async (importOriginal) => {
 });
 
 const mockSubscriptionService = vi.mocked(subscriptionService);
-const mockHandleApiError = vi.mocked(handleApiError);
+
+// テスト用のラッパーコンポーネント
+const createWrapper = () => {
+	const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: {
+				retry: false,
+				gcTime: 0,
+				// React Query v5ではエラー時のundefinedを許可しないため、throwOnErrorを認識させる
+				throwOnError: false,
+			},
+			mutations: {
+				retry: false,
+			},
+		},
+	});
+
+	return ({ children }: { children: ReactNode }) => (
+		<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+	);
+};
 
 // テスト用のモックデータ
 const mockSubscriptions: Subscription[] = [
@@ -102,7 +125,9 @@ describe("useSubscriptions", () => {
 				() => new Promise(() => {}),
 			);
 
-			const { result } = renderHook(() => useSubscriptions());
+			const { result } = renderHook(() => useSubscriptions(), {
+				wrapper: createWrapper(),
+			});
 
 			expect(result.current.subscriptions).toEqual([]);
 			expect(result.current.isLoading).toBe(true);
@@ -115,7 +140,9 @@ describe("useSubscriptions", () => {
 				mockSubscriptions,
 			);
 
-			const { result } = renderHook(() => useSubscriptions());
+			const { result } = renderHook(() => useSubscriptions(), {
+				wrapper: createWrapper(),
+			});
 
 			await waitFor(
 				() => {
@@ -134,7 +161,9 @@ describe("useSubscriptions", () => {
 		it("空配列が返された場合も正常に処理される", async () => {
 			mockSubscriptionService.getSubscriptions.mockResolvedValue([]);
 
-			const { result } = renderHook(() => useSubscriptions());
+			const { result } = renderHook(() => useSubscriptions(), {
+				wrapper: createWrapper(),
+			});
 
 			await waitFor(
 				() => {
@@ -148,27 +177,23 @@ describe("useSubscriptions", () => {
 		});
 
 		it("エラーが発生した場合にエラーメッセージが設定される", async () => {
-			const errorMessage = "サブスクリプション一覧取得に失敗しました";
-			mockSubscriptionService.getSubscriptions.mockRejectedValue(
-				new Error("API Error"),
-			);
-			mockHandleApiError.mockReturnValue(new ApiError("unknown", errorMessage));
+			const mockError = new Error("API Error");
+			mockSubscriptionService.getSubscriptions.mockRejectedValue(mockError);
 
-			const { result } = renderHook(() => useSubscriptions());
+			const { result } = renderHook(() => useSubscriptions(), {
+				wrapper: createWrapper(),
+			});
 
 			await waitFor(
 				() => {
-					expect(result.current.isLoading).toBe(false);
+					expect(result.current.error).not.toBe(null);
 				},
 				{ timeout: 3000 },
 			);
 
 			expect(result.current.subscriptions).toEqual([]);
-			expect(result.current.error).toBe(errorMessage);
-			expect(mockHandleApiError).toHaveBeenCalledWith(
-				expect.any(Error),
-				"サブスクリプション一覧取得",
-			);
+			expect(result.current.error).toBe("API Error");
+			expect(result.current.isLoading).toBe(false);
 		});
 	});
 
@@ -179,7 +204,9 @@ describe("useSubscriptions", () => {
 				mockSubscriptions,
 			);
 
-			const { result } = renderHook(() => useSubscriptions(query));
+			const { result } = renderHook(() => useSubscriptions(query), {
+				wrapper: createWrapper(),
+			});
 
 			await waitFor(
 				() => {
@@ -205,6 +232,7 @@ describe("useSubscriptions", () => {
 				({ query }) => useSubscriptions(query),
 				{
 					initialProps: { query: initialQuery },
+					wrapper: createWrapper(),
 				},
 			);
 
@@ -231,7 +259,7 @@ describe("useSubscriptions", () => {
 				{ timeout: 3000 },
 			);
 
-			// useApiQueryの実装により、複数回呼ばれる可能性がある
+			// React Queryでは複数回呼ばれる可能性がある
 			expect(mockSubscriptionService.getSubscriptions).toHaveBeenCalledWith(
 				initialQuery,
 			);
@@ -255,7 +283,9 @@ describe("useActiveSubscriptions", () => {
 			activeSubscriptions,
 		);
 
-		const { result } = renderHook(() => useActiveSubscriptions());
+		const { result } = renderHook(() => useActiveSubscriptions(), {
+			wrapper: createWrapper(),
+		});
 
 		await waitFor(
 			() => {
@@ -282,7 +312,9 @@ describe("useInactiveSubscriptions", () => {
 			inactiveSubscriptions,
 		);
 
-		const { result } = renderHook(() => useInactiveSubscriptions());
+		const { result } = renderHook(() => useInactiveSubscriptions(), {
+			wrapper: createWrapper(),
+		});
 
 		await waitFor(
 			() => {
@@ -298,8 +330,8 @@ describe("useInactiveSubscriptions", () => {
 	});
 });
 
-// useApiQueryを使用したuseSubscriptionとuseSubscriptionStatsのテスト
-describe("useSubscription (useApiQuery対応)", () => {
+// React Queryを使用したuseSubscriptionとuseSubscriptionStatsのテスト
+describe("useSubscription (React Query対応)", () => {
 	const mockSubscription: Subscription = {
 		id: "1",
 		name: "Netflix",
@@ -318,10 +350,12 @@ describe("useSubscription (useApiQuery対応)", () => {
 		vi.clearAllMocks();
 	});
 
-	it("useApiQueryベースの実装でサブスクリプション詳細を取得する", async () => {
+	it("React Queryベースの実装でサブスクリプション詳細を取得する", async () => {
 		mockSubscriptionService.getSubscription.mockResolvedValue(mockSubscription);
 
-		const { result } = renderHook(() => useSubscription("1"));
+		const { result } = renderHook(() => useSubscription("1"), {
+			wrapper: createWrapper(),
+		});
 
 		// 初期状態の検証
 		expect(result.current.subscription).toBeNull();
@@ -340,7 +374,9 @@ describe("useSubscription (useApiQuery対応)", () => {
 	});
 
 	it("idがnullの場合、フェッチを実行しない", () => {
-		const { result } = renderHook(() => useSubscription(null));
+		const { result } = renderHook(() => useSubscription(null), {
+			wrapper: createWrapper(),
+		});
 
 		// 初期状態の検証
 		expect(result.current.subscription).toBeNull();
@@ -350,7 +386,7 @@ describe("useSubscription (useApiQuery対応)", () => {
 	});
 });
 
-describe("useSubscriptionStats (useApiQuery対応)", () => {
+describe("useSubscriptionStats (React Query対応)", () => {
 	const mockStats: SubscriptionStatsResponse = {
 		stats: {
 			totalActive: 3,
@@ -380,10 +416,12 @@ describe("useSubscriptionStats (useApiQuery対応)", () => {
 		vi.clearAllMocks();
 	});
 
-	it("useApiQueryベースの実装で統計データを取得する", async () => {
+	it("React Queryベースの実装で統計データを取得する", async () => {
 		mockSubscriptionService.getSubscriptionStats.mockResolvedValue(mockStats);
 
-		const { result } = renderHook(() => useSubscriptionStats());
+		const { result } = renderHook(() => useSubscriptionStats(), {
+			wrapper: createWrapper(),
+		});
 
 		// 初期状態の検証
 		expect(result.current.stats).toBeNull();
@@ -434,7 +472,9 @@ describe("useCreateSubscription", () => {
 
 	describe("初期状態", () => {
 		it("初期状態ではローディングはfalse、エラーはnullである", () => {
-			const { result } = renderHook(() => useCreateSubscription());
+			const { result } = renderHook(() => useCreateSubscription(), {
+				wrapper: createWrapper(),
+			});
 
 			expect(result.current.isLoading).toBe(false);
 			expect(result.current.error).toBeNull();
@@ -448,7 +488,9 @@ describe("useCreateSubscription", () => {
 				mockCreatedSubscription,
 			);
 
-			const { result } = renderHook(() => useCreateSubscription());
+			const { result } = renderHook(() => useCreateSubscription(), {
+				wrapper: createWrapper(),
+			});
 
 			// サブスクリプション作成を実行
 			let createdSubscription: Subscription | null = null;
@@ -476,31 +518,24 @@ describe("useCreateSubscription", () => {
 
 	describe("エラーハンドリング", () => {
 		it("ネットワークエラー発生時、適切なエラーメッセージが設定される", async () => {
-			const errorMessage = "サブスクリプション作成に失敗しました";
 			const apiError = new Error("Network error");
 			mockSubscriptionService.createSubscription.mockRejectedValue(apiError);
-			mockHandleApiError.mockReturnValue(new ApiError("network", errorMessage));
 
-			const { result } = renderHook(() => useCreateSubscription());
-
-			// サブスクリプション作成を実行
-			let createdSubscription: Subscription | null = null;
-			await act(async () => {
-				createdSubscription =
-					await result.current.createSubscription(mockCreateRequest);
+			const { result } = renderHook(() => useCreateSubscription(), {
+				wrapper: createWrapper(),
 			});
 
-			// nullが返される
-			expect(createdSubscription).toBeNull();
+			// サブスクリプション作成を実行（React Queryではmutationエラーがthrowされる）
+			await expect(
+				result.current.createSubscription(mockCreateRequest),
+			).rejects.toThrow("Network error");
 
-			// エラー状態が設定される
-			expect(result.current.error).toBe(errorMessage);
+			// ローディング状態の確認
 			expect(result.current.isLoading).toBe(false);
 
-			// handleApiErrorが適切なパラメータで呼ばれる
-			expect(mockHandleApiError).toHaveBeenCalledWith(
-				apiError,
-				"サブスクリプション作成",
+			// subscriptionServiceが呼ばれたことを確認
+			expect(mockSubscriptionService.createSubscription).toHaveBeenCalledWith(
+				mockCreateRequest,
 			);
 		});
 
@@ -508,42 +543,38 @@ describe("useCreateSubscription", () => {
 			const errorMessage = "入力データが不正です";
 			const apiError = new ApiError("validation", errorMessage, 400);
 			mockSubscriptionService.createSubscription.mockRejectedValue(apiError);
-			mockHandleApiError.mockReturnValue(apiError);
 
-			const { result } = renderHook(() => useCreateSubscription());
-
-			let createdSubscription: Subscription | null = null;
-			await act(async () => {
-				createdSubscription =
-					await result.current.createSubscription(mockCreateRequest);
+			const { result } = renderHook(() => useCreateSubscription(), {
+				wrapper: createWrapper(),
 			});
 
-			expect(createdSubscription).toBeNull();
-			expect(result.current.error).toBe(errorMessage);
-			expect(mockHandleApiError).toHaveBeenCalledWith(
-				apiError,
-				"サブスクリプション作成",
-			);
+			// mutationエラーはthrowされる
+			await expect(
+				result.current.createSubscription(mockCreateRequest),
+			).rejects.toThrow(errorMessage);
 		});
 	});
 
 	describe("ローディング状態管理", () => {
 		it("非同期操作中はローディング状態がtrueになる", async () => {
 			// 遅延解決されるPromiseを作成
+			let resolvePromise: (value: Subscription) => void;
 			const delayedPromise = new Promise<Subscription>((resolve) => {
-				setTimeout(() => resolve(mockCreatedSubscription), 100);
+				resolvePromise = resolve;
 			});
 			mockSubscriptionService.createSubscription.mockReturnValue(
 				delayedPromise,
 			);
 
-			const { result } = renderHook(() => useCreateSubscription());
+			const { result } = renderHook(() => useCreateSubscription(), {
+				wrapper: createWrapper(),
+			});
 
 			// 初期状態を確認
 			expect(result.current.isLoading).toBe(false);
 
 			// 作成を開始（actでラップ）
-			let createPromise: Promise<Subscription | null>;
+			let createPromise: Promise<Subscription>;
 			act(() => {
 				createPromise = result.current.createSubscription(mockCreateRequest);
 			});
@@ -553,66 +584,57 @@ describe("useCreateSubscription", () => {
 				expect(result.current.isLoading).toBe(true);
 			});
 
-			// 完了を待つ
+			// Promiseを解決
 			await act(async () => {
+				resolvePromise!(mockCreatedSubscription);
 				await createPromise!;
 			});
 
 			// ローディングが完了
-			expect(result.current.isLoading).toBe(false);
-			expect(result.current.error).toBeNull();
+			await waitFor(() => {
+				expect(result.current.isLoading).toBe(false);
+			});
 		});
 
 		it("エラー発生時もローディング状態が適切に更新される", async () => {
 			const apiError = new Error("Network error");
 			mockSubscriptionService.createSubscription.mockRejectedValue(apiError);
-			mockHandleApiError.mockReturnValue(
-				new ApiError("network", "エラーが発生しました"),
-			);
 
-			const { result } = renderHook(() => useCreateSubscription());
+			const { result } = renderHook(() => useCreateSubscription(), {
+				wrapper: createWrapper(),
+			});
 
 			// 初期状態
 			expect(result.current.isLoading).toBe(false);
 
-			// 作成を実行
-			await act(async () => {
-				await result.current.createSubscription(mockCreateRequest);
-			});
+			// 作成を実行（エラーがスローされる）
+			await expect(
+				result.current.createSubscription(mockCreateRequest),
+			).rejects.toThrow();
 
 			// エラー後もローディングはfalse
 			expect(result.current.isLoading).toBe(false);
-			expect(result.current.error).not.toBeNull();
 		});
 	});
 
-	describe("handleApiErrorの呼び出し", () => {
-		it("エラー時にhandleApiErrorが正しいパラメータで呼ばれる", async () => {
+	describe("mutationエラーハンドリング", () => {
+		it("エラー時にmutationが正しく失敗する", async () => {
 			const networkError = new Error("Connection failed");
-			const apiError = new ApiError("network", "ネットワークエラー", 0);
 			mockSubscriptionService.createSubscription.mockRejectedValue(
 				networkError,
 			);
-			mockHandleApiError.mockReturnValue(apiError);
 
-			const { result } = renderHook(() => useCreateSubscription());
-
-			await act(async () => {
-				await result.current.createSubscription(mockCreateRequest);
+			const { result } = renderHook(() => useCreateSubscription(), {
+				wrapper: createWrapper(),
 			});
 
-			// handleApiErrorが適切に呼ばれることを確認
-			expect(mockHandleApiError).toHaveBeenCalledWith(
-				networkError,
-				"サブスクリプション作成",
-			);
-			expect(mockHandleApiError).toHaveBeenCalledTimes(1);
-
-			// エラーメッセージが設定される
-			expect(result.current.error).toBe("ネットワークエラー");
+			// mutationはエラーをthrowする
+			await expect(
+				result.current.createSubscription(mockCreateRequest),
+			).rejects.toThrow("Connection failed");
 		});
 
-		it("異なるエラータイプでもhandleApiErrorが呼ばれる", async () => {
+		it("異なるエラータイプでも正しくハンドリングされる", async () => {
 			const validationError = new ApiError(
 				"validation",
 				"金額は正の数値である必要があります",
@@ -621,22 +643,17 @@ describe("useCreateSubscription", () => {
 			mockSubscriptionService.createSubscription.mockRejectedValue(
 				validationError,
 			);
-			mockHandleApiError.mockReturnValue(validationError);
 
-			const { result } = renderHook(() => useCreateSubscription());
-
-			await act(async () => {
-				await result.current.createSubscription({
-					...mockCreateRequest,
-					amount: -100, // 不正な値
-				});
+			const { result } = renderHook(() => useCreateSubscription(), {
+				wrapper: createWrapper(),
 			});
 
-			expect(mockHandleApiError).toHaveBeenCalledWith(
-				validationError,
-				"サブスクリプション作成",
-			);
-			expect(result.current.error).toBe("金額は正の数値である必要があります");
+			await expect(
+				result.current.createSubscription({
+					...mockCreateRequest,
+					amount: -100, // 不正な値
+				}),
+			).rejects.toThrow("金額は正の数値である必要があります");
 		});
 	});
 
@@ -657,7 +674,9 @@ describe("useCreateSubscription", () => {
 				.mockResolvedValueOnce(subscription1)
 				.mockResolvedValueOnce(subscription2);
 
-			const { result } = renderHook(() => useCreateSubscription());
+			const { result } = renderHook(() => useCreateSubscription(), {
+				wrapper: createWrapper(),
+			});
 
 			// 1回目の作成
 			let created1: Subscription | null = null;
@@ -690,11 +709,9 @@ describe("useCreateSubscription", () => {
 				.mockResolvedValueOnce(mockCreatedSubscription)
 				.mockRejectedValueOnce(new Error("Server error"));
 
-			mockHandleApiError.mockReturnValue(
-				new ApiError("server", "サーバーエラー", 500),
-			);
-
-			const { result } = renderHook(() => useCreateSubscription());
+			const { result } = renderHook(() => useCreateSubscription(), {
+				wrapper: createWrapper(),
+			});
 
 			// 1回目：成功
 			let created: Subscription | null = null;
@@ -702,15 +719,11 @@ describe("useCreateSubscription", () => {
 				created = await result.current.createSubscription(mockCreateRequest);
 			});
 			expect(created).toEqual(mockCreatedSubscription);
-			expect(result.current.error).toBeNull();
 
 			// 2回目：エラー
-			let failed: Subscription | null = null;
-			await act(async () => {
-				failed = await result.current.createSubscription(mockCreateRequest);
-			});
-			expect(failed).toBeNull();
-			expect(result.current.error).toBe("サーバーエラー");
+			await expect(
+				result.current.createSubscription(mockCreateRequest),
+			).rejects.toThrow("Server error");
 		});
 	});
 });

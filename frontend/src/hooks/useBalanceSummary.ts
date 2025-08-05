@@ -1,13 +1,19 @@
 /**
- * 収支サマリー取得フック
+ * 収支サマリー取得フック（React Query版）
  *
  * 月間の収入・支出・残高・貯蓄率・トレンド情報をAPIから取得する
  * エラーハンドリングとローディング状態管理を含む
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { getBalanceSummary } from "../lib/api/services/balance";
 import type { BalanceSummary } from "../lib/api/types";
+
+// クエリキーの定義（Matt Pocock方針：as constで厳密な型）
+const QUERY_KEYS = {
+	balanceSummary: ["balanceSummary"],
+} as const;
 
 export interface UseBalanceSummaryResult {
 	summary: BalanceSummary | null;
@@ -21,39 +27,40 @@ export interface UseBalanceSummaryResult {
  * @returns サマリー情報、ローディング状態、エラー、再取得関数
  */
 export const useBalanceSummary = (): UseBalanceSummaryResult => {
-	const [summary, setSummary] = useState<BalanceSummary | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	// React Queryでサマリーデータを取得
+	const {
+		data: summary = null,
+		isLoading,
+		isError,
+		error,
+		refetch: queryRefetch,
+	} = useQuery({
+		queryKey: QUERY_KEYS.balanceSummary,
+		queryFn: getBalanceSummary,
+		// キャッシュ戦略
+		staleTime: 0, // 常に新鮮なデータを取得
+		gcTime: 5 * 60 * 1000, // 5分間キャッシュを保持
+		// 再試行戦略
+		retry: 1,
+		retryDelay: 1000,
+	});
 
-	/**
-	 * サマリー情報を取得する関数
-	 */
-	const fetchSummary = useCallback(async () => {
-		setLoading(true);
-		setError(null);
+	// refetch関数をPromise<void>型に適合させる
+	const refetch = useCallback(async () => {
+		await queryRefetch();
+	}, [queryRefetch]);
 
-		try {
-			const data = await getBalanceSummary();
-			setSummary(data);
-		} catch (err) {
-			const errorMessage = handleBalanceError(err);
-			setError(errorMessage);
-			console.error("収支サマリー取得エラー:", err);
-		} finally {
-			setLoading(false);
-		}
-	}, []);
+	// エラーメッセージの整形（詳細なエラーハンドリングは維持）
+	const formattedError = error ? handleBalanceError(error) : null;
 
-	// 初回マウント時にサマリー情報を取得
-	useEffect(() => {
-		fetchSummary();
-	}, [fetchSummary]);
+	// エラー時はloadingをfalseにする（useExpensesと同じ実装）
+	const loading = isLoading && !isError;
 
 	return {
 		summary,
 		loading,
-		error,
-		refetch: fetchSummary,
+		error: formattedError,
+		refetch,
 	};
 };
 

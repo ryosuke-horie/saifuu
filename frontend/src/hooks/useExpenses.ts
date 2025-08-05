@@ -1,11 +1,13 @@
 /**
- * 支出管理のカスタムフック
+ * 支出管理のカスタムフック（React Query版）
  * 支出・収入のCRUD操作とローディング状態を管理
  *
  * 関連Issue: #93 支出管理メインページ実装
+ * React Queryを使用してキャッシュ管理とデータフェッチングを最適化
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo } from "react";
 import { API_CONFIG } from "../config/constants";
 import {
 	createTransaction,
@@ -18,14 +20,17 @@ import type { Transaction } from "../lib/api/types";
 import type { Category } from "../types/category";
 import { convertGlobalCategoriesToCategory } from "../utils/categories";
 
-interface UseExpensesState {
+// クエリキーの定義（Matt Pocock方針：as constで厳密な型）
+const QUERY_KEYS = {
+	expenses: ["expenses"],
+	expense: (id: string) => ["expense", id],
+} as const;
+
+interface UseExpensesReturn {
 	expenses: Transaction[];
 	loading: boolean;
 	error: string | null;
 	operationLoading: boolean; // CRUD操作のローディング状態
-}
-
-interface UseExpensesReturn extends UseExpensesState {
 	refetch: () => Promise<void>;
 	createExpenseMutation: (formData: {
 		amount: number;
@@ -49,159 +54,222 @@ interface UseExpensesReturn extends UseExpensesState {
 /**
  * 支出データを管理するカスタムフック
  * グローバル設定のカテゴリを自動的に使用します
+ * React Queryを使用してキャッシュ管理とデータフェッチングを最適化
  * @returns {UseExpensesReturn} 支出管理に必要な状態と操作関数
- * @returns {Transaction[]} UseExpensesReturn.expenses - 支出一覧
- * @returns {boolean} UseExpensesReturn.loading - 初期読み込み中フラグ
- * @returns {string|null} UseExpensesReturn.error - エラーメッセージ
- * @returns {boolean} UseExpensesReturn.operationLoading - CRUD操作中フラグ
- * @returns {function} UseExpensesReturn.refetch - データ再取得関数
- * @returns {function} UseExpensesReturn.createExpenseMutation - 支出作成関数
- * @returns {function} UseExpensesReturn.updateExpenseMutation - 支出更新関数
- * @returns {function} UseExpensesReturn.deleteExpenseMutation - 支出削除関数
- * @returns {function} UseExpensesReturn.getExpenseById - ID指定での支出取得関数
  * @example
  * const { expenses, loading, createExpenseMutation } = useExpenses();
  */
 export function useExpenses(): UseExpensesReturn {
-	const [state, setState] = useState<UseExpensesState>({
-		expenses: [],
-		loading: true,
-		error: null,
-		operationLoading: false,
-	});
+	const queryClient = useQueryClient();
 
 	// グローバル設定のカテゴリを取得してCategory型に変換
 	const _categories = useMemo((): Category[] => {
 		return convertGlobalCategoriesToCategory("expense");
 	}, []);
 
-	const loadExpenses = useCallback(async () => {
-		try {
-			setState((prev) => ({ ...prev, loading: true, error: null }));
-			// ページネーションなしで全件取得（当面の実装として）
-			// TODO: 将来的にページネーション対応を検討
-			const expenses = await getExpenseTransactions({
+	// 支出データの取得
+	const {
+		data: expenses = [],
+		isLoading,
+		isError,
+		error,
+		refetch: queryRefetch,
+	} = useQuery({
+		queryKey: QUERY_KEYS.expenses,
+		queryFn: () =>
+			getExpenseTransactions({
 				limit: API_CONFIG.DEFAULT_TRANSACTION_LIMIT,
-			});
-			setState((prev) => ({ ...prev, expenses, loading: false }));
-		} catch (error) {
-			const errorMessage =
-				error instanceof Error
-					? error.message
-					: "支出データの取得に失敗しました";
-			setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
-		}
-	}, []);
+			}),
+		// キャッシュ戦略
+		staleTime: 0, // 常に新鮮なデータを取得
+		gcTime: 5 * 60 * 1000, // 5分間キャッシュを保持
+		// 再試行戦略
+		retry: 1,
+		retryDelay: 1000,
+	});
 
-	const refetch = async () => {
-		await loadExpenses();
-	};
-
-	const createExpenseMutation = async (formData: {
-		amount: number;
-		description?: string | null;
-		date: string;
-		categoryId?: string | null;
-	}): Promise<Transaction> => {
-		try {
-			setState((prev) => ({ ...prev, operationLoading: true, error: null }));
-			const newExpense = await createTransaction({
+	// 支出作成のmutation
+	const createMutation = useMutation({
+		mutationFn: (formData: {
+			amount: number;
+			description?: string | null;
+			date: string;
+			categoryId?: string | null;
+		}) =>
+			createTransaction({
 				...formData,
 				type: "expense",
+			}),
+		onSuccess: (newExpense) => {
+			// 楽観的更新: キャッシュに新しい支出を追加
+			queryClient.setQueryData<Transaction[]>(QUERY_KEYS.expenses, (old) => {
+				if (!old) return [newExpense];
+				return [...old, newExpense];
 			});
-
-			setState((prev) => ({
-				...prev,
-				expenses: [...prev.expenses, newExpense],
-				operationLoading: false,
-			}));
-
-			return newExpense;
-		} catch (error) {
-			const errorMessage =
-				error instanceof Error ? error.message : "支出の作成に失敗しました";
-			setState((prev) => ({
-				...prev,
-				error: errorMessage,
-				operationLoading: false,
-			}));
-			throw error;
-		}
-	};
-
-	const updateExpenseMutation = async (
-		id: string,
-		formData: {
-			amount?: number;
-			description?: string | null;
-			date?: string;
-			categoryId?: string | null;
 		},
-	): Promise<Transaction> => {
-		try {
-			setState((prev) => ({ ...prev, operationLoading: true, error: null }));
-			const updatedExpense = await updateTransaction(id, formData);
+		onError: () => {
+			// エラー時はキャッシュを無効化して再取得
+			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.expenses });
+		},
+	});
 
-			setState((prev) => ({
-				...prev,
-				expenses: prev.expenses.map((expense) =>
-					expense.id === id ? updatedExpense : expense,
-				),
-				operationLoading: false,
-			}));
+	// 支出更新のmutation
+	const updateMutation = useMutation({
+		mutationFn: ({
+			id,
+			formData,
+		}: {
+			id: string;
+			formData: {
+				amount?: number;
+				description?: string | null;
+				date?: string;
+				categoryId?: string | null;
+			};
+		}) => updateTransaction(id, formData),
+		onMutate: async ({ id, formData }) => {
+			// 楽観的更新のためのキャンセル
+			await queryClient.cancelQueries({ queryKey: QUERY_KEYS.expenses });
 
-			return updatedExpense;
-		} catch (error) {
-			const errorMessage =
-				error instanceof Error ? error.message : "支出の更新に失敗しました";
-			setState((prev) => ({
-				...prev,
-				error: errorMessage,
-				operationLoading: false,
-			}));
-			throw error;
-		}
-	};
+			// 現在のデータを保存
+			const previousExpenses = queryClient.getQueryData<Transaction[]>(
+				QUERY_KEYS.expenses,
+			);
 
-	const deleteExpenseMutation = async (id: string): Promise<void> => {
-		try {
-			setState((prev) => ({ ...prev, operationLoading: true, error: null }));
-			await deleteTransaction(id);
+			// 楽観的更新
+			if (previousExpenses) {
+				queryClient.setQueryData<Transaction[]>(QUERY_KEYS.expenses, (old) => {
+					if (!old) return [];
+					return old.map((expense) =>
+						expense.id === id ? { ...expense, ...formData } : expense,
+					);
+				});
+			}
 
-			setState((prev) => ({
-				...prev,
-				expenses: prev.expenses.filter((expense) => expense.id !== id),
-				operationLoading: false,
-			}));
-		} catch (error) {
-			const errorMessage =
-				error instanceof Error ? error.message : "支出の削除に失敗しました";
-			setState((prev) => ({
-				...prev,
-				error: errorMessage,
-				operationLoading: false,
-			}));
-			throw error;
-		}
-	};
+			return { previousExpenses };
+		},
+		onError: (_err, _variables, context) => {
+			// エラー時は元のデータに戻す
+			if (context?.previousExpenses) {
+				queryClient.setQueryData(QUERY_KEYS.expenses, context.previousExpenses);
+			}
+		},
+		onSettled: () => {
+			// 最終的にキャッシュを無効化して最新データを取得
+			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.expenses });
+		},
+	});
 
-	const getExpenseById = async (id: string): Promise<Transaction> => {
-		try {
-			return await getTransaction(id);
-		} catch (error) {
-			const errorMessage =
-				error instanceof Error ? error.message : "支出詳細の取得に失敗しました";
-			setState((prev) => ({ ...prev, error: errorMessage }));
-			throw error;
-		}
-	};
+	// 支出削除のmutation
+	const deleteMutation = useMutation({
+		mutationFn: deleteTransaction,
+		onMutate: async (id: string) => {
+			// 楽観的更新のためのキャンセル
+			await queryClient.cancelQueries({ queryKey: QUERY_KEYS.expenses });
 
-	useEffect(() => {
-		loadExpenses();
-	}, [loadExpenses]);
+			// 現在のデータを保存
+			const previousExpenses = queryClient.getQueryData<Transaction[]>(
+				QUERY_KEYS.expenses,
+			);
+
+			// 楽観的更新
+			if (previousExpenses) {
+				queryClient.setQueryData<Transaction[]>(QUERY_KEYS.expenses, (old) => {
+					if (!old) return [];
+					return old.filter((expense) => expense.id !== id);
+				});
+			}
+
+			return { previousExpenses };
+		},
+		onError: (_err, _variables, context) => {
+			// エラー時は元のデータに戻す
+			if (context?.previousExpenses) {
+				queryClient.setQueryData(QUERY_KEYS.expenses, context.previousExpenses);
+			}
+		},
+		onSettled: () => {
+			// 最終的にキャッシュを無効化して最新データを取得
+			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.expenses });
+		},
+	});
+
+	// 操作中かどうかの判定
+	const operationLoading =
+		createMutation.isPending ||
+		updateMutation.isPending ||
+		deleteMutation.isPending;
+
+	// refetch関数をPromise<void>型に適合させる
+	const refetch = useCallback(async () => {
+		await queryRefetch();
+	}, [queryRefetch]);
+
+	// 各mutation関数のラッパー
+	const createExpenseMutation = useCallback(
+		async (formData: {
+			amount: number;
+			description?: string | null;
+			date: string;
+			categoryId?: string | null;
+		}): Promise<Transaction> => {
+			const result = await createMutation.mutateAsync(formData);
+			return result;
+		},
+		[createMutation],
+	);
+
+	const updateExpenseMutation = useCallback(
+		async (
+			id: string,
+			formData: {
+				amount?: number;
+				description?: string | null;
+				date?: string;
+				categoryId?: string | null;
+			},
+		): Promise<Transaction> => {
+			const result = await updateMutation.mutateAsync({ id, formData });
+			return result;
+		},
+		[updateMutation],
+	);
+
+	const deleteExpenseMutation = useCallback(
+		async (id: string): Promise<void> => {
+			await deleteMutation.mutateAsync(id);
+		},
+		[deleteMutation],
+	);
+
+	// ID指定での支出取得
+	const getExpenseById = useCallback(
+		async (id: string): Promise<Transaction> => {
+			try {
+				return await getTransaction(id);
+			} catch (error) {
+				const errorMessage =
+					error instanceof Error
+						? error.message
+						: "支出詳細の取得に失敗しました";
+				throw new Error(errorMessage);
+			}
+		},
+		[],
+	);
+
+	// エラーメッセージの整形
+	const formattedError = error
+		? error instanceof Error
+			? error.message
+			: "支出データの取得に失敗しました"
+		: null;
 
 	return {
-		...state,
+		expenses,
+		loading: isLoading && !isError, // エラー時はloadingをfalseに
+		error: formattedError,
+		operationLoading,
 		refetch,
 		createExpenseMutation,
 		updateExpenseMutation,
