@@ -4,11 +4,11 @@
  * 収支サマリー表示の正常系・異常系のテストケースを網羅
  */
 
-import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { UseBalanceSummaryResult } from "../../hooks/useBalanceSummary";
 import { useBalanceSummary } from "../../hooks/useBalanceSummary";
 import type { BalanceSummary as BalanceSummaryType } from "../../lib/api/types";
+import { renderWithProviders, screen } from "../../test-utils";
 import { BalanceSummary } from "./BalanceSummary";
 
 // useBalanceSummaryフックをモック
@@ -56,7 +56,7 @@ describe("BalanceSummary", () => {
 		} as UseBalanceSummaryResult);
 
 		// コンポーネントをレンダリング
-		render(<BalanceSummary />);
+		renderWithProviders(<BalanceSummary />);
 
 		// タイトルの確認
 		expect(screen.getByText("今月の収支サマリー")).toBeInTheDocument();
@@ -82,7 +82,7 @@ describe("BalanceSummary", () => {
 			refetch: vi.fn(),
 		} as UseBalanceSummaryResult);
 
-		render(<BalanceSummary />);
+		renderWithProviders(<BalanceSummary />);
 
 		// 赤字の残高表示確認
 		expect(screen.getByText("-¥150,000")).toBeInTheDocument();
@@ -103,7 +103,7 @@ describe("BalanceSummary", () => {
 			refetch: vi.fn(),
 		} as UseBalanceSummaryResult);
 
-		render(<BalanceSummary />);
+		renderWithProviders(<BalanceSummary />);
 
 		// 残高0円の表示確認
 		expect(screen.getByText("+¥0")).toBeInTheDocument();
@@ -124,7 +124,7 @@ describe("BalanceSummary", () => {
 			refetch: vi.fn(),
 		} as UseBalanceSummaryResult);
 
-		render(<BalanceSummary />);
+		renderWithProviders(<BalanceSummary />);
 
 		// スピナーの表示確認
 		expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
@@ -143,7 +143,7 @@ describe("BalanceSummary", () => {
 			refetch: vi.fn(),
 		} as UseBalanceSummaryResult);
 
-		render(<BalanceSummary />);
+		renderWithProviders(<BalanceSummary />);
 
 		// エラーメッセージの表示確認
 		expect(screen.getByText(errorMessage)).toBeInTheDocument();
@@ -160,7 +160,7 @@ describe("BalanceSummary", () => {
 			refetch: vi.fn(),
 		} as UseBalanceSummaryResult);
 
-		render(<BalanceSummary />);
+		renderWithProviders(<BalanceSummary />);
 
 		// データなしメッセージの表示確認
 		expect(screen.getByText("データがありません")).toBeInTheDocument();
@@ -174,7 +174,7 @@ describe("BalanceSummary", () => {
 			refetch: vi.fn(),
 		} as UseBalanceSummaryResult);
 
-		render(<BalanceSummary />);
+		renderWithProviders(<BalanceSummary />);
 
 		// バランスバーのラベル確認
 		expect(screen.getByText("収支バランス")).toBeInTheDocument();
@@ -192,7 +192,7 @@ describe("BalanceSummary", () => {
 			refetch: vi.fn(),
 		} as UseBalanceSummaryResult);
 
-		render(<BalanceSummary />);
+		renderWithProviders(<BalanceSummary />);
 
 		// 貯蓄率のラベル確認
 		expect(screen.getByText("貯蓄率")).toBeInTheDocument();
@@ -214,7 +214,7 @@ describe("BalanceSummary", () => {
 			refetch: vi.fn(),
 		} as UseBalanceSummaryResult);
 
-		render(<BalanceSummary />);
+		renderWithProviders(<BalanceSummary />);
 
 		// 正常に表示されることを確認
 		expect(screen.getByText("+¥0")).toBeInTheDocument(); // 収入
@@ -250,7 +250,7 @@ describe("BalanceSummary", () => {
 			refetch: vi.fn(),
 		} as UseBalanceSummaryResult);
 
-		render(<BalanceSummary />);
+		renderWithProviders(<BalanceSummary />);
 
 		// 大きな金額の表示確認
 		expect(screen.getByText("+¥10,000,000")).toBeInTheDocument();

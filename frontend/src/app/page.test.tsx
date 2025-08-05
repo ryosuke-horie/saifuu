@@ -1,5 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithProviders, screen, waitFor } from "../test-utils";
 import Page from "./page";
 
 // フックのモック
@@ -92,7 +92,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				refetch: vi.fn(),
 			});
 
-			render(<Page />);
+			renderWithProviders(<Page />);
 
 			expect(
 				screen.getByRole("heading", { name: "ダッシュボード" }),
@@ -159,7 +159,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				refetch: vi.fn(),
 			});
 
-			render(<Page />);
+			renderWithProviders(<Page />);
 
 			await waitFor(() => {
 				expect(screen.getByText("今月の支出")).toBeInTheDocument();
@@ -224,7 +224,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				refetch: vi.fn(),
 			});
 
-			render(<Page />);
+			renderWithProviders(<Page />);
 
 			await waitFor(() => {
 				expect(screen.getByText("2件")).toBeInTheDocument();
@@ -275,7 +275,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				refetch: vi.fn(),
 			});
 
-			render(<Page />);
+			renderWithProviders(<Page />);
 
 			// 支出、収入、サブスク、バランスカードの4つのローディングスピナー
 			expect(screen.getAllByTestId("loading-spinner")).toHaveLength(4);
@@ -351,7 +351,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				refetch: vi.fn(),
 			});
 
-			render(<Page />);
+			renderWithProviders(<Page />);
 
 			await waitFor(() => {
 				expect(screen.getByText("今月の収入")).toBeInTheDocument();
@@ -405,7 +405,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				refetch: vi.fn(),
 			});
 
-			render(<Page />);
+			renderWithProviders(<Page />);
 
 			await waitFor(() => {
 				expect(screen.getByText("アクティブなサブスク")).toBeInTheDocument();
@@ -457,7 +457,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				refetch: vi.fn(),
 			});
 
-			render(<Page />);
+			renderWithProviders(<Page />);
 
 			await waitFor(() => {
 				expect(screen.getByText("月額合計")).toBeInTheDocument();
@@ -514,7 +514,7 @@ describe("ダッシュボード（ホームページ）", () => {
 
 		it("支出管理ページへのリンクが表示される", () => {
 			setupMocksForNavigation();
-			render(<Page />);
+			renderWithProviders(<Page />);
 
 			const expenseLink = screen.getByRole("link", { name: /支出管理/ });
 			expect(expenseLink).toBeInTheDocument();
@@ -523,7 +523,7 @@ describe("ダッシュボード（ホームページ）", () => {
 
 		it("収入管理ページへのリンクが表示される", () => {
 			setupMocksForNavigation();
-			render(<Page />);
+			renderWithProviders(<Page />);
 
 			const incomeLink = screen.getByRole("link", { name: /収入管理/ });
 			expect(incomeLink).toBeInTheDocument();
@@ -532,7 +532,7 @@ describe("ダッシュボード（ホームページ）", () => {
 
 		it("サブスクリプション管理ページへのリンクが表示される", () => {
 			setupMocksForNavigation();
-			render(<Page />);
+			renderWithProviders(<Page />);
 
 			const subscriptionLink = screen.getByRole("link", {
 				name: /サブスクリプション管理/,
@@ -577,7 +577,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				refetch: vi.fn(),
 			});
 
-			render(<Page />);
+			renderWithProviders(<Page />);
 
 			expect(
 				screen.getByText(/支出データの取得に失敗しました/),
@@ -618,7 +618,7 @@ describe("ダッシュボード（ホームページ）", () => {
 				refetch: vi.fn(),
 			});
 
-			render(<Page />);
+			renderWithProviders(<Page />);
 
 			expect(
 				screen.getByText(/サブスクリプションデータの取得に失敗しました/),

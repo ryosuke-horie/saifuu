@@ -10,6 +10,11 @@
 - [技術スタック](./技術スタック.md) - 使用技術の詳細と選定理由
 - [プロジェクト構造](./プロジェクト構造.md) - ディレクトリ構成と命名規約
 
+## 🔧 技術文書
+<!-- tags: technical, react-query, migration, patterns -->
+
+- [React Query移行計画書](./技術/react-query移行計画書.md) - React Query完全移行のための包括的な計画書
+
 ## 📚 開発環境
 <!-- tags: setup, environment, troubleshooting, commands -->
 
