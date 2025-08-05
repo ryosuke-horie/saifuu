@@ -370,6 +370,7 @@ class ApiClient {
 const baseApiClient = new ApiClient();
 const loggedApiClient = withApiLogging(baseApiClient);
 
+import { logTransactionError, TransactionApiError } from "./transaction-errors";
 // transactionsサービスを追加（ページネーション対応）
 import type {
 	GetTransactionsQuery,
@@ -409,46 +410,123 @@ export const apiClient = Object.assign(loggedApiClient, {
 		list: async (
 			params?: TransactionsListParams,
 		): Promise<TransactionsListResponse> => {
-			const endpoint = addQueryParams(
-				"/transactions",
-				params as Record<string, unknown>,
-			);
-			// skipTypeCheckをtrueにして、ApiResponseのラップ処理を回避
-			const response = await loggedApiClient.get<any>(endpoint, {
-				skipTypeCheck: true,
-			});
+			try {
+				const endpoint = addQueryParams(
+					"/transactions",
+					params as Record<string, unknown>,
+				);
+				// skipTypeCheckをtrueにして、ApiResponseのラップ処理を回避
+				const response = await loggedApiClient.get<any>(endpoint, {
+					skipTypeCheck: true,
+				});
 
-			// レスポンスの形式を正規化
-			// テストのモックレスポンスは既に { data: [], pagination: {...} } の形式で返ってくる
-			// APIが直接配列を返す場合は { data: [...] } に変換
-			if (response && typeof response === "object") {
-				// 既に正しい形式の場合はそのまま返す
-				if ("data" in response) {
-					return response as TransactionsListResponse;
+				// レスポンスの形式を正規化
+				// テストのモックレスポンスは既に { data: [], pagination: {...} } の形式で返ってくる
+				// APIが直接配列を返す場合は { data: [...] } に変換
+				if (response && typeof response === "object") {
+					// 既に正しい形式の場合はそのまま返す
+					if ("data" in response) {
+						return response as TransactionsListResponse;
+					}
+					// 配列の場合はdataでラップ
+					if (Array.isArray(response)) {
+						return { data: response };
+					}
 				}
-				// 配列の場合はdataでラップ
-				if (Array.isArray(response)) {
-					return { data: response };
+
+				// フォールバック
+				return { data: [] };
+			} catch (error) {
+				// ApiErrorの場合はTransactionApiErrorでラップ
+				if (error instanceof ApiError) {
+					const transactionError = new TransactionApiError(
+						"list",
+						error.type,
+						error.message,
+						error.statusCode,
+						error.response,
+						error.originalError,
+					);
+					// クエリパラメータを含むコンテキストでログ出力
+					const context =
+						params?.page || params?.limit
+							? `transactions.list:page=${params.page || 1},limit=${params.limit || "default"}`
+							: "transactions.list";
+					logTransactionError(transactionError, context);
+					throw transactionError;
 				}
+				// その他のエラーも適切に処理
+				throw error;
 			}
-
-			// フォールバック
-			return { data: [] };
 		},
 		create: async (params: TransactionCreateParams): Promise<Transaction> => {
-			return await loggedApiClient.post<Transaction>("/transactions", params);
+			try {
+				return await loggedApiClient.post<Transaction>("/transactions", params);
+			} catch (error) {
+				// ApiErrorの場合はTransactionApiErrorでラップ
+				if (error instanceof ApiError) {
+					const transactionError = new TransactionApiError(
+						"create",
+						error.type,
+						error.message,
+						error.statusCode,
+						error.response,
+						error.originalError,
+					);
+					logTransactionError(transactionError, "transactions.create");
+					throw transactionError;
+				}
+				// その他のエラーも適切に処理
+				throw error;
+			}
 		},
 		update: async (
 			id: string,
 			params: TransactionUpdateParams,
 		): Promise<Transaction> => {
-			return await loggedApiClient.put<Transaction>(
-				`/transactions/${id}`,
-				params,
-			);
+			try {
+				return await loggedApiClient.put<Transaction>(
+					`/transactions/${id}`,
+					params,
+				);
+			} catch (error) {
+				// ApiErrorの場合はTransactionApiErrorでラップ
+				if (error instanceof ApiError) {
+					const transactionError = new TransactionApiError(
+						"update",
+						error.type,
+						error.message,
+						error.statusCode,
+						error.response,
+						error.originalError,
+					);
+					logTransactionError(transactionError, `transactions.update:${id}`);
+					throw transactionError;
+				}
+				// その他のエラーも適切に処理
+				throw error;
+			}
 		},
 		delete: async (id: string): Promise<void> => {
-			await loggedApiClient.delete<void>(`/transactions/${id}`);
+			try {
+				await loggedApiClient.delete<void>(`/transactions/${id}`);
+			} catch (error) {
+				// ApiErrorの場合はTransactionApiErrorでラップ
+				if (error instanceof ApiError) {
+					const transactionError = new TransactionApiError(
+						"delete",
+						error.type,
+						error.message,
+						error.statusCode,
+						error.response,
+						error.originalError,
+					);
+					logTransactionError(transactionError, `transactions.delete:${id}`);
+					throw transactionError;
+				}
+				// その他のエラーも適切に処理
+				throw error;
+			}
 		},
 	},
 });
