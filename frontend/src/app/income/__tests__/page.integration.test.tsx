@@ -105,6 +105,7 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 // インポート（モック後）
 import { fetchCategories } from "@/lib/api/categories/api";
 import { apiClient } from "@/lib/api/client";
+
 // テストではSuspenseラップなしのコンテンツコンポーネントを直接使用
 // import { IncomePageContent } from "../page";  // エクスポートされていないのでコメントアウト
 

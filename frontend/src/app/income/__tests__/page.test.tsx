@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useIncomes } from "@/hooks/useIncomes";
 import { fetchCategories } from "@/lib/api/categories/api";
 import type { TransactionWithCategory } from "@/lib/api/types";
+
 // import { IncomePageContent } from "../page";  // エクスポートされていないのでコメントアウト
 
 // TypeScriptエラー回避のためのダミー定義
