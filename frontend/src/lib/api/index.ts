@@ -29,6 +29,13 @@ export {
 	isRetryableError,
 	logApiError,
 } from "./errors";
+export type { TransactionOperation } from "./transaction-errors";
+// 取引専用エラーハンドリング
+export {
+	getErrorMessage,
+	logTransactionError,
+	TransactionApiError,
+} from "./transaction-errors";
 
 // =============================================================================
 // 型定義のエクスポート
