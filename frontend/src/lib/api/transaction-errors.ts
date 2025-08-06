@@ -4,12 +4,32 @@
  * 取引（収入・支出）関連のAPI操作に特化したエラー処理を提供する
  */
 
+import type { TransactionType } from "../../types/transaction";
 import { ApiError, type ApiErrorResponse, type ApiErrorType } from "./errors";
 
 /**
  * 取引操作の種類
  */
 export type TransactionOperation = "create" | "update" | "delete" | "list";
+
+/**
+ * バリデーションエラーの対象フィールド
+ */
+export type TransactionErrorField =
+	| "amount"
+	| "categoryId"
+	| "date"
+	| "description";
+
+/**
+ * バリデーションエラーの種類
+ */
+export type ValidationErrorType =
+	| "required"
+	| "min"
+	| "max"
+	| "invalid"
+	| "maxLength";
 
 /**
  * 取引API専用のエラークラス
@@ -203,5 +223,141 @@ export function logTransactionError(error: unknown, context?: string): void {
 		console.error(`[Transaction Error] [${errorContext}]`, {
 			error,
 		});
+	}
+}
+
+/**
+ * バリデーションメッセージマップの型定義
+ *
+ * 型安全性を向上させるために、メッセージマップの構造を明示的に定義
+ */
+type ValidationMessageMap = Record<
+	TransactionType,
+	Record<TransactionErrorField, Record<ValidationErrorType, string>>
+>;
+
+/**
+ * バリデーションエラーメッセージを取得する
+ *
+ * トランザクションタイプとフィールドに応じた
+ * 適切なバリデーションメッセージを返す
+ *
+ * @param transactionType - 取引タイプ（収入または支出）
+ * @param field - エラーが発生したフィールド
+ * @param errorType - エラーの種類
+ * @returns バリデーションメッセージ（該当するメッセージがない場合はundefined）
+ */
+export function getValidationMessage(
+	transactionType: TransactionType,
+	field: TransactionErrorField,
+	errorType: ValidationErrorType,
+): string | undefined {
+	// トランザクションタイプとフィールドに応じたメッセージマップ
+	// satisfies演算子で型推論を保ちながら型チェックを実行
+	const messageMap = {
+		income: {
+			amount: {
+				required: "収入金額を入力してください。",
+				min: "収入金額は0より大きい値を入力してください。",
+				max: "収入金額が上限を超えています。",
+				invalid: "有効な収入金額を入力してください。",
+				maxLength: "収入金額の桁数が多すぎます。",
+			},
+			categoryId: {
+				required: "収入カテゴリを選択してください。",
+				min: "有効な収入カテゴリを選択してください。",
+				max: "有効な収入カテゴリを選択してください。",
+				invalid: "有効な収入カテゴリを選択してください。",
+				maxLength: "カテゴリIDが長すぎます。",
+			},
+			date: {
+				required: "日付を入力してください。",
+				min: "過去の日付は入力できません。",
+				max: "未来の日付は入力できません。",
+				invalid: "有効な日付を入力してください。",
+				maxLength: "日付の形式が正しくありません。",
+			},
+			description: {
+				required: "説明を入力してください。",
+				min: "説明が短すぎます。",
+				max: "説明が長すぎます。",
+				invalid: "有効な説明を入力してください。",
+				maxLength: "説明は500文字以内で入力してください。",
+			},
+		},
+		expense: {
+			amount: {
+				required: "支出金額を入力してください。",
+				min: "支出金額は0より大きい値を入力してください。",
+				max: "支出金額が上限を超えています。",
+				invalid: "有効な支出金額を入力してください。",
+				maxLength: "支出金額の桁数が多すぎます。",
+			},
+			categoryId: {
+				required: "支出カテゴリを選択してください。",
+				min: "有効な支出カテゴリを選択してください。",
+				max: "有効な支出カテゴリを選択してください。",
+				invalid: "有効な支出カテゴリを選択してください。",
+				maxLength: "カテゴリIDが長すぎます。",
+			},
+			date: {
+				required: "日付を入力してください。",
+				min: "過去の日付は入力できません。",
+				max: "未来の日付は入力できません。",
+				invalid: "有効な日付を入力してください。",
+				maxLength: "日付の形式が正しくありません。",
+			},
+			description: {
+				required: "説明を入力してください。",
+				min: "説明が短すぎます。",
+				max: "説明が長すぎます。",
+				invalid: "有効な説明を入力してください。",
+				maxLength: "説明は500文字以内で入力してください。",
+			},
+		},
+	} satisfies ValidationMessageMap;
+
+	// 対応するメッセージを取得
+	const transactionMessages = messageMap[transactionType];
+	if (!transactionMessages) {
+		return undefined;
+	}
+
+	const fieldMessages = transactionMessages[field];
+	if (!fieldMessages) {
+		return undefined;
+	}
+
+	return fieldMessages[errorType];
+}
+
+/**
+ * バリデーションエラーのログ出力（開発環境のみ）
+ *
+ * 単一責任原則に従い、ログ出力のみを行う。
+ * メッセージ生成は getValidationMessage に委譲する。
+ *
+ * @param transactionType - 取引タイプ（収入または支出）
+ * @param field - エラーが発生したフィールド
+ * @param message - ログに出力するエラーメッセージ
+ *
+ * @example
+ * ```typescript
+ * const message = getValidationMessage("income", "amount", "required");
+ * if (message) {
+ *   logValidationError("income", "amount", message);
+ * }
+ * ```
+ */
+export function logValidationError(
+	transactionType: TransactionType,
+	field: TransactionErrorField,
+	message: string,
+): void {
+	// 開発環境でのみログ出力
+	if (process.env.NODE_ENV === "development") {
+		console.error(
+			`[${transactionType}] Validation error - ${field}: ${message}`,
+		);
 	}
 }
