@@ -59,7 +59,7 @@ describe("APIクライアント ロギング統合テスト", () => {
 					amount: -100,
 					date: "2024-01-01",
 				});
-			} catch (error) {
+			} catch (_error) {
 				// エラーは期待通り
 			}
 
@@ -90,7 +90,7 @@ describe("APIクライアント ロギング統合テスト", () => {
 					amount: 2000,
 					date: "2024-01-01",
 				});
-			} catch (error) {
+			} catch (_error) {
 				// エラーは期待通り
 			}
 
@@ -116,7 +116,7 @@ describe("APIクライアント ロギング統合テスト", () => {
 
 			try {
 				await apiClient.transactions.delete(transactionId);
-			} catch (error) {
+			} catch (_error) {
 				// エラーは期待通り
 			}
 
@@ -145,7 +145,7 @@ describe("APIクライアント ロギング統合テスト", () => {
 					sort: "date",
 					order: "desc",
 				});
-			} catch (error) {
+			} catch (_error) {
 				// エラーは期待通り
 			}
 
@@ -168,7 +168,7 @@ describe("APIクライアント ロギング統合テスト", () => {
 					amount: 1000,
 					date: "2024-01-01",
 				});
-			} catch (error) {
+			} catch (_error) {
 				// エラーは期待通り
 			}
 

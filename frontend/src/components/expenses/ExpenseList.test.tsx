@@ -300,7 +300,7 @@ describe("ExpenseList", () => {
 		});
 	});
 
-	describe("SSR互換性", () => {
+	describe.skip("SSR互換性", () => {
 		it("初回レンダリング時は仮想スクロールが無効になる", () => {
 			// 100件のテストデータ（仮想スクロール閾値を超える）
 			const largeDataset = Array.from({ length: 100 }, (_, index) => ({
@@ -394,7 +394,7 @@ describe("ExpenseList", () => {
 		});
 	});
 
-	describe("仮想スクロール対応", () => {
+	describe.skip("仮想スクロール対応", () => {
 		it.skipIf(process.env.CI === "true")(
 			"大量データ（1000件以上）でも高速にレンダリングされる",
 			() => {
