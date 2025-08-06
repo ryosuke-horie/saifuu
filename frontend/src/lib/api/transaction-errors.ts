@@ -361,3 +361,7 @@ export function logValidationError(
 		);
 	}
 }
+
+// client.tsからhandleTransactionApiErrorを再エクスポート
+// テストからのインポート一貫性のため
+export { handleTransactionApiError } from "./client";
