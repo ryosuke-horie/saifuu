@@ -4,9 +4,14 @@
  * TransactionApiErrorクラスとgetErrorMessage関数の振る舞いをテスト
  */
 
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../errors";
-import { getErrorMessage, TransactionApiError } from "../transaction-errors";
+import {
+	getErrorMessage,
+	getValidationMessage,
+	logValidationError,
+	TransactionApiError,
+} from "../transaction-errors";
 
 describe("TransactionApiError", () => {
 	it("ApiErrorを継承している", () => {
@@ -211,6 +216,100 @@ describe("getErrorMessage", () => {
 			const error = { some: "object" };
 			const message = getErrorMessage(error);
 			expect(message).toBe("予期しないエラーが発生しました。");
+		});
+	});
+});
+
+describe("バリデーションエラーハンドリング", () => {
+	describe("getValidationMessage", () => {
+		it("収入の金額フィールドのバリデーションメッセージを返す", () => {
+			const message = getValidationMessage("income", "amount", "required");
+			expect(message).toBe("収入金額を入力してください。");
+		});
+
+		it("収入のカテゴリフィールドのバリデーションメッセージを返す", () => {
+			const message = getValidationMessage("income", "categoryId", "required");
+			expect(message).toBe("収入カテゴリを選択してください。");
+		});
+
+		it("支出の金額フィールドのバリデーションメッセージを返す", () => {
+			const message = getValidationMessage("expense", "amount", "min");
+			expect(message).toBe("支出金額は0より大きい値を入力してください。");
+		});
+
+		it("支出の日付フィールドのバリデーションメッセージを返す", () => {
+			const message = getValidationMessage("expense", "date", "invalid");
+			expect(message).toBe("有効な日付を入力してください。");
+		});
+
+		it("共通の説明フィールドのバリデーションメッセージを返す", () => {
+			const message = getValidationMessage(
+				"income",
+				"description",
+				"maxLength",
+			);
+			expect(message).toBe("説明は500文字以内で入力してください。");
+		});
+
+		it("未定義のフィールドに対してundefinedを返す", () => {
+			const message = getValidationMessage(
+				"income",
+				"unknown" as any,
+				"required",
+			);
+			expect(message).toBeUndefined();
+		});
+
+		it("未定義のエラータイプに対してundefinedを返す", () => {
+			const message = getValidationMessage(
+				"income",
+				"amount",
+				"unknown" as any,
+			);
+			expect(message).toBeUndefined();
+		});
+	});
+
+	describe("logValidationError", () => {
+		beforeEach(() => {
+			vi.clearAllMocks();
+			// console.errorのモックを設定
+			vi.spyOn(console, "error").mockImplementation(() => {});
+		});
+
+		afterEach(() => {
+			vi.restoreAllMocks();
+			// 環境変数をリセット
+			vi.unstubAllEnvs();
+		});
+
+		it("開発環境でバリデーションエラーをログ出力する", () => {
+			// 開発環境を模擬
+			vi.stubEnv("NODE_ENV", "development");
+
+			logValidationError("income", "amount", "収入金額を入力してください。");
+
+			expect(console.error).toHaveBeenCalledWith(
+				"[income] Validation error - amount: 収入金額を入力してください。",
+			);
+		});
+
+		it("本番環境ではログ出力しない", () => {
+			// 本番環境を模擬
+			vi.stubEnv("NODE_ENV", "production");
+
+			logValidationError(
+				"expense",
+				"categoryId",
+				"カテゴリを選択してください。",
+			);
+
+			expect(console.error).not.toHaveBeenCalled();
+		});
+
+		it("戻り値を持たない（void関数）", () => {
+			const result = logValidationError("income", "amount", "テストメッセージ");
+			expect(result).toBeUndefined();
 		});
 	});
 });
