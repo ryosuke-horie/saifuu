@@ -237,6 +237,124 @@ type ValidationMessageMap = Record<
 >;
 
 /**
+ * 共通バリデーションメッセージ
+ *
+ * 取引タイプに依存しない共通のエラーメッセージを定義
+ * これにより重複を排除し、一貫性のあるメッセージを提供
+ */
+const commonValidationMessages: Partial<
+	Record<TransactionErrorField, Partial<Record<ValidationErrorType, string>>>
+> = {
+	amount: {
+		min: "金額は0より大きい値を入力してください。",
+		max: "金額が上限を超えています。",
+		invalid: "有効な金額を入力してください。",
+		maxLength: "金額の桁数が多すぎます。",
+	},
+	categoryId: {
+		min: "有効なカテゴリを選択してください。",
+		max: "有効なカテゴリを選択してください。",
+		invalid: "有効なカテゴリを選択してください。",
+		maxLength: "カテゴリIDが長すぎます。",
+	},
+	date: {
+		required: "日付を入力してください。",
+		min: "過去の日付は入力できません。",
+		max: "未来の日付は入力できません。",
+		invalid: "有効な日付を入力してください。",
+		maxLength: "日付の形式が正しくありません。",
+	},
+	description: {
+		required: "説明を入力してください。",
+		min: "説明が短すぎます。",
+		max: "説明が長すぎます。",
+		invalid: "有効な説明を入力してください。",
+		maxLength: "説明は500文字以内で入力してください。",
+	},
+};
+
+/**
+ * タイプ固有バリデーションメッセージ
+ *
+ * 収入・支出で異なる部分のみを定義
+ * 主にrequiredメッセージと、タイプ固有の表現が必要な部分
+ */
+const typeSpecificMessages: Record<
+	TransactionType,
+	Partial<
+		Record<TransactionErrorField, Partial<Record<ValidationErrorType, string>>>
+	>
+> = {
+	income: {
+		amount: {
+			required: "収入金額を入力してください。",
+			min: "収入金額は0より大きい値を入力してください。",
+			max: "収入金額が上限を超えています。",
+			invalid: "有効な収入金額を入力してください。",
+			maxLength: "収入金額の桁数が多すぎます。",
+		},
+		categoryId: {
+			required: "収入カテゴリを選択してください。",
+			min: "有効な収入カテゴリを選択してください。",
+			max: "有効な収入カテゴリを選択してください。",
+			invalid: "有効な収入カテゴリを選択してください。",
+		},
+	},
+	expense: {
+		amount: {
+			required: "支出金額を入力してください。",
+			min: "支出金額は0より大きい値を入力してください。",
+			max: "支出金額が上限を超えています。",
+			invalid: "有効な支出金額を入力してください。",
+			maxLength: "支出金額の桁数が多すぎます。",
+		},
+		categoryId: {
+			required: "支出カテゴリを選択してください。",
+			min: "有効な支出カテゴリを選択してください。",
+			max: "有効な支出カテゴリを選択してください。",
+			invalid: "有効な支出カテゴリを選択してください。",
+		},
+	},
+};
+
+/**
+ * バリデーションメッセージを生成
+ *
+ * 共通メッセージとタイプ固有メッセージをマージして
+ * 完全なメッセージマップを生成
+ *
+ * @param transactionType - 取引タイプ（収入または支出）
+ * @returns 完全なバリデーションメッセージマップ
+ */
+function createValidationMessages(
+	transactionType: TransactionType,
+): Record<TransactionErrorField, Record<ValidationErrorType, string>> {
+	const fields: TransactionErrorField[] = [
+		"amount",
+		"categoryId",
+		"date",
+		"description",
+	];
+
+	// 型安全性を向上: anyの使用を避けて明示的な型定義を使用
+	const result = {} as Record<
+		TransactionErrorField,
+		Record<ValidationErrorType, string>
+	>;
+
+	for (const field of fields) {
+		// 共通メッセージとタイプ固有メッセージをマージ
+		// タイプ固有メッセージが優先される（後から適用）
+		result[field] = {
+			...(commonValidationMessages[field] || {}),
+			...(typeSpecificMessages[transactionType]?.[field] || {}),
+		} as Record<ValidationErrorType, string>;
+	}
+
+	return result;
+}
+
+/**
  * バリデーションエラーメッセージを取得する
  *
  * トランザクションタイプとフィールドに応じた
@@ -253,68 +371,10 @@ export function getValidationMessage(
 	errorType: ValidationErrorType,
 ): string | undefined {
 	// トランザクションタイプとフィールドに応じたメッセージマップ
-	// satisfies演算子で型推論を保ちながら型チェックを実行
+	// 共通メッセージとタイプ固有メッセージをマージして生成
 	const messageMap = {
-		income: {
-			amount: {
-				required: "収入金額を入力してください。",
-				min: "収入金額は0より大きい値を入力してください。",
-				max: "収入金額が上限を超えています。",
-				invalid: "有効な収入金額を入力してください。",
-				maxLength: "収入金額の桁数が多すぎます。",
-			},
-			categoryId: {
-				required: "収入カテゴリを選択してください。",
-				min: "有効な収入カテゴリを選択してください。",
-				max: "有効な収入カテゴリを選択してください。",
-				invalid: "有効な収入カテゴリを選択してください。",
-				maxLength: "カテゴリIDが長すぎます。",
-			},
-			date: {
-				required: "日付を入力してください。",
-				min: "過去の日付は入力できません。",
-				max: "未来の日付は入力できません。",
-				invalid: "有効な日付を入力してください。",
-				maxLength: "日付の形式が正しくありません。",
-			},
-			description: {
-				required: "説明を入力してください。",
-				min: "説明が短すぎます。",
-				max: "説明が長すぎます。",
-				invalid: "有効な説明を入力してください。",
-				maxLength: "説明は500文字以内で入力してください。",
-			},
-		},
-		expense: {
-			amount: {
-				required: "支出金額を入力してください。",
-				min: "支出金額は0より大きい値を入力してください。",
-				max: "支出金額が上限を超えています。",
-				invalid: "有効な支出金額を入力してください。",
-				maxLength: "支出金額の桁数が多すぎます。",
-			},
-			categoryId: {
-				required: "支出カテゴリを選択してください。",
-				min: "有効な支出カテゴリを選択してください。",
-				max: "有効な支出カテゴリを選択してください。",
-				invalid: "有効な支出カテゴリを選択してください。",
-				maxLength: "カテゴリIDが長すぎます。",
-			},
-			date: {
-				required: "日付を入力してください。",
-				min: "過去の日付は入力できません。",
-				max: "未来の日付は入力できません。",
-				invalid: "有効な日付を入力してください。",
-				maxLength: "日付の形式が正しくありません。",
-			},
-			description: {
-				required: "説明を入力してください。",
-				min: "説明が短すぎます。",
-				max: "説明が長すぎます。",
-				invalid: "有効な説明を入力してください。",
-				maxLength: "説明は500文字以内で入力してください。",
-			},
-		},
+		income: createValidationMessages("income"),
+		expense: createValidationMessages("expense"),
 	} satisfies ValidationMessageMap;
 
 	// 対応するメッセージを取得
