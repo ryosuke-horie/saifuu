@@ -152,7 +152,7 @@ function getTransactionErrorMessage(error: TransactionApiError): string {
 
 	// 対応するメッセージを取得
 	const operationMessages = messageMap[operation];
-	if (operationMessages && operationMessages[type]) {
+	if (operationMessages?.[type]) {
 		return operationMessages[type];
 	}
 
@@ -421,3 +421,7 @@ export function logValidationError(
 		);
 	}
 }
+
+// client.tsからhandleTransactionApiErrorを再エクスポート
+// テストからのインポート一貫性のため
+export { handleTransactionApiError } from "./client";

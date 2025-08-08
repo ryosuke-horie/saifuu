@@ -7,7 +7,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { apiClient } from "../client";
 import { ApiError } from "../errors";
-import { TransactionApiError } from "../transaction-errors";
+import {
+	logTransactionError,
+	TransactionApiError,
+} from "../transaction-errors";
 
 // グローバルfetchのモック
 const mockFetch = vi.fn();
@@ -17,6 +20,16 @@ global.fetch = mockFetch;
 vi.mock("../../logger/api-integration", () => ({
 	withApiLogging: (client: any) => client,
 }));
+
+// transaction-errorsのlogTransactionErrorをモック
+vi.mock("../transaction-errors", async (importOriginal) => {
+	const original =
+		await importOriginal<typeof import("../transaction-errors")>();
+	return {
+		...original,
+		logTransactionError: vi.fn(),
+	};
+});
 
 describe("apiClient.transactions エラーハンドリング", () => {
 	beforeEach(() => {
@@ -311,6 +324,191 @@ describe("apiClient.transactions エラーハンドリング", () => {
 					);
 				}
 			}
+		});
+	});
+
+	describe("handleTransactionApiError（共通エラーハンドリングユーティリティ）", () => {
+		// handleTransactionApiErrorの動的インポートで関数を取得
+		let handleTransactionApiError: (
+			operation: import("../transaction-errors").TransactionOperation,
+			context: string,
+			error: unknown,
+		) => never;
+
+		beforeEach(async () => {
+			// 動的インポートで未実装の関数を取得（実装時にのみ存在）
+			try {
+				const module = await import("../transaction-errors");
+				handleTransactionApiError = module.handleTransactionApiError;
+			} catch {
+				// 関数が未実装の場合はundefinedのままにして、テストを失敗させる
+			}
+		});
+
+		it("ApiErrorをTransactionApiErrorに変換し、適切なoperationを設定する", () => {
+			// Arrange: ApiErrorのインスタンスを作成
+			const originalError = new ApiError(
+				"validation",
+				"Validation failed",
+				400,
+				{ error: "Invalid input" },
+			);
+
+			// Act & Assert: 変換された後のエラーをキャッチして検証
+			expect(() =>
+				handleTransactionApiError(
+					"create",
+					"Transaction Creation",
+					originalError,
+				),
+			).toThrow(TransactionApiError);
+
+			try {
+				handleTransactionApiError(
+					"create",
+					"Transaction Creation",
+					originalError,
+				);
+			} catch (error) {
+				const transactionError = error as TransactionApiError;
+				expect(transactionError.operation).toBe("create");
+				expect(transactionError.type).toBe("validation");
+				expect(transactionError.statusCode).toBe(400);
+				expect(transactionError.response).toEqual({ error: "Invalid input" });
+				expect(transactionError.originalError).toBe(originalError);
+			}
+		});
+
+		it("非ApiErrorをそのまま再スローする", () => {
+			// Arrange: 通常のErrorインスタンスを作成
+			const regularError = new Error("Regular error");
+
+			// Act & Assert: そのままのエラーが再スローされることを検証
+			expect(() =>
+				handleTransactionApiError("update", "Transaction Update", regularError),
+			).toThrow(Error);
+
+			try {
+				handleTransactionApiError("update", "Transaction Update", regularError);
+			} catch (error) {
+				// 元のErrorオブジェクトがそのまま返されることを確認
+				expect(error).toBe(regularError);
+				expect(error).not.toBeInstanceOf(TransactionApiError);
+			}
+		});
+
+		it("文字列エラーをそのまま再スローする", () => {
+			// Arrange: 文字列エラー
+			const stringError = "String error message";
+
+			// Act & Assert: 文字列エラーがそのまま再スローされることを検証
+			expect(() =>
+				handleTransactionApiError(
+					"delete",
+					"Transaction Deletion",
+					stringError,
+				),
+			).toThrow();
+
+			try {
+				handleTransactionApiError(
+					"delete",
+					"Transaction Deletion",
+					stringError,
+				);
+			} catch (error) {
+				expect(error).toBe(stringError);
+			}
+		});
+
+		it("logTransactionErrorを呼び出してエラーをログ出力する", () => {
+			// Arrange: logTransactionErrorのモック
+			const mockLogTransactionError = vi.mocked(logTransactionError);
+			mockLogTransactionError.mockImplementation(() => {});
+
+			const apiError = new ApiError("server", "Server error", 500);
+
+			// Act: 関数を実行してエラーをキャッチ
+			try {
+				handleTransactionApiError("list", "Transaction List", apiError);
+			} catch {
+				// エラーがスローされることは期待される
+			}
+
+			// Assert: logTransactionErrorが適切な引数で呼び出されたことを確認
+			expect(mockLogTransactionError).toHaveBeenCalledWith(
+				expect.any(TransactionApiError),
+				"Transaction List",
+			);
+		});
+
+		it("異なるoperationタイプごとに適切なTransactionApiErrorを作成する", () => {
+			// テストケースを定義
+			const testCases = [
+				{ operation: "create" as const, context: "Creating transaction" },
+				{ operation: "update" as const, context: "Updating transaction" },
+				{ operation: "delete" as const, context: "Deleting transaction" },
+				{ operation: "list" as const, context: "Listing transactions" },
+			];
+
+			testCases.forEach(({ operation, context }) => {
+				// Arrange: 各操作用のApiErrorを作成
+				const apiError = new ApiError("forbidden", "Access denied", 403);
+
+				// Act & Assert: 適切なoperationが設定されることを確認
+				try {
+					handleTransactionApiError(operation, context, apiError);
+				} catch (error) {
+					const transactionError = error as TransactionApiError;
+					expect(transactionError.operation).toBe(operation);
+					expect(transactionError.type).toBe("forbidden");
+					expect(transactionError.statusCode).toBe(403);
+				}
+			});
+		});
+
+		it("TransactionApiErrorが既に渡された場合は新しく作成せずそのまま再スローする", () => {
+			// Arrange: 既存のTransactionApiError
+			const existingTransactionError = new TransactionApiError(
+				"create",
+				"network",
+				"Network error",
+				undefined,
+				undefined,
+				new Error("Original network error"),
+			);
+
+			// Act & Assert: 既存のTransactionApiErrorがそのまま再スローされることを確認
+			expect(() =>
+				handleTransactionApiError(
+					"update",
+					"Context",
+					existingTransactionError,
+				),
+			).toThrow(TransactionApiError);
+
+			try {
+				handleTransactionApiError(
+					"update",
+					"Context",
+					existingTransactionError,
+				);
+			} catch (error) {
+				// 同じインスタンスが再スローされることを確認（新しく作成されない）
+				expect(error).toBe(existingTransactionError);
+				expect((error as TransactionApiError).operation).toBe("create"); // 元のoperationが保持される
+			}
+		});
+
+		it("nullやundefinedが渡された場合は適切に処理する", () => {
+			// Arrange & Act & Assert: nullやundefinedでもエラーが発生しないことを確認
+			expect(() =>
+				handleTransactionApiError("create", "Context", null),
+			).toThrow();
+
+			expect(() =>
+				handleTransactionApiError("create", "Context", undefined),
+			).toThrow();
 		});
 	});
 });
