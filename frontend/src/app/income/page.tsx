@@ -8,6 +8,10 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 import { fetchCategories } from "@/lib/api/categories/api";
 import { apiClient } from "@/lib/api/client";
 import type { TransactionWithCategory } from "@/lib/api/types";
+import {
+	calculateMonthOverMonth,
+	calculatePercentage,
+} from "@/lib/utils/calculations";
 import type { Category } from "@/types/category";
 import type {
 	IncomeCategoryData,
@@ -129,14 +133,10 @@ function IncomePageContent() {
 			);
 
 			// 前月比の計算
-			const monthOverMonth =
-				lastMonthTotal === 0
-					? currentMonthTotal > 0
-						? 100
-						: 0
-					: Math.round(
-							((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100,
-						);
+			const monthOverMonth = calculateMonthOverMonth(
+				currentMonthTotal,
+				lastMonthTotal,
+			);
 
 			// カテゴリ別内訳の計算
 			const categoryMap = new Map<string, { name: string; amount: number }>();
@@ -156,7 +156,7 @@ function IncomePageContent() {
 					categoryId,
 					name: data.name,
 					amount: data.amount,
-					percentage: Math.round((data.amount / currentMonthTotal) * 100),
+					percentage: calculatePercentage(data.amount, currentMonthTotal),
 				}),
 			);
 
@@ -214,8 +214,7 @@ function IncomePageContent() {
 			categoryId,
 			name: data.name,
 			amount: data.amount,
-			percentage:
-				totalAmount > 0 ? Math.round((data.amount / totalAmount) * 100) : 0,
+			percentage: calculatePercentage(data.amount, totalAmount),
 			color: data.color,
 		}));
 	}, [incomes]);
