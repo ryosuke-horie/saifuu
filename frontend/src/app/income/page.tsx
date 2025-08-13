@@ -18,6 +18,7 @@ import type {
 	IncomeFormData,
 	IncomeStats,
 } from "@/types/income";
+import { calculatePercentage } from "@/utils/calculations";
 import { DeleteConfirmDialog } from "../../components/income/DeleteConfirmDialog";
 import { IncomeCategoryChart } from "../../components/income/IncomeCategoryChart";
 import { IncomeFilters } from "../../components/income/IncomeFilters";
