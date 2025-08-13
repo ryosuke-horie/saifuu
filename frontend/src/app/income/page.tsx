@@ -14,6 +14,7 @@ import type {
 	IncomeFormData,
 	IncomeStats,
 } from "@/types/income";
+import { calculatePercentage } from "@/utils/calculations";
 import { DeleteConfirmDialog } from "../../components/income/DeleteConfirmDialog";
 import { IncomeCategoryChart } from "../../components/income/IncomeCategoryChart";
 import { IncomeFilters } from "../../components/income/IncomeFilters";
@@ -156,7 +157,7 @@ function IncomePageContent() {
 					categoryId,
 					name: data.name,
 					amount: data.amount,
-					percentage: Math.round((data.amount / currentMonthTotal) * 100),
+					percentage: calculatePercentage(data.amount, currentMonthTotal),
 				}),
 			);
 
@@ -214,8 +215,7 @@ function IncomePageContent() {
 			categoryId,
 			name: data.name,
 			amount: data.amount,
-			percentage:
-				totalAmount > 0 ? Math.round((data.amount / totalAmount) * 100) : 0,
+			percentage: calculatePercentage(data.amount, totalAmount),
 			color: data.color,
 		}));
 	}, [incomes]);

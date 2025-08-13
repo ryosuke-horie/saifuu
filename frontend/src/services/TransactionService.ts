@@ -10,6 +10,7 @@ import type {
 	TransactionType,
 	ValidationResult,
 } from "@/types/transaction";
+import { calculatePercentage } from "@/utils/calculations";
 
 // biome-ignore lint/complexity/noStaticOnlyClass: Service pattern with static methods for organization
 export class TransactionService {
@@ -110,7 +111,7 @@ export class TransactionService {
 					categoryName: category?.name || "不明なカテゴリ",
 					total: stats.total,
 					count: stats.count,
-					percentage: total > 0 ? Math.round((stats.total / total) * 100) : 0,
+					percentage: calculatePercentage(stats.total, total),
 				};
 			})
 			.sort((a, b) => b.total - a.total);
