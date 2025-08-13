@@ -9,6 +9,41 @@ import type { Category, Transaction, TransactionType } from "../lib/api/types";
 // 基本型をre-export
 export type { Category, TransactionType } from "../lib/api/types";
 
+// ===============================
+// 支出統計関連の型定義
+// ===============================
+
+// 現在のAPI仕様で利用可能な基本統計データ
+export interface BaseStatsData {
+	totalExpense: number;
+	transactionCount: number;
+}
+
+// 拡張された統計データ（将来的な機能を含む）
+export interface ExtendedStatsData extends BaseStatsData {
+	monthlyComparison?: number; // 前月比（パーセンテージ）
+	topExpenseCategory?: { name: string; amount: number } | null;
+}
+
+// エラータイプの定義
+export type ErrorType = "network" | "server" | "timeout" | "unknown";
+
+// プロパティの型定義
+export interface ExpenseStatsProps {
+	stats: BaseStatsData | ExtendedStatsData | null | undefined;
+	isLoading?: boolean;
+	error?: string | null;
+	errorType?: ErrorType;
+	className?: string;
+	onRefresh?: () => void;
+	onRetry?: () => void;
+	useSkeletonLoader?: boolean; // スケルトンローダーを使用するかどうか
+}
+
+// ===============================
+// 支出・収入フォーム関連の型定義
+// ===============================
+
 /**
  * 支出・収入フォームデータ
  * フォーム入力時に使用する型（カテゴリはIDで管理）
