@@ -102,9 +102,6 @@ export function useIncomes(): UseIncomesReturn {
 		date: string;
 		categoryId?: string | null;
 	}): Promise<Transaction> => {
-		// 楽観的更新のための現在の状態を保存
-		const previousIncomes = state.incomes;
-
 		try {
 			setState((prev) => ({ ...prev, operationLoading: true, error: null }));
 			const newIncome = await createTransaction({
@@ -112,20 +109,22 @@ export function useIncomes(): UseIncomesReturn {
 				type: "income",
 			});
 
-			setState((prev) => ({
-				...prev,
-				incomes: [...prev.incomes, newIncome],
-				operationLoading: false,
-			}));
+			// 楽観的UI更新を削除し、必ずデータを再取得する
+			// 作成成功後にサーバーから最新データを取得
+			await loadIncomes();
+			setState((prev) => ({ ...prev, operationLoading: false }));
 
 			return newIncome;
 		} catch (error) {
-			// エラー時は元の状態にロールバック
+			// エラー時もデータを再取得して同期
+			await loadIncomes().catch((loadError) => {
+				console.error("エラー後のデータ再取得に失敗:", loadError);
+			});
+
 			const errorMessage =
 				error instanceof Error ? error.message : "収入の作成に失敗しました";
 			setState((prev) => ({
 				...prev,
-				incomes: previousIncomes,
 				error: errorMessage,
 				operationLoading: false,
 			}));
@@ -142,29 +141,26 @@ export function useIncomes(): UseIncomesReturn {
 			categoryId?: string | null;
 		},
 	): Promise<Transaction> => {
-		// 楽観的更新のための現在の状態を保存
-		const previousIncomes = state.incomes;
-
 		try {
 			setState((prev) => ({ ...prev, operationLoading: true, error: null }));
 			const updatedIncome = await updateTransaction(id, formData);
 
-			setState((prev) => ({
-				...prev,
-				incomes: prev.incomes.map((income) =>
-					income.id === id ? updatedIncome : income,
-				),
-				operationLoading: false,
-			}));
+			// 楽観的UI更新を削除し、必ずデータを再取得する
+			// 更新成功後にサーバーから最新データを取得
+			await loadIncomes();
+			setState((prev) => ({ ...prev, operationLoading: false }));
 
 			return updatedIncome;
 		} catch (error) {
-			// エラー時は元の状態にロールバック
+			// エラー時もデータを再取得して同期
+			await loadIncomes().catch((loadError) => {
+				console.error("エラー後のデータ再取得に失敗:", loadError);
+			});
+
 			const errorMessage =
 				error instanceof Error ? error.message : "収入の更新に失敗しました";
 			setState((prev) => ({
 				...prev,
-				incomes: previousIncomes,
 				error: errorMessage,
 				operationLoading: false,
 			}));
@@ -173,31 +169,19 @@ export function useIncomes(): UseIncomesReturn {
 	};
 
 	const deleteIncomeMutation = async (id: string): Promise<void> => {
-		// 楽観的更新のための現在の状態を保存
-		const previousIncomes = state.incomes;
-
 		try {
 			setState((prev) => ({ ...prev, operationLoading: true, error: null }));
-
-			// 楽観的更新：先にUIから削除
-			setState((prev) => ({
-				...prev,
-				incomes: prev.incomes.filter((income) => income.id !== id),
-			}));
-
 			await deleteTransaction(id);
 
-			setState((prev) => ({
-				...prev,
-				operationLoading: false,
-			}));
+			// 楽観的UI更新を削除し、必ずデータを再取得する
+			// 削除成功後にサーバーから最新データを取得
+			await loadIncomes();
+			setState((prev) => ({ ...prev, operationLoading: false }));
 		} catch (error) {
-			// エラー時は元の状態にロールバック
 			const errorMessage =
 				error instanceof Error ? error.message : "収入の削除に失敗しました";
 			setState((prev) => ({
 				...prev,
-				incomes: previousIncomes,
 				error: errorMessage,
 				operationLoading: false,
 			}));
