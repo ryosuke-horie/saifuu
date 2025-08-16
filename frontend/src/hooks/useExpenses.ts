@@ -125,16 +125,14 @@ export function useExpenses(): UseExpensesReturn {
 				operationLoading: false,
 			}));
 
-			// 成功後にデータを再取得して同期を確実にする
-			// 非同期で実行し、UIをブロックしない
-			setTimeout(() => {
-				loadExpenses().catch((error) => {
-					console.error("支出データの再取得に失敗:", error);
-				});
-			}, 100);
-
 			return newExpense;
 		} catch (error) {
+			// エラー時は楽観的更新をロールバックするために再取得
+			// これによりUIとサーバーの状態を同期
+			await loadExpenses().catch((loadError) => {
+				console.error("エラー後のデータ再取得に失敗:", loadError);
+			});
+
 			const errorMessage =
 				error instanceof Error ? error.message : "支出の作成に失敗しました";
 			setState((prev) => ({
@@ -175,15 +173,13 @@ export function useExpenses(): UseExpensesReturn {
 				operationLoading: false,
 			}));
 
-			// 成功後にデータを再取得して同期を確実にする
-			setTimeout(() => {
-				loadExpenses().catch((error) => {
-					console.error("支出データの再取得に失敗:", error);
-				});
-			}, 100);
-
 			return updatedExpense;
 		} catch (error) {
+			// エラー時は楽観的更新をロールバックするために再取得
+			await loadExpenses().catch((loadError) => {
+				console.error("エラー後のデータ再取得に失敗:", loadError);
+			});
+
 			const errorMessage =
 				error instanceof Error ? error.message : "支出の更新に失敗しました";
 			setState((prev) => ({
