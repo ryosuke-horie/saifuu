@@ -355,7 +355,7 @@ describe("IncomePageContent 統合テスト", () => {
 			});
 
 			// 期間フィルターを選択 - selectの変更イベントを直接発火
-			const periodSelect = screen.getByLabelText("期間") as HTMLSelectElement;
+			const periodSelect = screen.getByLabelText("期間");
 			await user.selectOptions(periodSelect, "thisMonth");
 
 			// onChangeイベントが発火し、updateFiltersが呼ばれるはず
