@@ -36,11 +36,23 @@ vi.mock("next/navigation", () => ({
 	}),
 	useSearchParams: () => mockSearchParams,
 	usePathname: () => "/income",
+	notFound: vi.fn(),
+	redirect: vi.fn(),
 }));
 
 // メディアクエリフックのモック
 vi.mock("@/hooks/useMediaQuery", () => ({
 	useIsMobile: vi.fn(() => false),
+}));
+
+// rechartsのモック - ResponsiveContainerがhooksのエラーを起こすため
+vi.mock("recharts", () => ({
+	ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
+	PieChart: ({ children }: any) => <div>{children}</div>,
+	Pie: () => null,
+	Cell: () => null,
+	Tooltip: () => null,
+	Legend: () => null,
 }));
 
 // カスタムフックのモック - メモリを節約するため軽量なモックを使用
@@ -78,6 +90,7 @@ vi.mock("@/hooks/useIncomeFilters", () => ({
 		resetFilters: vi.fn(),
 		toggleCategory: vi.fn(),
 		selectedCategories: [],
+		clearFilters: vi.fn(),
 	})),
 }));
 
@@ -98,6 +111,8 @@ vi.mock("@/lib/api/categories/api", () => ({
 	fetchCategories: vi.fn(),
 }));
 
+// テストではSuspenseラップなしのコンテンツコンポーネントを直接使用
+import { Suspense } from "react";
 import { useIncomeFilters } from "@/hooks/useIncomeFilters";
 import { useIncomeStats } from "@/hooks/useIncomeStats";
 import { useIncomesWithPagination } from "@/hooks/useIncomesWithPagination";
@@ -105,14 +120,14 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 // インポート（モック後）
 import { fetchCategories } from "@/lib/api/categories/api";
 import { apiClient } from "@/lib/api/client";
+import { IncomePageContent } from "../IncomePageContent";
 
-// テストではSuspenseラップなしのコンテンツコンポーネントを直接使用
-// import { IncomePageContent } from "../page";  // エクスポートされていないのでコメントアウト
+// テスト用のラッパーコンポーネント
+function TestWrapper({ children }: { children: React.ReactNode }) {
+	return <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>;
+}
 
-// TypeScriptエラー回避のためのダミー定義
-const IncomePageContent = () => null as any;
-
-describe.skip("IncomePageContent 統合テスト", () => {
+describe("IncomePageContent 統合テスト", () => {
 	// テストデータ（最小限）
 	const mockCategories: Category[] = [
 		{
@@ -207,7 +222,12 @@ describe.skip("IncomePageContent 統合テスト", () => {
 
 		(useIncomeFilters as Mock).mockReturnValue({
 			filters: {},
+			updateFilter: vi.fn(),
 			updateFilters: vi.fn(),
+			resetFilters: vi.fn(),
+			toggleCategory: vi.fn(),
+			selectedCategories: [],
+			clearFilters: vi.fn(),
 		});
 	};
 
@@ -224,8 +244,12 @@ describe.skip("IncomePageContent 統合テスト", () => {
 	});
 
 	describe("コンポーネントレンダリング", () => {
-		it.skip("すべての主要コンポーネントが表示される", async () => {
-			render(<IncomePageContent />);
+		it("すべての主要コンポーネントが表示される", async () => {
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				// ページタイトル
@@ -249,11 +273,16 @@ describe.skip("IncomePageContent 統合テスト", () => {
 			expect(formContainer).toBeInTheDocument();
 
 			// 収入一覧
-			expect(screen.getByText("収入一覧")).toBeInTheDocument();
+			const incomeLists = screen.getAllByText("収入一覧");
+			expect(incomeLists.length).toBeGreaterThan(0);
 		});
 
 		it("収入データが一覧に表示される", async () => {
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				expect(screen.getByText("1月給与")).toBeInTheDocument();
@@ -267,10 +296,19 @@ describe.skip("IncomePageContent 統合テスト", () => {
 			const mockUpdateFilters = vi.fn();
 			(useIncomeFilters as Mock).mockReturnValue({
 				filters: {},
+				updateFilter: vi.fn(),
 				updateFilters: mockUpdateFilters,
+				resetFilters: vi.fn(),
+				toggleCategory: vi.fn(),
+				selectedCategories: [],
+				clearFilters: vi.fn(),
 			});
 
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				expect(screen.getByText("絞り込み条件")).toBeInTheDocument();
@@ -284,15 +322,24 @@ describe.skip("IncomePageContent 統合テスト", () => {
 			expect(screen.getByLabelText("期間")).toBeInTheDocument();
 		});
 
-		it.skip("期間フィルターが動作する", async () => {
+		it("期間フィルターが動作する", async () => {
 			const mockUpdateFilters = vi.fn();
 			(useIncomeFilters as Mock).mockReturnValue({
 				filters: {},
+				updateFilter: vi.fn(),
 				updateFilters: mockUpdateFilters,
+				resetFilters: vi.fn(),
+				toggleCategory: vi.fn(),
+				selectedCategories: [],
+				clearFilters: vi.fn(),
 			});
 
 			const user = userEvent.setup();
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				expect(screen.getByText("絞り込み条件")).toBeInTheDocument();
@@ -308,15 +355,24 @@ describe.skip("IncomePageContent 統合テスト", () => {
 			});
 		});
 
-		it.skip("フィルターリセットが動作する", async () => {
+		it("フィルターリセットが動作する", async () => {
 			const mockUpdateFilters = vi.fn();
 			(useIncomeFilters as Mock).mockReturnValue({
 				filters: { period: "thisMonth" },
+				updateFilter: vi.fn(),
 				updateFilters: mockUpdateFilters,
+				resetFilters: vi.fn(),
+				toggleCategory: vi.fn(),
+				selectedCategories: [],
+				clearFilters: vi.fn(),
 			});
 
 			const user = userEvent.setup();
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				expect(screen.getByText("絞り込み条件")).toBeInTheDocument();
@@ -338,7 +394,11 @@ describe.skip("IncomePageContent 統合テスト", () => {
 
 	describe("CRUD操作", () => {
 		it("新規収入フォームが表示される", async () => {
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				expect(screen.getByText(/収入を登録/)).toBeInTheDocument();
@@ -349,7 +409,7 @@ describe.skip("IncomePageContent 統合テスト", () => {
 			expect(formSection).toBeInTheDocument();
 		});
 
-		it.skip("収入の登録処理が動作する", async () => {
+		it("収入の登録処理が動作する", async () => {
 			const mockRefetch = vi.fn();
 			setupHookMocks({
 				incomes: mockIncomes,
@@ -368,7 +428,11 @@ describe.skip("IncomePageContent 統合テスト", () => {
 			});
 
 			const user = userEvent.setup();
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				expect(screen.getByText(/収入を登録/)).toBeInTheDocument();
@@ -409,7 +473,11 @@ describe.skip("IncomePageContent 統合テスト", () => {
 				amount: 350000,
 			});
 
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				expect(screen.getByText("1月給与")).toBeInTheDocument();
@@ -429,7 +497,11 @@ describe.skip("IncomePageContent 統合テスト", () => {
 
 		it("削除確認ダイアログが表示される", async () => {
 			const user = userEvent.setup();
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				expect(screen.getByText("1月給与")).toBeInTheDocument();
@@ -461,7 +533,11 @@ describe.skip("IncomePageContent 統合テスト", () => {
 				},
 			});
 
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				// ページ情報が表示されることを確認
@@ -490,7 +566,11 @@ describe.skip("IncomePageContent 統合テスト", () => {
 			});
 
 			const user = userEvent.setup();
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				expect(screen.getByText(/15件/)).toBeInTheDocument();
@@ -520,7 +600,11 @@ describe.skip("IncomePageContent 統合テスト", () => {
 			// モバイルモードに設定
 			(useIsMobile as Mock).mockReturnValue(true);
 
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				// モバイルではグリッドレイアウトではなく縦並びになる
@@ -537,7 +621,11 @@ describe.skip("IncomePageContent 統合テスト", () => {
 			// デスクトップモードに設定
 			(useIsMobile as Mock).mockReturnValue(false);
 
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				// デスクトップではグリッドレイアウトになる
@@ -560,7 +648,11 @@ describe.skip("IncomePageContent 統合テスト", () => {
 				pagination: null,
 			});
 
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				// エラーメッセージが表示される
@@ -575,7 +667,11 @@ describe.skip("IncomePageContent 統合テスト", () => {
 				new Error("カテゴリ取得エラー"),
 			);
 
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			await waitFor(() => {
 				// ページタイトルは表示される
@@ -590,7 +686,7 @@ describe.skip("IncomePageContent 統合テスト", () => {
 	});
 
 	describe("統合フロー", () => {
-		it.skip("基本的な収入管理フローが動作する", async () => {
+		it("基本的な収入管理フローが動作する", async () => {
 			const mockRefetch = vi.fn();
 			const mockUpdateFilters = vi.fn();
 
@@ -601,11 +697,20 @@ describe.skip("IncomePageContent 統合テスト", () => {
 
 			(useIncomeFilters as Mock).mockReturnValue({
 				filters: {},
+				updateFilter: vi.fn(),
 				updateFilters: mockUpdateFilters,
+				resetFilters: vi.fn(),
+				toggleCategory: vi.fn(),
+				selectedCategories: [],
+				clearFilters: vi.fn(),
 			});
 
 			const user = userEvent.setup();
-			render(<IncomePageContent />);
+			render(
+				<TestWrapper>
+					<IncomePageContent />
+				</TestWrapper>,
+			);
 
 			// 1. 初期表示を確認
 			await waitFor(() => {
