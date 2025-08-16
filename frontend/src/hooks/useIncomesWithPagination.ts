@@ -14,9 +14,10 @@ import {
 } from "../constants/pagination";
 import { apiClient } from "../lib/api/client";
 import type {
-	PaginationResponse,
-	TransactionWithCategory,
+        PaginationResponse,
+        TransactionWithCategory,
 } from "../lib/api/types";
+import { isTransactionWithCategoryArray } from "../lib/utils/typeGuards";
 import type {
 	UseIncomesWithPaginationReturn,
 	UsePaginationParams,
@@ -76,17 +77,21 @@ export function useIncomesWithPagination({
 				setLoading(true);
 				setError(null);
 
-				const response = await apiClient.transactions.list({
-					type: "income",
-					page,
-					limit,
-					sort: sortBy,
-					order: sortOrder,
-				});
+                                const response = await apiClient.transactions.list({
+                                        type: "income",
+                                        page,
+                                        limit,
+                                        sort: sortBy,
+                                        order: sortOrder,
+                                });
 
-				setIncomes(response.data as TransactionWithCategory[]);
-				setPagination(response.pagination || null);
-			} catch (err) {
+                                if (!isTransactionWithCategoryArray(response.data)) {
+                                        throw new Error("Invalid response format");
+                                }
+
+                                setIncomes(response.data);
+                                setPagination(response.pagination || null);
+                        } catch (err) {
 				const message =
 					err instanceof Error ? err.message : "データの取得に失敗しました";
 				setError(message);

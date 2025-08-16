@@ -35,12 +35,12 @@ export function useSubscriptions(query?: GetSubscriptionsQuery) {
 	// queryの値を安定させるため、JSONで文字列化して比較
 	const stableQuery = useMemo(() => JSON.stringify(query || {}), [query]);
 
-	const { data, isLoading, error, refetch } = useApiQuery({
-		queryFn: () => subscriptionService.getSubscriptions(query),
-		initialData: [] as Subscription[],
-		errorContext: "サブスクリプション一覧取得",
-		deps: [stableQuery],
-	});
+        const { data, isLoading, error, refetch } = useApiQuery<Subscription[]>({
+                queryFn: () => subscriptionService.getSubscriptions(query),
+                initialData: [],
+                errorContext: "サブスクリプション一覧取得",
+                deps: [stableQuery],
+        });
 
 	return {
 		subscriptions: data,
@@ -57,13 +57,13 @@ export function useSubscriptions(query?: GetSubscriptionsQuery) {
  * 統一されたAPIクエリパターンを適用
  */
 export function useSubscription(id: string | null) {
-	const { data, isLoading, error, refetch } = useApiQuery({
-		queryFn: () => subscriptionService.getSubscription(id!),
-		initialData: null as Subscription | null,
-		errorContext: "サブスクリプション詳細取得",
-		shouldFetch: !!id,
-		deps: [id || ""], // 安定した値にする
-	});
+        const { data, isLoading, error, refetch } = useApiQuery<Subscription | null>({
+                queryFn: () => subscriptionService.getSubscription(id!),
+                initialData: null,
+                errorContext: "サブスクリプション詳細取得",
+                shouldFetch: !!id,
+                deps: [id || ""], // 安定した値にする
+        });
 
 	return {
 		subscription: data,
@@ -112,12 +112,14 @@ export function useCreateSubscription() {
  * 統一されたAPIクエリパターンを適用
  */
 export function useSubscriptionStats() {
-	const { data, isLoading, error, refetch } = useApiQuery({
-		queryFn: () => subscriptionService.getSubscriptionStats(),
-		initialData: null as SubscriptionStatsResponse | null,
-		errorContext: "サブスクリプション統計取得",
-		deps: [],
-	});
+        const { data, isLoading, error, refetch } = useApiQuery<
+                SubscriptionStatsResponse | null
+        >({
+                queryFn: () => subscriptionService.getSubscriptionStats(),
+                initialData: null,
+                errorContext: "サブスクリプション統計取得",
+                deps: [],
+        });
 
 	return {
 		stats: data,

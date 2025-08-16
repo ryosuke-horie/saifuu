@@ -100,13 +100,16 @@ export const IncomeList: FC<IncomeListProps> = memo(
 
 		// 収入データのソート処理（共通ユーティリティ関数を使用）
 		// ページネーション有効時はAPIでソート済みなのでスキップ
-		const sortedTransactions = useMemo(() => {
-			if (enablePagination) {
-				return transactions as TransactionWithCategory[]; // APIでソート済み
-			}
-			// ソート用ユーティリティ関数を使用して重複コードを削除
-			return sortTransactions(transactions, sortBy, sortOrder);
-		}, [transactions, enablePagination, sortBy, sortOrder]);
+                const sortedTransactions: readonly TransactionWithCategory[] = useMemo(
+                        () => {
+                                if (enablePagination) {
+                                        return transactions; // APIでソート済み
+                                }
+                                // ソート用ユーティリティ関数を使用して重複コードを削除
+                                return sortTransactions(transactions, sortBy, sortOrder);
+                        },
+                        [transactions, enablePagination, sortBy, sortOrder],
+                );
 
 		return (
 			<div className={`bg-white rounded-lg shadow ${className}`}>

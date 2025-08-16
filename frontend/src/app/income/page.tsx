@@ -9,9 +9,10 @@ import { fetchCategories } from "@/lib/api/categories/api";
 import { apiClient } from "@/lib/api/client";
 import type { TransactionWithCategory } from "@/lib/api/types";
 import {
-	calculateMonthOverMonth,
-	calculatePercentage,
+        calculateMonthOverMonth,
+        calculatePercentage,
 } from "@/lib/utils/calculations";
+import { isTransactionWithCategoryArray } from "@/lib/utils/typeGuards";
 import type { Category } from "@/types/category";
 import type {
 	IncomeCategoryData,
@@ -83,13 +84,15 @@ function IncomePageContent() {
 			setStatsLoading(true);
 			// 全収入データを取得して統計計算用に使用
 			// API は拡張された取引データ（カテゴリ情報付き）を返すはず
-			const response = await apiClient.transactions.list({
-				type: "income",
-				limit: 1000, // 統計計算のため全データ取得
-			});
-			// APIが既にカテゴリ情報を含む拡張データを返すことを想定
-			const incomesWithCategory = response.data as TransactionWithCategory[];
-			setAllIncomes(incomesWithCategory);
+                        const response = await apiClient.transactions.list({
+                                type: "income",
+                                limit: 1000, // 統計計算のため全データ取得
+                        });
+                        if (!isTransactionWithCategoryArray(response.data)) {
+                                throw new Error("Invalid response format");
+                        }
+                        const incomesWithCategory = response.data;
+                        setAllIncomes(incomesWithCategory);
 
 			// 統計データの計算
 			const now = new Date();

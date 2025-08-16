@@ -26,12 +26,12 @@ interface UseCategoriesReturn {
  * @returns カテゴリ一覧とローディング状態、エラー状態、再取得関数
  */
 export function useCategories(): UseCategoriesReturn {
-	const { data, isLoading, error, refetch } = useApiQuery({
-		queryFn: fetchCategories,
-		initialData: [] as Category[],
-		errorContext: "カテゴリ一覧取得",
-		deps: [],
-	});
+        const { data, isLoading, error, refetch } = useApiQuery<Category[]>({
+                queryFn: fetchCategories,
+                initialData: [],
+                errorContext: "カテゴリ一覧取得",
+                deps: [],
+        });
 
 	return {
 		categories: data,
