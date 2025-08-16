@@ -153,26 +153,28 @@ describe("IncomeFilters", () => {
 		});
 	});
 
-	it("負の金額入力時にエラーが表示されること", async () => {
-		const user = userEvent.setup();
-		render(<IncomeFilters {...defaultProps} />);
+        it("負の金額入力時にエラーが表示されること", async () => {
+                const user = userEvent.setup();
+                render(<IncomeFilters {...defaultProps} />);
 
-		const minAmountInput = screen.getByLabelText("最小金額");
-		await user.clear(minAmountInput);
-		await user.type(minAmountInput, "-1000");
+                const minAmountInput = screen.getByLabelText("最小金額");
+                await user.clear(minAmountInput);
+                await user.type(minAmountInput, "-1000");
 
-		// onFiltersChangeはエラーがあっても呼ばれる（UIを更新するため）
-		await waitFor(() => {
-			expect(mockOnFiltersChange).toHaveBeenCalledWith(
-				expect.objectContaining({
-					minAmount: -1000,
-				}),
-			);
-		});
+                await waitFor(() => {
+                        expect(mockOnFiltersChange).toHaveBeenCalledWith(
+                                expect.objectContaining({
+                                        minAmount: -1000,
+                                }),
+                        );
+                });
 
-		// 現在の実装では、AmountRangeFilterに直接エラーメッセージは表示されない
-		// （エラーハンドリングは親コンポーネントの責務）
-	});
+                expect(
+                        await screen.findByText(
+                                "最小金額は0以上を指定してください",
+                        ),
+                ).toBeInTheDocument();
+        });
 
 	it("リセットボタンですべてのフィルターがクリアされること", async () => {
 		const user = userEvent.setup();
