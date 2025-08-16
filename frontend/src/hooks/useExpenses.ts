@@ -118,12 +118,10 @@ export function useExpenses(): UseExpensesReturn {
 				throw new Error(errorMsg);
 			}
 
-			// 楽観的UI更新：検証済みのデータのみ追加
-			setState((prev) => ({
-				...prev,
-				expenses: [...prev.expenses, newExpense],
-				operationLoading: false,
-			}));
+			// 楽観的UI更新を削除し、必ずデータを再取得する
+			// 作成成功後にサーバーから最新データを取得
+			await loadExpenses();
+			setState((prev) => ({ ...prev, operationLoading: false }));
 
 			return newExpense;
 		} catch (error) {
@@ -165,13 +163,10 @@ export function useExpenses(): UseExpensesReturn {
 				throw new Error(errorMsg);
 			}
 
-			setState((prev) => ({
-				...prev,
-				expenses: prev.expenses.map((expense) =>
-					expense.id === id ? updatedExpense : expense,
-				),
-				operationLoading: false,
-			}));
+			// 楽観的UI更新を削除し、必ずデータを再取得する
+			// 更新成功後にサーバーから最新データを取得
+			await loadExpenses();
+			setState((prev) => ({ ...prev, operationLoading: false }));
 
 			return updatedExpense;
 		} catch (error) {
@@ -196,11 +191,10 @@ export function useExpenses(): UseExpensesReturn {
 			setState((prev) => ({ ...prev, operationLoading: true, error: null }));
 			await deleteTransaction(id);
 
-			setState((prev) => ({
-				...prev,
-				expenses: prev.expenses.filter((expense) => expense.id !== id),
-				operationLoading: false,
-			}));
+			// 楽観的UI更新を削除し、必ずデータを再取得する
+			// 削除成功後にサーバーから最新データを取得
+			await loadExpenses();
+			setState((prev) => ({ ...prev, operationLoading: false }));
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : "支出の削除に失敗しました";
