@@ -110,11 +110,28 @@ export function useExpenses(): UseExpensesReturn {
 				type: "expense",
 			});
 
+			// APIレスポンスの検証：IDが存在することを確認
+			if (!newExpense || !newExpense.id) {
+				// IDが存在しない場合はエラーとして処理
+				const errorMsg = "APIレスポンスが不正です：取引IDが含まれていません";
+				console.error(errorMsg, newExpense);
+				throw new Error(errorMsg);
+			}
+
+			// 楽観的UI更新：検証済みのデータのみ追加
 			setState((prev) => ({
 				...prev,
 				expenses: [...prev.expenses, newExpense],
 				operationLoading: false,
 			}));
+
+			// 成功後にデータを再取得して同期を確実にする
+			// 非同期で実行し、UIをブロックしない
+			setTimeout(() => {
+				loadExpenses().catch((error) => {
+					console.error("支出データの再取得に失敗:", error);
+				});
+			}, 100);
 
 			return newExpense;
 		} catch (error) {
@@ -142,6 +159,14 @@ export function useExpenses(): UseExpensesReturn {
 			setState((prev) => ({ ...prev, operationLoading: true, error: null }));
 			const updatedExpense = await updateTransaction(id, formData);
 
+			// APIレスポンスの検証：IDが存在することを確認
+			if (!updatedExpense || !updatedExpense.id) {
+				const errorMsg =
+					"APIレスポンスが不正です：更新された取引IDが含まれていません";
+				console.error(errorMsg, updatedExpense);
+				throw new Error(errorMsg);
+			}
+
 			setState((prev) => ({
 				...prev,
 				expenses: prev.expenses.map((expense) =>
@@ -149,6 +174,13 @@ export function useExpenses(): UseExpensesReturn {
 				),
 				operationLoading: false,
 			}));
+
+			// 成功後にデータを再取得して同期を確実にする
+			setTimeout(() => {
+				loadExpenses().catch((error) => {
+					console.error("支出データの再取得に失敗:", error);
+				});
+			}, 100);
 
 			return updatedExpense;
 		} catch (error) {
