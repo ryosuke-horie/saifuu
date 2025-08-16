@@ -337,13 +337,13 @@ describe("IncomePageContent 統合テスト", () => {
 			// 期間フィルターが存在することを確認
 			const periodSelect = screen.getByLabelText("期間");
 			expect(periodSelect).toBeInTheDocument();
-			
+
 			// フィルターが操作可能であることを確認
 			expect(periodSelect).not.toBeDisabled();
-			
+
 			// 期間フィルターを選択
 			await user.selectOptions(periodSelect, "thisMonth");
-			
+
 			// フィルターの操作が完了したことを確認
 			// 少なくともセレクトボックスが操作された
 			expect(periodSelect).toBeInTheDocument();
@@ -375,20 +375,20 @@ describe("IncomePageContent 統合テスト", () => {
 			// フィルターセクションが存在することを確認
 			const filterSection = screen.getByTestId("income-filters");
 			expect(filterSection).toBeInTheDocument();
-			
+
 			// クリアボタンを探す
 			const buttons = screen.getAllByRole("button");
 			const clearButton = buttons.find(
-				(btn) => 
+				(btn) =>
 					btn.textContent?.includes("クリア") ||
-					btn.textContent?.includes("リセット")
+					btn.textContent?.includes("リセット"),
 			);
 
 			// ボタンが存在する場合はクリック、存在しない場合でもテストは成功
 			if (clearButton) {
 				await user.click(clearButton);
 			}
-			
+
 			// フィルターセクションがまだ存在することを確認
 			expect(screen.getByText("絞り込み条件")).toBeInTheDocument();
 		});
@@ -440,7 +440,6 @@ describe("IncomePageContent 統合テスト", () => {
 				},
 			});
 
-			const user = userEvent.setup();
 			render(
 				<TestWrapper>
 					<IncomePageContent />
@@ -454,18 +453,19 @@ describe("IncomePageContent 統合テスト", () => {
 			// フォームが存在することを確認
 			const formSection = screen.getByText(/収入を登録/).closest("div");
 			expect(formSection).toBeInTheDocument();
-			
+
 			// フォーム要素が存在することを確認（実際のフォーム入力の検証は簡略化）
 			// 注: IncomeFormコンポーネントが描画されていることの確認に留める
 			const buttons = screen.getAllByRole("button");
-			const submitButton = buttons.find(btn => 
-				btn.textContent?.match(/登録|保存|追加|submit/i) &&
-				!btn.textContent?.match(/キャンセル|削除|戻る/i)
+			const submitButton = buttons.find(
+				(btn) =>
+					btn.textContent?.match(/登録|保存|追加|submit/i) &&
+					!btn.textContent?.match(/キャンセル|削除|戻る/i),
 			);
-			
+
 			// 登録ボタンまたはフォームコンテナが存在することを確認
 			expect(submitButton || formSection).toBeTruthy();
-			
+
 			// フォームが適切にレンダリングされていることを確認
 			expect(screen.getByText(/収入を登録/)).toBeInTheDocument();
 		});
@@ -720,7 +720,6 @@ describe("IncomePageContent 統合テスト", () => {
 				},
 			});
 
-			const user = userEvent.setup();
 			render(
 				<TestWrapper>
 					<IncomePageContent />
@@ -737,20 +736,22 @@ describe("IncomePageContent 統合テスト", () => {
 
 			// 2. フォームが存在することを確認
 			expect(screen.getByText(/収入を登録/)).toBeInTheDocument();
-			
+
 			// 3. フィルターセクションが存在することを確認
 			expect(screen.getByText("絞り込み条件")).toBeInTheDocument();
-			
+
 			// 4. ページネーション情報が表示されることを確認
 			// 統合フローでは、基本的な要素が全て表示されることを確認
 			const incomeListHeaders = screen.getAllByText("収入一覧");
 			expect(incomeListHeaders.length).toBeGreaterThan(0);
-			
+
 			// 5. 統合フローとして全コンポーネントが連携していることを確認
-			expect(screen.getByRole("heading", { name: "収入管理" })).toBeInTheDocument();
+			expect(
+				screen.getByRole("heading", { name: "収入管理" }),
+			).toBeInTheDocument();
 			expect(screen.getByText(/収入を登録/)).toBeInTheDocument();
 			expect(screen.getByText("絞り込み条件")).toBeInTheDocument();
-			
+
 			// 収入一覧はgetAllByTextを使用（複数存在する場合があるため）
 			const allIncomeListTexts = screen.getAllByText("収入一覧");
 			expect(allIncomeListTexts.length).toBeGreaterThan(0);
