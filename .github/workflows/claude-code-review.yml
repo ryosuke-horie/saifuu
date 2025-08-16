@@ -2,7 +2,7 @@ name: Claude Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize]
 
 jobs:
   claude-review:
@@ -22,14 +22,14 @@ jobs:
 
       - name: Run Claude Code Review
         id: claude-review
-        uses: anthropics/claude-code-action@v0.0.45
+        uses: anthropics/claude-code-action@beta
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           
           allowed_tools: "mcp__github__get_pull_request_diff"
           
           # PR作成・更新時のレビュー用のカスタム指示
-          custom_instructions: |
+          direct_prompt: |
             プルリクエストが作成または更新されたため、自動的にレビューを実行します。
             
             このプルリクエスト（PR）をレビューしてください。作業は次の手順に沿って進めてください：
