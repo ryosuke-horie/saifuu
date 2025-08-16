@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import SQLiteDatabase from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import * as schema from './src/db/schema.ts';
+import { ALL_CATEGORIES } from '../shared/src/config/categories.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -18,8 +19,10 @@ const app = new Hono();
 app.use('/api/*', cors({
   origin: [
     'http://localhost:3000',
+    'http://localhost:3001',
     'http://localhost:3002',
-    'http://localhost:3003'
+    'http://localhost:3003',
+    'http://localhost:3004'
   ],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
@@ -60,13 +63,13 @@ try {
   
   console.log('✅ Database seeded successfully');
   
-  // カテゴリ数を確認
-  const categoryCount = sqlite.prepare('SELECT COUNT(*) as count FROM categories').get();
-  console.log(`✅ Categories initialized: ${categoryCount.count} categories`);
-  
-  // サブスクリプション数も確認
+  // サブスクリプション数を確認
   const subscriptionCount = sqlite.prepare('SELECT COUNT(*) as count FROM subscriptions').get();
   console.log(`✅ Subscriptions initialized: ${subscriptionCount.count} subscriptions`);
+  
+  // トランザクション数も確認
+  const transactionCount = sqlite.prepare('SELECT COUNT(*) as count FROM transactions').get();
+  console.log(`✅ Transactions tables created (${transactionCount.count} transactions)`);
   
 } catch (error) {
   console.error('❌ Failed to seed database:', error);
@@ -85,8 +88,9 @@ app.use('/api/*', async (c, next) => {
 app.get('/api/health', async (c) => {
   try {
     const db = c.get('db');
-    const result = await db.select().from(schema.categories).limit(1);
-    const categoryCount = await db.select().from(schema.categories);
+    // トランザクションテーブルでDB接続を確認
+    const result = await db.select().from(schema.transactions).limit(1);
+    const subscriptionCount = await db.select().from(schema.subscriptions);
     
     return c.json({
       status: 'ok',
@@ -94,7 +98,8 @@ app.get('/api/health', async (c) => {
       environment: 'e2e-test',
       timestamp: new Date().toISOString(),
       debug: {
-        categoriesCount: categoryCount.length,
+        categoriesCount: ALL_CATEGORIES.length, // 設定から取得
+        subscriptionsCount: subscriptionCount.length,
         dbPath: E2E_DB_PATH,
         server: 'node-e2e'
       }
@@ -111,88 +116,42 @@ app.get('/api/health', async (c) => {
   }
 });
 
-// カテゴリ関連エンドポイント
+// カテゴリ関連エンドポイント（設定ファイルから取得）
 // カテゴリ一覧取得
 app.get('/api/categories', async (c) => {
   try {
-    const db = c.get('db');
-    const result = await db.select().from(schema.categories);
-    console.log(`[E2E] Categories fetched: ${result.length} items`);
-    return c.json(result);
+    // 設定ファイルからカテゴリを取得
+    const categories = ALL_CATEGORIES.map(category => ({
+      id: category.numericId,
+      name: category.name,
+      type: category.type,
+      color: category.color,
+      description: category.description || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+    
+    console.log(`[E2E] Categories fetched from config: ${categories.length} items`);
+    return c.json(categories);
   } catch (error) {
     console.error('[E2E] Error fetching categories:', error);
     return c.json({ error: 'Failed to fetch categories' }, 500);
   }
 });
 
-// カテゴリ作成
+// カテゴリ作成（E2E環境では無効）
 app.post('/api/categories', async (c) => {
-  try {
-    const body = await c.req.json();
-    const db = c.get('db');
-
-    const newCategory = {
-      name: body.name,
-      type: body.type,
-      color: body.color,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    const result = await db.insert(schema.categories).values(newCategory).returning();
-    return c.json(result[0], 201);
-  } catch (error) {
-    console.error('[E2E] Error creating category:', error);
-    return c.json({ error: 'Failed to create category' }, 500);
-  }
+  return c.json({ error: 'Categories are read-only in E2E environment' }, 405);
 });
 
-// カテゴリ更新
+// カテゴリ更新（E2E環境では無効）
 app.put('/api/categories/:id', async (c) => {
-  try {
-    const id = Number.parseInt(c.req.param('id'));
-    const body = await c.req.json();
-    const db = c.get('db');
-
-    const updateData = {
-      ...body,
-      updatedAt: new Date().toISOString(),
-    };
-
-    const result = await db
-      .update(schema.categories)
-      .set(updateData)
-      .where(eq(schema.categories.id, id))
-      .returning();
-
-    if (result.length === 0) {
-      return c.json({ error: 'Category not found' }, 404);
-    }
-
-    return c.json(result[0]);
-  } catch (error) {
-    console.error('[E2E] Error updating category:', error);
-    return c.json({ error: 'Failed to update category' }, 500);
-  }
+  return c.json({ error: 'Categories are read-only in E2E environment' }, 405);
 });
 
-// カテゴリ削除
+// カテゴリ削除（E2E環境では無効）
 app.delete('/api/categories/:id', async (c) => {
-  try {
-    const id = Number.parseInt(c.req.param('id'));
-    const db = c.get('db');
-
-    const result = await db.delete(schema.categories).where(eq(schema.categories.id, id)).returning();
-
-    if (result.length === 0) {
-      return c.json({ error: 'Category not found' }, 404);
-    }
-
-    return c.json({ message: 'Category deleted successfully' });
-  } catch (error) {
-    console.error('[E2E] Error deleting category:', error);
-    return c.json({ error: 'Failed to delete category' }, 500);
-  }
+  return c.json({ error: 'Categories are read-only in E2E environment' }, 405);
 });
 
 // サブスクリプション関連エンドポイント
@@ -298,7 +257,101 @@ app.delete('/api/subscriptions/:id', async (c) => {
   }
 });
 
-const port = 3003;
+// トランザクション（支出・収入）関連エンドポイント
+// トランザクション一覧取得
+app.get('/api/transactions', async (c) => {
+  try {
+    const db = c.get('db');
+    const type = c.req.query('type'); // 'expense' or 'income'
+    
+    let query = db.select().from(schema.transactions);
+    if (type) {
+      query = query.where(eq(schema.transactions.type, type));
+    }
+    
+    const result = await query;
+    console.log(`[E2E] Transactions fetched: ${result.length} items (type: ${type || 'all'})`);
+    return c.json(result);
+  } catch (error) {
+    console.error('[E2E] Error fetching transactions:', error);
+    return c.json({ error: 'Failed to fetch transactions' }, 500);
+  }
+});
+
+// トランザクション作成（支出・収入登録）
+app.post('/api/transactions', async (c) => {
+  try {
+    const body = await c.req.json();
+    const db = c.get('db');
+
+    const newTransaction = {
+      amount: body.amount,
+      type: body.type || 'expense',
+      categoryId: body.categoryId,
+      description: body.description,
+      date: body.date,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const result = await db.insert(schema.transactions).values(newTransaction).returning();
+    console.log(`[E2E] Transaction created: ${result[0].type} - ${result[0].amount}`);
+    return c.json(result[0], 201);
+  } catch (error) {
+    console.error('[E2E] Error creating transaction:', error);
+    return c.json({ error: 'Failed to create transaction' }, 500);
+  }
+});
+
+// トランザクション更新
+app.put('/api/transactions/:id', async (c) => {
+  try {
+    const id = Number.parseInt(c.req.param('id'));
+    const body = await c.req.json();
+    const db = c.get('db');
+
+    const updateData = {
+      ...body,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const result = await db
+      .update(schema.transactions)
+      .set(updateData)
+      .where(eq(schema.transactions.id, id))
+      .returning();
+
+    if (result.length === 0) {
+      return c.json({ error: 'Transaction not found' }, 404);
+    }
+
+    return c.json(result[0]);
+  } catch (error) {
+    console.error('[E2E] Error updating transaction:', error);
+    return c.json({ error: 'Failed to update transaction' }, 500);
+  }
+});
+
+// トランザクション削除
+app.delete('/api/transactions/:id', async (c) => {
+  try {
+    const id = Number.parseInt(c.req.param('id'));
+    const db = c.get('db');
+
+    const result = await db.delete(schema.transactions).where(eq(schema.transactions.id, id)).returning();
+
+    if (result.length === 0) {
+      return c.json({ error: 'Transaction not found' }, 404);
+    }
+
+    return c.json({ message: 'Transaction deleted successfully' });
+  } catch (error) {
+    console.error('[E2E] Error deleting transaction:', error);
+    return c.json({ error: 'Failed to delete transaction' }, 500);
+  }
+});
+
+const port = 3004;
 console.log(`=== E2E API Server Starting ===`);
 console.log(`Server will run on port ${port}`);
 console.log(`Database path: ${E2E_DB_PATH}`);
@@ -364,6 +417,8 @@ server.listen(port, () => {
   console.log(`✅ E2E API Server is running on http://localhost:${port}`);
   console.log(`✅ Health check: http://localhost:${port}/api/health`);
   console.log(`✅ Categories API: http://localhost:${port}/api/categories`);
+  console.log(`✅ Transactions API: http://localhost:${port}/api/transactions`);
+  console.log(`✅ Subscriptions API: http://localhost:${port}/api/subscriptions`);
   console.log(`✅ Database initialized with seed data`);
 });
 

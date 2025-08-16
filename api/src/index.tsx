@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { type AnyDatabase, createDatabase, type Env } from './db'
+import { createDevSqliteDatabase } from './db/dev'
 import { transactions } from './db/schema'
 import { type LoggingVariables, loggingMiddleware, logWithContext } from './middleware/logging'
 import { renderer } from './renderer'
@@ -37,6 +38,12 @@ const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV
 // ロギングミドルウェアの設定（CORSの後、他のミドルウェアの前に適用）
 app.use('/api/*', loggingMiddleware(process.env as Record<string, string>))
 
+// 開発環境用のデータベースインスタンスを一度だけ作成
+let devDb: AnyDatabase | null = null
+if (isDev) {
+	devDb = createDevSqliteDatabase() as unknown as AnyDatabase
+}
+
 // ミドルウェア: データベース接続を設定
 app.use('/api/*', async (c, next) => {
 	try {
@@ -46,10 +53,18 @@ app.use('/api/*', async (c, next) => {
 			path: c.req.path,
 		})
 
-		// 開発環境・本番環境の両方でCloudflare D1を使用
-		// wrangler dev では c.env.DB がローカルD1インスタンスを提供
-		const db = createDatabase(c.env.DB)
-		logWithContext(c, 'debug', 'D1 database created successfully')
+		let db: AnyDatabase
+		
+		if (isDev) {
+			// 開発環境ではローカルSQLiteを使用
+			db = devDb!
+			logWithContext(c, 'debug', 'Local SQLite database used (development)')
+		} else {
+			// 本番環境ではCloudflare D1を使用
+			db = createDatabase(c.env.DB)
+			logWithContext(c, 'debug', 'D1 database created successfully (production)')
+		}
+		
 		c.set('db', db)
 		logWithContext(c, 'debug', 'Database set in context')
 

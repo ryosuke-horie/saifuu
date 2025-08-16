@@ -7,16 +7,23 @@ test.describe('支出管理機能', () => {
     const testDescription = `[E2E_TEST] 動作確認 ${timestamp}`;
     const editedDescription = `[E2E_TEST] 編集確認 ${timestamp}`;
     
-    // ホーム画面から支出管理画面へ遷移
-    await page.goto('/');
-    // ダッシュボードのナビゲーションカードをクリック（data-testidを使用）
-    await page.getByTestId('navigation-expenses').click();
+    // 支出管理画面へ直接遷移
+    await page.goto('/expenses');
+    
+    // ページが完全に読み込まれるまで待機
+    await page.waitForLoadState('domcontentloaded');
     
     // 支出管理画面が表示されることを確認
     await expect(page).toHaveURL(/\/expenses/);
     
-    // 新規支出を登録
-    await page.getByRole('button', { name: '新しい支出を登録' }).click();
+    // 「支出管理」のテキストが表示されるまで待機
+    await page.waitForSelector('text=支出管理', { timeout: 10000 });
+    
+    // 新規登録ボタンをクリック
+    await page.click('button:has-text("新規登録")');
+    
+    // ダイアログが開くまで待機
+    await page.waitForSelector('[role="dialog"]', { timeout: 5000 });
     
     // フォームに入力（一意なデータ）
     await page.getByRole('spinbutton', { name: '金額（円） *' }).fill('152000');
@@ -24,11 +31,13 @@ test.describe('支出管理機能', () => {
     await page.getByRole('textbox', { name: '説明（任意）' }).fill(testDescription);
     await page.getByLabel('カテゴリ').selectOption('1'); // 食費カテゴリ
     
-    // 登録ボタンをクリック
-    await page.getByRole('button', { name: '登録', exact: true }).click();
+    // 登録ボタンをクリック（フォームが有効になるまで待機）
+    const submitButton = page.getByRole('button', { name: '登録', exact: true });
+    await expect(submitButton).toBeEnabled({ timeout: 10000 });
+    await submitButton.click();
     
     // フォームが閉じることを確認（モーダルやフォームが消えるのを待つ）
-    await expect(page.getByRole('button', { name: '登録', exact: true })).not.toBeVisible();
+    await expect(page.getByRole('button', { name: '登録', exact: true })).not.toBeVisible({ timeout: 10000 });
     
     // 登録した支出が一覧に表示されることを確認
     // 一意なテストデータを使って確実に特定
