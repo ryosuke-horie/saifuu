@@ -145,10 +145,7 @@ vi.mock("@/lib/api/categories/api", () => ({
 
 // テストではSuspenseラップなしのコンテンツコンポーネントを直接使用
 import { Suspense } from "react";
-import { useIncomeCategories } from "@/hooks/useIncomeCategories";
 import { useIncomeFilters } from "@/hooks/useIncomeFilters";
-import { useIncomeOperations } from "@/hooks/useIncomeOperations";
-import { useIncomeStatistics } from "@/hooks/useIncomeStatistics";
 import { useIncomeStats } from "@/hooks/useIncomeStats";
 import { useIncomesWithPagination } from "@/hooks/useIncomesWithPagination";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -435,7 +432,7 @@ describe("IncomePageContent 統合テスト", () => {
 
 			if (resetButton) {
 				await user.click(resetButton);
-				
+
 				// リセット関数が呼び出されたことを検証
 				await waitFor(() => {
 					expect(mockResetFilters).toHaveBeenCalled();
