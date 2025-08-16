@@ -30,14 +30,14 @@ export type ErrorType = "network" | "server" | "timeout" | "unknown";
 
 // プロパティの型定義
 export interface ExpenseStatsProps {
-	stats: BaseStatsData | ExtendedStatsData | null | undefined;
-	isLoading?: boolean;
-	error?: string | null;
-	errorType?: ErrorType;
-	className?: string;
-	onRefresh?: () => void;
-	onRetry?: () => void;
-	useSkeletonLoader?: boolean; // スケルトンローダーを使用するかどうか
+	readonly stats: BaseStatsData | ExtendedStatsData | null | undefined;
+	readonly isLoading?: boolean;
+	readonly error?: string | null;
+	readonly errorType?: ErrorType;
+	readonly className?: string;
+	readonly onRefresh?: () => void;
+	readonly onRetry?: () => void;
+	readonly useSkeletonLoader?: boolean; // スケルトンローダーを使用するかどうか
 }
 
 // ===============================
