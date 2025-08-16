@@ -1,36 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useIncomeCategories } from "@/hooks/useIncomeCategories";
 import { useIncomeFilters } from "@/hooks/useIncomeFilters";
+import { useIncomeOperations } from "@/hooks/useIncomeOperations";
+import { useIncomeStatistics } from "@/hooks/useIncomeStatistics";
 import { useIncomeStats } from "@/hooks/useIncomeStats";
 import { useIncomesWithPagination } from "@/hooks/useIncomesWithPagination";
 import { useIsMobile } from "@/hooks/useMediaQuery";
-import { fetchCategories } from "@/lib/api/categories/api";
-import { apiClient } from "@/lib/api/client";
-import type { TransactionWithCategory } from "@/lib/api/types";
-import {
-	calculateMonthOverMonth,
-	calculatePercentage,
-} from "@/lib/utils/calculations";
-import type { Category } from "@/types/category";
-import type {
-	IncomeCategoryData,
-	IncomeFormData,
-	IncomeStats,
-} from "@/types/income";
+import { calculatePercentage } from "@/lib/utils/calculations";
+import type { IncomeCategoryData } from "@/types/income";
 import { DeleteConfirmDialog } from "../../components/income/DeleteConfirmDialog";
 import { IncomeCategoryChart } from "../../components/income/IncomeCategoryChart";
 import { IncomeFilters } from "../../components/income/IncomeFilters";
 import { IncomeForm } from "../../components/income/IncomeForm";
 import { IncomeList } from "../../components/income/IncomeList";
+import { IncomePageLayout } from "../../components/income/IncomePageLayout";
 import { IncomeStats as IncomeStatsComponent } from "../../components/income/IncomeStats";
 import { Pagination } from "../../components/ui/Pagination";
 
 /**
  * 収入管理ページのメインコンテンツ
  *
- * useSearchParamsを使用するため、Suspenseでラップする必要がある
- * すべてのロジックとUIをこのコンポーネントに含める
+ * 機能別にカスタムフックに分離してコンポーネントサイズを最適化
+ * 単一責任の原則に従い、UIの組み立てのみに集中
  */
 export function IncomePageContent() {
 	// レスポンシブ対応
@@ -53,17 +46,28 @@ export function IncomePageContent() {
 		sortOrder: "desc",
 	});
 
-	// UI状態の管理
-	const [categories, setCategories] = useState<Category[]>([]);
-	const [editingIncome, setEditingIncome] =
-		useState<TransactionWithCategory | null>(null);
-	const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-	const [operationLoading, setOperationLoading] = useState(false);
+	// カテゴリ管理
+	const { categories } = useIncomeCategories();
 
-	// 統計データの管理
-	const [statsData, setStatsData] = useState<IncomeStats | null>(null);
-	const [statsLoading, setStatsLoading] = useState(true);
-	const [allIncomes, setAllIncomes] = useState<TransactionWithCategory[]>([]);
+	// 統計データ管理
+	const { statsData, statsLoading, allIncomes, refetchStats } =
+		useIncomeStatistics();
+
+	// CRUD操作管理
+	const {
+		editingIncome,
+		deleteTargetId,
+		operationLoading,
+		handleSubmit,
+		handleEdit,
+		handleDelete,
+		handleDeleteConfirm,
+		handleDeleteCancel,
+		handleEditCancel,
+	} = useIncomeOperations({
+		onOperationComplete: refetch,
+		onStatsRefresh: refetchStats,
+	});
 
 	// フィルタリング機能
 	const { filters, updateFilters } = useIncomeFilters({
@@ -76,117 +80,6 @@ export function IncomePageContent() {
 
 	// 収入統計の計算
 	const stats = useIncomeStats(allIncomes, statsLoading);
-
-	// 統計データの取得
-	const fetchStatsData = useCallback(async () => {
-		try {
-			setStatsLoading(true);
-			// 全収入データを取得して統計計算用に使用
-			// API は拡張された取引データ（カテゴリ情報付き）を返すはず
-			const response = await apiClient.transactions.list({
-				type: "income",
-				limit: 1000, // 統計計算のため全データ取得
-			});
-			// APIが既にカテゴリ情報を含む拡張データを返すことを想定
-			const incomesWithCategory = response.data as TransactionWithCategory[];
-			setAllIncomes(incomesWithCategory);
-
-			// 統計データの計算
-			const now = new Date();
-			const currentYear = now.getFullYear();
-			const currentMonth = now.getMonth();
-			const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-			const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-
-			// 今月の収入
-			const currentMonthIncomes = incomesWithCategory.filter((t) => {
-				const date = new Date(t.date);
-				return (
-					date.getFullYear() === currentYear && date.getMonth() === currentMonth
-				);
-			});
-			const currentMonthTotal = currentMonthIncomes.reduce(
-				(sum, t) => sum + t.amount,
-				0,
-			);
-
-			// 先月の収入
-			const lastMonthIncomes = incomesWithCategory.filter((t) => {
-				const date = new Date(t.date);
-				return (
-					date.getFullYear() === lastMonthYear && date.getMonth() === lastMonth
-				);
-			});
-			const lastMonthTotal = lastMonthIncomes.reduce(
-				(sum, t) => sum + t.amount,
-				0,
-			);
-
-			// 今年の収入
-			const currentYearIncomes = incomesWithCategory.filter((t) => {
-				const date = new Date(t.date);
-				return date.getFullYear() === currentYear;
-			});
-			const currentYearTotal = currentYearIncomes.reduce(
-				(sum, t) => sum + t.amount,
-				0,
-			);
-
-			// 前月比の計算
-			const monthOverMonth = calculateMonthOverMonth(
-				currentMonthTotal,
-				lastMonthTotal,
-			);
-
-			// カテゴリ別内訳の計算
-			const categoryMap = new Map<string, { name: string; amount: number }>();
-			for (const income of currentMonthIncomes) {
-				if (income.categoryId && income.category) {
-					const existing = categoryMap.get(income.categoryId) || {
-						name: income.category.name,
-						amount: 0,
-					};
-					existing.amount += income.amount;
-					categoryMap.set(income.categoryId, existing);
-				}
-			}
-
-			const categoryBreakdown = Array.from(categoryMap.entries()).map(
-				([categoryId, data]) => ({
-					categoryId,
-					name: data.name,
-					amount: data.amount,
-					percentage: calculatePercentage(data.amount, currentMonthTotal),
-				}),
-			);
-
-			setStatsData({
-				currentMonth: currentMonthTotal,
-				lastMonth: lastMonthTotal,
-				currentYear: currentYearTotal,
-				monthOverMonth,
-				categoryBreakdown,
-			});
-		} catch (err) {
-			console.error("統計データの取得に失敗しました", err);
-		} finally {
-			setStatsLoading(false);
-		}
-	}, []);
-
-	// カテゴリデータの取得
-	const fetchCategoriesData = useCallback(async () => {
-		try {
-			const response = await fetchCategories();
-			// 収入カテゴリのみフィルタリング
-			const incomeCategories = response.filter(
-				(category) => category.type === "income",
-			);
-			setCategories(incomeCategories);
-		} catch (err) {
-			console.error("カテゴリの取得に失敗しました", err);
-		}
-	}, []);
 
 	// カテゴリ別グラフ用データの準備
 	const categoryChartData = useMemo<IncomeCategoryData[]>(() => {
@@ -219,82 +112,8 @@ export function IncomePageContent() {
 		}));
 	}, [incomes]);
 
-	// 初期データ取得
-	useEffect(() => {
-		fetchCategoriesData();
-		fetchStatsData();
-	}, [fetchCategoriesData, fetchStatsData]);
-
-	// フォーム送信ハンドラー
-	const handleSubmit = async (data: IncomeFormData) => {
-		try {
-			setOperationLoading(true);
-			// typeフィールドを除外してAPIに渡す
-			const { type: _, ...apiData } = data;
-
-			if (editingIncome) {
-				await apiClient.transactions.update(editingIncome.id, {
-					amount: apiData.amount,
-					date: apiData.date,
-					description: apiData.description || null,
-					categoryId: apiData.categoryId || null,
-				});
-			} else {
-				await apiClient.transactions.create({
-					type: "income",
-					amount: apiData.amount,
-					date: apiData.date,
-					description: apiData.description || null,
-					categoryId: apiData.categoryId || null,
-				});
-			}
-			setEditingIncome(null);
-			// データを再取得
-			await refetch();
-			await fetchStatsData();
-		} catch (err) {
-			console.error("操作に失敗しました", err);
-		} finally {
-			setOperationLoading(false);
-		}
-	};
-
-	// 編集ハンドラー
-	const handleEdit = (transaction: TransactionWithCategory) => {
-		setEditingIncome(transaction);
-	};
-
-	// 削除ハンドラー
-	const handleDelete = (id: string) => {
-		setDeleteTargetId(id);
-	};
-
-	// 削除確認ハンドラー
-	const handleDeleteConfirm = async () => {
-		if (!deleteTargetId) return;
-		try {
-			setOperationLoading(true);
-			await apiClient.transactions.delete(deleteTargetId);
-			setDeleteTargetId(null);
-			// データを再取得
-			await refetch();
-			await fetchStatsData();
-		} catch (err) {
-			console.error("削除に失敗しました", err);
-		} finally {
-			setOperationLoading(false);
-		}
-	};
-
-	// 削除キャンセルハンドラー
-	const handleDeleteCancel = () => {
-		setDeleteTargetId(null);
-	};
-
 	return (
-		<div className="container mx-auto p-4">
-			<h1 className="text-2xl font-bold mb-6">収入管理</h1>
-
+		<IncomePageLayout>
 			{/* 収入統計カード（全幅） */}
 			<div className="mb-8">
 				<IncomeStatsComponent
@@ -342,7 +161,7 @@ export function IncomePageContent() {
 				</h2>
 				<IncomeForm
 					onSubmit={handleSubmit}
-					onCancel={() => setEditingIncome(null)}
+					onCancel={handleEditCancel}
 					isSubmitting={operationLoading}
 					initialData={
 						editingIncome
@@ -405,6 +224,6 @@ export function IncomePageContent() {
 				onCancel={handleDeleteCancel}
 				isLoading={operationLoading}
 			/>
-		</div>
+		</IncomePageLayout>
 	);
 }

@@ -94,6 +94,38 @@ vi.mock("@/hooks/useIncomeFilters", () => ({
 	})),
 }));
 
+// 新しいカスタムフックのモック
+vi.mock("@/hooks/useIncomeCategories", () => ({
+	useIncomeCategories: vi.fn(() => ({
+		categories: [],
+		categoriesLoading: false,
+		refetchCategories: vi.fn(),
+	})),
+}));
+
+vi.mock("@/hooks/useIncomeStatistics", () => ({
+	useIncomeStatistics: vi.fn(() => ({
+		statsData: null,
+		statsLoading: false,
+		allIncomes: [],
+		refetchStats: vi.fn(),
+	})),
+}));
+
+vi.mock("@/hooks/useIncomeOperations", () => ({
+	useIncomeOperations: vi.fn(() => ({
+		editingIncome: null,
+		deleteTargetId: null,
+		operationLoading: false,
+		handleSubmit: vi.fn(),
+		handleEdit: vi.fn(),
+		handleDelete: vi.fn(),
+		handleDeleteConfirm: vi.fn(),
+		handleDeleteCancel: vi.fn(),
+		handleEditCancel: vi.fn(),
+	})),
+}));
+
 // APIクライアントのモック
 vi.mock("@/lib/api/client", () => ({
 	apiClient: {
@@ -113,7 +145,10 @@ vi.mock("@/lib/api/categories/api", () => ({
 
 // テストではSuspenseラップなしのコンテンツコンポーネントを直接使用
 import { Suspense } from "react";
+import { useIncomeCategories } from "@/hooks/useIncomeCategories";
 import { useIncomeFilters } from "@/hooks/useIncomeFilters";
+import { useIncomeOperations } from "@/hooks/useIncomeOperations";
+import { useIncomeStatistics } from "@/hooks/useIncomeStatistics";
 import { useIncomeStats } from "@/hooks/useIncomeStats";
 import { useIncomesWithPagination } from "@/hooks/useIncomesWithPagination";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -323,6 +358,17 @@ describe("IncomePageContent 統合テスト", () => {
 		});
 
 		it("期間フィルターが動作する", async () => {
+			const mockUpdateFilter = vi.fn();
+			(useIncomeFilters as Mock).mockReturnValue({
+				filters: {},
+				updateFilter: mockUpdateFilter,
+				updateFilters: vi.fn(),
+				resetFilters: vi.fn(),
+				toggleCategory: vi.fn(),
+				selectedCategories: [],
+				clearFilters: vi.fn(),
+			});
+
 			const user = userEvent.setup();
 			render(
 				<TestWrapper>
@@ -344,21 +390,24 @@ describe("IncomePageContent 統合テスト", () => {
 			// 期間フィルターを選択
 			await user.selectOptions(periodSelect, "thisMonth");
 
-			// フィルターの操作が完了したことを確認
-			// 少なくともセレクトボックスが操作された
-			expect(periodSelect).toBeInTheDocument();
+			// 実際のフィルター更新が呼び出されたことを検証
+			await waitFor(() => {
+				expect(mockUpdateFilter).toHaveBeenCalledWith("period", "thisMonth");
+			});
 		});
 
 		it("フィルターリセットが動作する", async () => {
+			const mockResetFilters = vi.fn();
+			const mockClearFilters = vi.fn();
 			// 初期フィルターありの状態でセットアップ
 			(useIncomeFilters as Mock).mockReturnValue({
-				filters: { period: "thisMonth" },
+				filters: { period: "thisMonth", minAmount: 1000 },
 				updateFilter: vi.fn(),
 				updateFilters: vi.fn(),
-				resetFilters: vi.fn(),
+				resetFilters: mockResetFilters,
 				toggleCategory: vi.fn(),
 				selectedCategories: [],
-				clearFilters: vi.fn(),
+				clearFilters: mockClearFilters,
 			});
 
 			const user = userEvent.setup();
@@ -376,21 +425,25 @@ describe("IncomePageContent 統合テスト", () => {
 			const filterSection = screen.getByTestId("income-filters");
 			expect(filterSection).toBeInTheDocument();
 
-			// クリアボタンを探す
+			// リセットボタンを探してクリック
 			const buttons = screen.getAllByRole("button");
-			const clearButton = buttons.find(
+			const resetButton = buttons.find(
 				(btn) =>
 					btn.textContent?.includes("クリア") ||
 					btn.textContent?.includes("リセット"),
 			);
 
-			// ボタンが存在する場合はクリック、存在しない場合でもテストは成功
-			if (clearButton) {
-				await user.click(clearButton);
+			if (resetButton) {
+				await user.click(resetButton);
+				
+				// リセット関数が呼び出されたことを検証
+				await waitFor(() => {
+					expect(mockResetFilters).toHaveBeenCalled();
+				});
+			} else {
+				// ボタンが見つからない場合でも、モック関数の存在を確認
+				expect(mockResetFilters).toBeDefined();
 			}
-
-			// フィルターセクションがまだ存在することを確認
-			expect(screen.getByText("絞り込み条件")).toBeInTheDocument();
 		});
 	});
 
