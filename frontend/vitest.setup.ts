@@ -1,5 +1,8 @@
 import "@testing-library/jest-dom";
 
+// Ensure all date operations run in JST to avoid timezone-related test failures
+process.env.TZ = "Asia/Tokyo";
+
 // React Testing Library の act をVitest環境で利用可能にする
 // 参考: https://github.com/testing-library/react-testing-library/issues/1061
 (global as any).IS_REACT_ACT_ENVIRONMENT = true;

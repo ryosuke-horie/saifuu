@@ -27,8 +27,11 @@ export const PERIOD_OPTIONS = [
  * 金額入力時のエラーメッセージ定義
  */
 export const VALIDATION_MESSAGES = {
-	INVALID_NUMBER: "有効な数値を入力してください",
-	NEGATIVE_AMOUNT: "金額は0以上の数値を入力してください",
+        INVALID_NUMBER: "有効な数値を入力してください",
+        NEGATIVE_MIN: "最小金額は0以上を指定してください",
+        NEGATIVE_MAX: "最大金額は0以上を指定してください",
+        MIN_GREATER_THAN_MAX: "最小金額は最大金額以下を指定してください",
+        AMOUNT_TOO_LARGE: "金額が大きすぎます",
 } as const;
 
 /**

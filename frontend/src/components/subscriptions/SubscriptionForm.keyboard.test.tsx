@@ -145,28 +145,41 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			);
 
 			// 必須フィールドを入力
-			const nameInput = screen.getByLabelText(/サービス名/);
-			await user.type(nameInput, "Spotify");
-			await user.type(screen.getByLabelText(/料金/), "980");
-			await user.type(screen.getByLabelText(/次回請求日/), "2025-08-15");
-			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "2");
+                        const nameInput = screen.getByLabelText(/サービス名/);
+                        await user.type(nameInput, "Spotify");
+                        await user.type(screen.getByLabelText(/料金/), "980");
+
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        const nextBillingDate = tomorrow
+                                .toISOString()
+                                .split("T")[0];
+                        await user.type(
+                                screen.getByLabelText(/次回請求日/),
+                                nextBillingDate,
+                        );
+                        await user.selectOptions(screen.getByLabelText(/カテゴリ/), "2");
 
 			// いずれかのフィールドからCtrl+Enterを実行
 			// フォーカスをnameInputに維持したまま
 			nameInput.focus();
 
 			// Windows/Linux用のショートカット (Ctrl+Enter)
-			await user.keyboard("{Control>}{Enter}{/Control}");
+                        await user.keyboard("{Control>}{Enter}{/Control}");
 
-			expect(mockOnSubmit).toHaveBeenCalledWith(
-				expect.objectContaining({
-					name: "Spotify",
-					amount: 980,
-					nextBillingDate: "2025-08-15",
-					categoryId: "2",
-				}),
-			);
-		});
+                        await waitFor(() => {
+                                expect(mockOnSubmit).toHaveBeenCalled();
+                        });
+
+                        expect(mockOnSubmit).toHaveBeenCalledWith(
+                                expect.objectContaining({
+                                        name: "Spotify",
+                                        amount: 980,
+                                        nextBillingDate,
+                                        categoryId: "2",
+                                }),
+                        );
+                });
 
 		it("任意のフィールドからCmd+Enter（Mac）でフォームを送信できる", async () => {
 			const user = userEvent.setup();
