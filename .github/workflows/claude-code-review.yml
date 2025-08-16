@@ -1,21 +1,17 @@
 name: Claude Code Review
 
 on:
-  issue_comment:
-    types: [created]
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   claude-review:
-    # PRコメントで@claudeがメンションされた場合のみ実行
-    if: |
-      github.event.issue.pull_request &&
-      contains(github.event.comment.body, '@claude')
-    
+    # PR作成または更新時に実行
     runs-on: self-hosted
     permissions:
       contents: read
       pull-requests: write  # コメント作成のために write に変更
-      issues: write        # issue_comment イベントでコメント作成に必要
+      issues: write        # PRのコメント作成に必要
       id-token: write
     
     steps:
@@ -32,9 +28,9 @@ jobs:
           
           allowed_tools: "mcp__github__get_pull_request_diff"
           
-          # コメントトリガーによるレビュー用のカスタム指示
+          # PR作成・更新時のレビュー用のカスタム指示
           custom_instructions: |
-            ユーザーから @claude メンションでレビューが要求されました。
+            プルリクエストが作成または更新されたため、自動的にレビューを実行します。
             
             このプルリクエスト（PR）をレビューしてください。作業は次の手順に沿って進めてください：
             
