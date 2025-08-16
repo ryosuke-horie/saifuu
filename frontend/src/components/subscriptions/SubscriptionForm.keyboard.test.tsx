@@ -148,7 +148,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			const nameInput = screen.getByLabelText(/サービス名/);
 			await user.type(nameInput, "Spotify");
 			await user.type(screen.getByLabelText(/料金/), "980");
-			await user.type(screen.getByLabelText(/次回請求日/), "2025-08-15");
+			await user.type(screen.getByLabelText(/次回請求日/), "2025-08-17");
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "2");
 
 			// いずれかのフィールドからCtrl+Enterを実行
@@ -158,14 +158,17 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			// Windows/Linux用のショートカット (Ctrl+Enter)
 			await user.keyboard("{Control>}{Enter}{/Control}");
 
-			expect(mockOnSubmit).toHaveBeenCalledWith(
-				expect.objectContaining({
-					name: "Spotify",
-					amount: 980,
-					nextBillingDate: "2025-08-15",
-					categoryId: "2",
-				}),
-			);
+			// フォームが送信されるまで待つ
+			await waitFor(() => {
+				expect(mockOnSubmit).toHaveBeenCalledWith(
+					expect.objectContaining({
+						name: "Spotify",
+						amount: 980,
+						nextBillingDate: "2025-08-17",
+						categoryId: "2",
+					}),
+				);
+			});
 		});
 
 		it("任意のフィールドからCmd+Enter（Mac）でフォームを送信できる", async () => {
@@ -192,14 +195,17 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			// Mac用のショートカット (Cmd+Enter)
 			await user.keyboard("{Meta>}{Enter}{/Meta}");
 
-			expect(mockOnSubmit).toHaveBeenCalledWith(
-				expect.objectContaining({
-					name: "Amazon Prime",
-					amount: 500,
-					nextBillingDate: "2025-09-01",
-					categoryId: "1",
-				}),
-			);
+			// フォームが送信されるまで待つ
+			await waitFor(() => {
+				expect(mockOnSubmit).toHaveBeenCalledWith(
+					expect.objectContaining({
+						name: "Amazon Prime",
+						amount: 500,
+						nextBillingDate: "2025-09-01",
+						categoryId: "1",
+					}),
+				);
+			});
 		});
 
 		it("Escapeキーでフォームをキャンセルできる", async () => {
