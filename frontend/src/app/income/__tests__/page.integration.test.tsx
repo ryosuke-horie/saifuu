@@ -325,7 +325,7 @@ describe("IncomePageContent 統合テスト", () => {
 		it("期間フィルターが動作する", async () => {
 			const mockUpdateFilters = vi.fn();
 			const mockRefetch = vi.fn();
-			
+
 			// useIncomeFiltersフックをモック
 			(useIncomeFilters as Mock).mockReturnValue({
 				filters: {},
@@ -336,7 +336,7 @@ describe("IncomePageContent 統合テスト", () => {
 				selectedCategories: [],
 				clearFilters: vi.fn(),
 			});
-			
+
 			// useIncomesWithPaginationフックをモック
 			setupHookMocks({
 				incomes: mockIncomes,
@@ -359,16 +359,19 @@ describe("IncomePageContent 統合テスト", () => {
 			await user.selectOptions(periodSelect, "thisMonth");
 
 			// onChangeイベントが発火し、updateFiltersが呼ばれるはず
-			await waitFor(() => {
-				// updateFiltersまたはrefetchが呼ばれることを確認
-				expect(mockUpdateFilters).toHaveBeenCalled();
-			}, { timeout: 3000 });
+			await waitFor(
+				() => {
+					// updateFiltersまたはrefetchが呼ばれることを確認
+					expect(mockUpdateFilters).toHaveBeenCalled();
+				},
+				{ timeout: 3000 },
+			);
 		});
 
 		it("フィルターリセットが動作する", async () => {
 			const mockUpdateFilters = vi.fn();
 			const mockClearFilters = vi.fn();
-			
+
 			(useIncomeFilters as Mock).mockReturnValue({
 				filters: { period: "thisMonth" },
 				updateFilter: vi.fn(),
@@ -391,21 +394,25 @@ describe("IncomePageContent 統合テスト", () => {
 			});
 
 			// リセットボタンを探す - より具体的なセレクタを使用
-			const resetButtons = screen.getAllByRole('button');
-			const resetButton = resetButtons.find(btn => 
-				btn.textContent?.includes('リセット') || 
-				btn.textContent?.includes('クリア')
+			const resetButtons = screen.getAllByRole("button");
+			const resetButton = resetButtons.find(
+				(btn) =>
+					btn.textContent?.includes("リセット") ||
+					btn.textContent?.includes("クリア"),
 			);
 
 			if (resetButton) {
 				await user.click(resetButton);
 				// フィルター更新関数が呼び出されることを確認
-				await waitFor(() => {
-					expect(mockUpdateFilters).toHaveBeenCalled();
-				}, { timeout: 3000 });
+				await waitFor(
+					() => {
+						expect(mockUpdateFilters).toHaveBeenCalled();
+					},
+					{ timeout: 3000 },
+				);
 			} else {
 				// リセットボタンが見つからない場合はテストをスキップ
-				console.warn('Reset button not found in the DOM');
+				console.warn("Reset button not found in the DOM");
 				expect(mockUpdateFilters).toHaveBeenCalled();
 			}
 		});
@@ -445,7 +452,7 @@ describe("IncomePageContent 統合テスト", () => {
 				createdAt: "2024-01-30T00:00:00Z",
 				updatedAt: "2024-01-30T00:00:00Z",
 			});
-			
+
 			// 統計データ取得のモックも設定
 			(apiClient.transactions.list as Mock).mockResolvedValue({
 				data: [...mockIncomes],
@@ -470,7 +477,7 @@ describe("IncomePageContent 統合テスト", () => {
 
 			// より安定したセレクタを使用
 			// 金額入力フィールドを探す - ラベルで探すか、プレースホルダーで探す
-			const amountInputs = screen.getAllByRole('spinbutton'); // number inputの場合
+			const amountInputs = screen.getAllByRole("spinbutton"); // number inputの場合
 			if (amountInputs.length > 0) {
 				const amountInput = amountInputs[0];
 				await user.clear(amountInput);
@@ -478,10 +485,11 @@ describe("IncomePageContent 統合テスト", () => {
 			}
 
 			// 日付入力フィールド
-			const dateInputs = screen.getAllByRole('textbox');
-			const dateInput = dateInputs.find(input => 
-				input.getAttribute('type') === 'date' || 
-				input.getAttribute('placeholder')?.includes('日付')
+			const dateInputs = screen.getAllByRole("textbox");
+			const dateInput = dateInputs.find(
+				(input) =>
+					input.getAttribute("type") === "date" ||
+					input.getAttribute("placeholder")?.includes("日付"),
 			);
 			if (dateInput) {
 				await user.clear(dateInput);
@@ -489,18 +497,23 @@ describe("IncomePageContent 統合テスト", () => {
 			}
 
 			// 登録ボタンをクリック - テキストで探す
-			const submitButton = screen.getByRole('button', { name: /登録|保存|追加/i });
+			const submitButton = screen.getByRole("button", {
+				name: /登録|保存|追加/i,
+			});
 			await user.click(submitButton);
 
 			// APIが呼び出されることを確認
-			await waitFor(() => {
-				expect(apiClient.transactions.create).toHaveBeenCalledWith(
-					expect.objectContaining({
-						type: "income",
-						amount: 80000,
-					})
-				);
-			}, { timeout: 3000 });
+			await waitFor(
+				() => {
+					expect(apiClient.transactions.create).toHaveBeenCalledWith(
+						expect.objectContaining({
+							type: "income",
+							amount: 80000,
+						}),
+					);
+				},
+				{ timeout: 3000 },
+			);
 		});
 
 		it("収入を編集できる", async () => {
@@ -741,7 +754,7 @@ describe("IncomePageContent 統合テスト", () => {
 				selectedCategories: [],
 				clearFilters: vi.fn(),
 			});
-			
+
 			// 統計データ取得のモックも設定
 			(apiClient.transactions.list as Mock).mockResolvedValue({
 				data: [...mockIncomes],
@@ -781,16 +794,16 @@ describe("IncomePageContent 統合テスト", () => {
 			});
 
 			// より安定したセレクタを使用して入力
-			const amountInputs = screen.getAllByRole('spinbutton');
+			const amountInputs = screen.getAllByRole("spinbutton");
 			if (amountInputs.length > 0) {
 				await user.clear(amountInputs[0]);
 				await user.type(amountInputs[0], "250000");
 			}
-			
+
 			// 日付も入力
-			const dateInputs = screen.getAllByRole('textbox');
-			const dateInput = dateInputs.find(input => 
-				input.getAttribute('type') === 'date'
+			const dateInputs = screen.getAllByRole("textbox");
+			const dateInput = dateInputs.find(
+				(input) => input.getAttribute("type") === "date",
 			);
 			if (dateInput) {
 				await user.clear(dateInput);
@@ -798,23 +811,31 @@ describe("IncomePageContent 統合テスト", () => {
 			}
 
 			// 登録ボタンをクリック
-			const submitButton = screen.getByRole('button', { name: /登録|保存|追加/i });
+			const submitButton = screen.getByRole("button", {
+				name: /登録|保存|追加/i,
+			});
 			await user.click(submitButton);
 
 			// 3. APIが呼び出されることを確認
-			await waitFor(() => {
-				expect(apiClient.transactions.create).toHaveBeenCalledWith(
-					expect.objectContaining({
-						type: "income",
-						amount: 250000,
-					})
-				);
-			}, { timeout: 3000 });
-			
+			await waitFor(
+				() => {
+					expect(apiClient.transactions.create).toHaveBeenCalledWith(
+						expect.objectContaining({
+							type: "income",
+							amount: 250000,
+						}),
+					);
+				},
+				{ timeout: 3000 },
+			);
+
 			// refetchも呼ばれることを確認
-			await waitFor(() => {
-				expect(mockRefetch).toHaveBeenCalled();
-			}, { timeout: 3000 });
+			await waitFor(
+				() => {
+					expect(mockRefetch).toHaveBeenCalled();
+				},
+				{ timeout: 3000 },
+			);
 		});
 	});
 });
