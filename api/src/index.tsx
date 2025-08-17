@@ -84,8 +84,17 @@ app.use('/api/*', async (c, next) => {
 			logWithContext(c, 'debug', 'Local SQLite database used (development)')
 		} else {
 			// 本番環境ではCloudflare D1を使用
+			if (!c.env.DB) {
+				logWithContext(c, 'error', 'D1 database binding not found', {
+					availableBindings: Object.keys(c.env || {}),
+				})
+				throw new Error('D1 database binding (DB) not found in environment')
+			}
 			db = createDatabase(c.env.DB)
-			logWithContext(c, 'debug', 'D1 database created successfully (production)')
+			logWithContext(c, 'debug', 'D1 database created successfully (production)', {
+				databaseBinding: 'DB',
+				hasDatabase: !!c.env.DB,
+			})
 		}
 
 		c.set('db', db)

@@ -322,6 +322,40 @@ export function createCrudHandlers<
 					throw new Error('Failed to create item - no data returned')
 				}
 
+				// 本番環境（Cloudflare D1）では、データが実際に永続化されたことを確認
+				// returning()が成功してもコミットが完了していない可能性があるため
+				if (!testDatabase) {
+					logWithContext(c, 'debug', `${resourceName}作成後の検証を実行`, {
+						[`${resourceName}Id`]: createdItem.id,
+						resource: resourceName,
+					})
+
+					// 作成されたアイテムを再度取得して確認
+					// biome-ignore lint/suspicious/noExplicitAny: テーブルの型が動的なため
+					const verifyResult = await db
+						.select()
+						.from(table)
+						.where(eq((table as any).id, createdItem.id))
+						.limit(1)
+
+					const verifiedItem = extractResult<TNew & { id: number }>(verifyResult)
+
+					if (!verifiedItem) {
+						logWithContext(c, 'error', `${resourceName}の永続化に失敗`, {
+							[`${resourceName}Id`]: createdItem.id,
+							resource: resourceName,
+							operationType: 'write',
+							issue: 'Item returned by insert but not found in database',
+						})
+						throw new Error(`Failed to persist ${resourceName} to database`)
+					}
+
+					logWithContext(c, 'debug', `${resourceName}の永続化を確認`, {
+						[`${resourceName}Id`]: verifiedItem.id,
+						resource: resourceName,
+					})
+				}
+
 				logWithContext(c, 'info', `${resourceName}作成が完了`, {
 					[`${resourceName}Id`]: createdItem.id,
 					resource: resourceName,
