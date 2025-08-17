@@ -100,6 +100,8 @@ jobs:
       - name: Setup E2E Database
         working-directory: api
         run: |
+          # データベースディレクトリを作成
+          mkdir -p db
           # E2E用データベースファイルを作成
           touch db/e2e-test.db
           # E2E用の環境でマイグレーションを実行
