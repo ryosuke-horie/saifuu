@@ -32,11 +32,13 @@ app.use('/api/*', cors({
 const E2E_DB_PATH = './e2e-test.db';
 console.log('=== E2E Server Database Initialization ===');
 
-// 既存のE2Eデータベースがあれば削除
+// 既存のE2Eデータベースがあれば安全にクローズ
 try {
-  SQLiteDatabase(E2E_DB_PATH).close();
+  const existingDb = new SQLiteDatabase(E2E_DB_PATH);
+  existingDb.close();
+  console.log('Previous E2E database closed successfully');
 } catch (error) {
-  // ファイルが存在しない場合は無視
+  console.log('Previous E2E database not found or already closed');
 }
 
 // 新しいデータベースを作成

@@ -33,11 +33,10 @@ app.use(
 // 開発環境判定（Cloudflare Workers対応）
 // 本番環境では import.meta.env が存在しないため、安全にチェック
 const isDev = (() => {
-	try {
-		return import.meta.env?.DEV === true || import.meta.env?.NODE_ENV === 'development' || false
-	} catch {
-		return false
+	if (typeof import.meta?.env === 'undefined') {
+		return false; // Cloudflare Workers環境
 	}
+	return import.meta.env.DEV === true || import.meta.env.NODE_ENV === 'development';
 })()
 
 // ロギングミドルウェアの設定（CORSの後、他のミドルウェアの前に適用）

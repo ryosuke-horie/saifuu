@@ -49,8 +49,9 @@ test.describe('支出管理機能', () => {
     console.log('API Response Status:', response.status());
     console.log('API Response URL:', response.url());
     
-    // API応答を待つ
-    await page.waitForTimeout(1000);
+    // API応答の完了を待つ
+    await expect(response.status()).toBe(200);
+    await page.waitForLoadState('networkidle', { timeout: 5000 });
     
     // フォームが閉じることを確認（ダイアログが消えるのを待つ）
     await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });

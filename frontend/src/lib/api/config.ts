@@ -77,14 +77,15 @@ function getBaseUrl(environment: Environment): string {
 		case "production":
 			// 本番環境: Cloudflare Workersのエンドポイント
 			// .env.production または CI/CD環境で設定された環境変数を使用
-			// ビルド時に環境変数が設定されていない場合の警告
+			// ビルド時に環境変数が設定されていない場合のエラー処理
 			if (!process.env.NEXT_PUBLIC_API_URL) {
-				console.warn(
-					"NEXT_PUBLIC_API_URL is not defined. Using placeholder URL. " +
-						"Please set it in .env.production for production builds.",
+				// 本番環境では必須としてエラーをスロー
+				throw new Error(
+					'NEXT_PUBLIC_API_URL is required in production environment. ' +
+					'Please set it in .env.production or CI/CD environment variables.'
 				);
 			}
-			return process.env.NEXT_PUBLIC_API_URL || "https://api.placeholder.local";
+			return process.env.NEXT_PUBLIC_API_URL;
 
 		case "test":
 			// テスト環境: テスト用のAPIサーバー（E2E用）

@@ -199,6 +199,10 @@ export const useIncomeFilters = ({
 		}
 	}, [searchParams, disableUrlSync]);
 
+	// URL更新リセット遅延時間を定数として管理
+	const URL_UPDATE_RESET_DELAY = 100;
+	const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+
 	// URL更新関数をdebounceで最適化（300ms遅延）
 	// 頻繁なURL更新を防ぎ、パフォーマンスを向上
 	const debouncedUrlUpdate = useMemo(
@@ -210,9 +214,14 @@ export const useIncomeFilters = ({
 					const newURL = queryString ? `${pathname}?${queryString}` : pathname;
 					router.replace(newURL);
 					// URL更新完了後にフラグをリセット
-					setTimeout(() => {
+					// 既存のタイマーをクリア
+					if (timeoutIdRef.current) {
+						clearTimeout(timeoutIdRef.current);
+					}
+					timeoutIdRef.current = setTimeout(() => {
 						isUpdatingUrl.current = false;
-					}, 100);
+						timeoutIdRef.current = null;
+					}, URL_UPDATE_RESET_DELAY);
 				}
 			}, 300),
 		[router, pathname, disableUrlSync],
@@ -280,6 +289,15 @@ export const useIncomeFilters = ({
 				? prev.filter((id) => id !== categoryId)
 				: [...prev, categoryId],
 		);
+	}, []);
+
+	// クリーンアップ: タイマーをクリア
+	useEffect(() => {
+		return () => {
+			if (timeoutIdRef.current) {
+				clearTimeout(timeoutIdRef.current);
+			}
+		};
 	}, []);
 
 	return {
