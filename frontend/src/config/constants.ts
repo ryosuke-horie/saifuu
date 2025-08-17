@@ -12,13 +12,13 @@ export const API_CONFIG = {
 	/**
 	 * 取引一覧取得時のデフォルト取得件数
 	 *
-	 * 将来的にページネーション対応を検討する際は、
-	 * この値を基準にページサイズを決定する
+	 * 暫定対応: 100件を超える取引データに対応するため1000件に増加
+	 * 将来的には月別フィルタやページネーション対応を検討する
 	 *
 	 * 環境変数での上書き例:
-	 * process.env.NEXT_PUBLIC_DEFAULT_TRANSACTION_LIMIT || 100
+	 * process.env.NEXT_PUBLIC_DEFAULT_TRANSACTION_LIMIT || 1000
 	 */
-	DEFAULT_TRANSACTION_LIMIT: 100,
+	DEFAULT_TRANSACTION_LIMIT: 1000,
 
 	/**
 	 * API呼び出しのタイムアウト時間（ミリ秒）

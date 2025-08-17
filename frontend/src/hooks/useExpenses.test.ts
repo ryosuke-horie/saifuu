@@ -105,7 +105,7 @@ describe("useExpenses", () => {
 			expect(result.current.expenses).toEqual(mockExpenses);
 			expect(result.current.error).toBeNull();
 			expect(mockGetExpenses).toHaveBeenCalledWith({
-				limit: 100,
+				limit: 1000,
 			});
 		});
 

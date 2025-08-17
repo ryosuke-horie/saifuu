@@ -1,4 +1,4 @@
-import { and, count, eq, gte, lte, sum } from 'drizzle-orm'
+import { and, count, desc, eq, gte, lte, sum } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { type AnyDatabase, type Env } from '../db'
 import { type NewTransaction, type Transaction, transactions } from '../db/schema'
@@ -263,6 +263,10 @@ export function createTransactionsApp(options: { testDatabase?: AnyDatabase } = 
 			if (whereCondition) {
 				selectQuery = selectQuery.where(whereCondition)
 			}
+
+			// 日付降順でソート（新しいデータを先に取得）
+			// 暫定対応: 100件リミット問題を解決するため新しいデータを優先的に取得
+			selectQuery = selectQuery.orderBy(desc(transactions.date))
 
 			// ページネーションの適用
 			if (offset !== undefined) {

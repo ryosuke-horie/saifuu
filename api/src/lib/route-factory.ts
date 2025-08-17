@@ -205,7 +205,13 @@ export function createCrudHandlers<
 
 			try {
 				const db = testDatabase || c.get('db')
-				let result = await db.select().from(table)
+				// 日付降順でソート（新しいデータを先に取得）
+				// createdAtカラムが存在する場合のみソートを適用
+				// 暫定対応: 100件リミット問題を解決するため新しいデータを優先的に取得
+				const { desc } = await import('drizzle-orm')
+				let result = table.createdAt
+					? await db.select().from(table).orderBy(desc(table.createdAt))
+					: await db.select().from(table)
 
 				// データ変換が指定されている場合は適用
 				if (transformData) {
