@@ -573,11 +573,11 @@ ghost run pnpm run dev
 
 #### 3. E2Eテスト実行フロー
 ```bash
-# 1. 開発サーバーをGhostで起動
-ghost run pnpm run dev
+# 1. フロントエンド開発サーバーをGhostで起動（ポート3000）
+ghost run "cd frontend && pnpm run dev"
 
-# 2. APIサーバーも起動（別ターミナル相当）
-ghost run "cd api && pnpm run dev"
+# 2. E2E用APIサーバーを起動（ポート3004）
+ghost run "cd api && pnpm run dev:e2e"
 
 # 3. E2Eテストを実行
 pnpm run test:e2e
@@ -586,12 +586,92 @@ pnpm run test:e2e
 ghost list
 ghost stop <frontend-task-id>
 ghost stop <api-task-id>
-ghost run pnpm run dev
-ghost run "cd api && pnpm run dev"
+ghost run "cd frontend && pnpm run dev"
+ghost run "cd api && pnpm run dev:e2e"
 
 # 5. 再度E2Eテストを実行
 pnpm run test:e2e
 ```
+
+### E2Eテストアーキテクチャ（開発サーバー統合方式）
+
+#### ポート構成
+- **フロントエンド開発サーバー**: ポート3000固定
+- **E2E専用APIサーバー**: ポート3004（独立したE2E用データベース使用）
+- **通常のAPI開発サーバー**: ポート5173（開発用データベース使用）
+
+#### Next.js Rewritesによる統合
+フロントエンドの `next.config.ts` でAPIプロキシを設定：
+```typescript
+rewrites: async () => {
+  return [
+    {
+      source: '/api/:path*',
+      destination: 'http://localhost:3004/api/:path*',
+    },
+  ];
+},
+```
+
+この設定により、フロントエンドからの `/api/*` へのリクエストは自動的にポート3004のE2E用APIサーバーにプロキシされます。
+
+#### 環境変数設定
+フロントエンドの `.env.local`:
+```
+NEXT_PUBLIC_API_URL=/api  # 相対パスを使用（Next.js rewritesでプロキシ）
+```
+
+#### E2Eテスト環境の利点
+1. **開発サーバーとの共存**: フロントエンドは3000番ポートで統一、E2E用APIは3004番で独立
+2. **データの分離**: E2E用データベース（e2e-test.db）と開発用データベース（dev.db）を完全分離
+3. **並列実行対応**: 複数のブラウザ（Chrome Desktop/Mobile）でテストを並列実行可能
+4. **テストデータの一意性**: タイムスタンプとランダムIDで重複を防止
+
+### Cloudflare Workers環境での注意点
+
+#### 環境変数の扱い
+- **禁止**: `process.env` の使用（Cloudflare Workersでは利用不可）
+- **推奨**: `import.meta.env` を使用
+
+```typescript
+// ❌ 悪い例
+const isDev = process.env.NODE_ENV === 'development'
+
+// ✅ 良い例
+const isDev = import.meta.env.DEV || import.meta.env.NODE_ENV === 'development'
+```
+
+#### ファイルシステムの制限
+- **禁止**: `fs` モジュール、`__dirname`、`__filename` の使用
+- **推奨**: `import.meta.url` を使用
+
+```typescript
+// ❌ 悪い例
+import { dirname } from 'path'
+const __dirname = dirname(__filename)
+
+// ✅ 良い例
+import { fileURLToPath } from 'url'
+const dirname = fileURLToPath(new URL('.', import.meta.url))
+```
+
+### E2Eテストのベストプラクティス
+
+#### テストデータの管理
+```typescript
+// タイムスタンプとランダムIDで一意性を確保
+const timestamp = Date.now();
+const randomId = Math.floor(Math.random() * 10000);
+const testDescription = `[E2E_TEST] 動作確認 ${timestamp}_${randomId}`;
+```
+
+#### ブラウザ限定
+- **対象ブラウザ**: Chrome（Desktop/Mobile）のみ
+- **理由**: 開発効率の最大化とメンテナンスコストの削減
+
+#### テスト範囲
+- **対象**: 正常系の主要ユーザーフローのみ
+- **除外**: エラーハンドリング、パフォーマンステスト（ユニットテストで対応）
 
 ### Sub Agent作成時のルール
 

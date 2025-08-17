@@ -72,10 +72,8 @@ export function IncomePageContent() {
 	// フィルタリング機能
 	const { filters, updateFilters } = useIncomeFilters({
 		disableUrlSync: false,
-		onFiltersChange: () => {
-			// フィルター変更時にデータを再取得
-			refetch();
-		},
+		// onFiltersChangeは削除（無限ループの原因）
+		// フィルター変更時の再取得は手動で行う
 	});
 
 	// 収入統計の計算
@@ -139,9 +137,7 @@ export function IncomePageContent() {
 				<div className="bg-white rounded-lg shadow p-4">
 					<h2 className="text-lg font-semibold mb-4">絞り込み条件</h2>
 					<IncomeFilters
-						onFiltersChange={(newFilters) => {
-							updateFilters(newFilters);
-						}}
+						onFiltersChange={updateFilters}
 						categories={categories}
 						initialFilters={filters}
 						disableUrlSync={false}

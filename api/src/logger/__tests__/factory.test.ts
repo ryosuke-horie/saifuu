@@ -30,10 +30,15 @@ describe('LoggerFactory', () => {
 			expect(logger1).toBeInstanceOf(CloudflareLogger)
 		})
 
-		it('should throw error when no env provided on first call', () => {
-			expect(() => {
-				LoggerFactory.getInstance()
-			}).toThrow('Environment variables required for logger initialization')
+		it('should use default config when no env provided on first call', () => {
+			const logger = LoggerFactory.getInstance()
+			expect(logger).toBeInstanceOf(CloudflareLogger)
+
+			// デフォルトの設定が使用されることを確認
+			const config = LoggerFactory.getConfig()
+			expect(config).not.toBeNull()
+			expect(config?.environment).toBe('production')
+			expect(config?.level).toBe('info')
 		})
 
 		it('should work without env on subsequent calls', () => {
@@ -98,10 +103,10 @@ describe('LoggerFactory', () => {
 
 			expect(LoggerFactory.getConfig()).toBeNull()
 
-			// 新しいインスタンスが作成される
-			expect(() => {
-				LoggerFactory.getInstance()
-			}).toThrow('Environment variables required for logger initialization')
+			// 新しいインスタンスが作成される（デフォルト設定で）
+			const newLogger = LoggerFactory.getInstance()
+			expect(newLogger).toBeInstanceOf(CloudflareLogger)
+			expect(LoggerFactory.getConfig()).not.toBeNull()
 		})
 
 		it('should call destroy on existing instance', () => {

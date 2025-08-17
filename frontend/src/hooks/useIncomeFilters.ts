@@ -6,7 +6,7 @@
  */
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { debounce, throttle } from "../lib/performance";
 import type { IncomeFiltersState, IncomePeriodType } from "../types/income";
 
@@ -183,9 +183,14 @@ export const useIncomeFilters = ({
 		() => filters.categories || [],
 	);
 
+	// 初回レンダリングかどうかを追跡
+	const isFirstRender = useRef(true);
+	// URL更新中かどうかを追跡（循環を防ぐため）
+	const isUpdatingUrl = useRef(false);
+
 	// URLパラメータの変更を監視
 	useEffect(() => {
-		if (!disableUrlSync) {
+		if (!disableUrlSync && !isUpdatingUrl.current) {
 			const urlFilters = parseFiltersFromURL(searchParams);
 			setFilters((prev) => ({ ...prev, ...urlFilters }));
 			if (urlFilters.categories) {
@@ -200,9 +205,14 @@ export const useIncomeFilters = ({
 		() =>
 			debounce((cleanedFilters: IncomeFiltersState) => {
 				if (!disableUrlSync) {
+					isUpdatingUrl.current = true;
 					const queryString = buildURLParams(cleanedFilters);
 					const newURL = queryString ? `${pathname}?${queryString}` : pathname;
 					router.replace(newURL);
+					// URL更新完了後にフラグをリセット
+					setTimeout(() => {
+						isUpdatingUrl.current = false;
+					}, 100);
 				}
 			}, 300),
 		[router, pathname, disableUrlSync],
@@ -217,6 +227,12 @@ export const useIncomeFilters = ({
 
 	// フィルター変更時の処理
 	useEffect(() => {
+		// 初回レンダリング時はスキップ
+		if (isFirstRender.current) {
+			isFirstRender.current = false;
+			return;
+		}
+
 		const cleanedFilters = cleanFilters({
 			...filters,
 			categories:
@@ -228,7 +244,8 @@ export const useIncomeFilters = ({
 
 		// デバウンスされたURL更新を実行
 		debouncedUrlUpdate(cleanedFilters);
-	}, [filters, selectedCategories, throttledCallback, debouncedUrlUpdate]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [filters, selectedCategories]); // throttledCallbackとdebouncedUrlUpdateは除外
 
 	// フィルターを更新
 	const updateFilter = useCallback(

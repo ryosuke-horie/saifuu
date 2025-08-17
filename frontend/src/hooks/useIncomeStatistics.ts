@@ -5,7 +5,7 @@
  * IncomePageContentから分離して単一責任の原則に従う
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/lib/api/client";
 import type { TransactionWithCategory } from "@/lib/api/types";
 import {
@@ -18,6 +18,7 @@ export const useIncomeStatistics = () => {
 	const [statsData, setStatsData] = useState<IncomeStats | null>(null);
 	const [statsLoading, setStatsLoading] = useState(true);
 	const [allIncomes, setAllIncomes] = useState<TransactionWithCategory[]>([]);
+	const isInitialMount = useRef(true);
 
 	const fetchStatsData = useCallback(async () => {
 		try {
@@ -114,8 +115,12 @@ export const useIncomeStatistics = () => {
 	}, []);
 
 	useEffect(() => {
-		fetchStatsData();
-	}, [fetchStatsData]);
+		if (isInitialMount.current) {
+			isInitialMount.current = false;
+			fetchStatsData();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []); // 初回マウント時のみ実行
 
 	return {
 		statsData,

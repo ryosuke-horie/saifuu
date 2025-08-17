@@ -28,7 +28,7 @@ export default defineConfig({
 	// 共通設定
 	use: {
 		// ベースURL（開発サーバー）
-		baseURL: "http://localhost:3005",
+		baseURL: "http://localhost:3000",
 
 		// 失敗時のスクリーンショット
 		screenshot: "only-on-failure",

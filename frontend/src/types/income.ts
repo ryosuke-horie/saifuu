@@ -93,8 +93,9 @@ export interface IncomeFormData {
 export interface IncomeFormProps {
 	/**
 	 * フォーム送信時のコールバック
+	 * 成功時はtrueを返す
 	 */
-	onSubmit: (data: IncomeFormData) => void;
+	onSubmit: (data: IncomeFormData) => Promise<boolean> | boolean;
 
 	/**
 	 * キャンセル時のコールバック

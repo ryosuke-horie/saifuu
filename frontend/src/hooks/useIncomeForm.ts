@@ -26,7 +26,7 @@ const defaultFormData: IncomeFormData = {
 
 interface UseIncomeFormProps {
 	initialData?: IncomeFormData;
-	onSubmit: (data: IncomeFormData) => void;
+	onSubmit: (data: IncomeFormData) => Promise<void> | void;
 }
 
 export const useIncomeForm = ({
@@ -122,9 +122,22 @@ export const useIncomeForm = ({
 		});
 	}, []);
 
+	// フォームのリセット
+	const resetForm = useCallback(() => {
+		setFormData(defaultFormData);
+		setErrors({});
+		setTouched({
+			amount: false,
+			type: false,
+			description: false,
+			date: false,
+			categoryId: false,
+		});
+	}, []);
+
 	// フォーム送信ハンドラー
 	const handleSubmit = useCallback(
-		(e: React.FormEvent) => {
+		async (e: React.FormEvent) => {
 			e.preventDefault();
 
 			// 全フィールドのバリデーション
@@ -136,7 +149,7 @@ export const useIncomeForm = ({
 
 			// エラーがない場合のみ送信
 			if (Object.keys(newErrors).length === 0) {
-				onSubmit(formData);
+				await onSubmit(formData);
 			}
 		},
 		[formData, validateForm, onSubmit, setAllFieldsTouched],
@@ -149,5 +162,6 @@ export const useIncomeForm = ({
 		handleFieldChange,
 		handleFieldBlur,
 		handleSubmit,
+		resetForm,
 	};
 };

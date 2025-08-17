@@ -17,13 +17,12 @@ const app = new Hono<{
 	}
 }>()
 
-// CORS設定（開発環境・本番環境対応）
+// CORS設定（開発環境は3000番ポートのみ、本番環境は指定ドメインのみ）
 app.use(
 	'/api/*',
 	cors({
 		origin: [
-			'http://localhost:3000',
-			'http://localhost:3001',
+			'http://localhost:3000', // 開発環境は3000番ポートのみ
 			'https://saifuu.ryosuke-horie37.workers.dev',
 			'https://saifuu.pages.dev',
 		],
@@ -32,11 +31,21 @@ app.use(
 	})
 )
 
-// 開発環境判定
-const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV
+// 開発環境判定（Cloudflare Workers対応）
+const isDev = import.meta.env.DEV || import.meta.env.NODE_ENV === 'development'
 
 // ロギングミドルウェアの設定（CORSの後、他のミドルウェアの前に適用）
-app.use('/api/*', loggingMiddleware(process.env as Record<string, string>))
+// 環境変数は動的に取得するため、リクエスト時に初期化
+app.use('/api/*', async (c, next) => {
+	// 環境変数の取得（開発環境では import.meta.env、本番環境では c.env を使用）
+	const env = isDev
+		? (import.meta.env as unknown as Record<string, string>)
+		: (c.env as unknown as Record<string, string>)
+
+	// ロギングミドルウェアを動的に作成して実行
+	const middleware = loggingMiddleware(env)
+	return middleware(c as unknown as Parameters<typeof middleware>[0], next)
+})
 
 // 開発環境用のデータベースインスタンスを一度だけ作成
 let devDb: AnyDatabase | null = null
@@ -54,7 +63,7 @@ app.use('/api/*', async (c, next) => {
 		})
 
 		let db: AnyDatabase
-		
+
 		if (isDev) {
 			// 開発環境ではローカルSQLiteを使用
 			db = devDb!
@@ -64,7 +73,7 @@ app.use('/api/*', async (c, next) => {
 			db = createDatabase(c.env.DB)
 			logWithContext(c, 'debug', 'D1 database created successfully (production)')
 		}
-		
+
 		c.set('db', db)
 		logWithContext(c, 'debug', 'Database set in context')
 

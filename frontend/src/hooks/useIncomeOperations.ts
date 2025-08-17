@@ -51,8 +51,12 @@ export const useIncomeOperations = ({
 			// データを再取得
 			await onOperationComplete();
 			await onStatsRefresh();
+			// 成功を返す
+			return true;
 		} catch (err) {
 			console.error("操作に失敗しました", err);
+			// 失敗を返す
+			return false;
 		} finally {
 			setOperationLoading(false);
 		}
