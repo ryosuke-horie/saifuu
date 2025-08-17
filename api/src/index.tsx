@@ -34,9 +34,9 @@ app.use(
 // 本番環境では import.meta.env が存在しないため、安全にチェック
 const isDev = (() => {
 	if (typeof import.meta?.env === 'undefined') {
-		return false; // Cloudflare Workers環境
+		return false // Cloudflare Workers環境
 	}
-	return import.meta.env.DEV === true || import.meta.env.NODE_ENV === 'development';
+	return import.meta.env.DEV === true || import.meta.env.NODE_ENV === 'development'
 })()
 
 // ロギングミドルウェアの設定（CORSの後、他のミドルウェアの前に適用）

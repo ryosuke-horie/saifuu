@@ -81,8 +81,8 @@ function getBaseUrl(environment: Environment): string {
 			if (!process.env.NEXT_PUBLIC_API_URL) {
 				// 本番環境では必須としてエラーをスロー
 				throw new Error(
-					'NEXT_PUBLIC_API_URL is required in production environment. ' +
-					'Please set it in .env.production or CI/CD environment variables.'
+					"NEXT_PUBLIC_API_URL is required in production environment. " +
+						"Please set it in .env.production or CI/CD environment variables.",
 				);
 			}
 			return process.env.NEXT_PUBLIC_API_URL;

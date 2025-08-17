@@ -167,11 +167,11 @@ describe("API Config", () => {
 			vi.stubEnv("NODE_ENV", "production");
 			vi.stubEnv("NEXT_PUBLIC_API_URL", "");
 
-			const { buildUrl } = await import("../config");
-
-			// buildUrl実行時にエラーが発生することを確認
-			expect(() => buildUrl("/subscriptions")).toThrow(
-				"NEXT_PUBLIC_API_URL environment variable is required in production",
+			// 環境変数設定後にモジュールを新しくインポート
+			await expect(async () => {
+				await import("../config");
+			}).rejects.toThrow(
+				"NEXT_PUBLIC_API_URL is required in production environment",
 			);
 		});
 
