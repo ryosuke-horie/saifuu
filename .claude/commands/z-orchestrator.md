@@ -32,6 +32,15 @@ Split complex tasks into sequential steps, where each step can contain multiple 
    - Build comprehensive understanding progressively
    - Maintain flexibility to adapt plan
 
+6. **Create PR**
+    - Create PR. Use gh command.
+    - before create pr, check typecheck, format
+
+7. **After Create PR Check CI Success and Claude Code Review**
+    - Check CI Passed
+    - Check Claude Code Review Comment
+    - Fix High or middle revel reviews
+
 ## Example Usage with Agents
 
 When given "analyze test lint and commit":
