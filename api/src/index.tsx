@@ -22,11 +22,13 @@ app.use(
 	cors({
 		origin: [
 			'http://localhost:3000', // 開発環境は3000番ポートのみ
-			'https://saifuu.ryosuke-horie37.workers.dev',
-			'https://saifuu.pages.dev',
+			'https://saifuu.ryosuke-horie37.workers.dev', // Frontend Workers deployment
+			'https://saifuu.pages.dev', // Cloudflare Pages deployment
+			'https://*.saifuu.pages.dev', // Preview deployments on Pages
 		],
 		allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 		allowHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+		credentials: true, // Allow cookies/credentials
 	})
 )
 
