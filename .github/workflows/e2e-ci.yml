@@ -85,12 +85,33 @@ jobs:
         with:
           version: 10.12.1
       
-      # E2E依存関係のインストール（E2Eテスト実行用）
+      # ルート依存関係のインストール（共有モジュール含む）
+      - name: Install root dependencies
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          pnpm config set store-dir /tmp/pnpm-store-${{ github.run_id }}
+          pnpm install --frozen-lockfile --prefer-offline false
+      
+      # API依存関係のインストール
+      - name: Install API dependencies
+        working-directory: api
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          pnpm install --frozen-lockfile --prefer-offline false
+      
+      # Frontend依存関係のインストール
+      - name: Install Frontend dependencies
+        working-directory: frontend
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          pnpm install --frozen-lockfile --prefer-offline false
+      
+      # E2E依存関係のインストール
       - name: Install E2E dependencies
         working-directory: e2e
         run: |
           export PATH="$PNPM_HOME:$PATH"
-          pnpm install --frozen-lockfile
+          pnpm install --frozen-lockfile --prefer-offline false
       
       # E2E用データベースのセットアップ
       - name: Setup E2E Database
@@ -103,13 +124,6 @@ jobs:
           touch db/e2e-test.db
           # E2E用の環境でマイグレーションを実行
           NODE_ENV=e2e pnpm run db:migrate:dev
-      
-      # API依存関係のインストール
-      - name: Install API dependencies
-        working-directory: api
-        run: |
-          export PATH="$PNPM_HOME:$PATH"
-          pnpm install --frozen-lockfile --prefer-offline false
       
       # APIサーバーの起動
       - name: Start API server
@@ -130,13 +144,6 @@ jobs:
           echo "API server failed to start"
           cat api-server.log
           exit 1
-      
-      # Frontend依存関係のインストール
-      - name: Install Frontend dependencies
-        working-directory: frontend
-        run: |
-          export PATH="$PNPM_HOME:$PATH"
-          pnpm install --frozen-lockfile --prefer-offline false
       
       # Frontendサーバーの起動
       - name: Start Frontend server
