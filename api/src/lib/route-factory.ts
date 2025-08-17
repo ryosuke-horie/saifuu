@@ -4,22 +4,58 @@ import type { AnyDatabase } from '../db'
 import { type LoggingVariables, logWithContext } from '../middleware/logging'
 
 /**
- * 現在の実行環境が本番環境かどうかを判定する
+ * 環境の種類を定義
+ */
+export const ENVIRONMENTS = {
+	DEVELOPMENT: 'development',
+	TEST: 'test',
+	PRODUCTION: 'production',
+} as const
+
+export type Environment = (typeof ENVIRONMENTS)[keyof typeof ENVIRONMENTS]
+
+/**
+ * 現在の実行環境を取得する
  *
- * @returns 本番環境の場合はtrue、開発環境の場合はfalse
+ * @returns 現在の環境（development, test, production）
+ */
+export const getCurrentEnvironment = (): Environment => {
+	// Cloudflare Workers環境（import.metaが存在しない）は本番扱い
+	if (typeof import.meta === 'undefined' || !import.meta.env) {
+		return ENVIRONMENTS.PRODUCTION
+	}
+
+	// テスト環境の判定
+	if (import.meta.env.NODE_ENV === 'test') {
+		return ENVIRONMENTS.TEST
+	}
+
+	// 開発環境の判定
+	if (import.meta.env.DEV === true || import.meta.env.NODE_ENV === 'development') {
+		return ENVIRONMENTS.DEVELOPMENT
+	}
+
+	// デフォルトは本番環境
+	return ENVIRONMENTS.PRODUCTION
+}
+
+/**
+ * 開発環境かどうかを判定する
+ *
+ * @returns 開発環境またはテスト環境の場合はtrue
+ */
+export const isDevelopmentEnvironment = (): boolean => {
+	const env = getCurrentEnvironment()
+	return env === ENVIRONMENTS.DEVELOPMENT || env === ENVIRONMENTS.TEST
+}
+
+/**
+ * 本番環境かどうかを判定する
+ *
+ * @returns 本番環境の場合はtrue
  */
 const isProductionEnvironment = (): boolean => {
-	try {
-		// import.metaが存在しない、またはenvが存在しない場合は本番環境と判定
-		if (typeof import.meta === 'undefined' || typeof import.meta.env === 'undefined') {
-			return true
-		}
-		// 開発環境の場合はfalseを返す
-		return !(import.meta.env.DEV === true || import.meta.env.NODE_ENV === 'development')
-	} catch {
-		// import.metaへのアクセスでエラーが発生した場合は本番環境と判定
-		return true
-	}
+	return !isDevelopmentEnvironment()
 }
 
 /**
