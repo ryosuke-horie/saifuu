@@ -26,7 +26,7 @@ const defaultFormData: IncomeFormData = {
 
 interface UseIncomeFormProps {
 	initialData?: IncomeFormData;
-	onSubmit: (data: IncomeFormData) => Promise<void> | void;
+	onSubmit: (data: IncomeFormData) => Promise<boolean> | boolean;
 }
 
 export const useIncomeForm = ({
@@ -149,8 +149,10 @@ export const useIncomeForm = ({
 
 			// エラーがない場合のみ送信
 			if (Object.keys(newErrors).length === 0) {
-				await onSubmit(formData);
+				const result = await onSubmit(formData);
+				return result;
 			}
+			return false;
 		},
 		[formData, validateForm, onSubmit, setAllFieldsTouched],
 	);
