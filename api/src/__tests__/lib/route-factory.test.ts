@@ -1,5 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createCrudHandlers, shouldVerifyPersistence } from '../../lib/route-factory'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+	createCrudHandlers,
+	ENVIRONMENTS,
+	type Environment,
+	getCurrentEnvironment,
+	isDevelopmentEnvironment,
+	shouldVerifyPersistence,
+} from '../../lib/route-factory'
 
 // モックの設定
 vi.mock('../../middleware/logging', () => ({
@@ -692,6 +699,80 @@ describe('route-factory', () => {
 			const result = shouldVerifyPersistence(undefined, mockDbWithSelect as any)
 			// テスト環境では基本的にfalse（検証をスキップ）になることを確認
 			expect(typeof result).toBe('boolean')
+		})
+	})
+
+	describe('環境判定関数のテスト', () => {
+		// 注意: Vitestのテスト環境では、import.metaの動的なモックは完全には機能しない
+		// 実際の環境判定ロジックは、実際の環境（開発、テスト、本番）で確認する必要がある
+		// 以下のテストは、関数の構造と呼び出しが正しいことを確認するもの
+
+		describe('getCurrentEnvironment', () => {
+			it('関数が定義されており、環境文字列を返す', () => {
+				const result = getCurrentEnvironment()
+				expect(typeof result).toBe('string')
+				expect(['development', 'test', 'production']).toContain(result)
+			})
+
+			it('現在のテスト環境では開発環境またはテスト環境を返す', () => {
+				// Vitest環境では通常、開発環境またはテスト環境として動作
+				const result = getCurrentEnvironment()
+				expect(['development', 'test']).toContain(result)
+			})
+		})
+
+		describe('isDevelopmentEnvironment', () => {
+			it('関数が定義されており、boolean値を返す', () => {
+				const result = isDevelopmentEnvironment()
+				expect(typeof result).toBe('boolean')
+			})
+
+			it('現在のテスト環境ではtrueを返す', () => {
+				// Vitest環境では開発環境またはテスト環境として扱われるため、trueが期待される
+				const result = isDevelopmentEnvironment()
+				expect(result).toBe(true)
+			})
+		})
+
+		describe('更新されたshouldVerifyPersistence', () => {
+			const mockDb = {
+				select: vi.fn(),
+			}
+
+			beforeEach(() => {
+				vi.clearAllMocks()
+			})
+
+			it('テストデータベースが存在する場合はfalseを返す', () => {
+				const testDatabase = { select: vi.fn() } as any
+				expect(shouldVerifyPersistence(testDatabase, mockDb as any)).toBe(false)
+			})
+
+			it('dbにselect関数が存在しない場合はfalseを返す', () => {
+				const dbWithoutSelect = {} as any
+				expect(shouldVerifyPersistence(undefined, dbWithoutSelect)).toBe(false)
+			})
+
+			it('現在のテスト環境ではfalseを返す', () => {
+				// テスト環境では永続化検証をスキップすることを確認
+				const result = shouldVerifyPersistence(undefined, mockDb as any)
+				expect(result).toBe(false)
+			})
+		})
+
+		describe('ENVIRONMENTS定数', () => {
+			it('正しい環境値が定義されている', () => {
+				expect(ENVIRONMENTS.DEVELOPMENT).toBe('development')
+				expect(ENVIRONMENTS.TEST).toBe('test')
+				expect(ENVIRONMENTS.PRODUCTION).toBe('production')
+			})
+
+			it('Environment型が正しく定義されている', () => {
+				const validEnvironments: Environment[] = ['development', 'test', 'production']
+				validEnvironments.forEach((env) => {
+					expect(Object.values(ENVIRONMENTS)).toContain(env)
+				})
+			})
 		})
 	})
 })
