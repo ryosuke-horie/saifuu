@@ -77,19 +77,12 @@ function getBaseUrl(environment: Environment): string {
 		case "production":
 			// 本番環境: Cloudflare Workersのエンドポイント
 			// .env.production または CI/CD環境で設定された環境変数を使用
-			// ビルド時に環境変数が設定されていない場合の警告
-			if (!process.env.NEXT_PUBLIC_API_URL) {
-				console.warn(
-					"NEXT_PUBLIC_API_URL is not defined. Using placeholder URL. " +
-						"Please set it in .env.production for production builds.",
-				);
-			}
-			return process.env.NEXT_PUBLIC_API_URL || "https://api.placeholder.local";
+			return process.env.NEXT_PUBLIC_API_URL || "";
 
 		case "test":
 			// テスト環境: テスト用のAPIサーバー（E2E用）
 			return (
-				process.env.NEXT_PUBLIC_TEST_API_URL || "http://localhost:3003/api"
+				process.env.NEXT_PUBLIC_TEST_API_URL || "http://localhost:3004/api"
 			);
 
 		default:
@@ -117,6 +110,14 @@ function createApiConfig(): ApiConfig {
 	const environment = getCurrentEnvironment();
 	const baseUrl = getBaseUrl(environment);
 
+	// 本番環境でベースURLが空の場合はエラーをスロー
+	if (environment === "production" && !baseUrl) {
+		throw new Error(
+			"NEXT_PUBLIC_API_URL is required in production environment. " +
+				"Please set it in .env.production or CI/CD environment variables.",
+		);
+	}
+
 	return {
 		baseUrl,
 		timeout: safeParseNumber(
@@ -139,7 +140,20 @@ function createApiConfig(): ApiConfig {
  * グローバルAPI設定
  * アプリケーション全体で使用される設定インスタンス
  */
-export const apiConfig: ApiConfig = createApiConfig();
+let _apiConfig: ApiConfig | null = null;
+
+/**
+ * API設定を取得する（遅延初期化）
+ * テスト環境では再初期化可能にするため、getter関数として実装
+ */
+function getApiConfig(): ApiConfig {
+	if (!_apiConfig) {
+		_apiConfig = createApiConfig();
+	}
+	return _apiConfig;
+}
+
+export const apiConfig: ApiConfig = getApiConfig();
 
 /**
  * API エンドポイント定義
@@ -177,8 +191,8 @@ export const endpoints = {
  */
 function validateProductionConfig(): void {
 	if (apiConfig.environment === "production") {
-		// プレースホルダーURLが使用されている場合、本番環境で必要な環境変数が未設定
-		if (apiConfig.baseUrl === "https://api.placeholder.local") {
+		// 空のURLが使用されている場合、本番環境で必要な環境変数が未設定
+		if (!apiConfig.baseUrl) {
 			throw new Error(
 				"NEXT_PUBLIC_API_URL environment variable is required in production. " +
 					"This error occurs at runtime when the API is actually used, " +

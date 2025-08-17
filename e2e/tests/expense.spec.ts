@@ -1,22 +1,34 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('支出管理機能', () => {
-  test('支出の登録・編集・削除が正常に動作すること', async ({ page }) => {
-    // タイムスタンプを使って一意なテストデータを作成
-    const timestamp = Date.now();
-    const testDescription = `[E2E_TEST] 動作確認 ${timestamp}`;
-    const editedDescription = `[E2E_TEST] 編集確認 ${timestamp}`;
+  test('支出の登録・編集・削除が正常に動作すること', async ({ page, browserName }) => {
+    // コンソールログを出力
+    page.on('console', msg => console.log('Browser Console:', msg.text()));
+    page.on('pageerror', error => console.log('Browser Error:', error.message));
     
-    // ホーム画面から支出管理画面へ遷移
-    await page.goto('/');
-    // ダッシュボードのナビゲーションカードをクリック（data-testidを使用）
-    await page.getByTestId('navigation-expenses').click();
+    // タイムスタンプとブラウザ名を使って一意なテストデータを作成
+    const timestamp = Date.now();
+    const randomId = Math.floor(Math.random() * 10000);
+    const testDescription = `[E2E_TEST] 動作確認 ${timestamp}_${randomId}`;
+    const editedDescription = `[E2E_TEST] 編集確認 ${timestamp}_${randomId}`;
+    
+    // 支出管理画面へ直接遷移
+    await page.goto('/expenses');
+    
+    // ページが完全に読み込まれるまで待機
+    await page.waitForLoadState('domcontentloaded');
     
     // 支出管理画面が表示されることを確認
     await expect(page).toHaveURL(/\/expenses/);
     
-    // 新規支出を登録
-    await page.getByRole('button', { name: '新しい支出を登録' }).click();
+    // ページが正しく読み込まれたことを確認（h1要素で確認）
+    await page.waitForSelector('h1', { timeout: 10000 });
+    
+    // 新規登録ボタンをクリック
+    await page.click('button:has-text("新規登録")');
+    
+    // ダイアログが開くまで待機
+    await page.waitForSelector('[role="dialog"]', { timeout: 5000 });
     
     // フォームに入力（一意なデータ）
     await page.getByRole('spinbutton', { name: '金額（円） *' }).fill('152000');
@@ -24,11 +36,25 @@ test.describe('支出管理機能', () => {
     await page.getByRole('textbox', { name: '説明（任意）' }).fill(testDescription);
     await page.getByLabel('カテゴリ').selectOption('1'); // 食費カテゴリ
     
-    // 登録ボタンをクリック
-    await page.getByRole('button', { name: '登録', exact: true }).click();
+    // 登録ボタンをクリック（フォームが有効になるまで待機）
+    const submitButton = page.getByRole('button', { name: '登録', exact: true });
+    await expect(submitButton).toBeEnabled({ timeout: 10000 });
     
-    // フォームが閉じることを確認（モーダルやフォームが消えるのを待つ）
-    await expect(page.getByRole('button', { name: '登録', exact: true })).not.toBeVisible();
+    // API呼び出しを監視
+    const [response] = await Promise.all([
+      page.waitForResponse(res => res.url().includes('/api/transactions'), { timeout: 10000 }),
+      submitButton.click()
+    ]);
+    
+    console.log('API Response Status:', response.status());
+    console.log('API Response URL:', response.url());
+    
+    // API応答の完了を待つ
+    await expect(response.status()).toBe(200);
+    await page.waitForLoadState('networkidle', { timeout: 5000 });
+    
+    // フォームが閉じることを確認（ダイアログが消えるのを待つ）
+    await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
     
     // 登録した支出が一覧に表示されることを確認
     // 一意なテストデータを使って確実に特定
@@ -49,7 +75,7 @@ test.describe('支出管理機能', () => {
     await page.getByRole('button', { name: '更新' }).click();
     
     // フォームが閉じることを確認
-    await expect(page.getByRole('button', { name: '更新' })).not.toBeVisible();
+    await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
     
     // 更新された内容が表示されることを確認
     const updatedRow = page.locator('tr', { hasText: editedDescription });

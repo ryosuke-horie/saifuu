@@ -29,11 +29,13 @@ export class LoggerFactory {
 	 */
 	static getInstance(env?: EnvironmentVariables): Logger {
 		if (!LoggerFactory.instance) {
-			if (!env) {
-				throw new Error('Environment variables required for logger initialization')
+			// 環境変数が提供されていない場合はデフォルト値で初期化
+			const envConfig = env || {
+				NODE_ENV: 'production',
+				LOG_LEVEL: 'info',
 			}
 
-			LoggerFactory.config = createLoggerConfig(env)
+			LoggerFactory.config = createLoggerConfig(envConfig)
 			LoggerFactory.instance = new CloudflareLogger(LoggerFactory.config)
 		}
 

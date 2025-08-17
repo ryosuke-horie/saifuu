@@ -30,8 +30,24 @@ export const IncomeForm: FC<IncomeFormProps> = ({
 	className = "",
 }) => {
 	// カスタムフックでフォームロジックを管理
-	const { formData, errors, handleFieldChange, handleFieldBlur, handleSubmit } =
-		useIncomeForm({ initialData, onSubmit });
+	const {
+		formData,
+		errors,
+		handleFieldChange,
+		handleFieldBlur,
+		handleSubmit,
+		resetForm,
+	} = useIncomeForm({
+		initialData,
+		onSubmit: async (data) => {
+			const success = await onSubmit(data);
+			// 新規登録時のみフォームをリセット
+			if (success && !initialData) {
+				resetForm();
+			}
+			return success;
+		},
+	});
 
 	// カテゴリフィルタリングの最適化（収入カテゴリのみ）
 	const filteredCategories = useMemo(

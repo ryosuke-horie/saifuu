@@ -16,13 +16,12 @@ const app = new Hono<{
 	}
 }>()
 
-// CORS設定（開発環境・本番環境対応）
+// CORS設定（開発環境は3000番ポートのみ、本番環境は指定ドメインのみ）
 app.use(
 	'/api/*',
 	cors({
 		origin: [
-			'http://localhost:3000',
-			'http://localhost:3001',
+			'http://localhost:3000', // 開発環境は3000番ポートのみ
 			'https://saifuu.ryosuke-horie37.workers.dev',
 			'https://saifuu.pages.dev',
 		],
@@ -31,11 +30,30 @@ app.use(
 	})
 )
 
-// 開発環境判定
-const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV
+// 開発環境判定（Cloudflare Workers対応）
+// 本番環境では import.meta.env が存在しないため、安全にチェック
+const isDev = (() => {
+	if (typeof import.meta?.env === 'undefined') {
+		return false // Cloudflare Workers環境
+	}
+	return import.meta.env.DEV === true || import.meta.env.NODE_ENV === 'development'
+})()
 
 // ロギングミドルウェアの設定（CORSの後、他のミドルウェアの前に適用）
-app.use('/api/*', loggingMiddleware(process.env as Record<string, string>))
+// 環境変数は動的に取得するため、リクエスト時に初期化
+app.use('/api/*', async (c, next) => {
+	// 環境変数の取得（開発環境では import.meta.env、本番環境では c.env を使用）
+	const env = isDev
+		? (import.meta.env as unknown as Record<string, string>)
+		: (c.env as unknown as Record<string, string>)
+
+	// ロギングミドルウェアを動的に作成して実行
+	const middleware = loggingMiddleware(env)
+	return middleware(c as unknown as Parameters<typeof middleware>[0], next)
+})
+
+// 開発環境用のデータベースインスタンスを一度だけ作成（遅延初期化）
+let devDb: AnyDatabase | null = null
 
 // ミドルウェア: データベース接続を設定
 app.use('/api/*', async (c, next) => {
@@ -46,10 +64,28 @@ app.use('/api/*', async (c, next) => {
 			path: c.req.path,
 		})
 
-		// 開発環境・本番環境の両方でCloudflare D1を使用
-		// wrangler dev では c.env.DB がローカルD1インスタンスを提供
-		const db = createDatabase(c.env.DB)
-		logWithContext(c, 'debug', 'D1 database created successfully')
+		let db: AnyDatabase
+
+		if (isDev) {
+			// 開発環境ではローカルSQLiteを使用（初回のみ作成）
+			if (!devDb) {
+				try {
+					const { createDevSqliteDatabase } = await import('./db/dev')
+					devDb = createDevSqliteDatabase() as unknown as AnyDatabase
+					logWithContext(c, 'debug', 'Dev SQLite database created successfully')
+				} catch (error) {
+					console.error('Failed to create dev database:', error)
+					throw new Error('Failed to initialize development database')
+				}
+			}
+			db = devDb
+			logWithContext(c, 'debug', 'Local SQLite database used (development)')
+		} else {
+			// 本番環境ではCloudflare D1を使用
+			db = createDatabase(c.env.DB)
+			logWithContext(c, 'debug', 'D1 database created successfully (production)')
+		}
+
 		c.set('db', db)
 		logWithContext(c, 'debug', 'Database set in context')
 

@@ -6,7 +6,7 @@
  */
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { debounce, throttle } from "../lib/performance";
 import type { IncomeFiltersState, IncomePeriodType } from "../types/income";
 
@@ -183,9 +183,14 @@ export const useIncomeFilters = ({
 		() => filters.categories || [],
 	);
 
+	// 初回レンダリングかどうかを追跡
+	const isFirstRender = useRef(true);
+	// URL更新中かどうかを追跡（循環を防ぐため）
+	const isUpdatingUrl = useRef(false);
+
 	// URLパラメータの変更を監視
 	useEffect(() => {
-		if (!disableUrlSync) {
+		if (!disableUrlSync && !isUpdatingUrl.current) {
 			const urlFilters = parseFiltersFromURL(searchParams);
 			setFilters((prev) => ({ ...prev, ...urlFilters }));
 			if (urlFilters.categories) {
@@ -194,15 +199,29 @@ export const useIncomeFilters = ({
 		}
 	}, [searchParams, disableUrlSync]);
 
+	// URL更新リセット遅延時間を定数として管理
+	const URL_UPDATE_RESET_DELAY = 100;
+	const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+
 	// URL更新関数をdebounceで最適化（300ms遅延）
 	// 頻繁なURL更新を防ぎ、パフォーマンスを向上
 	const debouncedUrlUpdate = useMemo(
 		() =>
 			debounce((cleanedFilters: IncomeFiltersState) => {
 				if (!disableUrlSync) {
+					isUpdatingUrl.current = true;
 					const queryString = buildURLParams(cleanedFilters);
 					const newURL = queryString ? `${pathname}?${queryString}` : pathname;
 					router.replace(newURL);
+					// URL更新完了後にフラグをリセット
+					// 既存のタイマーをクリア
+					if (timeoutIdRef.current) {
+						clearTimeout(timeoutIdRef.current);
+					}
+					timeoutIdRef.current = setTimeout(() => {
+						isUpdatingUrl.current = false;
+						timeoutIdRef.current = null;
+					}, URL_UPDATE_RESET_DELAY);
 				}
 			}, 300),
 		[router, pathname, disableUrlSync],
@@ -216,7 +235,14 @@ export const useIncomeFilters = ({
 	);
 
 	// フィルター変更時の処理
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <throttledCallbackとdebouncedUrlUpdateは意図的に除外>
 	useEffect(() => {
+		// 初回レンダリング時はスキップ
+		if (isFirstRender.current) {
+			isFirstRender.current = false;
+			return;
+		}
+
 		const cleanedFilters = cleanFilters({
 			...filters,
 			categories:
@@ -228,7 +254,7 @@ export const useIncomeFilters = ({
 
 		// デバウンスされたURL更新を実行
 		debouncedUrlUpdate(cleanedFilters);
-	}, [filters, selectedCategories, throttledCallback, debouncedUrlUpdate]);
+	}, [filters, selectedCategories]);
 
 	// フィルターを更新
 	const updateFilter = useCallback(
@@ -263,6 +289,15 @@ export const useIncomeFilters = ({
 				? prev.filter((id) => id !== categoryId)
 				: [...prev, categoryId],
 		);
+	}, []);
+
+	// クリーンアップ: タイマーをクリア
+	useEffect(() => {
+		return () => {
+			if (timeoutIdRef.current) {
+				clearTimeout(timeoutIdRef.current);
+			}
+		};
 	}, []);
 
 	return {

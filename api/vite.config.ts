@@ -1,6 +1,7 @@
 import { cloudflare } from '@cloudflare/vite-plugin'
 import { defineConfig } from 'vite'
 import path from 'node:path'
+import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [cloudflare()],
@@ -9,7 +10,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@shared': path.resolve(__dirname, '../shared/src')
+      '@shared': fileURLToPath(new URL('../shared/src', import.meta.url))
     }
   }
 })

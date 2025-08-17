@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome lint src/",
     "format": "biome format --write src/",
-    "test": "vitest",
+    "test": "vitest --run",
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage",
     "test:integration": "vitest run --config vitest.integration.config.ts",

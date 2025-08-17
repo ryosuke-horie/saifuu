@@ -5,7 +5,7 @@
  * URL同期機能も含む
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
 	DEFAULT_ITEMS_PER_PAGE,
 	DEFAULT_PAGE,
@@ -68,6 +68,9 @@ export function useIncomesWithPagination({
 	const [currentItemsPerPage, setCurrentItemsPerPage] = useState(
 		getInitialLimit(),
 	);
+
+	// 初回取得フラグ
+	const isInitialMount = useRef(true);
 
 	// データ取得関数
 	const fetchIncomes = useCallback(
@@ -140,11 +143,14 @@ export function useIncomesWithPagination({
 		await fetchIncomes(currentPage, currentItemsPerPage);
 	}, [currentPage, currentItemsPerPage, fetchIncomes]);
 
-	// 初回データ取得
-	// biome-ignore lint/correctness/useExhaustiveDependencies: 初回のみ実行するため
+	// 初回データ取得のみ（ページやアイテム数の変更はハンドラー経由で行う）
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <初回マウント時のみ実行するため依存配列は空>
 	useEffect(() => {
-		fetchIncomes(currentPage, currentItemsPerPage);
-	}, []); // 初回のみ実行
+		if (isInitialMount.current) {
+			isInitialMount.current = false;
+			fetchIncomes(currentPage, currentItemsPerPage);
+		}
+	}, []);
 
 	// UseIncomesWithPaginationReturn型に準拠した戻り値
 	return {
