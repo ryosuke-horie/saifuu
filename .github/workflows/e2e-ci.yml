@@ -94,10 +94,7 @@ jobs:
         run: |
           pnpm install --frozen-lockfile --prefer-offline false
       
-      # Playwrightブラウザのインストール
-      - name: Install Playwright Browsers
-        working-directory: e2e
-        run: npx playwright install chromium
+      # セルフホストランナーには既にChromeがインストール済みのためスキップ
       
       # E2E用データベースのセットアップ
       - name: Setup E2E Database
@@ -159,16 +156,16 @@ jobs:
           # テスト結果を返す
           exit ${TEST_RESULT:-0}
       
-      # アーティファクトのアップロード（失敗時）
-      - name: Upload test results
+      # テスト結果の表示（失敗時のみ）
+      - name: Show test failure summary
         if: failure()
-        uses: actions/upload-artifact@b2360a637a4909eb666817a837f5c891dc406b61 # v4.5.1
-        with:
-          name: e2e-test-results
-          path: |
-            e2e/test-results/
-            e2e/playwright-report/
-          retention-days: 7
+        run: |
+          echo "E2E tests failed. Check the logs above for details."
+          # Playwrightのテスト結果サマリーがあれば表示
+          if [ -f e2e/test-results/.last-run.json ]; then
+            echo "Test run summary:"
+            cat e2e/test-results/.last-run.json || true
+          fi
       
       # クリーンアップ
       - name: Cleanup
