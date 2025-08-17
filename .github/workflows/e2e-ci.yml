@@ -76,6 +76,20 @@ jobs:
         with:
           version: 10.12.1
       
+      # ルート依存関係のインストール（better-sqlite3のビルドに必要）
+      - name: Install root dependencies
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          pnpm config set store-dir /tmp/pnpm-store-${{ github.run_id }}
+          pnpm install --frozen-lockfile
+      
+      # better-sqlite3のリビルド
+      - name: Rebuild better-sqlite3
+        run: |
+          cd node_modules/better-sqlite3
+          npm run install --verbose || npm run build-release || node-gyp rebuild
+          cd ../..
+      
       # E2E依存関係のインストール（E2Eテスト実行用）
       - name: Install E2E dependencies
         working-directory: e2e
