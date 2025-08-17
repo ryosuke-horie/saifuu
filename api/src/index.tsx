@@ -86,7 +86,8 @@ app.use('/api/*', async (c, next) => {
 			// 本番環境ではCloudflare D1を使用
 			if (!c.env.DB) {
 				logWithContext(c, 'error', 'D1 database binding not found', {
-					availableBindings: Object.keys(c.env || {}),
+					hasEnvObject: !!c.env,
+					envKeyCount: c.env ? Object.keys(c.env).length : 0,
 				})
 				throw new Error('D1 database binding (DB) not found in environment')
 			}
