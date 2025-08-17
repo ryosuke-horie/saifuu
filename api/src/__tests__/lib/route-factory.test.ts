@@ -29,6 +29,7 @@ type MockDatabase = {
 	select: ReturnType<typeof vi.fn>
 	from: ReturnType<typeof vi.fn>
 	where: ReturnType<typeof vi.fn>
+	orderBy: ReturnType<typeof vi.fn>
 	insert: ReturnType<typeof vi.fn>
 	into: ReturnType<typeof vi.fn>
 	values: ReturnType<typeof vi.fn>
@@ -52,6 +53,7 @@ describe('route-factory', () => {
 			select: vi.fn().mockReturnThis(),
 			from: vi.fn().mockReturnThis(),
 			where: vi.fn().mockReturnThis(),
+			orderBy: vi.fn().mockReturnThis(),
 			insert: vi.fn().mockReturnThis(),
 			into: vi.fn().mockReturnThis(),
 			values: vi.fn().mockReturnThis(),
@@ -98,8 +100,8 @@ describe('route-factory', () => {
 					{ id: 1, name: 'Test 1', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
 					{ id: 2, name: 'Test 2', createdAt: '2024-01-02', updatedAt: '2024-01-02' },
 				]
-				// select().from()が呼び出されたときにtestDataを返すように設定
-				mockDb.from.mockResolvedValueOnce(testData)
+				// select().from().orderBy()が呼び出されたときにtestDataを返すように設定
+				mockDb.orderBy.mockResolvedValueOnce(testData)
 
 				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 					table: testTable,
@@ -120,7 +122,7 @@ describe('route-factory', () => {
 				const testData = [
 					{ id: 1, name: 'Test 1', createdAt: '2024-01-01', updatedAt: '2024-01-01' },
 				]
-				mockDb.from.mockResolvedValueOnce(testData)
+				mockDb.orderBy.mockResolvedValueOnce(testData)
 
 				const transformFn = vi.fn((data: unknown[]) =>
 					(data as TestEntity[]).map((item) => ({ ...item, transformed: true }))
@@ -142,7 +144,7 @@ describe('route-factory', () => {
 			})
 
 			it('エラー発生時に500エラーを返す', async () => {
-				mockDb.from.mockRejectedValueOnce(new Error('Database error'))
+				mockDb.orderBy.mockRejectedValueOnce(new Error('Database error'))
 
 				const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 					table: testTable,
@@ -373,7 +375,7 @@ describe('route-factory', () => {
 						updatedAt: new Date(2024, 0, 1, 0, 0, i).toISOString(),
 					}))
 
-					mockDb.from.mockResolvedValueOnce(largeDataset)
+					mockDb.orderBy.mockResolvedValueOnce(largeDataset)
 
 					const handlers = createCrudHandlers<TestEntity, Partial<TestEntity>>({
 						table: testTable,
