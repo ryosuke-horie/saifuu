@@ -71,6 +71,7 @@ jobs:
       - name: Install API dependencies
         working-directory: api
         run: |
+          export PATH="$PNPM_HOME:$PATH"
           pnpm install --frozen-lockfile --prefer-offline false
       
       # better-sqlite3のリビルド
@@ -86,12 +87,14 @@ jobs:
       - name: Install Frontend dependencies
         working-directory: frontend
         run: |
+          export PATH="$PNPM_HOME:$PATH"
           pnpm install --frozen-lockfile --prefer-offline false
       
       # E2E依存関係のインストール
       - name: Install E2E dependencies
         working-directory: e2e
         run: |
+          export PATH="$PNPM_HOME:$PATH"
           pnpm install --frozen-lockfile --prefer-offline false
       
       # セルフホストランナーには既にChromeがインストール済みのためスキップ
@@ -100,6 +103,7 @@ jobs:
       - name: Setup E2E Database
         working-directory: api
         run: |
+          export PATH="$PNPM_HOME:$PATH"
           # データベースディレクトリを作成
           mkdir -p db
           # E2E用データベースファイルを作成
@@ -110,12 +114,16 @@ jobs:
       # APIサーバーのビルド
       - name: Build API
         working-directory: api
-        run: pnpm run build
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          pnpm run build
       
       # Frontendのビルド
       - name: Build Frontend
         working-directory: frontend
-        run: pnpm run build
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          pnpm run build
         env:
           NEXT_PUBLIC_API_URL: /api
       
@@ -131,11 +139,11 @@ jobs:
           sleep 2
           
           # APIサーバーをE2Eモードで起動
-          cd api && pnpm run dev:e2e &
+          cd api && export PATH="$PNPM_HOME:$PATH" && pnpm run dev:e2e &
           API_PID=$!
           
           # Frontendサーバーを起動（productionモード）
-          cd frontend && E2E_MODE=true pnpm run start &
+          cd frontend && export PATH="$PNPM_HOME:$PATH" && E2E_MODE=true pnpm run start &
           FRONTEND_PID=$!
           
           # サーバーの起動を待つ（タイムアウトは15秒に短縮）
@@ -155,6 +163,7 @@ jobs:
           
           # E2Eテストを実行（ヘッドレスモードで失敗時は即座に終了）
           cd e2e
+          export PATH="$PNPM_HOME:$PATH"
           pnpm run test --reporter=list || TEST_RESULT=$?
           
           # サーバーを停止
