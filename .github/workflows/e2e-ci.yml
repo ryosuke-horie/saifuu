@@ -76,43 +76,12 @@ jobs:
         with:
           version: 10.12.1
       
-      # ルートの依存関係をインストール
-      - name: Install root dependencies
-        run: |
-          pnpm config set store-dir /tmp/pnpm-store-${{ github.run_id }}
-          pnpm install --frozen-lockfile --prefer-offline false
-      
-      # API依存関係のインストール
-      - name: Install API dependencies
-        working-directory: api
-        run: |
-          export PATH="$PNPM_HOME:$PATH"
-          pnpm install --frozen-lockfile --prefer-offline false
-      
-      # better-sqlite3のリビルド
-      - name: Rebuild better-sqlite3
-        working-directory: .
-        run: |
-          cd node_modules/better-sqlite3
-          npm run install --verbose || npm run build-release || node-gyp rebuild
-          ls -la build/ || true
-          ls -la build/Release/ || true
-      
-      # Frontend依存関係のインストール
-      - name: Install Frontend dependencies
-        working-directory: frontend
-        run: |
-          export PATH="$PNPM_HOME:$PATH"
-          pnpm install --frozen-lockfile --prefer-offline false
-      
-      # E2E依存関係のインストール
+      # E2E依存関係のインストール（E2Eテスト実行用）
       - name: Install E2E dependencies
         working-directory: e2e
         run: |
           export PATH="$PNPM_HOME:$PATH"
-          pnpm install --frozen-lockfile --prefer-offline false
-      
-      # セルフホストランナーには既にChromeがインストール済みのためスキップ
+          pnpm install --frozen-lockfile
       
       # E2E用データベースのセットアップ
       - name: Setup E2E Database
@@ -141,13 +110,23 @@ jobs:
           pkill -9 -f "tsx server-e2e.js" || true
           sleep 2
           
-          # APIサーバーをE2Eモードで起動
-          cd api && export PATH="$PNPM_HOME:$PATH" && pnpm run dev:e2e &
+          # APIディレクトリで依存関係をインストールしてからサーバーを起動
+          echo "Starting API server..."
+          cd api
+          export PATH="$PNPM_HOME:$PATH"
+          pnpm install --frozen-lockfile
+          pnpm run dev:e2e &
           API_PID=$!
+          cd ..
           
-          # Frontendサーバーを起動（開発モード）
-          cd frontend && export PATH="$PNPM_HOME:$PATH" && E2E_MODE=true pnpm run dev &
+          # Frontendディレクトリで依存関係をインストールしてからサーバーを起動
+          echo "Starting Frontend server..."
+          cd frontend
+          export PATH="$PNPM_HOME:$PATH"
+          pnpm install --frozen-lockfile
+          E2E_MODE=true pnpm run dev &
           FRONTEND_PID=$!
+          cd ..
           
           # サーバーの起動を待つ（開発サーバーは起動に時間がかかる場合がある）
           echo "Waiting for API server..."
