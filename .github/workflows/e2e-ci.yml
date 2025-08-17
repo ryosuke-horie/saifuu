@@ -92,6 +92,15 @@ jobs:
           pnpm config set store-dir /tmp/pnpm-store-${{ github.run_id }}
           pnpm install --frozen-lockfile --prefer-offline false
       
+      # better-sqlite3のリビルド
+      - name: Rebuild better-sqlite3
+        run: |
+          if [ -d "node_modules/better-sqlite3" ]; then
+            cd node_modules/better-sqlite3
+            npm run install --verbose || npm run build-release || node-gyp rebuild || true
+            cd ../..
+          fi
+      
       # API依存関係のインストール
       - name: Install API dependencies
         working-directory: api
