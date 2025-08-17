@@ -13,7 +13,7 @@
 		"lint:biome:fix": "biome check --fix .",
 		"format": "biome format --write .",
 		"typecheck": "tsc --noEmit",
-		"test": "vitest",
+		"test": "vitest --run",
 		"test:unit": "vitest run",
 		"test:unit:coverage": "vitest run --coverage",
 		"test:watch": "vitest watch",
