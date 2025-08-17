@@ -71,19 +71,23 @@ export const TransactionRow: FC<TransactionRowProps> = memo(
 			<tr
 				className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${className}`}
 			>
-				<td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900">
+				<td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900 whitespace-nowrap">
 					{formatDate(transaction.date)}
 				</td>
 				<td
-					className={`px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium ${amountColorClass}`}
+					className={`px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium whitespace-nowrap ${amountColorClass}`}
 				>
 					{formatCurrency(transaction.amount, showSign)}
 				</td>
-				<td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700 max-w-[80px] sm:max-w-none truncate">
-					{formatCategoryName(transaction.category || null)}
+				<td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
+					<div className="max-w-[80px] sm:max-w-[120px] md:max-w-[150px] truncate">
+						{formatCategoryName(transaction.category || null)}
+					</div>
 				</td>
-				<td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700 max-w-[120px] sm:max-w-none truncate">
-					{transaction.description || ""}
+				<td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
+					<div className="max-w-[100px] sm:max-w-[200px] md:max-w-[300px] truncate">
+						{transaction.description || ""}
+					</div>
 				</td>
 				<td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
 					<div className="flex flex-col gap-1">
