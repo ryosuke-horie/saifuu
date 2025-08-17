@@ -4,10 +4,10 @@ const nextConfig: NextConfig = {
 	/* config options here */
 	rewrites: async () => {
 		// E2Eテスト時は3004ポート、通常開発時は5173ポートにプロキシ
-		const apiPort = process.env.E2E_MODE === 'true' ? 3004 : 5173;
+		const apiPort = process.env.E2E_MODE === "true" ? 3004 : 5173;
 		return [
 			{
-				source: '/api/:path*',
+				source: "/api/:path*",
 				destination: `http://localhost:${apiPort}/api/:path*`,
 			},
 		];

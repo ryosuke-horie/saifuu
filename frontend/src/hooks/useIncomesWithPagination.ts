@@ -144,13 +144,13 @@ export function useIncomesWithPagination({
 	}, [currentPage, currentItemsPerPage, fetchIncomes]);
 
 	// 初回データ取得のみ（ページやアイテム数の変更はハンドラー経由で行う）
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <初回マウント時のみ実行するため依存配列は空>
 	useEffect(() => {
 		if (isInitialMount.current) {
 			isInitialMount.current = false;
 			fetchIncomes(currentPage, currentItemsPerPage);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []); // 初回マウント時のみ実行
+	}, []);
 
 	// UseIncomesWithPaginationReturn型に準拠した戻り値
 	return {

@@ -226,6 +226,7 @@ export const useIncomeFilters = ({
 	);
 
 	// フィルター変更時の処理
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <throttledCallbackとdebouncedUrlUpdateは意図的に除外>
 	useEffect(() => {
 		// 初回レンダリング時はスキップ
 		if (isFirstRender.current) {
@@ -244,8 +245,7 @@ export const useIncomeFilters = ({
 
 		// デバウンスされたURL更新を実行
 		debouncedUrlUpdate(cleanedFilters);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [filters, selectedCategories]); // throttledCallbackとdebouncedUrlUpdateは除外
+	}, [filters, selectedCategories]);
 
 	// フィルターを更新
 	const updateFilter = useCallback(

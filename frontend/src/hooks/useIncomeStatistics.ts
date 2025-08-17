@@ -114,13 +114,13 @@ export const useIncomeStatistics = () => {
 		}
 	}, []);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <初回マウント時のみ実行するためfetchStatsDataは除外>
 	useEffect(() => {
 		if (isInitialMount.current) {
 			isInitialMount.current = false;
 			fetchStatsData();
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []); // 初回マウント時のみ実行
+	}, []);
 
 	return {
 		statsData,
