@@ -1,7 +1,6 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { type AnyDatabase, createDatabase, type Env } from './db'
-import { createDevSqliteDatabase } from './db/dev'
 import { transactions } from './db/schema'
 import { type LoggingVariables, loggingMiddleware, logWithContext } from './middleware/logging'
 import { renderer } from './renderer'
@@ -32,7 +31,14 @@ app.use(
 )
 
 // 開発環境判定（Cloudflare Workers対応）
-const isDev = import.meta.env.DEV || import.meta.env.NODE_ENV === 'development'
+// 本番環境では import.meta.env が存在しないため、安全にチェック
+const isDev = (() => {
+	try {
+		return import.meta.env?.DEV === true || import.meta.env?.NODE_ENV === 'development' || false
+	} catch {
+		return false
+	}
+})()
 
 // ロギングミドルウェアの設定（CORSの後、他のミドルウェアの前に適用）
 // 環境変数は動的に取得するため、リクエスト時に初期化
@@ -47,11 +53,8 @@ app.use('/api/*', async (c, next) => {
 	return middleware(c as unknown as Parameters<typeof middleware>[0], next)
 })
 
-// 開発環境用のデータベースインスタンスを一度だけ作成
+// 開発環境用のデータベースインスタンスを一度だけ作成（遅延初期化）
 let devDb: AnyDatabase | null = null
-if (isDev) {
-	devDb = createDevSqliteDatabase() as unknown as AnyDatabase
-}
 
 // ミドルウェア: データベース接続を設定
 app.use('/api/*', async (c, next) => {
@@ -65,8 +68,18 @@ app.use('/api/*', async (c, next) => {
 		let db: AnyDatabase
 
 		if (isDev) {
-			// 開発環境ではローカルSQLiteを使用
-			db = devDb!
+			// 開発環境ではローカルSQLiteを使用（初回のみ作成）
+			if (!devDb) {
+				try {
+					const { createDevSqliteDatabase } = await import('./db/dev')
+					devDb = createDevSqliteDatabase() as unknown as AnyDatabase
+					logWithContext(c, 'debug', 'Dev SQLite database created successfully')
+				} catch (error) {
+					console.error('Failed to create dev database:', error)
+					throw new Error('Failed to initialize development database')
+				}
+			}
+			db = devDb
 			logWithContext(c, 'debug', 'Local SQLite database used (development)')
 		} else {
 			// 本番環境ではCloudflare D1を使用
