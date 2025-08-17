@@ -149,20 +149,33 @@ jobs:
           cd frontend && export PATH="$PNPM_HOME:$PATH" && E2E_MODE=true pnpm run dev &
           FRONTEND_PID=$!
           
-          # サーバーの起動を待つ（タイムアウトは15秒に短縮）
+          # サーバーの起動を待つ（開発サーバーは起動に時間がかかる場合がある）
           echo "Waiting for API server..."
-          timeout 15 sh -c 'until curl -f http://localhost:3004/api/health 2>/dev/null; do sleep 1; done' || {
-            echo "API server failed to start"
-            kill $API_PID $FRONTEND_PID 2>/dev/null || true
-            exit 1
-          }
+          for i in {1..30}; do
+            if curl -f http://localhost:3004/api/health 2>/dev/null; then
+              echo "API server is ready"
+              break
+            fi
+            echo "Waiting for API... ($i/30)"
+            sleep 1
+          done
           
           echo "Waiting for Frontend server..."
-          timeout 15 sh -c 'until curl -f http://localhost:3000 2>/dev/null; do sleep 1; done' || {
-            echo "Frontend server failed to start"
-            kill $API_PID $FRONTEND_PID 2>/dev/null || true
-            exit 1
-          }
+          for i in {1..60}; do
+            if curl -f http://localhost:3000 2>/dev/null; then
+              echo "Frontend server is ready"
+              break
+            fi
+            echo "Waiting for Frontend... ($i/60)"
+            sleep 1
+            if [ $i -eq 60 ]; then
+              echo "Frontend server failed to start after 60 seconds"
+              ps aux | grep -E "(next|node)" || true
+              netstat -tulpn | grep -E "(3000|3004)" || true
+              kill -9 $API_PID $FRONTEND_PID 2>/dev/null || true
+              exit 1
+            fi
+          done
           
           # E2Eテストを実行（ヘッドレスモードで失敗時は即座に終了）
           cd e2e
