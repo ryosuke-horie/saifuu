@@ -1,0 +1,180 @@
+name: E2E Tests (Self-hosted Runner)
+
+on:
+  # プルリクエストで自動実行
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'frontend/**'
+      - 'api/**'
+      - 'e2e/**'
+      - '!frontend/**/*.md'
+      - '!api/**/*.md'
+      - '!e2e/**/*.md'
+      - '.github/workflows/e2e-ci.yml'
+  # mainブランチへのpushで実行
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - 'api/**'
+      - 'e2e/**'
+      - '!frontend/**/*.md'
+      - '!api/**/*.md'
+      - '!e2e/**/*.md'
+      - '.github/workflows/e2e-ci.yml'
+  # 手動トリガー（デバッグ用）
+  workflow_dispatch:
+
+# GitHub Actions無料枠節約のため、同一PRで複数実行時は前の実行をキャンセル
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-tests:
+    name: E2E Tests
+    runs-on: self-hosted
+    timeout-minutes: 20
+    
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      
+      - name: Clean pnpm setup directory
+        run: |
+          # pnpm/action-setupのデフォルトディレクトリをクリーンアップ
+          rm -rf ~/setup-pnpm || true
+          rm -rf /home/runner-user/setup-pnpm || true
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+      
+      # ルートの依存関係をインストール
+      - name: Install root dependencies
+        run: |
+          pnpm config set store-dir /tmp/pnpm-store-${{ github.run_id }}
+          pnpm install --frozen-lockfile --prefer-offline false
+      
+      # API依存関係のインストール
+      - name: Install API dependencies
+        working-directory: api
+        run: |
+          pnpm install --frozen-lockfile --prefer-offline false
+      
+      # better-sqlite3のリビルド
+      - name: Rebuild better-sqlite3
+        working-directory: .
+        run: |
+          cd node_modules/better-sqlite3
+          npm run install --verbose || npm run build-release || node-gyp rebuild
+          ls -la build/ || true
+          ls -la build/Release/ || true
+      
+      # Frontend依存関係のインストール
+      - name: Install Frontend dependencies
+        working-directory: frontend
+        run: |
+          pnpm install --frozen-lockfile --prefer-offline false
+      
+      # E2E依存関係のインストール
+      - name: Install E2E dependencies
+        working-directory: e2e
+        run: |
+          pnpm install --frozen-lockfile --prefer-offline false
+      
+      # Playwrightブラウザのインストール
+      - name: Install Playwright Browsers
+        working-directory: e2e
+        run: npx playwright install chromium
+      
+      # E2E用データベースのセットアップ
+      - name: Setup E2E Database
+        working-directory: api
+        run: |
+          # E2E用データベースファイルを作成
+          touch db/e2e-test.db
+          # E2E用の環境でマイグレーションを実行
+          NODE_ENV=e2e pnpm run db:migrate:dev
+      
+      # APIサーバーのビルド
+      - name: Build API
+        working-directory: api
+        run: pnpm run build
+      
+      # Frontendのビルド
+      - name: Build Frontend
+        working-directory: frontend
+        run: pnpm run build
+        env:
+          NEXT_PUBLIC_API_URL: /api
+      
+      # E2Eテストの実行
+      - name: Run E2E tests
+        env:
+          CI: true
+          E2E_MODE: true
+        run: |
+          # APIサーバーをE2Eモードで起動
+          cd api && pnpm run dev:e2e &
+          API_PID=$!
+          
+          # Frontendサーバーを起動（productionモード）
+          cd frontend && E2E_MODE=true pnpm run start &
+          FRONTEND_PID=$!
+          
+          # サーバーの起動を待つ（タイムアウトは15秒に短縮）
+          echo "Waiting for API server..."
+          timeout 15 sh -c 'until curl -f http://localhost:3004/api/health 2>/dev/null; do sleep 1; done' || {
+            echo "API server failed to start"
+            kill $API_PID $FRONTEND_PID 2>/dev/null || true
+            exit 1
+          }
+          
+          echo "Waiting for Frontend server..."
+          timeout 15 sh -c 'until curl -f http://localhost:3000 2>/dev/null; do sleep 1; done' || {
+            echo "Frontend server failed to start"
+            kill $API_PID $FRONTEND_PID 2>/dev/null || true
+            exit 1
+          }
+          
+          # E2Eテストを実行（ヘッドレスモードで失敗時は即座に終了）
+          cd e2e
+          pnpm run test --reporter=list || TEST_RESULT=$?
+          
+          # サーバーを停止
+          kill $API_PID $FRONTEND_PID 2>/dev/null || true
+          
+          # テスト結果を返す
+          exit ${TEST_RESULT:-0}
+      
+      # アーティファクトのアップロード（失敗時）
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@b2360a637a4909eb666817a837f5c891dc406b61 # v4.5.1
+        with:
+          name: e2e-test-results
+          path: |
+            e2e/test-results/
+            e2e/playwright-report/
+          retention-days: 7
+      
+      # クリーンアップ
+      - name: Cleanup
+        if: always()
+        run: |
+          # pnpmストアのクリーンアップ
+          rm -rf /tmp/pnpm-store-${{ github.run_id }} || true
+          # E2Eテスト用データベースの削除
+          rm -f api/db/e2e-test.db || true
