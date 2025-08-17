@@ -4,6 +4,25 @@ import type { AnyDatabase } from '../db'
 import { type LoggingVariables, logWithContext } from '../middleware/logging'
 
 /**
+ * 現在の実行環境が本番環境かどうかを判定する
+ *
+ * @returns 本番環境の場合はtrue、開発環境の場合はfalse
+ */
+const isProductionEnvironment = (): boolean => {
+	try {
+		// import.metaが存在しない、またはenvが存在しない場合は本番環境と判定
+		if (typeof import.meta === 'undefined' || typeof import.meta.env === 'undefined') {
+			return true
+		}
+		// 開発環境の場合はfalseを返す
+		return !(import.meta.env.DEV === true || import.meta.env.NODE_ENV === 'development')
+	} catch {
+		// import.metaへのアクセスでエラーが発生した場合は本番環境と判定
+		return true
+	}
+}
+
+/**
  * データ永続化の検証が必要かどうかを判定する
  *
  * @param testDatabase テスト用データベース（存在する場合は検証不要）
@@ -20,24 +39,8 @@ export const shouldVerifyPersistence = (
 	// select関数が存在しない場合は検証不可
 	if (typeof db.select !== 'function') return false
 
-	// 開発環境では検証しない（パフォーマンス優先）
-	// Cloudflare Workers環境では import.meta が存在しないため、環境変数チェックを行わない
-	// 本番環境（Cloudflare Workers）でのみ検証を実行
-	try {
-		// import.metaが存在しない、またはenvが存在しない場合は本番環境と判定
-		if (typeof import.meta === 'undefined' || typeof import.meta.env === 'undefined') {
-			return true
-		}
-		// 開発環境の場合は検証をスキップ
-		if (import.meta.env.DEV === true || import.meta.env.NODE_ENV === 'development') {
-			return false
-		}
-	} catch {
-		// import.metaへのアクセスでエラーが発生した場合は本番環境と判定
-		return true
-	}
-
-	return true
+	// 本番環境でのみ検証を実行（パフォーマンス優先）
+	return isProductionEnvironment()
 }
 
 /**
