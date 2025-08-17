@@ -4,6 +4,43 @@ import type { AnyDatabase } from '../db'
 import { type LoggingVariables, logWithContext } from '../middleware/logging'
 
 /**
+ * データ永続化の検証が必要かどうかを判定する
+ *
+ * @param testDatabase テスト用データベース（存在する場合は検証不要）
+ * @param db 実際のデータベースインスタンス
+ * @returns 検証が必要な場合はtrue
+ */
+export const shouldVerifyPersistence = (
+	testDatabase: AnyDatabase | undefined,
+	db: AnyDatabase
+): boolean => {
+	// テスト環境では検証しない
+	if (testDatabase) return false
+
+	// select関数が存在しない場合は検証不可
+	if (typeof db.select !== 'function') return false
+
+	// 開発環境では検証しない（パフォーマンス優先）
+	// Cloudflare Workers環境では import.meta が存在しないため、環境変数チェックを行わない
+	// 本番環境（Cloudflare Workers）でのみ検証を実行
+	try {
+		// import.metaが存在しない、またはenvが存在しない場合は本番環境と判定
+		if (typeof import.meta === 'undefined' || typeof import.meta.env === 'undefined') {
+			return true
+		}
+		// 開発環境の場合は検証をスキップ
+		if (import.meta.env.DEV === true || import.meta.env.NODE_ENV === 'development') {
+			return false
+		}
+	} catch {
+		// import.metaへのアクセスでエラーが発生した場合は本番環境と判定
+		return true
+	}
+
+	return true
+}
+
+/**
  * バリデーションエラーの型定義
  */
 export type ValidationError = {
@@ -330,8 +367,7 @@ export function createCrudHandlers<
 
 				// 本番環境（Cloudflare D1）では、データが実際に永続化されたことを確認
 				// returning()が成功してもコミットが完了していない可能性があるため
-				// testDatabaseが渡されていない、かつselect関数が存在する（実際のDBインスタンス）場合のみ実行
-				if (!testDatabase && typeof db.select === 'function') {
+				if (shouldVerifyPersistence(testDatabase, db)) {
 					logWithContext(c, 'debug', `${resourceName}作成後の検証を実行`, {
 						[`${resourceName}Id`]: createdItem.id,
 						resource: resourceName,
