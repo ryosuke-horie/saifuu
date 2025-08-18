@@ -29,7 +29,8 @@ app.use('/api/*', cors({
 }));
 
 // E2E専用データベースの初期化
-const E2E_DB_PATH = './e2e-test.db';
+// CI環境では db/e2e-test.db を使用
+const E2E_DB_PATH = './db/e2e-test.db';
 console.log('=== E2E Server Database Initialization ===');
 
 // 既存のE2Eデータベースがあれば安全にクローズ
