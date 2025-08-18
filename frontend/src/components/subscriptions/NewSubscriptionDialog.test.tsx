@@ -104,11 +104,13 @@ describe("NewSubscriptionDialog", () => {
 			await user.type(screen.getByLabelText(/サービス名/), "Netflix");
 			await user.type(screen.getByLabelText(/料金/), "1490");
 
-			// 次回請求日を設定
+			// 次回請求日を設定（デフォルト値があるのでまずクリア）
 			const nextMonth = new Date();
 			nextMonth.setMonth(nextMonth.getMonth() + 1);
 			const nextMonthString = nextMonth.toISOString().split("T")[0];
-			await user.type(screen.getByLabelText(/次回請求日/), nextMonthString);
+			const dateInput = screen.getByLabelText(/次回請求日/);
+			await user.clear(dateInput);
+			await user.type(dateInput, nextMonthString);
 
 			// カテゴリを選択
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "3");

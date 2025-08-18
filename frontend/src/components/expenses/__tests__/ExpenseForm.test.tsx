@@ -26,6 +26,28 @@ const mockCategories: Category[] = [
 
 describe("ExpenseForm", () => {
 	describe("レンダリング", () => {
+		it("日付フィールドのデフォルト値が当日の日付になっている", () => {
+			const mockOnSubmit = vi.fn();
+			const mockOnCancel = vi.fn();
+
+			// 当日の日付を取得（ExpenseFormと同じロジック）
+			const today = new Date();
+			const expectedDate = `${today.getFullYear()}-${String(
+				today.getMonth() + 1,
+			).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+			render(
+				<ExpenseForm
+					onSubmit={mockOnSubmit}
+					onCancel={mockOnCancel}
+					categories={mockCategories}
+				/>,
+			);
+
+			const dateInput = screen.getByLabelText(/日付/) as HTMLInputElement;
+			expect(dateInput.value).toBe(expectedDate);
+		});
+
 		it("すべてのフォームフィールドが表示される", () => {
 			const mockOnSubmit = vi.fn();
 			const mockOnCancel = vi.fn();
@@ -95,6 +117,10 @@ describe("ExpenseForm", () => {
 				/>,
 			);
 
+			// 日付を空にして金額も0のままにする
+			const dateInput = screen.getByLabelText(/日付/);
+			fireEvent.change(dateInput, { target: { value: "" } });
+
 			// フォーム送信
 			const submitButton = screen.getByRole("button", { name: "登録" });
 			fireEvent.click(submitButton);
@@ -155,7 +181,7 @@ describe("ExpenseForm", () => {
 	});
 
 	describe("フォーム送信", () => {
-		it("有効なデータで送信が成功する", async () => {
+		it("有効なデータで送信が成功する（日付を変更）", async () => {
 			const mockOnSubmit = vi.fn();
 			const mockOnCancel = vi.fn();
 
@@ -190,6 +216,49 @@ describe("ExpenseForm", () => {
 					type: "expense",
 					date: "2024-01-15",
 					description: "ランチ代",
+					categoryId: "1",
+				});
+			});
+		});
+
+		it("有効なデータで送信が成功する（デフォルト日付のまま）", async () => {
+			const mockOnSubmit = vi.fn();
+			const mockOnCancel = vi.fn();
+
+			// 当日の日付を取得
+			const today = new Date();
+			const expectedDate = `${today.getFullYear()}-${String(
+				today.getMonth() + 1,
+			).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+			render(
+				<ExpenseForm
+					onSubmit={mockOnSubmit}
+					onCancel={mockOnCancel}
+					categories={mockCategories}
+				/>,
+			);
+
+			// 日付はデフォルトのまま、他のフィールドに値を入力
+			fireEvent.change(screen.getByLabelText(/金額（円）/), {
+				target: { value: "2000" },
+			});
+			fireEvent.change(screen.getByLabelText(/説明（任意）/), {
+				target: { value: "夕食代" },
+			});
+			fireEvent.change(screen.getByLabelText(/カテゴリ/), {
+				target: { value: "1" },
+			});
+
+			// 送信
+			fireEvent.click(screen.getByRole("button", { name: "登録" }));
+
+			await waitFor(() => {
+				expect(mockOnSubmit).toHaveBeenCalledWith({
+					amount: 2000,
+					type: "expense",
+					date: expectedDate,
+					description: "夕食代",
 					categoryId: "1",
 				});
 			});

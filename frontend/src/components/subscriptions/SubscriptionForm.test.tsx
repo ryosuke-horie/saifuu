@@ -122,7 +122,8 @@ describe("SubscriptionForm", () => {
 			render(<SubscriptionForm {...defaultProps} />);
 
 			const dateInput = screen.getByLabelText(/次回請求日/);
-			await user.click(dateInput);
+			// デフォルト値があるので、まずクリアする
+			await user.clear(dateInput);
 			await user.tab();
 
 			await waitFor(() => {
@@ -146,10 +147,10 @@ describe("SubscriptionForm", () => {
 				screen.getByLabelText(/請求サイクル/),
 				validFormData.billingCycle,
 			);
-			await user.type(
-				screen.getByLabelText(/次回請求日/),
-				validFormData.nextBillingDate,
-			);
+			// 日付はデフォルト値があるので、まずクリアしてから入力
+			const dateInput = screen.getByLabelText(/次回請求日/);
+			await user.clear(dateInput);
+			await user.type(dateInput, validFormData.nextBillingDate);
 			await user.selectOptions(
 				screen.getByLabelText(/カテゴリ/),
 				validFormData.categoryId,

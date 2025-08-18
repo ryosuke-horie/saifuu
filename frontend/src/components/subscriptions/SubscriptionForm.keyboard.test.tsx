@@ -113,10 +113,11 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			);
 
 			// 必須フィールドを入力
-			const tomorrowDate = getTomorrowDate();
 			await user.type(screen.getByLabelText(/サービス名/), "Netflix");
 			await user.type(screen.getByLabelText(/料金/), "1480");
-			await user.type(screen.getByLabelText(/次回請求日/), tomorrowDate);
+			// デフォルトの日付を取得（今日の日付がデフォルトで設定されている）
+			const dateInput = screen.getByLabelText(/次回請求日/) as HTMLInputElement;
+			const defaultDate = dateInput.value;
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "1");
 
 			// 説明フィールドにフォーカスしてからキーボードショートカットを実行
@@ -135,7 +136,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 				expect.objectContaining({
 					name: "Netflix",
 					amount: 1480,
-					nextBillingDate: tomorrowDate,
+					nextBillingDate: defaultDate,
 					categoryId: "1",
 				}),
 			);
@@ -154,10 +155,13 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 
 			// 必須フィールドを入力
 			const nameInput = screen.getByLabelText(/サービス名/);
-			const tomorrowDate = getTomorrowDate();
 			await user.type(nameInput, "Spotify");
 			await user.type(screen.getByLabelText(/料金/), "980");
-			await user.type(screen.getByLabelText(/次回請求日/), tomorrowDate);
+
+			// デフォルトの日付を取得（今日の日付がデフォルトで設定されている）
+			const dateInput = screen.getByLabelText(/次回請求日/) as HTMLInputElement;
+			const defaultDate = dateInput.value;
+
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "2");
 
 			// いずれかのフィールドからCtrl+Enterを実行
@@ -173,7 +177,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 					expect.objectContaining({
 						name: "Spotify",
 						amount: 980,
-						nextBillingDate: tomorrowDate,
+						nextBillingDate: defaultDate, // デフォルトの日付を使用
 						categoryId: "2",
 					}),
 				);
@@ -192,10 +196,13 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			);
 
 			// 必須フィールドを入力
-			const tomorrowDate = getTomorrowDate();
 			await user.type(screen.getByLabelText(/サービス名/), "Amazon Prime");
 			await user.type(screen.getByLabelText(/料金/), "500");
-			await user.type(screen.getByLabelText(/次回請求日/), tomorrowDate);
+
+			// デフォルトの日付を取得
+			const dateInput = screen.getByLabelText(/次回請求日/) as HTMLInputElement;
+			const defaultDate = dateInput.value;
+
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "1");
 
 			// 説明フィールドにフォーカスしてからキーボードショートカットを実行
@@ -211,7 +218,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 					expect.objectContaining({
 						name: "Amazon Prime",
 						amount: 500,
-						nextBillingDate: tomorrowDate,
+						nextBillingDate: defaultDate,
 						categoryId: "1",
 					}),
 				);
