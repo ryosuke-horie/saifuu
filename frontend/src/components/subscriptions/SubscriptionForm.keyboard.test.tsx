@@ -161,6 +161,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			// デフォルトの日付を取得（今日の日付がデフォルトで設定されている）
 			const dateInput = screen.getByLabelText(/次回請求日/) as HTMLInputElement;
 			const defaultDate = dateInput.value;
+
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "2");
 
 			// いずれかのフィールドからCtrl+Enterを実行
@@ -201,6 +202,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			// デフォルトの日付を取得
 			const dateInput = screen.getByLabelText(/次回請求日/) as HTMLInputElement;
 			const defaultDate = dateInput.value;
+
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "1");
 
 			// 説明フィールドにフォーカスしてからキーボードショートカットを実行
