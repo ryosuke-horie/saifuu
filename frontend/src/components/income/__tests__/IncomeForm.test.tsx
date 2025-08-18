@@ -34,6 +34,19 @@ describe("IncomeForm", () => {
 		expect(screen.getByRole("button", { name: "登録" })).toBeInTheDocument();
 	});
 
+	it("日付フィールドのデフォルト値が当日の日付になっている", () => {
+		// 当日の日付を取得（IncomeFormと同じロジック）
+		const today = new Date();
+		const expectedDate = `${today.getFullYear()}-${String(
+			today.getMonth() + 1,
+		).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+		render(<IncomeForm {...defaultProps} />);
+
+		const dateInput = screen.getByLabelText(/日付/) as HTMLInputElement;
+		expect(dateInput.value).toBe(expectedDate);
+	});
+
 	it("必須フィールドが空の場合、エラーメッセージが表示されること", async () => {
 		const user = userEvent.setup();
 		render(<IncomeForm {...defaultProps} />);

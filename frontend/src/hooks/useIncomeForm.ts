@@ -15,11 +15,20 @@ import type { IncomeFormData } from "../types/income";
 // フォームエラーの型定義
 type FormErrors = Partial<Record<keyof IncomeFormData, string>>;
 
+// 現在の日付を取得する関数（YYYY-MM-DD形式）
+const getToday = (): string => {
+	const today = new Date();
+	const year = today.getFullYear();
+	const month = String(today.getMonth() + 1).padStart(2, "0");
+	const day = String(today.getDate()).padStart(2, "0");
+	return `${year}-${month}-${day}`;
+};
+
 // デフォルトフォームデータ
 const defaultFormData: IncomeFormData = {
 	amount: 0,
 	type: "income",
-	date: new Date().toISOString().split("T")[0], // 今日の日付をデフォルトに
+	date: getToday(), // 今日の日付をデフォルトに
 	description: "",
 	categoryId: "",
 };
@@ -124,7 +133,13 @@ export const useIncomeForm = ({
 
 	// フォームのリセット
 	const resetForm = useCallback(() => {
-		setFormData(defaultFormData);
+		setFormData({
+			amount: 0,
+			type: "income",
+			date: getToday(), // リセット時も今日の日付にする
+			description: "",
+			categoryId: "",
+		});
 		setErrors({});
 		setTouched({
 			amount: false,
