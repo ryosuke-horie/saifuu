@@ -157,6 +157,8 @@ jobs:
       - name: Wait Frontend server response
         run: |
           curl --retry 60 --retry-delay 2 --max-time 5 http://localhost:3000
+          echo "Frontend server is ready, waiting for full initialization..."
+          sleep 5
       
       # Playwrightブラウザのインストール
       - name: Install Playwright browsers
