@@ -671,7 +671,7 @@ describe('route-factory', () => {
 		})
 	})
 
-	describe('shouldVerifyPersistence', () => {
+	describe('shouldVerifyPersistence - 基本動作', () => {
 		// テスト用のモックDB
 		// shouldVerifyPersistenceはselectプロパティの存在のみをチェックするため、
 		// Partialとunknownを使用して型安全性を保ちつつテストをシンプルに保つ
@@ -689,6 +689,12 @@ describe('route-factory', () => {
 
 		it('データベースにselect関数が存在しない場合はfalseを返す', () => {
 			const result = shouldVerifyPersistence(undefined, mockDbWithoutSelect)
+			expect(result).toBe(false)
+		})
+
+		it('テスト環境ではfalseを返す', () => {
+			// 現在のテスト環境での動作を確認
+			const result = shouldVerifyPersistence(undefined, mockDbWithSelect)
 			expect(result).toBe(false)
 		})
 	})
@@ -714,90 +720,66 @@ describe('route-factory', () => {
 				expect(result).toBe(true)
 			})
 		})
+	})
 
-		describe('shouldVerifyPersistence（環境別動作）', () => {
-			const mockDb = {
-				select: vi.fn(),
-			}
+	describe('shouldVerifyPersistence - 構造テスト', () => {
+		const mockDb = {
+			select: vi.fn(),
+		} as unknown as AnyDatabase
 
-			beforeEach(() => {
-				vi.clearAllMocks()
-				vi.resetModules()
-			})
+		describe('環境別の動作確認', () => {
+			// 注意：Vitestではimport.meta.envの動的な変更が困難なため、
+			// 実際の環境変数の変更は本番デプロイ時に確認する必要があります。
+			// これらのテストは、関数の構造と条件分岐が正しいことを確認するものです。
 
-			it('テストデータベースが存在する場合はfalseを返す', () => {
-				const testDatabase = { select: vi.fn() } as unknown as AnyDatabase
-				expect(shouldVerifyPersistence(testDatabase, mockDb as unknown as AnyDatabase)).toBe(false)
-			})
+			it('関数の条件分岐が正しい順序で評価される', () => {
+				// テストデータベースが最優先で評価されることを確認
+				const testDb = { select: vi.fn() } as unknown as AnyDatabase
+				expect(shouldVerifyPersistence(testDb, mockDb as unknown as AnyDatabase)).toBe(false)
 
-			it('dbにselect関数が存在しない場合はfalseを返す', () => {
+				// select関数のチェックが次に評価されることを確認
 				const dbWithoutSelect = {} as AnyDatabase
 				expect(shouldVerifyPersistence(undefined, dbWithoutSelect)).toBe(false)
-			})
 
-			it('テスト環境ではfalseを返す', () => {
-				// 現在のテスト環境での動作を確認
+				// 現在のテスト環境では環境判定により false が返される
+				// （本番環境では true が返されることが期待される）
 				const result = shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)
 				expect(result).toBe(false)
 			})
 
-			describe('環境別の動作確認（構造テスト）', () => {
-				// 注意：Vitestではimport.meta.envの動的な変更が困難なため、
-				// 実際の環境変数の変更は本番デプロイ時に確認する必要があります。
-				// これらのテストは、関数の構造と条件分岐が正しいことを確認するものです。
+			it('エッジケース：null/undefined の扱い', () => {
+				// nullデータベースの場合
+				expect(
+					shouldVerifyPersistence(null as unknown as AnyDatabase, mockDb as unknown as AnyDatabase)
+				).toBe(false)
 
-				it('関数の条件分岐が正しい順序で評価される', () => {
-					// テストデータベースが最優先で評価されることを確認
-					const testDb = { select: vi.fn() } as unknown as AnyDatabase
-					expect(shouldVerifyPersistence(testDb, mockDb as unknown as AnyDatabase)).toBe(false)
+				// undefinedデータベースの場合（通常のフロー）
+				expect(shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)).toBe(false)
+			})
 
-					// select関数のチェックが次に評価されることを確認
-					const dbWithoutSelect = {} as AnyDatabase
-					expect(shouldVerifyPersistence(undefined, dbWithoutSelect)).toBe(false)
+			it('組み合わせテスト：様々な条件の組み合わせ', () => {
+				const testCases = [
+					{ testDb: { select: vi.fn() }, db: { select: vi.fn() }, expected: false },
+					{ testDb: { select: vi.fn() }, db: {}, expected: false },
+					{ testDb: undefined, db: {}, expected: false },
+					{ testDb: undefined, db: { select: vi.fn() }, expected: false },
+				]
 
-					// 現在のテスト環境では環境判定により false が返される
-					// （本番環境では true が返されることが期待される）
-					const result = shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)
-					expect(result).toBe(false)
+				testCases.forEach(({ testDb, db, expected }, index) => {
+					const result = shouldVerifyPersistence(
+						testDb as unknown as AnyDatabase | undefined,
+						db as unknown as AnyDatabase
+					)
+					expect(result, `Test case ${index + 1}`).toBe(expected)
 				})
+			})
 
-				it('エッジケース：null/undefined の扱い', () => {
-					// nullデータベースの場合
-					expect(
-						shouldVerifyPersistence(
-							null as unknown as AnyDatabase,
-							mockDb as unknown as AnyDatabase
-						)
-					).toBe(false)
+			it('本番環境での動作をドキュメント化', () => {
+				// 本番環境: testDatabase=undefined, db.select存在, isProduction=true → true
+				// 開発/テスト環境: testDatabase=undefined, db.select存在, isProduction=false → false
 
-					// undefinedデータベースの場合（通常のフロー）
-					expect(shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)).toBe(false)
-				})
-
-				it('組み合わせテスト：様々な条件の組み合わせ', () => {
-					const testCases = [
-						{ testDb: { select: vi.fn() }, db: { select: vi.fn() }, expected: false },
-						{ testDb: { select: vi.fn() }, db: {}, expected: false },
-						{ testDb: undefined, db: {}, expected: false },
-						{ testDb: undefined, db: { select: vi.fn() }, expected: false },
-					]
-
-					testCases.forEach(({ testDb, db, expected }, index) => {
-						const result = shouldVerifyPersistence(
-							testDb as unknown as AnyDatabase | undefined,
-							db as unknown as AnyDatabase
-						)
-						expect(result, `Test case ${index + 1}`).toBe(expected)
-					})
-				})
-
-				it('本番環境での動作をドキュメント化', () => {
-					// 本番環境: testDatabase=undefined, db.select存在, isProduction=true → true
-					// 開発/テスト環境: testDatabase=undefined, db.select存在, isProduction=false → false
-
-					const actualResult = shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)
-					expect(actualResult).toBe(false) // 現在のテスト環境
-				})
+				const actualResult = shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)
+				expect(actualResult).toBe(false) // 現在のテスト環境
 			})
 		})
 	})
