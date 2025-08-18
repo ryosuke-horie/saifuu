@@ -22,8 +22,8 @@ export default defineConfig({
 	// 再試行回数（失敗時は即座に終了）
 	retries: 0,
 
-	// 並列ワーカー数（CI環境では2ワーカーに制限）
-	workers: process.env.CI ? 2 : undefined,
+	// 並列ワーカー数（CI環境では1ワーカーに制限してリソース使用を抑制）
+	workers: process.env.CI ? 1 : undefined,
 
 	// レポーター設定
 	reporter: "html",
