@@ -3,69 +3,76 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize]
+    # Optional: Only run on specific file changes
+    # paths:
+    #   - "src/**/*.ts"
+    #   - "src/**/*.tsx"
+    #   - "src/**/*.js"
+    #   - "src/**/*.jsx"
 
 jobs:
   claude-review:
-    # PR作成または更新時に実行
-    runs-on: self-hosted
+    # Optional: Filter by PR author
+    # if: |
+    #   github.event.pull_request.user.login == 'external-contributor' ||
+    #   github.event.pull_request.user.login == 'new-developer' ||
+    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    
+    runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write  # コメント作成のために write に変更
-      issues: write        # PRのコメント作成に必要
+      pull-requests: read
+      issues: read
       id-token: write
     
     steps:
-      - name: Checkout PR branch
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # PR全体の変更を取得するため
+          fetch-depth: 1
 
       - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@beta
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          
-          allowed_tools: "mcp__github__get_pull_request_diff"
-          
-          # PR作成・更新時のレビュー用のカスタム指示
+
+          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4.1)
+          # model: "claude-opus-4-1-20250805"
+
+          # Direct prompt for automated review (no @claude mention needed)
           direct_prompt: |
-            プルリクエストが作成または更新されたため、自動的にレビューを実行します。
+            Please review this pull request and provide feedback on:
+            - Code quality and best practices
+            - Potential bugs or issues
+            - Performance considerations
+            - Security concerns
+            - Test coverage
             
-            このプルリクエスト（PR）をレビューしてください。作業は次の手順に沿って進めてください：
-            
-            1. **変更内容を確認する:** `mcp__github__get_pull_request_diff` を使って、コードの変更点を把握します。
-            2. **レビュー結果をまとめる:** すべての指摘事項を1つのコメントにまとめて、スティッキーコメントとして返答してください。
+            Be constructive and helpful in your feedback.
 
-            **レビュー結果の構成:**
-            
-            ## 📝 コードレビュー結果
-            
-            ### ✅ 良い点
-            - 良好な実装や設計の判断があれば簡潔に記載
-            
-            ### ⚠️ 改善提案
-            各指摘事項について以下の形式で記載：
-            
-            **1. [ファイル名:行番号] 指摘の要約**
-            - **問題:** 具体的な問題の説明
-            - **修正案:** 
-            ```言語
-            // 具体的なコード例
-            ```
-            - **理由:** なぜこの修正が必要か
-            
-            ### 📌 まとめ
-            - 全体的な評価とアクションアイテムの優先順位
+          # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
+          # use_sticky_comment: true
+          
+          # Optional: Customize review based on file types
+          # direct_prompt: |
+          #   Review this PR focusing on:
+          #   - For TypeScript files: Type safety and proper interface usage
+          #   - For API endpoints: Security, input validation, and error handling
+          #   - For React components: Performance, accessibility, and best practices
+          #   - For tests: Coverage, edge cases, and test quality
+          
+          # Optional: Different prompts for different authors
+          # direct_prompt: |
+          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' && 
+          #   'Welcome! Please review this PR from a first-time contributor. Be encouraging and provide detailed explanations for any suggestions.' ||
+          #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
+          
+          # Optional: Add specific tools for running tests or linting
+          # allowed_tools: "Bash(npm run test),Bash(npm run lint),Bash(npm run typecheck)"
+          
+          # Optional: Skip review for certain conditions
+          # if: |
+          #   !contains(github.event.pull_request.title, '[skip-review]') &&
+          #   !contains(github.event.pull_request.title, '[WIP]')
 
-            **レビューの観点:**
-            - CLAUDE.mdのガイドラインへの準拠
-            - バグやセキュリティリスクの有無
-            - 保守性と可読性
-            - 設計とアーキテクチャの妥当性
-            - テストコードの品質とカバレッジ
-            
-            すべてのフィードバックは日本語で、建設的かつ実用的な内容にしてください。
-
-          # Sticky comments を使用して同一PRへの複数回のレビューを管理
-          use_sticky_comment: true
