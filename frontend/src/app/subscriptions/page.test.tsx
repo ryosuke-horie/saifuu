@@ -209,7 +209,6 @@ describe("SubscriptionsPage", () => {
 			// 統計カードのタイトルを確認
 			expect(screen.getByText("登録サービス数")).toBeInTheDocument();
 			expect(screen.getByText("月間合計")).toBeInTheDocument();
-			expect(screen.getByText("次回請求")).toBeInTheDocument();
 		});
 	});
 
@@ -291,28 +290,6 @@ describe("SubscriptionsPage", () => {
 			expect(screen.getByText("¥8,140")).toBeInTheDocument();
 		});
 
-		it("次回請求日が最も近い日付で表示されること", async () => {
-			render(<SubscriptionsPage />);
-
-			// mockSubscriptionsの中で最も早い日付は2025-07-01
-			// スペースなしの日付フォーマット
-			expect(screen.getByText("7月1日")).toBeInTheDocument();
-		});
-
-		it("アクティブなサービスがない場合、次回請求日が「---」と表示されること", async () => {
-			const { useSubscriptions } = await import(
-				"../../lib/api/hooks/useSubscriptions"
-			);
-			vi.mocked(useSubscriptions).mockReturnValue({
-				...defaultSubscriptionsHook,
-				subscriptions: [],
-			});
-
-			render(<SubscriptionsPage />);
-
-			expect(screen.getByText("---")).toBeInTheDocument();
-		});
-
 		it("読み込み中の状態で統計情報が適切に表示されること", async () => {
 			const { useSubscriptions } = await import(
 				"../../lib/api/hooks/useSubscriptions"
@@ -326,7 +303,7 @@ describe("SubscriptionsPage", () => {
 
 			// 統計情報とリストで読み込み中表示
 			const loadingTexts = screen.getAllByText("読み込み中...");
-			expect(loadingTexts).toHaveLength(4); // 統計3つ + リスト1つ
+			expect(loadingTexts).toHaveLength(3); // 統計2つ + リスト1つ
 
 			// サービス数のローディング表示
 			expect(screen.getByText("...")).toBeInTheDocument();
@@ -475,7 +452,6 @@ describe("SubscriptionsPage", () => {
 
 			expect(screen.getByText("0 サービス")).toBeInTheDocument();
 			expect(screen.getByText("¥0")).toBeInTheDocument();
-			expect(screen.getByText("---")).toBeInTheDocument();
 		});
 
 		it("単一のサブスクリプションが正しく処理されること", async () => {
@@ -740,7 +716,7 @@ describe("SubscriptionsPage", () => {
 
 			// グリッドコンテナ
 			const statsGrid = container.querySelector(
-				".grid.grid-cols-1.md\\:grid-cols-3",
+				".grid.grid-cols-1.md\\:grid-cols-2",
 			);
 			expect(statsGrid).toBeInTheDocument();
 
@@ -748,7 +724,7 @@ describe("SubscriptionsPage", () => {
 			const statsCards = container.querySelectorAll(
 				".bg-white.rounded-lg.shadow.p-6",
 			);
-			expect(statsCards).toHaveLength(3);
+			expect(statsCards).toHaveLength(2);
 		});
 	});
 
@@ -808,9 +784,6 @@ describe("SubscriptionsPage", () => {
 
 			expect(screen.getByText("月間合計")).toBeInTheDocument();
 			expect(screen.getByText("¥8,140")).toBeInTheDocument();
-
-			expect(screen.getByText("次回請求")).toBeInTheDocument();
-			expect(screen.getByText("7月1日")).toBeInTheDocument();
 		});
 	});
 });

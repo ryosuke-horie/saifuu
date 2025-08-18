@@ -117,7 +117,7 @@ const SubscriptionsPage: FC = () => {
 				</div>
 
 				{/* 統計情報（将来実装予定） */}
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 					<div className="bg-white rounded-lg shadow p-6">
 						<div className="flex items-center">
 							<div className="flex-shrink-0">
@@ -163,49 +163,6 @@ const SubscriptionsPage: FC = () => {
 													return sum + monthlyAmount;
 												}, 0)
 												.toLocaleString("ja-JP")}`}
-								</p>
-							</div>
-						</div>
-					</div>
-
-					<div className="bg-white rounded-lg shadow p-6">
-						<div className="flex items-center">
-							<div className="flex-shrink-0">
-								<div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-									<span className="text-yellow-600 text-sm">📅</span>
-								</div>
-							</div>
-							<div className="ml-4">
-								<p className="text-sm font-medium text-gray-500">次回請求</p>
-								<p className="text-lg font-semibold text-gray-900">
-									{subscriptionsLoading
-										? "読み込み中..."
-										: (() => {
-												const activeSubscriptions = subscriptions.filter(
-													(s) => s.isActive,
-												);
-												if (activeSubscriptions.length === 0) return "---";
-
-												// 最も早い次回請求日を見つける（タイムゾーンに依存しない方法）
-												const nextBillingDates = activeSubscriptions.map(
-													(s) => s.nextBillingDate,
-												);
-												const validDates = nextBillingDates.filter(
-													(date): date is string => date != null,
-												);
-												if (validDates.length === 0) return "---";
-												const earliestDate = validDates.sort()[0];
-
-												// ISO文字列から月日を抽出
-												const datePart = earliestDate.split("T")[0];
-												if (!datePart) return "---";
-
-												const [, month, day] = datePart.split("-");
-												if (!month || !day) return "---";
-
-												// 月日を表示（例: "1月15日"）
-												return `${Number.parseInt(month, 10)}月${Number.parseInt(day, 10)}日`;
-											})()}
 								</p>
 							</div>
 						</div>
