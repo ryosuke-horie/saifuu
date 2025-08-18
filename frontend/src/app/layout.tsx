@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/layout";
 import { QueryProvider } from "@/components/providers";
 import { LoggedErrorBoundary, NextjsLoggerProvider } from "@/lib/logger";
+import { ToastProvider } from "@/contexts/ToastContext";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -119,10 +120,12 @@ export default function RootLayout({
 			>
 				<NextjsLoggerProvider config={loggerConfig}>
 					<QueryProvider>
-						<LoggedErrorBoundary>
-							<Header />
-							{children}
-						</LoggedErrorBoundary>
+						<ToastProvider>
+							<LoggedErrorBoundary>
+								<Header />
+								{children}
+							</LoggedErrorBoundary>
+						</ToastProvider>
 					</QueryProvider>
 				</NextjsLoggerProvider>
 			</body>
