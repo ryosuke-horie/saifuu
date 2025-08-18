@@ -673,20 +673,22 @@ describe('route-factory', () => {
 
 	describe('shouldVerifyPersistence', () => {
 		// テスト用のモックDB
+		// shouldVerifyPersistenceはselectプロパティの存在のみをチェックするため、
+		// Partialとunknownを使用して型安全性を保ちつつテストをシンプルに保つ
 		const mockDbWithSelect = {
 			select: vi.fn(),
-		}
+		} as unknown as AnyDatabase
 
-		const mockDbWithoutSelect = {}
+		const mockDbWithoutSelect = {} as unknown as AnyDatabase
 
 		it('テストデータベースが提供されている場合はfalseを返す', () => {
-			const testDatabase = {} as AnyDatabase
-			const result = shouldVerifyPersistence(testDatabase, mockDbWithSelect as AnyDatabase)
+			const testDatabase = {} as unknown as AnyDatabase
+			const result = shouldVerifyPersistence(testDatabase, mockDbWithSelect)
 			expect(result).toBe(false)
 		})
 
 		it('データベースにselect関数が存在しない場合はfalseを返す', () => {
-			const result = shouldVerifyPersistence(undefined, mockDbWithoutSelect as AnyDatabase)
+			const result = shouldVerifyPersistence(undefined, mockDbWithoutSelect)
 			expect(result).toBe(false)
 		})
 	})
