@@ -34,6 +34,13 @@
 	"exclude": [
 		"node_modules",
 		"../shared/**/__tests__/**",
-		"../shared/**/*.test.ts"
+		"../shared/**/*.test.ts",
+		"**/*.test.ts",
+		"**/*.test.tsx",
+		"**/*.spec.ts",
+		"**/*.spec.tsx",
+		"vitest.config.ts",
+		"vitest.setup.ts",
+		"coverage"
 	]
 }
