@@ -138,7 +138,7 @@ jobs:
         run: |
           export PATH="$PNPM_HOME:$PATH"
           cd api
-          nohup pnpm run dev:e2e &
+          nohup bash -c "export PATH='$PNPM_HOME:$PATH' && pnpm run dev:e2e" &
       
       # APIサーバーの起動を待機
       - name: Wait API server response
@@ -150,7 +150,7 @@ jobs:
         run: |
           export PATH="$PNPM_HOME:$PATH"
           cd frontend
-          E2E_MODE=true nohup pnpm run dev &
+          nohup bash -c "export PATH='$PNPM_HOME:$PATH' && E2E_MODE=true pnpm run dev" &
       
       # Frontendサーバーの起動を待機
       - name: Wait Frontend server response
