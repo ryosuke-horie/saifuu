@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { AnyDatabase } from '../../db'
 import {
 	createCrudHandlers,
 	ENVIRONMENTS,
@@ -670,108 +671,130 @@ describe('route-factory', () => {
 		})
 	})
 
-	describe('shouldVerifyPersistence', () => {
+	describe('shouldVerifyPersistence - 基本動作', () => {
 		// テスト用のモックDB
+		// shouldVerifyPersistenceはselectプロパティの存在のみをチェックするため、
+		// Partialとunknownを使用して型安全性を保ちつつテストをシンプルに保つ
 		const mockDbWithSelect = {
 			select: vi.fn(),
-		}
+		} as unknown as AnyDatabase
 
-		const mockDbWithoutSelect = {}
+		const mockDbWithoutSelect = {} as unknown as AnyDatabase
 
 		it('テストデータベースが提供されている場合はfalseを返す', () => {
-			const testDatabase = {} as any
-			const result = shouldVerifyPersistence(testDatabase, mockDbWithSelect as any)
+			const testDatabase = {} as unknown as AnyDatabase
+			const result = shouldVerifyPersistence(testDatabase, mockDbWithSelect)
 			expect(result).toBe(false)
 		})
 
 		it('データベースにselect関数が存在しない場合はfalseを返す', () => {
-			const result = shouldVerifyPersistence(undefined, mockDbWithoutSelect as any)
+			const result = shouldVerifyPersistence(undefined, mockDbWithoutSelect)
 			expect(result).toBe(false)
 		})
 
-		// 注意: import.meta.envは実行時に決定されるため、
-		// テスト環境での環境変数の動的な変更は実際の動作を完全に再現できない
-		// 以下のテストは、関数の条件分岐のロジックを確認するためのものである
-
-		it('開発環境の判定条件を確認（実際のテスト環境では常にfalse）', () => {
-			// Vitest環境では通常、NODE_ENVがtestに設定されているため、
-			// 実際にはfalseが返される（開発環境扱いになる）
-			const result = shouldVerifyPersistence(undefined, mockDbWithSelect as any)
-			// テスト環境では基本的にfalse（検証をスキップ）になることを確認
-			expect(typeof result).toBe('boolean')
+		it('テスト環境ではfalseを返す', () => {
+			// 現在のテスト環境での動作を確認
+			const result = shouldVerifyPersistence(undefined, mockDbWithSelect)
+			expect(result).toBe(false)
 		})
 	})
 
 	describe('環境判定関数のテスト', () => {
-		// 注意: Vitestのテスト環境では、import.metaの動的なモックは完全には機能しない
-		// 実際の環境判定ロジックは、実際の環境（開発、テスト、本番）で確認する必要がある
-		// 以下のテストは、関数の構造と呼び出しが正しいことを確認するもの
-
 		describe('getCurrentEnvironment', () => {
-			it('関数が定義されており、環境文字列を返す', () => {
+			it('テスト環境を正しく判定する', () => {
+				// 実際のテスト環境での動作確認
 				const result = getCurrentEnvironment()
-				expect(typeof result).toBe('string')
-				expect(['development', 'test', 'production']).toContain(result)
+				expect(result).toMatch(/^(test|development)$/)
 			})
 
-			it('現在のテスト環境では開発環境またはテスト環境を返す', () => {
-				// Vitest環境では通常、開発環境またはテスト環境として動作
+			it('有効な環境文字列を返す', () => {
 				const result = getCurrentEnvironment()
-				expect(['development', 'test']).toContain(result)
+				expect(['development', 'test', 'production']).toContain(result)
 			})
 		})
 
 		describe('isDevelopmentEnvironment', () => {
-			it('関数が定義されており、boolean値を返す', () => {
-				const result = isDevelopmentEnvironment()
-				expect(typeof result).toBe('boolean')
-			})
-
-			it('現在のテスト環境ではtrueを返す', () => {
-				// Vitest環境では開発環境またはテスト環境として扱われるため、trueが期待される
+			it('テスト環境ではtrueを返す', () => {
+				// Vitest環境では開発環境またはテスト環境として扱われる
 				const result = isDevelopmentEnvironment()
 				expect(result).toBe(true)
 			})
 		})
+	})
 
-		describe('更新されたshouldVerifyPersistence', () => {
-			const mockDb = {
-				select: vi.fn(),
-			}
+	describe('shouldVerifyPersistence - 構造テスト', () => {
+		const mockDb = {
+			select: vi.fn(),
+		} as unknown as AnyDatabase
 
-			beforeEach(() => {
-				vi.clearAllMocks()
-			})
+		describe('環境別の動作確認', () => {
+			// 注意：Vitestではimport.meta.envの動的な変更が困難なため、
+			// 実際の環境変数の変更は本番デプロイ時に確認する必要があります。
+			// これらのテストは、関数の構造と条件分岐が正しいことを確認するものです。
 
-			it('テストデータベースが存在する場合はfalseを返す', () => {
-				const testDatabase = { select: vi.fn() } as any
-				expect(shouldVerifyPersistence(testDatabase, mockDb as any)).toBe(false)
-			})
+			it('関数の条件分岐が正しい順序で評価される', () => {
+				// テストデータベースが最優先で評価されることを確認
+				const testDb = { select: vi.fn() } as unknown as AnyDatabase
+				expect(shouldVerifyPersistence(testDb, mockDb as unknown as AnyDatabase)).toBe(false)
 
-			it('dbにselect関数が存在しない場合はfalseを返す', () => {
-				const dbWithoutSelect = {} as any
+				// select関数のチェックが次に評価されることを確認
+				const dbWithoutSelect = {} as AnyDatabase
 				expect(shouldVerifyPersistence(undefined, dbWithoutSelect)).toBe(false)
-			})
 
-			it('現在のテスト環境ではfalseを返す', () => {
-				// テスト環境では永続化検証をスキップすることを確認
-				const result = shouldVerifyPersistence(undefined, mockDb as any)
+				// 現在のテスト環境では環境判定により false が返される
+				// （本番環境では true が返されることが期待される）
+				const result = shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)
 				expect(result).toBe(false)
 			})
-		})
 
-		describe('ENVIRONMENTS定数', () => {
-			it('正しい環境値が定義されている', () => {
-				expect(ENVIRONMENTS.DEVELOPMENT).toBe('development')
-				expect(ENVIRONMENTS.TEST).toBe('test')
-				expect(ENVIRONMENTS.PRODUCTION).toBe('production')
+			it('エッジケース：null/undefined の扱い', () => {
+				// nullデータベースの場合
+				expect(
+					shouldVerifyPersistence(null as unknown as AnyDatabase, mockDb as unknown as AnyDatabase)
+				).toBe(false)
+
+				// undefinedデータベースの場合（通常のフロー）
+				expect(shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)).toBe(false)
 			})
 
-			it('Environment型が正しく定義されている', () => {
-				const validEnvironments: Environment[] = ['development', 'test', 'production']
-				validEnvironments.forEach((env) => {
-					expect(Object.values(ENVIRONMENTS)).toContain(env)
+			it('組み合わせテスト：様々な条件の組み合わせ', () => {
+				const testCases = [
+					{ testDb: { select: vi.fn() }, db: { select: vi.fn() }, expected: false },
+					{ testDb: { select: vi.fn() }, db: {}, expected: false },
+					{ testDb: undefined, db: {}, expected: false },
+					{ testDb: undefined, db: { select: vi.fn() }, expected: false },
+				]
+
+				testCases.forEach(({ testDb, db, expected }, index) => {
+					const result = shouldVerifyPersistence(
+						testDb as unknown as AnyDatabase | undefined,
+						db as unknown as AnyDatabase
+					)
+					expect(result, `Test case ${index + 1}`).toBe(expected)
 				})
+			})
+
+			it('本番環境での動作をドキュメント化', () => {
+				// 本番環境: testDatabase=undefined, db.select存在, isProduction=true → true
+				// 開発/テスト環境: testDatabase=undefined, db.select存在, isProduction=false → false
+
+				const actualResult = shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)
+				expect(actualResult).toBe(false) // 現在のテスト環境
+			})
+		})
+	})
+
+	describe('ENVIRONMENTS定数', () => {
+		it('正しい環境値が定義されている', () => {
+			expect(ENVIRONMENTS.DEVELOPMENT).toBe('development')
+			expect(ENVIRONMENTS.TEST).toBe('test')
+			expect(ENVIRONMENTS.PRODUCTION).toBe('production')
+		})
+
+		it('Environment型が正しく定義されている', () => {
+			const validEnvironments: Environment[] = ['development', 'test', 'production']
+			validEnvironments.forEach((env) => {
+				expect(Object.values(ENVIRONMENTS)).toContain(env)
 			})
 		})
 	})
