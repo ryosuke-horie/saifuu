@@ -97,6 +97,11 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 		it.skip("Cmd+Enter（Mac）でフォームを送信できる", async () => {
 			const user = userEvent.setup();
 
+			// 将来の日付を動的に生成（1ヶ月後）
+			const futureDate = new Date();
+			futureDate.setMonth(futureDate.getMonth() + 1);
+			const futureDateStr = futureDate.toISOString().split("T")[0];
+
 			render(
 				<SubscriptionForm
 					onSubmit={mockOnSubmit}
@@ -108,7 +113,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			// 必須フィールドを入力
 			await user.type(screen.getByLabelText(/サービス名/), "Netflix");
 			await user.type(screen.getByLabelText(/料金/), "1480");
-			await user.type(screen.getByLabelText(/次回請求日/), "2025-09-01");
+			await user.type(screen.getByLabelText(/次回請求日/), futureDateStr);
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "1");
 
 			// 説明フィールドにフォーカスしてからキーボードショートカットを実行
@@ -127,7 +132,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 				expect.objectContaining({
 					name: "Netflix",
 					amount: 1480,
-					nextBillingDate: "2025-09-01",
+					nextBillingDate: futureDateStr,
 					categoryId: "1",
 				}),
 			);
@@ -135,6 +140,11 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 
 		it("Ctrl+Enter（Windows/Linux）でフォームを送信できる", async () => {
 			const user = userEvent.setup();
+
+			// 将来の日付を動的に生成（明日）
+			const tomorrow = new Date();
+			tomorrow.setDate(tomorrow.getDate() + 1);
+			const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
 			render(
 				<SubscriptionForm
@@ -148,7 +158,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			const nameInput = screen.getByLabelText(/サービス名/);
 			await user.type(nameInput, "Spotify");
 			await user.type(screen.getByLabelText(/料金/), "980");
-			await user.type(screen.getByLabelText(/次回請求日/), "2025-08-17");
+			await user.type(screen.getByLabelText(/次回請求日/), tomorrowStr);
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "2");
 
 			// いずれかのフィールドからCtrl+Enterを実行
@@ -164,7 +174,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 					expect.objectContaining({
 						name: "Spotify",
 						amount: 980,
-						nextBillingDate: "2025-08-17",
+						nextBillingDate: tomorrowStr,
 						categoryId: "2",
 					}),
 				);
@@ -173,6 +183,11 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 
 		it("任意のフィールドからCmd+Enter（Mac）でフォームを送信できる", async () => {
 			const user = userEvent.setup();
+
+			// 将来の日付を動的に生成（1ヶ月後）
+			const futureDate = new Date();
+			futureDate.setMonth(futureDate.getMonth() + 1);
+			const futureDateStr = futureDate.toISOString().split("T")[0];
 
 			render(
 				<SubscriptionForm
@@ -185,7 +200,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			// 必須フィールドを入力
 			await user.type(screen.getByLabelText(/サービス名/), "Amazon Prime");
 			await user.type(screen.getByLabelText(/料金/), "500");
-			await user.type(screen.getByLabelText(/次回請求日/), "2025-09-01");
+			await user.type(screen.getByLabelText(/次回請求日/), futureDateStr);
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "1");
 
 			// 説明フィールドにフォーカスしてからキーボードショートカットを実行
@@ -201,7 +216,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 					expect.objectContaining({
 						name: "Amazon Prime",
 						amount: 500,
-						nextBillingDate: "2025-09-01",
+						nextBillingDate: futureDateStr,
 						categoryId: "1",
 					}),
 				);
