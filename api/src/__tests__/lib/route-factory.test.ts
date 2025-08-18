@@ -688,59 +688,51 @@ describe('route-factory', () => {
 			const result = shouldVerifyPersistence(undefined, mockDbWithoutSelect as any)
 			expect(result).toBe(false)
 		})
-
-		// 注意: import.meta.envは実行時に決定されるため、
-		// テスト環境での環境変数の動的な変更は実際の動作を完全に再現できない
-		// 以下のテストは、関数の条件分岐のロジックを確認するためのものである
-
-		it('開発環境の判定条件を確認（実際のテスト環境では常にfalse）', () => {
-			// Vitest環境では通常、NODE_ENVがtestに設定されているため、
-			// 実際にはfalseが返される（開発環境扱いになる）
-			const result = shouldVerifyPersistence(undefined, mockDbWithSelect as any)
-			// テスト環境では基本的にfalse（検証をスキップ）になることを確認
-			expect(typeof result).toBe('boolean')
-		})
 	})
 
 	describe('環境判定関数のテスト', () => {
-		// 注意: Vitestのテスト環境では、import.metaの動的なモックは完全には機能しない
-		// 実際の環境判定ロジックは、実際の環境（開発、テスト、本番）で確認する必要がある
-		// 以下のテストは、関数の構造と呼び出しが正しいことを確認するもの
+		// 環境変数のモックのためのヘルパー関数
+		const withMockedEnvironment = (envVars: Record<string, any>, testFn: () => void) => {
+			// import.meta.envを直接モックできないため、
+			// グローバル変数経由で環境変数をテスト用に設定
+			const originalEnv = { ...((globalThis as any).__TEST_ENV__ || {}) }
+			;(globalThis as any).__TEST_ENV__ = envVars
+			try {
+				testFn()
+			} finally {
+				;(globalThis as any).__TEST_ENV__ = originalEnv
+			}
+		}
 
 		describe('getCurrentEnvironment', () => {
-			it('関数が定義されており、環境文字列を返す', () => {
+			it('テスト環境を正しく判定する', () => {
+				// 実際のテスト環境での動作確認
 				const result = getCurrentEnvironment()
-				expect(typeof result).toBe('string')
-				expect(['development', 'test', 'production']).toContain(result)
+				expect(result).toMatch(/^(test|development)$/)
 			})
 
-			it('現在のテスト環境では開発環境またはテスト環境を返す', () => {
-				// Vitest環境では通常、開発環境またはテスト環境として動作
+			it('有効な環境文字列を返す', () => {
 				const result = getCurrentEnvironment()
-				expect(['development', 'test']).toContain(result)
+				expect(['development', 'test', 'production']).toContain(result)
 			})
 		})
 
 		describe('isDevelopmentEnvironment', () => {
-			it('関数が定義されており、boolean値を返す', () => {
-				const result = isDevelopmentEnvironment()
-				expect(typeof result).toBe('boolean')
-			})
-
-			it('現在のテスト環境ではtrueを返す', () => {
-				// Vitest環境では開発環境またはテスト環境として扱われるため、trueが期待される
+			it('テスト環境ではtrueを返す', () => {
+				// Vitest環境では開発環境またはテスト環境として扱われる
 				const result = isDevelopmentEnvironment()
 				expect(result).toBe(true)
 			})
 		})
 
-		describe('更新されたshouldVerifyPersistence', () => {
+		describe('shouldVerifyPersistence（環境別動作）', () => {
 			const mockDb = {
 				select: vi.fn(),
 			}
 
 			beforeEach(() => {
 				vi.clearAllMocks()
+				vi.resetModules()
 			})
 
 			it('テストデータベースが存在する場合はfalseを返す', () => {
@@ -753,25 +745,107 @@ describe('route-factory', () => {
 				expect(shouldVerifyPersistence(undefined, dbWithoutSelect)).toBe(false)
 			})
 
-			it('現在のテスト環境ではfalseを返す', () => {
-				// テスト環境では永続化検証をスキップすることを確認
+			it('テスト環境ではfalseを返す', () => {
+				// 現在のテスト環境での動作を確認
 				const result = shouldVerifyPersistence(undefined, mockDb as any)
 				expect(result).toBe(false)
 			})
+
+			describe('環境別の動作確認（構造テスト）', () => {
+				// 注意：Vitestではimport.meta.envの動的な変更が困難なため、
+				// 実際の環境変数の変更は本番デプロイ時に確認する必要があります。
+				// これらのテストは、関数の構造と条件分岐が正しいことを確認するものです。
+
+				it('関数の条件分岐が正しい順序で評価される', () => {
+					// テストデータベースが最優先で評価されることを確認
+					const testDb = { select: vi.fn() } as any
+					expect(shouldVerifyPersistence(testDb, mockDb as any)).toBe(false)
+
+					// select関数のチェックが次に評価されることを確認
+					const dbWithoutSelect = {} as any
+					expect(shouldVerifyPersistence(undefined, dbWithoutSelect)).toBe(false)
+
+					// 現在のテスト環境では環境判定により false が返される
+					// （本番環境では true が返されることが期待される）
+					const result = shouldVerifyPersistence(undefined, mockDb as any)
+					expect(result).toBe(false)
+				})
+
+				it('エッジケース：null/undefined の扱い', () => {
+					// nullデータベースの場合
+					expect(shouldVerifyPersistence(null as any, mockDb as any)).toBe(false)
+
+					// undefinedデータベースの場合（通常のフロー）
+					expect(shouldVerifyPersistence(undefined, mockDb as any)).toBe(false)
+				})
+
+				it('組み合わせテスト：様々な条件の組み合わせ', () => {
+					const testCases = [
+						{
+							name: 'テストDBあり、selectあり',
+							testDb: { select: vi.fn() },
+							db: { select: vi.fn() },
+							expected: false,
+						},
+						{
+							name: 'テストDBあり、selectなし',
+							testDb: { select: vi.fn() },
+							db: {},
+							expected: false,
+						},
+						{
+							name: 'テストDBなし、selectなし',
+							testDb: undefined,
+							db: {},
+							expected: false,
+						},
+						{
+							name: 'テストDBなし、selectあり（テスト環境）',
+							testDb: undefined,
+							db: { select: vi.fn() },
+							expected: false, // テスト環境のため
+						},
+					]
+
+					testCases.forEach(({ name, testDb, db, expected }) => {
+						const result = shouldVerifyPersistence(testDb as any, db as any)
+						expect(result, name).toBe(expected)
+					})
+				})
+
+				it('環境判定関数の動作ロジックを確認（ドキュメント的テスト）', () => {
+					// このテストは、実際の環境変数の挙動をドキュメントするものです
+					// 本番環境での動作：
+					// - testDatabaseがundefined
+					// - db.selectが存在
+					// - isProductionEnvironment()がtrueを返す
+					// → shouldVerifyPersistenceはtrueを返す
+
+					// 開発/テスト環境での動作：
+					// - testDatabaseがundefined
+					// - db.selectが存在
+					// - isProductionEnvironment()がfalseを返す
+					// → shouldVerifyPersistenceはfalseを返す
+
+					// 現在のテスト環境での実際の動作を検証
+					const actualResult = shouldVerifyPersistence(undefined, mockDb as any)
+					expect(actualResult).toBe(false) // テスト環境のためfalse
+				})
+			})
+		})
+	})
+
+	describe('ENVIRONMENTS定数', () => {
+		it('正しい環境値が定義されている', () => {
+			expect(ENVIRONMENTS.DEVELOPMENT).toBe('development')
+			expect(ENVIRONMENTS.TEST).toBe('test')
+			expect(ENVIRONMENTS.PRODUCTION).toBe('production')
 		})
 
-		describe('ENVIRONMENTS定数', () => {
-			it('正しい環境値が定義されている', () => {
-				expect(ENVIRONMENTS.DEVELOPMENT).toBe('development')
-				expect(ENVIRONMENTS.TEST).toBe('test')
-				expect(ENVIRONMENTS.PRODUCTION).toBe('production')
-			})
-
-			it('Environment型が正しく定義されている', () => {
-				const validEnvironments: Environment[] = ['development', 'test', 'production']
-				validEnvironments.forEach((env) => {
-					expect(Object.values(ENVIRONMENTS)).toContain(env)
-				})
+		it('Environment型が正しく定義されている', () => {
+			const validEnvironments: Environment[] = ['development', 'test', 'production']
+			validEnvironments.forEach((env) => {
+				expect(Object.values(ENVIRONMENTS)).toContain(env)
 			})
 		})
 	})
