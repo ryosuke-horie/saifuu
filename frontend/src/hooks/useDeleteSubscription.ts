@@ -6,9 +6,10 @@
  */
 
 import { useCallback, useState } from "react";
-import { useToast } from "@/contexts/ToastContext";
-import { subscriptionService } from "@/lib/api/index";
-import type { DeleteResponse } from "@/lib/api/types";
+import { useToast } from "../contexts/ToastContext";
+import { handleApiError } from "../lib/api/errors";
+import { subscriptionService } from "../lib/api/index";
+import type { DeleteResponse } from "../lib/api/types";
 
 /**
  * ローディング状態とエラー状態を管理する基本型
@@ -45,10 +46,9 @@ export function useDeleteSubscription() {
 
 				return result;
 			} catch (error) {
-				const errorMessage =
-					error instanceof Error
-						? error.message
-						: "サブスクリプションの削除に失敗しました";
+				// 統一されたエラーハンドリングを使用
+				const apiError = handleApiError(error, "deleteSubscription");
+				const errorMessage = apiError.message;
 
 				setState({ isLoading: false, error: errorMessage });
 
