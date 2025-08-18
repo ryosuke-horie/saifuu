@@ -96,11 +96,11 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 	describe("ショートカットキー", () => {
 		it.skip("Cmd+Enter（Mac）でフォームを送信できる", async () => {
 			const user = userEvent.setup();
-			
+
 			// 将来の日付を動的に生成（1ヶ月後）
 			const futureDate = new Date();
 			futureDate.setMonth(futureDate.getMonth() + 1);
-			const futureDateStr = futureDate.toISOString().split('T')[0];
+			const futureDateStr = futureDate.toISOString().split("T")[0];
 
 			render(
 				<SubscriptionForm
@@ -140,11 +140,11 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 
 		it("Ctrl+Enter（Windows/Linux）でフォームを送信できる", async () => {
 			const user = userEvent.setup();
-			
+
 			// 将来の日付を動的に生成（明日）
 			const tomorrow = new Date();
 			tomorrow.setDate(tomorrow.getDate() + 1);
-			const tomorrowStr = tomorrow.toISOString().split('T')[0];
+			const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
 			render(
 				<SubscriptionForm
@@ -183,11 +183,11 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 
 		it("任意のフィールドからCmd+Enter（Mac）でフォームを送信できる", async () => {
 			const user = userEvent.setup();
-			
+
 			// 将来の日付を動的に生成（1ヶ月後）
 			const futureDate = new Date();
 			futureDate.setMonth(futureDate.getMonth() + 1);
-			const futureDateStr = futureDate.toISOString().split('T')[0];
+			const futureDateStr = futureDate.toISOString().split("T")[0];
 
 			render(
 				<SubscriptionForm
