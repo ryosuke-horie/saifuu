@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { AnyDatabase } from '../../db'
 import {
 	createCrudHandlers,
 	ENVIRONMENTS,
@@ -679,28 +680,30 @@ describe('route-factory', () => {
 		const mockDbWithoutSelect = {}
 
 		it('テストデータベースが提供されている場合はfalseを返す', () => {
-			const testDatabase = {} as any
-			const result = shouldVerifyPersistence(testDatabase, mockDbWithSelect as any)
+			const testDatabase = {} as AnyDatabase
+			const result = shouldVerifyPersistence(testDatabase, mockDbWithSelect as AnyDatabase)
 			expect(result).toBe(false)
 		})
 
 		it('データベースにselect関数が存在しない場合はfalseを返す', () => {
-			const result = shouldVerifyPersistence(undefined, mockDbWithoutSelect as any)
+			const result = shouldVerifyPersistence(undefined, mockDbWithoutSelect as AnyDatabase)
 			expect(result).toBe(false)
 		})
 	})
 
 	describe('環境判定関数のテスト', () => {
 		// 環境変数のモックのためのヘルパー関数
-		const withMockedEnvironment = (envVars: Record<string, any>, testFn: () => void) => {
+		type GlobalWithTestEnv = typeof globalThis & { __TEST_ENV__?: Record<string, unknown> }
+		const _withMockedEnvironment = (envVars: Record<string, unknown>, testFn: () => void) => {
 			// import.meta.envを直接モックできないため、
 			// グローバル変数経由で環境変数をテスト用に設定
-			const originalEnv = { ...((globalThis as any).__TEST_ENV__ || {}) }
-			;(globalThis as any).__TEST_ENV__ = envVars
+			const g = globalThis as GlobalWithTestEnv
+			const originalEnv = { ...(g.__TEST_ENV__ || {}) }
+			g.__TEST_ENV__ = envVars
 			try {
 				testFn()
 			} finally {
-				;(globalThis as any).__TEST_ENV__ = originalEnv
+				g.__TEST_ENV__ = originalEnv
 			}
 		}
 
@@ -736,18 +739,18 @@ describe('route-factory', () => {
 			})
 
 			it('テストデータベースが存在する場合はfalseを返す', () => {
-				const testDatabase = { select: vi.fn() } as any
-				expect(shouldVerifyPersistence(testDatabase, mockDb as any)).toBe(false)
+				const testDatabase = { select: vi.fn() } as unknown as AnyDatabase
+				expect(shouldVerifyPersistence(testDatabase, mockDb as unknown as AnyDatabase)).toBe(false)
 			})
 
 			it('dbにselect関数が存在しない場合はfalseを返す', () => {
-				const dbWithoutSelect = {} as any
+				const dbWithoutSelect = {} as AnyDatabase
 				expect(shouldVerifyPersistence(undefined, dbWithoutSelect)).toBe(false)
 			})
 
 			it('テスト環境ではfalseを返す', () => {
 				// 現在のテスト環境での動作を確認
-				const result = shouldVerifyPersistence(undefined, mockDb as any)
+				const result = shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)
 				expect(result).toBe(false)
 			})
 
@@ -758,25 +761,30 @@ describe('route-factory', () => {
 
 				it('関数の条件分岐が正しい順序で評価される', () => {
 					// テストデータベースが最優先で評価されることを確認
-					const testDb = { select: vi.fn() } as any
-					expect(shouldVerifyPersistence(testDb, mockDb as any)).toBe(false)
+					const testDb = { select: vi.fn() } as unknown as AnyDatabase
+					expect(shouldVerifyPersistence(testDb, mockDb as unknown as AnyDatabase)).toBe(false)
 
 					// select関数のチェックが次に評価されることを確認
-					const dbWithoutSelect = {} as any
+					const dbWithoutSelect = {} as AnyDatabase
 					expect(shouldVerifyPersistence(undefined, dbWithoutSelect)).toBe(false)
 
 					// 現在のテスト環境では環境判定により false が返される
 					// （本番環境では true が返されることが期待される）
-					const result = shouldVerifyPersistence(undefined, mockDb as any)
+					const result = shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)
 					expect(result).toBe(false)
 				})
 
 				it('エッジケース：null/undefined の扱い', () => {
 					// nullデータベースの場合
-					expect(shouldVerifyPersistence(null as any, mockDb as any)).toBe(false)
+					expect(
+						shouldVerifyPersistence(
+							null as unknown as AnyDatabase,
+							mockDb as unknown as AnyDatabase
+						)
+					).toBe(false)
 
 					// undefinedデータベースの場合（通常のフロー）
-					expect(shouldVerifyPersistence(undefined, mockDb as any)).toBe(false)
+					expect(shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)).toBe(false)
 				})
 
 				it('組み合わせテスト：様々な条件の組み合わせ', () => {
@@ -808,7 +816,10 @@ describe('route-factory', () => {
 					]
 
 					testCases.forEach(({ name, testDb, db, expected }) => {
-						const result = shouldVerifyPersistence(testDb as any, db as any)
+						const result = shouldVerifyPersistence(
+							testDb as unknown as AnyDatabase | undefined,
+							db as unknown as AnyDatabase
+						)
 						expect(result, name).toBe(expected)
 					})
 				})
@@ -828,7 +839,7 @@ describe('route-factory', () => {
 					// → shouldVerifyPersistenceはfalseを返す
 
 					// 現在のテスト環境での実際の動作を検証
-					const actualResult = shouldVerifyPersistence(undefined, mockDb as any)
+					const actualResult = shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)
 					expect(actualResult).toBe(false) // テスト環境のためfalse
 				})
 			})
