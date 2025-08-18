@@ -403,11 +403,6 @@ export interface SubscriptionListProps {
 	error?: string | null;
 
 	/**
-	 * データ再取得用のコールバック
-	 */
-	onRefresh?: () => void;
-
-	/**
 	 * 追加のCSSクラス名
 	 */
 	className?: string;
