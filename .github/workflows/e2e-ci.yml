@@ -88,7 +88,6 @@ jobs:
       # ルート依存関係のインストール（共有モジュール含む）
       - name: Install root dependencies
         run: |
-          export PATH="$PNPM_HOME:$PATH"
           pnpm config set store-dir /tmp/pnpm-store-${{ github.run_id }}
           pnpm install --frozen-lockfile --prefer-offline false
       
@@ -104,29 +103,22 @@ jobs:
       # API依存関係のインストール
       - name: Install API dependencies
         working-directory: api
-        run: |
-          export PATH="$PNPM_HOME:$PATH"
-          pnpm install --frozen-lockfile --prefer-offline false
+        run: pnpm install --frozen-lockfile --prefer-offline false
       
       # Frontend依存関係のインストール
       - name: Install Frontend dependencies
         working-directory: frontend
-        run: |
-          export PATH="$PNPM_HOME:$PATH"
-          pnpm install --frozen-lockfile --prefer-offline false
+        run: pnpm install --frozen-lockfile --prefer-offline false
       
       # E2E依存関係のインストール
       - name: Install E2E dependencies
         working-directory: e2e
-        run: |
-          export PATH="$PNPM_HOME:$PATH"
-          pnpm install --frozen-lockfile --prefer-offline false
+        run: pnpm install --frozen-lockfile --prefer-offline false
       
       # E2E用データベースのセットアップ
       - name: Setup E2E Database
         working-directory: api
         run: |
-          export PATH="$PNPM_HOME:$PATH"
           # データベースディレクトリを作成
           mkdir -p db
           # E2E用データベースファイルを作成
@@ -137,9 +129,7 @@ jobs:
       # APIサーバーをバックグラウンドで起動
       - name: Start API server on background
         working-directory: api
-        run: |
-          export PATH="$PNPM_HOME:$PATH"
-          nohup pnpm run dev:e2e &
+        run: nohup pnpm run dev:e2e &
       
       # APIサーバーの起動を待機
       - name: Wait API server response
@@ -149,9 +139,7 @@ jobs:
       # Frontendサーバーをバックグラウンドで起動
       - name: Start Frontend server on background
         working-directory: frontend
-        run: |
-          export PATH="$PNPM_HOME:$PATH"
-          E2E_MODE=true nohup pnpm run dev &
+        run: E2E_MODE=true nohup pnpm run dev &
       
       # Frontendサーバーの起動を待機
       - name: Wait Frontend server response
@@ -163,18 +151,14 @@ jobs:
       # Playwrightブラウザのインストール
       - name: Install Playwright browsers
         working-directory: e2e
-        run: |
-          export PATH="$PNPM_HOME:$PATH"
-          npx playwright install chromium
+        run: npx playwright install chromium
       
       # E2Eテストの実行
       - name: Run E2E tests
         working-directory: e2e
         env:
           CI: true
-        run: |
-          export PATH="$PNPM_HOME:$PATH"
-          npx playwright test
+        run: npx playwright test
       
       # テスト結果の表示（失敗時）
       - name: Show test results on failure
