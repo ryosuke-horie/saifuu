@@ -35,6 +35,13 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 		},
 	];
 
+	// 明日の日付を取得する関数（YYYY-MM-DD形式）
+	const getTomorrowDate = (): string => {
+		const tomorrow = new Date();
+		tomorrow.setDate(tomorrow.getDate() + 1);
+		return tomorrow.toISOString().split("T")[0];
+	};
+
 	afterEach(() => {
 		mockOnSubmit.mockClear();
 		mockOnCancel.mockClear();
@@ -106,9 +113,10 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			);
 
 			// 必須フィールドを入力
+			const tomorrowDate = getTomorrowDate();
 			await user.type(screen.getByLabelText(/サービス名/), "Netflix");
 			await user.type(screen.getByLabelText(/料金/), "1480");
-			await user.type(screen.getByLabelText(/次回請求日/), "2025-09-01");
+			await user.type(screen.getByLabelText(/次回請求日/), tomorrowDate);
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "1");
 
 			// 説明フィールドにフォーカスしてからキーボードショートカットを実行
@@ -127,7 +135,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 				expect.objectContaining({
 					name: "Netflix",
 					amount: 1480,
-					nextBillingDate: "2025-09-01",
+					nextBillingDate: tomorrowDate,
 					categoryId: "1",
 				}),
 			);
@@ -146,9 +154,10 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 
 			// 必須フィールドを入力
 			const nameInput = screen.getByLabelText(/サービス名/);
+			const tomorrowDate = getTomorrowDate();
 			await user.type(nameInput, "Spotify");
 			await user.type(screen.getByLabelText(/料金/), "980");
-			await user.type(screen.getByLabelText(/次回請求日/), "2025-08-17");
+			await user.type(screen.getByLabelText(/次回請求日/), tomorrowDate);
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "2");
 
 			// いずれかのフィールドからCtrl+Enterを実行
@@ -164,7 +173,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 					expect.objectContaining({
 						name: "Spotify",
 						amount: 980,
-						nextBillingDate: "2025-08-17",
+						nextBillingDate: tomorrowDate,
 						categoryId: "2",
 					}),
 				);
@@ -183,9 +192,10 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 			);
 
 			// 必須フィールドを入力
+			const tomorrowDate = getTomorrowDate();
 			await user.type(screen.getByLabelText(/サービス名/), "Amazon Prime");
 			await user.type(screen.getByLabelText(/料金/), "500");
-			await user.type(screen.getByLabelText(/次回請求日/), "2025-09-01");
+			await user.type(screen.getByLabelText(/次回請求日/), tomorrowDate);
 			await user.selectOptions(screen.getByLabelText(/カテゴリ/), "1");
 
 			// 説明フィールドにフォーカスしてからキーボードショートカットを実行
@@ -201,7 +211,7 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 					expect.objectContaining({
 						name: "Amazon Prime",
 						amount: 500,
-						nextBillingDate: "2025-09-01",
+						nextBillingDate: tomorrowDate,
 						categoryId: "1",
 					}),
 				);
