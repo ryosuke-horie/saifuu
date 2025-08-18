@@ -4,7 +4,7 @@
  * サブスクリプション削除確認ダイアログの機能とアクセシビリティをテスト
  * 既存のコンポーネントテストパターンに従って実装
  */
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeleteConfirmDialog } from "../DeleteConfirmDialog";

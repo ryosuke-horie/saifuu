@@ -116,6 +116,14 @@ vi.mock("../../lib/api/hooks/useSubscriptions", () => ({
 	useCreateSubscription: vi.fn(),
 }));
 
+vi.mock("../../hooks/useDeleteSubscription", () => ({
+	useDeleteSubscription: vi.fn(() => ({
+		isLoading: false,
+		error: null,
+		deleteSubscription: vi.fn(),
+	})),
+}));
+
 vi.mock("../../components/subscriptions", () => ({
 	NewSubscriptionButton: vi.fn(({ onClick }) => (
 		<button type="button" onClick={onClick}>
@@ -131,6 +139,19 @@ vi.mock("../../components/subscriptions", () => ({
 				</button>
 				<button type="button" onClick={() => onSubmit({} as any)}>
 					送信
+				</button>
+			</div>
+		);
+	}),
+	DeleteConfirmDialog: vi.fn(({ isOpen, onClose, onConfirm }) => {
+		if (!isOpen) return null;
+		return (
+			<div data-testid="delete-confirm-dialog">
+				<button type="button" onClick={onClose}>
+					キャンセル
+				</button>
+				<button type="button" onClick={onConfirm}>
+					削除
 				</button>
 			</div>
 		);
