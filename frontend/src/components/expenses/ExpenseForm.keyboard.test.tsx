@@ -122,9 +122,12 @@ describe("ExpenseForm - キーボードナビゲーション", () => {
 				/>,
 			);
 
-			// 必須フィールドを入力
+			// 必須フィールドを入力（日付はデフォルトで設定済み）
 			await user.type(screen.getByLabelText(/金額/), "1000");
-			await user.type(screen.getByLabelText(/日付/), "2024-01-01");
+
+			// デフォルトの日付を取得
+			const dateInput = screen.getByLabelText(/日付/) as HTMLInputElement;
+			const defaultDate = dateInput.value;
 
 			// 任意のフィールドでCmd+Enterを押す
 			const descriptionField = screen.getByLabelText(/説明/);
@@ -136,7 +139,7 @@ describe("ExpenseForm - キーボードナビゲーション", () => {
 			expect(mockOnSubmit).toHaveBeenCalledWith(
 				expect.objectContaining({
 					amount: 1000,
-					date: "2024-01-01",
+					date: defaultDate,
 				}),
 			);
 		});

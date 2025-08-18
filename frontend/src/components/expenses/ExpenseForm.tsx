@@ -36,11 +36,20 @@ interface FormErrors {
 	categoryId?: string;
 }
 
+// 現在の日付を取得する関数（YYYY-MM-DD形式）
+const getToday = (): string => {
+	const today = new Date();
+	const year = today.getFullYear();
+	const month = String(today.getMonth() + 1).padStart(2, "0");
+	const day = String(today.getDate()).padStart(2, "0");
+	return `${year}-${month}-${day}`;
+};
+
 // デフォルトフォームデータ
 const defaultFormData: ExpenseFormData = {
 	amount: 0,
 	type: "expense" as TransactionType,
-	date: "",
+	date: getToday(),
 	description: "",
 	categoryId: "",
 };
