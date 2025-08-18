@@ -3,6 +3,7 @@ import type {
 	SubscriptionListProps,
 	SubscriptionWithCategory,
 } from "../../lib/api/types";
+import { TrashIcon } from "../icons";
 import { LoadingState } from "../ui";
 
 /**
@@ -21,9 +22,10 @@ import { LoadingState } from "../ui";
 /**
  * 単一のサブスクリプション行コンポーネント
  */
-const SubscriptionRow: FC<{ subscription: SubscriptionWithCategory }> = ({
-	subscription,
-}) => {
+const SubscriptionRow: FC<{
+	subscription: SubscriptionWithCategory;
+	onDelete?: (id: string, name: string) => void;
+}> = ({ subscription, onDelete }) => {
 	// 料金を日本円形式でフォーマット
 	const formatAmount = (amount: number): string => {
 		return new Intl.NumberFormat("ja-JP", {
@@ -90,6 +92,19 @@ const SubscriptionRow: FC<{ subscription: SubscriptionWithCategory }> = ({
 					? formatDate(subscription.nextBillingDate)
 					: "---"}
 			</td>
+			<td className="px-4 py-3">
+				<div className="flex justify-center">
+					<button
+						type="button"
+						onClick={() => onDelete?.(subscription.id, subscription.name)}
+						className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+						title={`${subscription.name}を削除`}
+						disabled={!onDelete}
+					>
+						<TrashIcon size={16} />
+					</button>
+				</div>
+			</td>
 		</tr>
 	);
 };
@@ -99,7 +114,7 @@ const SubscriptionRow: FC<{ subscription: SubscriptionWithCategory }> = ({
  */
 const ErrorState: FC<{ message: string }> = ({ message }) => (
 	<tr>
-		<td colSpan={5} className="px-4 py-8 text-center text-red-600">
+		<td colSpan={6} className="px-4 py-8 text-center text-red-600">
 			<div className="flex items-center justify-center space-x-2">
 				<span className="text-xl">⚠️</span>
 				<span>エラー: {message}</span>
@@ -113,7 +128,7 @@ const ErrorState: FC<{ message: string }> = ({ message }) => (
  */
 const EmptyState: FC = () => (
 	<tr>
-		<td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+		<td colSpan={6} className="px-4 py-8 text-center text-gray-500">
 			<div className="flex flex-col items-center space-y-2">
 				<span className="text-3xl">📋</span>
 				<span>登録されているサブスクリプションがありません</span>
@@ -133,6 +148,7 @@ export const SubscriptionList: FC<SubscriptionListProps> = ({
 	isLoading = false,
 	error = null,
 	className = "",
+	onDelete,
 }) => {
 	return (
 		<div className={`bg-white rounded-lg shadow ${className}`}>
@@ -185,12 +201,18 @@ export const SubscriptionList: FC<SubscriptionListProps> = ({
 							>
 								次回請求日
 							</th>
+							<th
+								scope="col"
+								className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+							>
+								操作
+							</th>
 						</tr>
 					</thead>
 					<tbody className="bg-white divide-y divide-gray-200">
 						{isLoading && (
 							<tr>
-								<td colSpan={5} className="px-4 py-8">
+								<td colSpan={6} className="px-4 py-8">
 									<LoadingState />
 								</td>
 							</tr>
@@ -205,6 +227,7 @@ export const SubscriptionList: FC<SubscriptionListProps> = ({
 								<SubscriptionRow
 									key={subscription.id}
 									subscription={subscription}
+									onDelete={onDelete}
 								/>
 							))}
 					</tbody>

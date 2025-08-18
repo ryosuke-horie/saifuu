@@ -1,4 +1,6 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { vi } from "vitest";
 import type { Category } from "../../lib/api/types";
 import { SubscriptionList } from "./SubscriptionList";
 
@@ -303,6 +305,263 @@ describe("SubscriptionList", () => {
 			mockSubscriptions.forEach((subscription) => {
 				expect(screen.getByText(subscription.name)).toBeInTheDocument();
 			});
+		});
+	});
+
+	describe("削除ボタンの機能", () => {
+		it("削除ボタンが正しく表示されること", () => {
+			const onDeleteMock = vi.fn();
+			render(<SubscriptionList {...defaultProps} onDelete={onDeleteMock} />);
+
+			// 操作列のヘッダーが表示されること
+			expect(screen.getByText("操作")).toBeInTheDocument();
+
+			// 各行に削除ボタンが表示されること
+			const deleteButtons = screen.getAllByRole("button");
+			expect(deleteButtons).toHaveLength(mockSubscriptions.length);
+
+			// ボタンに適切なタイトル属性が設定されていること
+			mockSubscriptions.forEach((subscription) => {
+				const button = screen.getByTitle(`${subscription.name}を削除`);
+				expect(button).toBeInTheDocument();
+			});
+		});
+
+		it("削除ボタンをクリックするとonDeleteが正しい引数で呼ばれること", async () => {
+			const user = userEvent.setup();
+			const onDeleteMock = vi.fn();
+			render(<SubscriptionList {...defaultProps} onDelete={onDeleteMock} />);
+
+			// 最初のサブスクリプションの削除ボタンをクリック
+			const firstDeleteButton = screen.getByTitle(
+				`${mockSubscriptions[0].name}を削除`,
+			);
+			await user.click(firstDeleteButton);
+
+			expect(onDeleteMock).toHaveBeenCalledTimes(1);
+			expect(onDeleteMock).toHaveBeenCalledWith(
+				mockSubscriptions[0].id,
+				mockSubscriptions[0].name,
+			);
+		});
+
+		it("複数のサブスクリプションの削除ボタンが独立して動作すること", async () => {
+			const user = userEvent.setup();
+			const onDeleteMock = vi.fn();
+			render(<SubscriptionList {...defaultProps} onDelete={onDeleteMock} />);
+
+			// 2つ目のサブスクリプションの削除ボタンをクリック
+			const secondDeleteButton = screen.getByTitle(
+				`${mockSubscriptions[1].name}を削除`,
+			);
+			await user.click(secondDeleteButton);
+
+			expect(onDeleteMock).toHaveBeenCalledTimes(1);
+			expect(onDeleteMock).toHaveBeenCalledWith(
+				mockSubscriptions[1].id,
+				mockSubscriptions[1].name,
+			);
+
+			// 3つ目のサブスクリプションの削除ボタンをクリック
+			const thirdDeleteButton = screen.getByTitle(
+				`${mockSubscriptions[2].name}を削除`,
+			);
+			await user.click(thirdDeleteButton);
+
+			expect(onDeleteMock).toHaveBeenCalledTimes(2);
+			expect(onDeleteMock).toHaveBeenNthCalledWith(
+				2,
+				mockSubscriptions[2].id,
+				mockSubscriptions[2].name,
+			);
+		});
+
+		it("onDeleteが提供されない場合、削除ボタンがdisabledになること", () => {
+			render(<SubscriptionList {...defaultProps} onDelete={undefined} />);
+
+			const deleteButtons = screen.getAllByRole("button");
+			deleteButtons.forEach((button) => {
+				expect(button).toBeDisabled();
+			});
+		});
+
+		it("onDeleteがnullの場合、削除ボタンがdisabledになること", () => {
+			render(<SubscriptionList {...defaultProps} onDelete={null as any} />);
+
+			const deleteButtons = screen.getAllByRole("button");
+			deleteButtons.forEach((button) => {
+				expect(button).toBeDisabled();
+			});
+		});
+
+		it("削除ボタンにアクセシビリティ属性が適切に設定されていること", () => {
+			const onDeleteMock = vi.fn();
+			render(<SubscriptionList {...defaultProps} onDelete={onDeleteMock} />);
+
+			mockSubscriptions.forEach((subscription) => {
+				const button = screen.getByTitle(`${subscription.name}を削除`);
+
+				// button要素であることを確認
+				expect(button.tagName.toLowerCase()).toBe("button");
+
+				// type属性が設定されていることを確認
+				expect(button).toHaveAttribute("type", "button");
+
+				// title属性が設定されていることを確認
+				expect(button).toHaveAttribute("title", `${subscription.name}を削除`);
+			});
+		});
+
+		it("削除ボタンに適切なスタイルが適用されていること", () => {
+			const onDeleteMock = vi.fn();
+			render(<SubscriptionList {...defaultProps} onDelete={onDeleteMock} />);
+
+			const firstDeleteButton = screen.getByTitle(
+				`${mockSubscriptions[0].name}を削除`,
+			);
+
+			// 削除ボタンに危険なアクションを示すスタイルが適用されていること
+			expect(firstDeleteButton).toHaveClass(
+				"text-red-600",
+				"hover:text-red-700",
+				"hover:bg-red-50",
+			);
+
+			// その他のスタイルクラスが適用されていること
+			expect(firstDeleteButton).toHaveClass(
+				"p-2",
+				"rounded",
+				"transition-colors",
+			);
+		});
+
+		it("削除ボタンのアイコンが正しく表示されること", () => {
+			const onDeleteMock = vi.fn();
+			render(<SubscriptionList {...defaultProps} onDelete={onDeleteMock} />);
+
+			// TrashIconが表示されていることを確認
+			// SVGアイコンの存在を間接的に確認
+			const deleteButtons = screen.getAllByRole("button");
+			expect(deleteButtons[0]).toContainHTML("svg");
+		});
+
+		it("キーボード操作で削除ボタンにアクセスできること", async () => {
+			const user = userEvent.setup();
+			const onDeleteMock = vi.fn();
+			render(<SubscriptionList {...defaultProps} onDelete={onDeleteMock} />);
+
+			// タブキーでボタンにフォーカスを移動
+			await user.tab();
+			const firstDeleteButton = screen.getByTitle(
+				`${mockSubscriptions[0].name}を削除`,
+			);
+			expect(firstDeleteButton).toHaveFocus();
+
+			// Enterキーで削除を実行
+			await user.keyboard("{Enter}");
+			expect(onDeleteMock).toHaveBeenCalledWith(
+				mockSubscriptions[0].id,
+				mockSubscriptions[0].name,
+			);
+		});
+
+		it("削除ボタンが中央揃えで表示されること", () => {
+			const onDeleteMock = vi.fn();
+			render(<SubscriptionList {...defaultProps} onDelete={onDeleteMock} />);
+
+			// 削除ボタンのコンテナが中央揃えのスタイルを持つこと
+			const buttonContainers = document.querySelectorAll("td:last-child .flex");
+			expect(buttonContainers).toHaveLength(mockSubscriptions.length);
+
+			buttonContainers.forEach((container) => {
+				expect(container).toHaveClass("justify-center");
+			});
+		});
+
+		it("操作列のヘッダーが中央揃えで表示されること", () => {
+			const onDeleteMock = vi.fn();
+			render(<SubscriptionList {...defaultProps} onDelete={onDeleteMock} />);
+
+			const operationHeader = screen.getByText("操作").closest("th");
+			expect(operationHeader).toHaveClass("text-center");
+		});
+
+		it("削除ボタンがホバー効果を持つこと", () => {
+			const onDeleteMock = vi.fn();
+			render(<SubscriptionList {...defaultProps} onDelete={onDeleteMock} />);
+
+			const firstDeleteButton = screen.getByTitle(
+				`${mockSubscriptions[0].name}を削除`,
+			);
+
+			// ホバー時のスタイルクラスが含まれていること
+			expect(firstDeleteButton.className).toContain("hover:text-red-700");
+			expect(firstDeleteButton.className).toContain("hover:bg-red-50");
+		});
+
+		it("disabled状態の削除ボタンではonDeleteが呼ばれないこと", async () => {
+			const user = userEvent.setup();
+			const onDeleteMock = vi.fn();
+
+			// onDeleteを undefined に設定してdisabled状態にする
+			render(<SubscriptionList {...defaultProps} onDelete={undefined} />);
+
+			const firstDeleteButton = screen.getByTitle(
+				`${mockSubscriptions[0].name}を削除`,
+			);
+			expect(firstDeleteButton).toBeDisabled();
+
+			// クリックしてもonDeleteが呼ばれないことを確認
+			await user.click(firstDeleteButton);
+			expect(onDeleteMock).not.toHaveBeenCalled();
+		});
+
+		it("空のサブスクリプション配列では削除ボタンが表示されないこと", () => {
+			const onDeleteMock = vi.fn();
+			render(
+				<SubscriptionList
+					subscriptions={[]}
+					isLoading={false}
+					error={null}
+					onDelete={onDeleteMock}
+				/>,
+			);
+
+			// 削除ボタンが存在しないことを確認
+			const deleteButtons = screen.queryAllByRole("button");
+			expect(deleteButtons).toHaveLength(0);
+		});
+
+		it("ローディング中は削除ボタンが表示されないこと", () => {
+			const onDeleteMock = vi.fn();
+			render(
+				<SubscriptionList
+					subscriptions={mockSubscriptions}
+					isLoading={true}
+					error={null}
+					onDelete={onDeleteMock}
+				/>,
+			);
+
+			// ローディング中は削除ボタンが表示されない
+			const deleteButtons = screen.queryAllByRole("button");
+			expect(deleteButtons).toHaveLength(0);
+		});
+
+		it("エラー状態では削除ボタンが表示されないこと", () => {
+			const onDeleteMock = vi.fn();
+			render(
+				<SubscriptionList
+					subscriptions={mockSubscriptions}
+					isLoading={false}
+					error="エラーが発生しました"
+					onDelete={onDeleteMock}
+				/>,
+			);
+
+			// エラー状態では削除ボタンが表示されない
+			const deleteButtons = screen.queryAllByRole("button");
+			expect(deleteButtons).toHaveLength(0);
 		});
 	});
 });

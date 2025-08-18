@@ -3,10 +3,12 @@
 import type { FC } from "react";
 import { useCallback, useState } from "react";
 import {
+	DeleteConfirmDialog,
 	NewSubscriptionButton,
 	NewSubscriptionDialog,
 	SubscriptionList,
 } from "../../components/subscriptions";
+import { useDeleteSubscription } from "../../hooks/useDeleteSubscription";
 import {
 	useCreateSubscription,
 	useSubscriptions,
@@ -50,8 +52,17 @@ const SubscriptionsPage: FC = () => {
 		createSubscription: createSubscriptionMutation,
 	} = useCreateSubscription();
 
+	// サブスクリプション削除用フック
+	const { isLoading: deleteLoading, deleteSubscription } =
+		useDeleteSubscription();
+
 	// ダイアログの状態管理
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [subscriptionToDelete, setSubscriptionToDelete] = useState<{
+		id: string;
+		name: string;
+	} | null>(null);
 
 	// ダイアログを開く
 	const handleOpenDialog = useCallback(() => {
@@ -62,6 +73,41 @@ const SubscriptionsPage: FC = () => {
 	const handleCloseDialog = useCallback(() => {
 		setIsDialogOpen(false);
 	}, []);
+
+	// 削除確認ダイアログを開く
+	const handleDeleteClick = useCallback((id: string, name: string) => {
+		setSubscriptionToDelete({ id, name });
+		setDeleteDialogOpen(true);
+	}, []);
+
+	// 削除確認ダイアログを閉じる
+	const handleDeleteDialogClose = useCallback(() => {
+		setDeleteDialogOpen(false);
+		setSubscriptionToDelete(null);
+	}, []);
+
+	// サブスクリプション削除処理
+	const handleDeleteConfirm = useCallback(async () => {
+		if (!subscriptionToDelete) return;
+
+		try {
+			const result = await deleteSubscription(subscriptionToDelete.id);
+			if (result) {
+				// 削除成功時にダイアログを閉じる
+				handleDeleteDialogClose();
+				// サブスクリプション一覧を再取得
+				await refetchSubscriptions();
+			}
+		} catch (error) {
+			console.error("サブスクリプション削除エラー:", error);
+			// エラーはuseDeleteSubscriptionフック内でトースト表示される
+		}
+	}, [
+		subscriptionToDelete,
+		deleteSubscription,
+		handleDeleteDialogClose,
+		refetchSubscriptions,
+	]);
 
 	// 新規サブスクリプション登録処理
 	const handleSubmitNewSubscription = useCallback(
@@ -249,6 +295,7 @@ const SubscriptionsPage: FC = () => {
 					subscriptions={subscriptions}
 					isLoading={subscriptionsLoading}
 					error={subscriptionsError}
+					onDelete={handleDeleteClick}
 				/>
 			</main>
 
@@ -258,6 +305,15 @@ const SubscriptionsPage: FC = () => {
 				onClose={handleCloseDialog}
 				onSubmit={handleSubmitNewSubscription}
 				isSubmitting={operationLoading}
+			/>
+
+			{/* サブスクリプション削除確認ダイアログ */}
+			<DeleteConfirmDialog
+				isOpen={deleteDialogOpen}
+				onClose={handleDeleteDialogClose}
+				onConfirm={handleDeleteConfirm}
+				subscriptionName={subscriptionToDelete?.name}
+				isDeleting={deleteLoading}
 			/>
 		</div>
 	);

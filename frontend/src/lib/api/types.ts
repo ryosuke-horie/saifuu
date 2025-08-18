@@ -406,6 +406,13 @@ export interface SubscriptionListProps {
 	 * 追加のCSSクラス名
 	 */
 	className?: string;
+
+	/**
+	 * 削除ボタンクリック時のコールバック関数
+	 * @param id サブスクリプションID
+	 * @param name サブスクリプション名
+	 */
+	onDelete?: (id: string, name: string) => void;
 }
 
 /**
