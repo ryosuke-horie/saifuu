@@ -249,7 +249,6 @@ const SubscriptionsPage: FC = () => {
 					subscriptions={subscriptions}
 					isLoading={subscriptionsLoading}
 					error={subscriptionsError}
-					onRefresh={refetchSubscriptions}
 				/>
 			</main>
 

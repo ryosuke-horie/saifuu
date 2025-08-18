@@ -536,27 +536,6 @@ describe("SubscriptionsPage", () => {
 
 			consoleSpy.mockRestore();
 		});
-
-		it("データの再取得が正しく動作すること", async () => {
-			const mockRefetchSubscriptions = vi.fn();
-			const { useSubscriptions } = await import(
-				"../../lib/api/hooks/useSubscriptions"
-			);
-			vi.mocked(useSubscriptions).mockReturnValue({
-				...defaultSubscriptionsHook,
-				refetch: mockRefetchSubscriptions,
-			});
-
-			const { SubscriptionList } = await import(
-				"../../components/subscriptions"
-			);
-			render(<SubscriptionsPage />);
-
-			// モック呼び出しの引数を確認
-			expect(SubscriptionList).toHaveBeenCalled();
-			const callArgs = vi.mocked(SubscriptionList).mock.calls[0][0];
-			expect(callArgs.onRefresh).toBe(mockRefetchSubscriptions);
-		});
 	});
 
 	describe("エラーハンドリング", () => {
