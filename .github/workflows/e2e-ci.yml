@@ -103,24 +103,28 @@ jobs:
       # API依存関係のインストール
       - name: Install API dependencies
         run: |
+          export PATH="$PNPM_HOME:$PATH"
           cd api
           pnpm install --frozen-lockfile --prefer-offline false
       
       # Frontend依存関係のインストール
       - name: Install Frontend dependencies
         run: |
+          export PATH="$PNPM_HOME:$PATH"
           cd frontend
           pnpm install --frozen-lockfile --prefer-offline false
       
       # E2E依存関係のインストール
       - name: Install E2E dependencies
         run: |
+          export PATH="$PNPM_HOME:$PATH"
           cd e2e
           pnpm install --frozen-lockfile --prefer-offline false
       
       # E2E用データベースのセットアップ
       - name: Setup E2E Database
         run: |
+          export PATH="$PNPM_HOME:$PATH"
           cd api
           # データベースディレクトリを作成
           mkdir -p db
@@ -132,6 +136,7 @@ jobs:
       # APIサーバーをバックグラウンドで起動
       - name: Start API server on background
         run: |
+          export PATH="$PNPM_HOME:$PATH"
           cd api
           nohup pnpm run dev:e2e &
       
@@ -143,6 +148,7 @@ jobs:
       # Frontendサーバーをバックグラウンドで起動
       - name: Start Frontend server on background
         run: |
+          export PATH="$PNPM_HOME:$PATH"
           cd frontend
           E2E_MODE=true nohup pnpm run dev &
       
