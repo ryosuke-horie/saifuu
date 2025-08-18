@@ -694,21 +694,6 @@ describe('route-factory', () => {
 	})
 
 	describe('環境判定関数のテスト', () => {
-		// 環境変数のモックのためのヘルパー関数
-		type GlobalWithTestEnv = typeof globalThis & { __TEST_ENV__?: Record<string, unknown> }
-		const _withMockedEnvironment = (envVars: Record<string, unknown>, testFn: () => void) => {
-			// import.meta.envを直接モックできないため、
-			// グローバル変数経由で環境変数をテスト用に設定
-			const g = globalThis as GlobalWithTestEnv
-			const originalEnv = { ...(g.__TEST_ENV__ || {}) }
-			g.__TEST_ENV__ = envVars
-			try {
-				testFn()
-			} finally {
-				g.__TEST_ENV__ = originalEnv
-			}
-		}
-
 		describe('getCurrentEnvironment', () => {
 			it('テスト環境を正しく判定する', () => {
 				// 実際のテスト環境での動作確認
@@ -791,58 +776,27 @@ describe('route-factory', () => {
 
 				it('組み合わせテスト：様々な条件の組み合わせ', () => {
 					const testCases = [
-						{
-							name: 'テストDBあり、selectあり',
-							testDb: { select: vi.fn() },
-							db: { select: vi.fn() },
-							expected: false,
-						},
-						{
-							name: 'テストDBあり、selectなし',
-							testDb: { select: vi.fn() },
-							db: {},
-							expected: false,
-						},
-						{
-							name: 'テストDBなし、selectなし',
-							testDb: undefined,
-							db: {},
-							expected: false,
-						},
-						{
-							name: 'テストDBなし、selectあり（テスト環境）',
-							testDb: undefined,
-							db: { select: vi.fn() },
-							expected: false, // テスト環境のため
-						},
+						{ testDb: { select: vi.fn() }, db: { select: vi.fn() }, expected: false },
+						{ testDb: { select: vi.fn() }, db: {}, expected: false },
+						{ testDb: undefined, db: {}, expected: false },
+						{ testDb: undefined, db: { select: vi.fn() }, expected: false },
 					]
 
-					testCases.forEach(({ name, testDb, db, expected }) => {
+					testCases.forEach(({ testDb, db, expected }, index) => {
 						const result = shouldVerifyPersistence(
 							testDb as unknown as AnyDatabase | undefined,
 							db as unknown as AnyDatabase
 						)
-						expect(result, name).toBe(expected)
+						expect(result, `Test case ${index + 1}`).toBe(expected)
 					})
 				})
 
-				it('環境判定関数の動作ロジックを確認（ドキュメント的テスト）', () => {
-					// このテストは、実際の環境変数の挙動をドキュメントするものです
-					// 本番環境での動作：
-					// - testDatabaseがundefined
-					// - db.selectが存在
-					// - isProductionEnvironment()がtrueを返す
-					// → shouldVerifyPersistenceはtrueを返す
+				it('本番環境での動作をドキュメント化', () => {
+					// 本番環境: testDatabase=undefined, db.select存在, isProduction=true → true
+					// 開発/テスト環境: testDatabase=undefined, db.select存在, isProduction=false → false
 
-					// 開発/テスト環境での動作：
-					// - testDatabaseがundefined
-					// - db.selectが存在
-					// - isProductionEnvironment()がfalseを返す
-					// → shouldVerifyPersistenceはfalseを返す
-
-					// 現在のテスト環境での実際の動作を検証
 					const actualResult = shouldVerifyPersistence(undefined, mockDb as unknown as AnyDatabase)
-					expect(actualResult).toBe(false) // テスト環境のためfalse
+					expect(actualResult).toBe(false) // 現在のテスト環境
 				})
 			})
 		})
