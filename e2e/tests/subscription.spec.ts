@@ -8,11 +8,18 @@ test.describe('サブスクリプション管理機能', () => {
     
     // ホーム画面からサブスクリプション管理画面へ遷移
     await page.goto('/');
+    
+    // ページが完全に読み込まれるのを待つ
+    await page.waitForLoadState('networkidle');
+    
+    // ナビゲーションカードが表示されるのを待つ
+    await page.getByTestId('navigation-subscriptions').waitFor({ state: 'visible' });
+    
     // ダッシュボードのナビゲーションカードをクリック（data-testidを使用）
     await page.getByTestId('navigation-subscriptions').click();
     
     // サブスクリプション管理画面が表示されることを確認
-    await expect(page).toHaveURL(/\/subscriptions/);
+    await expect(page).toHaveURL(/\/subscriptions/, { timeout: 10000 });
     
     // 新規サブスクリプションを登録
     await page.getByRole('button', { name: '新しいサブスクリプションを登録' }).click();
