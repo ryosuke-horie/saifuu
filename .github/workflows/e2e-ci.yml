@@ -1,0 +1,198 @@
+name: E2E Tests (Self-hosted Runner)
+
+on:
+  # プルリクエストで自動実行
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'frontend/**'
+      - 'api/**'
+      - 'e2e/**'
+      - '!frontend/**/*.md'
+      - '!api/**/*.md'
+      - '!e2e/**/*.md'
+      - '.github/workflows/e2e-ci.yml'
+  # mainブランチへのpushで実行
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - 'api/**'
+      - 'e2e/**'
+      - '!frontend/**/*.md'
+      - '!api/**/*.md'
+      - '!e2e/**/*.md'
+      - '.github/workflows/e2e-ci.yml'
+  # 手動トリガー（デバッグ用）
+  workflow_dispatch:
+
+# GitHub Actions無料枠節約のため、同一PRで複数実行時は前の実行をキャンセル
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-tests:
+    name: E2E Tests
+    runs-on: self-hosted
+    timeout-minutes: 20
+    
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      
+      # 既存プロセスのクリーンアップ（セルフホストランナー用）
+      - name: Clean up existing processes
+        run: |
+          echo "=== Cleaning up existing processes ==="
+          echo "Checking port usage before cleanup:"
+          netstat -tulpn 2>/dev/null | grep -E ":(3000|3004|5173)" || echo "No ports in use"
+          
+          # ポートを使用しているプロセスを強制終了
+          echo "Killing processes on ports..."
+          for port in 3000 3004 5173; do
+            lsof -ti:$port | xargs -r kill -9 2>/dev/null && echo "Killed process on port $port" || true
+          done
+          
+          # Next.jsとNode.jsプロセスをクリーンアップ
+          echo "Killing Next.js and Node.js processes..."
+          pkill -9 -f "next" || true
+          pkill -9 -f "tsx" || true
+          pkill -9 -f "node" || true
+          
+          sleep 3
+          
+          echo "Checking port usage after cleanup:"
+          netstat -tulpn 2>/dev/null | grep -E ":(3000|3004|5173)" || echo "All ports cleared"
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      
+      - name: Clean pnpm setup directory
+        run: |
+          # pnpm/action-setupのデフォルトディレクトリをクリーンアップ
+          rm -rf ~/setup-pnpm || true
+          rm -rf /home/runner-user/setup-pnpm || true
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+      
+      # ルート依存関係のインストール（共有モジュール含む）
+      - name: Install root dependencies
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          pnpm config set store-dir /tmp/pnpm-store-${{ github.run_id }}
+          pnpm install --frozen-lockfile --prefer-offline false
+      
+      # better-sqlite3のリビルド
+      - name: Rebuild better-sqlite3
+        run: |
+          if [ -d "node_modules/better-sqlite3" ]; then
+            cd node_modules/better-sqlite3
+            npm run install --verbose || npm run build-release || node-gyp rebuild || true
+            cd ../..
+          fi
+      
+      # API依存関係のインストール
+      - name: Install API dependencies
+        working-directory: api
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          pnpm install --frozen-lockfile --prefer-offline false
+      
+      # Frontend依存関係のインストール
+      - name: Install Frontend dependencies
+        working-directory: frontend
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          pnpm install --frozen-lockfile --prefer-offline false
+      
+      # E2E依存関係のインストール
+      - name: Install E2E dependencies
+        working-directory: e2e
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          pnpm install --frozen-lockfile --prefer-offline false
+      
+      # E2E用データベースのセットアップ
+      - name: Setup E2E Database
+        working-directory: api
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          # データベースディレクトリを作成
+          mkdir -p db
+          # E2E用データベースファイルを作成
+          touch db/e2e-test.db
+          # E2E用の環境でマイグレーションを実行
+          NODE_ENV=e2e pnpm run db:migrate:dev
+      
+      # APIサーバーをバックグラウンドで起動
+      - name: Start API server on background
+        working-directory: api
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          nohup pnpm run dev:e2e &
+      
+      # APIサーバーの起動を待機
+      - name: Wait API server response
+        run: |
+          curl --retry 30 --retry-delay 1 --max-time 5 http://localhost:3004/api/health
+      
+      # Frontendサーバーをバックグラウンドで起動
+      - name: Start Frontend server on background
+        working-directory: frontend
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          E2E_MODE=true nohup pnpm run dev &
+      
+      # Frontendサーバーの起動を待機
+      - name: Wait Frontend server response
+        run: |
+          curl --retry 60 --retry-delay 2 --max-time 5 http://localhost:3000
+          echo "Frontend server is ready, waiting for full initialization..."
+          sleep 5
+      
+      # Playwrightブラウザのインストール
+      - name: Install Playwright browsers
+        working-directory: e2e
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          npx playwright install chromium
+      
+      # E2Eテストの実行
+      - name: Run E2E tests
+        working-directory: e2e
+        env:
+          CI: true
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          npx playwright test
+      
+      # テスト結果の表示（失敗時）
+      - name: Show test results on failure
+        if: failure()
+        working-directory: e2e
+        run: |
+          echo "=== E2E Test Failed ==="
+          if [ -f test-results/.last-run.json ]; then
+            cat test-results/.last-run.json || true
+          fi
+      
+      # クリーンアップ
+      - name: Cleanup
+        if: always()
+        run: |
+          # プロセスのクリーンアップ
+          pkill -9 -f "next dev" || true
+          pkill -9 -f "tsx server-e2e.js" || true
+          # テンポラリファイルの削除
+          rm -rf /tmp/pnpm-store-${{ github.run_id }} || true
+          rm -f api/db/e2e-test.db || true

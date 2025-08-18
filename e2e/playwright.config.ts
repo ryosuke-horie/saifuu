@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 /**
  * Playwright設定ファイル
- * - ローカル環境でのみE2Eテストを実行（CI環境では実行しない）
+ * - ローカル環境およびCI環境でE2Eテストを実行
  * - Chrome専用: PC ChromeとスマホChromeのみサポート
  * - 正常系テストのみ実装（エラーハンドリング・パフォーマンステストは対象外）
  */
@@ -13,14 +13,17 @@ export default defineConfig({
 	// 並列実行設定
 	fullyParallel: true,
 
-	// test.only()の使用を禁止（ローカル開発では許可）
-	forbidOnly: false,
+	// 最初の失敗で即座にテストを停止
+	maxFailures: process.env.CI ? 1 : undefined,
 
-	// 再試行回数（ローカル環境では再試行なし）
+	// test.only()の使用を禁止（CI環境では禁止、ローカルでは許可）
+	forbidOnly: !!process.env.CI,
+
+	// 再試行回数（失敗時は即座に終了）
 	retries: 0,
 
-	// 並列ワーカー数（ローカル専用のため、CIでの実行は想定しない）
-	workers: undefined,
+	// 並列ワーカー数（CI環境では2ワーカーに制限）
+	workers: process.env.CI ? 2 : undefined,
 
 	// レポーター設定
 	reporter: "html",
@@ -30,14 +33,17 @@ export default defineConfig({
 		// ベースURL（開発サーバー）
 		baseURL: "http://localhost:3000",
 
+		// ヘッドレスモード（CI環境では必須、ローカルでも推奨）
+		headless: true,
+
 		// 失敗時のスクリーンショット
 		screenshot: "only-on-failure",
 
 		// 失敗時のビデオ録画
 		video: "retain-on-failure",
 
-		// トレース設定
-		trace: "on-first-retry",
+		// トレース設定（再試行なしのため無効）
+		trace: "off",
 	},
 
 	// テスト対象のプロジェクト設定
