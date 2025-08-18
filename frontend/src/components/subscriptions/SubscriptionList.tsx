@@ -3,6 +3,7 @@ import type {
 	SubscriptionListProps,
 	SubscriptionWithCategory,
 } from "../../lib/api/types";
+import { EmptyState } from "../common/table";
 import { LoadingState, Spinner } from "../ui";
 
 /**
@@ -109,23 +110,6 @@ const ErrorState: FC<{ message: string }> = ({ message }) => (
 );
 
 /**
- * 空状態の表示コンポーネント
- */
-const EmptyState: FC = () => (
-	<tr>
-		<td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-			<div className="flex flex-col items-center space-y-2">
-				<span className="text-3xl">📋</span>
-				<span>登録されているサブスクリプションがありません</span>
-				<span className="text-sm text-gray-400">
-					新規登録ボタンから追加してください
-				</span>
-			</div>
-		</td>
-	</tr>
-);
-
-/**
  * サブスクリプション一覧コンポーネント
  */
 export const SubscriptionList: FC<SubscriptionListProps> = ({
@@ -213,7 +197,13 @@ export const SubscriptionList: FC<SubscriptionListProps> = ({
 						)}
 						{error && <ErrorState message={error} />}
 						{!isLoading && !error && subscriptions.length === 0 && (
-							<EmptyState />
+							<EmptyState
+								message="登録されているサブスクリプションがありません"
+								subMessage="新規登録ボタンから追加してください"
+								icon="📋"
+								variant="table"
+								colSpan={5}
+							/>
 						)}
 						{!isLoading &&
 							!error &&

@@ -164,13 +164,12 @@ export const ExpenseList: FC<ExpenseListProps> = memo(
 							<p className="text-sm text-gray-600 mt-1">支出の履歴</p>
 						</div>
 					</div>
-					<div className="px-4 py-8">
-						<EmptyState
-							message="登録されている取引がありません"
-							subMessage="新規登録ボタンから追加してください"
-							icon="💰"
-						/>
-					</div>
+					<EmptyState
+						message="登録されている取引がありません"
+						subMessage="新規登録ボタンから追加してください"
+						icon="💰"
+						variant="div"
+					/>
 				</div>
 			);
 		}

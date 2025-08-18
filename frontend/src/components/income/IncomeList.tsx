@@ -170,6 +170,7 @@ export const IncomeList: FC<IncomeListProps> = memo(
 									message="登録されている収入がありません"
 									subMessage="新規登録ボタンから追加してください"
 									icon="💵"
+									variant="table"
 								/>
 							)}
 							{!isLoading &&
