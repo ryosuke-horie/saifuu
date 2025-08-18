@@ -134,45 +134,36 @@ jobs:
           # E2E用の環境でマイグレーションを実行
           NODE_ENV=e2e pnpm run db:migrate:dev
       
-      # APIサーバーの起動
-      - name: Start API server
+      # APIサーバーをバックグラウンドで起動
+      - name: Start API server on background
         working-directory: api
         run: |
           export PATH="$PNPM_HOME:$PATH"
-          nohup pnpm run dev:e2e > api-server.log 2>&1 &
-          echo $! > api.pid
-          # ヘルスチェックを待つ
-          for i in {1..30}; do
-            if curl -f http://localhost:3004/api/health 2>/dev/null; then
-              echo "API server is ready"
-              exit 0
-            fi
-            echo "Waiting for API... ($i/30)"
-            sleep 1
-          done
-          echo "API server failed to start"
-          cat api-server.log
-          exit 1
+          nohup pnpm run dev:e2e &
       
-      # Frontendサーバーの起動
-      - name: Start Frontend server
+      # APIサーバーの起動を待機
+      - name: Wait API server response
+        run: |
+          curl --retry 30 --retry-delay 1 --max-time 5 http://localhost:3004/api/health
+      
+      # Frontendサーバーをバックグラウンドで起動
+      - name: Start Frontend server on background
         working-directory: frontend
         run: |
           export PATH="$PNPM_HOME:$PATH"
-          E2E_MODE=true nohup pnpm run dev > frontend-server.log 2>&1 &
-          echo $! > frontend.pid
-          # Frontendの準備を待つ
-          for i in {1..60}; do
-            if curl -f http://localhost:3000 2>/dev/null; then
-              echo "Frontend server is ready"
-              exit 0
-            fi
-            echo "Waiting for Frontend... ($i/60)"
-            sleep 2
-          done
-          echo "Frontend server failed to start"
-          cat frontend-server.log
-          exit 1
+          E2E_MODE=true nohup pnpm run dev &
+      
+      # Frontendサーバーの起動を待機
+      - name: Wait Frontend server response
+        run: |
+          curl --retry 60 --retry-delay 2 --max-time 5 http://localhost:3000
+      
+      # Playwrightブラウザのインストール
+      - name: Install Playwright browsers
+        working-directory: e2e
+        run: |
+          export PATH="$PNPM_HOME:$PATH"
+          npx playwright install chromium
       
       # E2Eテストの実行
       - name: Run E2E tests
@@ -181,42 +172,25 @@ jobs:
           CI: true
         run: |
           export PATH="$PNPM_HOME:$PATH"
-          pnpm run test --reporter=list
+          npx playwright test
       
-      # サーバーの停止
-      - name: Stop servers
-        if: always()
-        run: |
-          # PIDファイルからプロセスを終了
-          if [ -f api/api.pid ]; then
-            kill -9 $(cat api/api.pid) 2>/dev/null || true
-          fi
-          if [ -f frontend/frontend.pid ]; then
-            kill -9 $(cat frontend/frontend.pid) 2>/dev/null || true
-          fi
-          # 念のためポートをクリア
-          lsof -ti:3000 | xargs -r kill -9 2>/dev/null || true
-          lsof -ti:3004 | xargs -r kill -9 2>/dev/null || true
-      
-      # テスト結果の表示（失敗時のみ）
-      - name: Show test failure summary
+      # テスト結果の表示（失敗時）
+      - name: Show test results on failure
         if: failure()
+        working-directory: e2e
         run: |
-          echo "E2E tests failed. Check the logs above for details."
-          # Playwrightのテスト結果サマリーがあれば表示
-          if [ -f e2e/test-results/.last-run.json ]; then
-            echo "Test run summary:"
-            cat e2e/test-results/.last-run.json || true
+          echo "=== E2E Test Failed ==="
+          if [ -f test-results/.last-run.json ]; then
+            cat test-results/.last-run.json || true
           fi
       
       # クリーンアップ
       - name: Cleanup
         if: always()
         run: |
-          # プロセスのクリーンアップ（セルフホストランナー用）
+          # プロセスのクリーンアップ
           pkill -9 -f "next dev" || true
           pkill -9 -f "tsx server-e2e.js" || true
-          # pnpmストアのクリーンアップ
+          # テンポラリファイルの削除
           rm -rf /tmp/pnpm-store-${{ github.run_id }} || true
-          # E2Eテスト用データベースの削除
           rm -f api/db/e2e-test.db || true
