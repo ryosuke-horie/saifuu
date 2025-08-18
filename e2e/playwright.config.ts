@@ -13,8 +13,8 @@ export default defineConfig({
 	// 並列実行設定
 	fullyParallel: true,
 
-	// 最初の失敗で即座にテストを停止
-	maxFailures: process.env.CI ? 1 : undefined,
+	// 最初の失敗で即座にテストを停止（CI・ローカル共通）
+	maxFailures: 1,
 
 	// test.only()の使用を禁止（CI環境では禁止、ローカルでは許可）
 	forbidOnly: !!process.env.CI,
