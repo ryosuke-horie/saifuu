@@ -61,7 +61,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 export function useToast() {
 	const context = useContext(ToastContext);
+	// SSG/SSR時はダミーオブジェクトを返す
 	if (!context) {
+		if (typeof window === "undefined") {
+			// サーバーサイドでは警告を出さずにノーオペレーション関数を返す
+			return {
+				showToast: () => {},
+			};
+		}
+		// クライアントサイドでcontextがない場合はエラー
 		throw new Error("useToast must be used within a ToastProvider");
 	}
 	return context;
