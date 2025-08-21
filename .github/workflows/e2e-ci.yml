@@ -121,10 +121,7 @@ jobs:
         run: |
           # データベースディレクトリを作成
           mkdir -p db
-          # E2E用データベースファイルを作成
-          touch db/e2e-test.db
-          # E2E用の環境でマイグレーションを実行
-          NODE_ENV=e2e pnpm run db:migrate:dev
+          # server-e2e.jsがテーブル作成とシード投入を行うため、ディレクトリ作成のみ
       
       # APIサーバーをバックグラウンドで起動
       - name: Start API server on background

@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { eq } from 'drizzle-orm';
 import { createServer } from 'node:http';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import SQLiteDatabase from 'better-sqlite3';
@@ -45,6 +45,38 @@ try {
 // 新しいデータベースを作成
 const sqlite = new SQLiteDatabase(E2E_DB_PATH);
 const db = drizzle(sqlite, { schema });
+
+// マイグレーションファイルを実行してテーブルを作成
+try {
+  console.log('📋 Creating database tables...');
+  
+  // マイグレーションファイルを読み込んで実行
+  const migrationFiles = [
+    '0000_whole_owl.sql',
+    '0001_white_bishop.sql'
+  ];
+  
+  for (const migrationFile of migrationFiles) {
+    const migrationPath = join(__dirname, 'drizzle', 'migrations', migrationFile);
+    if (existsSync(migrationPath)) {
+      const migrationSQL = readFileSync(migrationPath, 'utf8');
+      const statements = migrationSQL.split('--> statement-breakpoint').filter(s => s.trim());
+      
+      for (const statement of statements) {
+        if (statement.trim()) {
+          sqlite.exec(statement.trim());
+        }
+      }
+      console.log(`✅ Applied migration: ${migrationFile}`);
+    }
+  }
+  
+  console.log('✅ Database tables created successfully');
+} catch (error) {
+  console.error('❌ Failed to create database tables:', error);
+  console.error('❌ Error details:', error.message);
+  process.exit(1);
+}
 
 // シードファイルを読み込んでデータベースを初期化
 try {

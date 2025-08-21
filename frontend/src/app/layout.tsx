@@ -3,8 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout";
 import { QueryProvider } from "@/components/providers";
-import { LoggedErrorBoundary, NextjsLoggerProvider } from "@/lib/logger";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { LoggedErrorBoundary, NextjsLoggerProvider } from "@/lib/logger";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
