@@ -106,6 +106,38 @@ export function useCreateSubscription() {
 }
 
 /**
+ * サブスクリプション削除を管理するフック
+ */
+export function useDeleteSubscription() {
+	const [state, setState] = useState<BaseState>({
+		isLoading: false,
+		error: null,
+	});
+
+	const deleteSubscription = useCallback(
+		async (id: string): Promise<boolean> => {
+			setState({ isLoading: true, error: null });
+
+			try {
+				await subscriptionService.deleteSubscription(id);
+				setState({ isLoading: false, error: null });
+				return true;
+			} catch (error) {
+				const apiError = handleApiError(error, "サブスクリプション削除");
+				setState({ isLoading: false, error: apiError.message });
+				return false;
+			}
+		},
+		[],
+	);
+
+	return {
+		...state,
+		deleteSubscription,
+	};
+}
+
+/**
  * サブスクリプション統計を管理するフック
  *
  * useApiQueryを使用してコードの重複を解消し、

@@ -22,6 +22,7 @@ import type {
 import {
 	useActiveSubscriptions,
 	useCreateSubscription,
+	useDeleteSubscription,
 	useInactiveSubscriptions,
 	useSubscription,
 	useSubscriptionStats,
@@ -35,6 +36,7 @@ vi.mock("../../services/subscriptions", () => ({
 		getSubscription: vi.fn(),
 		getSubscriptionStats: vi.fn(),
 		createSubscription: vi.fn(),
+		deleteSubscription: vi.fn(),
 	},
 }));
 
@@ -738,3 +740,138 @@ describe("useCreateSubscription", () => {
  * 4. ローディング状態管理のテスト
  * 5. handleApiError呼び出しのテスト
  */
+
+describe("useDeleteSubscription", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("初期状態が正しく設定される", () => {
+		const { result } = renderHook(() => useDeleteSubscription());
+
+		expect(result.current.isLoading).toBe(false);
+		expect(result.current.error).toBeNull();
+		expect(result.current.deleteSubscription).toBeInstanceOf(Function);
+	});
+
+	it("削除成功時に正しく状態が更新される", async () => {
+		// モックのセットアップ
+		vi.mocked(subscriptionService.deleteSubscription).mockResolvedValueOnce(
+			undefined,
+		);
+
+		const { result } = renderHook(() => useDeleteSubscription());
+
+		// 削除実行
+		let deleteResult: boolean | undefined;
+		await act(async () => {
+			deleteResult = await result.current.deleteSubscription("test-id");
+		});
+
+		// 結果の検証
+		expect(deleteResult).toBe(true);
+		expect(result.current.isLoading).toBe(false);
+		expect(result.current.error).toBeNull();
+		expect(subscriptionService.deleteSubscription).toHaveBeenCalledWith(
+			"test-id",
+		);
+	});
+
+	it("削除失敗時にエラーが正しくハンドリングされる", async () => {
+		// エラーのモック
+		const mockError = new Error("削除に失敗しました");
+		vi.mocked(subscriptionService.deleteSubscription).mockRejectedValueOnce(
+			mockError,
+		);
+
+		// handleApiErrorのモック
+		const mockApiError = new ApiError(
+			"server_error",
+			"サブスクリプション削除中にエラーが発生しました",
+			500,
+		);
+		vi.mocked(handleApiError).mockReturnValueOnce(mockApiError);
+
+		const { result } = renderHook(() => useDeleteSubscription());
+
+		// 削除実行
+		let deleteResult: boolean | undefined;
+		await act(async () => {
+			deleteResult = await result.current.deleteSubscription("test-id");
+		});
+
+		// エラー状態の検証
+		expect(deleteResult).toBe(false);
+		expect(result.current.isLoading).toBe(false);
+		expect(result.current.error).toBe(mockApiError.message);
+		expect(handleApiError).toHaveBeenCalledWith(
+			mockError,
+			"サブスクリプション削除",
+		);
+	});
+
+	it("削除中はローディング状態が適切に管理される", async () => {
+		// 遅延を伴うモック
+		let resolvePromise: (() => void) | undefined;
+		const deletePromise = new Promise<void>((resolve) => {
+			resolvePromise = resolve;
+		});
+		vi.mocked(subscriptionService.deleteSubscription).mockReturnValueOnce(
+			deletePromise,
+		);
+
+		const { result } = renderHook(() => useDeleteSubscription());
+
+		// 削除開始（awaitしない）
+		act(() => {
+			void result.current.deleteSubscription("test-id");
+		});
+
+		// ローディング中の確認
+		await waitFor(() => {
+			expect(result.current.isLoading).toBe(true);
+		});
+
+		// 削除完了
+		await act(async () => {
+			resolvePromise?.();
+			await deletePromise;
+		});
+
+		// ローディング終了の確認
+		expect(result.current.isLoading).toBe(false);
+	});
+
+	it("複数回の削除リクエストが正しく処理される", async () => {
+		vi.mocked(subscriptionService.deleteSubscription)
+			.mockResolvedValueOnce(undefined)
+			.mockRejectedValueOnce(new Error("削除失敗"))
+			.mockResolvedValueOnce(undefined);
+
+		const mockApiError = new ApiError("server_error", "削除エラー", 500);
+		vi.mocked(handleApiError).mockReturnValueOnce(mockApiError);
+
+		const { result } = renderHook(() => useDeleteSubscription());
+
+		// 1回目: 成功
+		await act(async () => {
+			const result1 = await result.current.deleteSubscription("id1");
+			expect(result1).toBe(true);
+		});
+		expect(result.current.error).toBeNull();
+
+		// 2回目: 失敗
+		await act(async () => {
+			const result2 = await result.current.deleteSubscription("id2");
+			expect(result2).toBe(false);
+		});
+		expect(result.current.error).toBe("削除エラー");
+
+		// 3回目: 成功（エラーがクリアされる）
+		await act(async () => {
+			const result3 = await result.current.deleteSubscription("id3");
+			expect(result3).toBe(true);
+		});
+		expect(result.current.error).toBeNull();
+	});
+});
