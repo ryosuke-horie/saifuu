@@ -136,9 +136,9 @@ jobs:
       # APIサーバーをバックグラウンドで起動
       - name: Start API server on background
         run: |
-          export PATH="$PNPM_HOME:$PATH"
           cd api
-          nohup bash -c "export PATH='$PNPM_HOME:$PATH' && pnpm run dev:e2e" &
+          # pnpmの実行パスを明示的に指定
+          nohup bash -c "$(which pnpm) run dev:e2e" > ../api-server.log 2>&1 &
       
       # APIサーバーの起動を待機
       - name: Wait API server response
@@ -148,9 +148,9 @@ jobs:
       # Frontendサーバーをバックグラウンドで起動
       - name: Start Frontend server on background
         run: |
-          export PATH="$PNPM_HOME:$PATH"
           cd frontend
-          nohup bash -c "export PATH='$PNPM_HOME:$PATH' && E2E_MODE=true pnpm run dev" &
+          # pnpmの実行パスを明示的に指定
+          nohup bash -c "E2E_MODE=true $(which pnpm) run dev" > ../frontend-server.log 2>&1 &
       
       # Frontendサーバーの起動を待機
       - name: Wait Frontend server response
@@ -194,6 +194,10 @@ jobs:
           if [ -f test-results/.last-run.json ]; then
             cat test-results/.last-run.json || true
           fi
+          echo "\n=== Frontend Server Log ==="
+          cat ../frontend-server.log || true
+          echo "\n=== API Server Log ==="
+          cat ../api-server.log || true
       
       # クリーンアップ
       - name: Cleanup
