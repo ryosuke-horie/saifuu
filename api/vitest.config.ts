@@ -10,6 +10,10 @@ export default defineConfig({
 			"@shared": path.resolve(__dirname, "../shared/src"),
 		},
 	},
+	esbuild: {
+		// テスト用のTypeScript設定を使用
+		target: "esnext"
+	},
 	test: {
 		// Node.js環境でのテスト実行
 		environment: "node",

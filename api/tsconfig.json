@@ -15,4 +15,21 @@
       "@shared/*": ["../shared/src/*"]
     }
   },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../shared/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "../shared/**/__tests__/**",
+    "../shared/**/*.test.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "__tests__/**/*",
+    "vitest.config.ts",
+    "coverage"
+  ]
 }

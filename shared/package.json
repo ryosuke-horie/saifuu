@@ -9,6 +9,7 @@
 		"test:run": "vitest run",
 		"test:watch": "vitest watch",
 		"typecheck": "tsc --noEmit",
+		"typecheck:test": "tsc --noEmit -p tsconfig.test.json",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"check:fix": "pnpm run lint:fix && pnpm run typecheck && pnpm run test:run"

@@ -19,6 +19,9 @@ export default defineConfig({
 		environment: "jsdom",
 		setupFiles: ["./vitest.setup.ts"],
 		globals: true,
+		typecheck: {
+			tsconfig: "./tsconfig.test.json",
+		},
 		// ビジュアルテスト実行時のみブラウザモードを有効化
 		// 通常のユニットテストはjsdom環境で高速実行
 		browser: {

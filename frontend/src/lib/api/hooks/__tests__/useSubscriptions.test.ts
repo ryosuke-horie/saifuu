@@ -15,6 +15,7 @@ import { ApiError, handleApiError } from "../../errors";
 import { subscriptionService } from "../../services/subscriptions";
 import type {
 	CreateSubscriptionRequest,
+	DeleteResponse,
 	GetSubscriptionsQuery,
 	Subscription,
 	SubscriptionStatsResponse,
@@ -756,9 +757,10 @@ describe("useDeleteSubscription", () => {
 
 	it("削除成功時に正しく状態が更新される", async () => {
 		// モックのセットアップ
-		vi.mocked(subscriptionService.deleteSubscription).mockResolvedValueOnce(
-			undefined,
-		);
+		vi.mocked(subscriptionService.deleteSubscription).mockResolvedValueOnce({
+			success: true,
+			message: "サブスクリプションを削除しました",
+		});
 
 		const { result } = renderHook(() => useDeleteSubscription());
 
@@ -786,7 +788,7 @@ describe("useDeleteSubscription", () => {
 
 		// handleApiErrorのモック
 		const mockApiError = new ApiError(
-			"server_error",
+			"server",
 			"サブスクリプション削除中にエラーが発生しました",
 			500,
 		);
@@ -812,9 +814,9 @@ describe("useDeleteSubscription", () => {
 
 	it("削除中はローディング状態が適切に管理される", async () => {
 		// 遅延を伴うモック
-		let resolvePromise: (() => void) | undefined;
-		const deletePromise = new Promise<void>((resolve) => {
-			resolvePromise = resolve;
+		let resolvePromise: ((value: DeleteResponse) => void) | undefined;
+		const deletePromise = new Promise<DeleteResponse>((resolve) => {
+			resolvePromise = (value: DeleteResponse) => resolve(value);
 		});
 		vi.mocked(subscriptionService.deleteSubscription).mockReturnValueOnce(
 			deletePromise,
@@ -834,7 +836,7 @@ describe("useDeleteSubscription", () => {
 
 		// 削除完了
 		await act(async () => {
-			resolvePromise?.();
+			resolvePromise?.({ success: true, message: "削除完了" });
 			await deletePromise;
 		});
 
@@ -844,11 +846,11 @@ describe("useDeleteSubscription", () => {
 
 	it("複数回の削除リクエストが正しく処理される", async () => {
 		vi.mocked(subscriptionService.deleteSubscription)
-			.mockResolvedValueOnce(undefined)
+			.mockResolvedValueOnce({ success: true, message: "削除成功1" })
 			.mockRejectedValueOnce(new Error("削除失敗"))
-			.mockResolvedValueOnce(undefined);
+			.mockResolvedValueOnce({ success: true, message: "削除成功2" });
 
-		const mockApiError = new ApiError("server_error", "削除エラー", 500);
+		const mockApiError = new ApiError("server", "削除エラー", 500);
 		vi.mocked(handleApiError).mockReturnValueOnce(mockApiError);
 
 		const { result } = renderHook(() => useDeleteSubscription());

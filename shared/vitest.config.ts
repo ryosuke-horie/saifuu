@@ -12,5 +12,9 @@ export default defineConfig({
 		env: {
 			TZ: 'Asia/Tokyo',
 		},
+		typecheck: {
+			// テスト専用のTypeScript設定を使用
+			tsconfig: './tsconfig.test.json',
+		},
 	},
 })

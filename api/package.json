@@ -11,6 +11,7 @@
     "deploy:manual": "pnpm run build && wrangler deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "typecheck": "tsc --noEmit",
+    "typecheck:test": "tsc --noEmit -p tsconfig.test.json",
     "lint": "biome lint src/",
     "format": "biome format --write src/",
     "test": "vitest --run",
