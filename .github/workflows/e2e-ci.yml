@@ -137,8 +137,10 @@ jobs:
       - name: Start API server on background
         run: |
           cd api
-          # pnpmの実行パスを明示的に指定
-          nohup bash -c "$(which pnpm) run dev:e2e" > ../api-server.log 2>&1 &
+          # pnpmの絶対パスを事前に取得
+          PNPM_PATH=$(which pnpm)
+          echo "PNPM path: $PNPM_PATH"
+          nohup bash -c "$PNPM_PATH run dev:e2e" > ../api-server.log 2>&1 &
       
       # APIサーバーの起動を待機
       - name: Wait API server response
@@ -149,8 +151,10 @@ jobs:
       - name: Start Frontend server on background
         run: |
           cd frontend
-          # pnpmの実行パスを明示的に指定
-          nohup bash -c "E2E_MODE=true $(which pnpm) run dev" > ../frontend-server.log 2>&1 &
+          # pnpmの絶対パスを事前に取得
+          PNPM_PATH=$(which pnpm)
+          echo "PNPM path: $PNPM_PATH"
+          nohup bash -c "E2E_MODE=true $PNPM_PATH run dev" > ../frontend-server.log 2>&1 &
       
       # Frontendサーバーの起動を待機
       - name: Wait Frontend server response
