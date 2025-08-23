@@ -114,6 +114,7 @@ const mockSubscriptions: Subscription[] = [
 vi.mock("../../lib/api/hooks/useSubscriptions", () => ({
 	useSubscriptions: vi.fn(),
 	useCreateSubscription: vi.fn(),
+	useDeleteSubscription: vi.fn(),
 }));
 
 vi.mock("../../components/subscriptions", () => ({
@@ -135,15 +136,35 @@ vi.mock("../../components/subscriptions", () => ({
 			</div>
 		);
 	}),
-	SubscriptionList: vi.fn(({ subscriptions, isLoading, error }) => (
+	SubscriptionList: vi.fn(({ subscriptions, isLoading, error, onDelete }) => (
 		<div data-testid="subscription-list">
 			{isLoading && <div>読み込み中...</div>}
 			{error && <div>エラー: {error}</div>}
 			{subscriptions.map((sub: Subscription) => (
-				<div key={sub.id}>{sub.name}</div>
+				<div key={sub.id}>
+					{sub.name}
+					{onDelete && (
+						<button type="button" onClick={() => onDelete(sub.id)}>
+							削除
+						</button>
+					)}
+				</div>
 			))}
 		</div>
 	)),
+	DeleteConfirmDialog: vi.fn(({ isOpen, onClose, onConfirm }) => {
+		if (!isOpen) return null;
+		return (
+			<div data-testid="delete-confirm-dialog">
+				<button type="button" onClick={onClose}>
+					キャンセル
+				</button>
+				<button type="button" onClick={onConfirm}>
+					削除
+				</button>
+			</div>
+		);
+	}),
 }));
 
 describe("SubscriptionsPage", () => {
@@ -160,15 +181,19 @@ describe("SubscriptionsPage", () => {
 		vi.clearAllMocks();
 
 		// デフォルトのモック実装を設定
-		const { useSubscriptions, useCreateSubscription } = await import(
-			"../../lib/api/hooks/useSubscriptions"
-		);
+		const { useSubscriptions, useCreateSubscription, useDeleteSubscription } =
+			await import("../../lib/api/hooks/useSubscriptions");
 
 		vi.mocked(useSubscriptions).mockReturnValue(defaultSubscriptionsHook);
 		vi.mocked(useCreateSubscription).mockReturnValue({
 			isLoading: false,
 			error: null,
 			createSubscription: vi.fn(),
+		});
+		vi.mocked(useDeleteSubscription).mockReturnValue({
+			isLoading: false,
+			error: null,
+			deleteSubscription: vi.fn(),
 		});
 	});
 

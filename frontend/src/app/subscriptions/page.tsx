@@ -3,12 +3,14 @@
 import type { FC } from "react";
 import { useCallback, useState } from "react";
 import {
+	DeleteConfirmDialog,
 	NewSubscriptionButton,
 	NewSubscriptionDialog,
 	SubscriptionList,
 } from "../../components/subscriptions";
 import {
 	useCreateSubscription,
+	useDeleteSubscription,
 	useSubscriptions,
 } from "../../lib/api/hooks/useSubscriptions";
 import type {
@@ -50,8 +52,17 @@ const SubscriptionsPage: FC = () => {
 		createSubscription: createSubscriptionMutation,
 	} = useCreateSubscription();
 
+	// サブスクリプション削除用フック
+	const {
+		isLoading: deleteLoading,
+		deleteSubscription: deleteSubscriptionMutation,
+	} = useDeleteSubscription();
+
 	// ダイアログの状態管理
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+	const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+	const [deleteTargetName, setDeleteTargetName] = useState<string | null>(null);
 
 	// ダイアログを開く
 	const handleOpenDialog = useCallback(() => {
@@ -92,6 +103,49 @@ const SubscriptionsPage: FC = () => {
 		},
 		[createSubscriptionMutation, handleCloseDialog, refetchSubscriptions],
 	);
+
+	// 削除ダイアログを開く
+	const handleOpenDeleteDialog = useCallback(
+		(id: string) => {
+			const targetSubscription = subscriptions.find((sub) => sub.id === id);
+			if (targetSubscription) {
+				setDeleteTargetId(id);
+				setDeleteTargetName(targetSubscription.name);
+				setIsDeleteDialogOpen(true);
+			}
+		},
+		[subscriptions],
+	);
+
+	// 削除ダイアログを閉じる
+	const handleCloseDeleteDialog = useCallback(() => {
+		setIsDeleteDialogOpen(false);
+		setDeleteTargetId(null);
+		setDeleteTargetName(null);
+	}, []);
+
+	// サブスクリプション削除処理
+	const handleDeleteSubscription = useCallback(async () => {
+		if (!deleteTargetId) return;
+
+		try {
+			const success = await deleteSubscriptionMutation(deleteTargetId);
+			if (success) {
+				// 削除成功時はダイアログを閉じて一覧を再取得
+				handleCloseDeleteDialog();
+				await refetchSubscriptions();
+				console.log("サブスクリプションを削除しました");
+			}
+		} catch (error) {
+			console.error("サブスクリプション削除エラー:", error);
+			// エラーハンドリングは削除フック側で実施されている
+		}
+	}, [
+		deleteTargetId,
+		deleteSubscriptionMutation,
+		handleCloseDeleteDialog,
+		refetchSubscriptions,
+	]);
 
 	return (
 		<div className="min-h-screen bg-gray-50">
@@ -249,6 +303,7 @@ const SubscriptionsPage: FC = () => {
 					subscriptions={subscriptions}
 					isLoading={subscriptionsLoading}
 					error={subscriptionsError}
+					onDelete={handleOpenDeleteDialog}
 				/>
 			</main>
 
@@ -258,6 +313,15 @@ const SubscriptionsPage: FC = () => {
 				onClose={handleCloseDialog}
 				onSubmit={handleSubmitNewSubscription}
 				isSubmitting={operationLoading}
+			/>
+
+			{/* サブスクリプション削除確認ダイアログ */}
+			<DeleteConfirmDialog
+				isOpen={isDeleteDialogOpen}
+				onClose={handleCloseDeleteDialog}
+				onConfirm={handleDeleteSubscription}
+				subscriptionName={deleteTargetName || undefined}
+				isDeleting={deleteLoading}
 			/>
 		</div>
 	);
