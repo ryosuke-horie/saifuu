@@ -39,15 +39,18 @@ vi.mock("@/lib/logger", () => ({
 // Server Componentのテストは特殊な扱いが必要
 // ここではメタデータとコンポーネント構造のモックテストを行う
 
-// モックコンポーネントを作成
+// より実際のレイアウト構造に近いモックコンポーネント
+// 実際のHTML構造により近い形でテストすることで、レイアウトの問題を検出可能
 const MockedRootLayout = ({ children }: { children: ReactNode }) => {
 	return (
-		<html lang="ja">
-			<body>
+		<div>
+			<div className="font-sans antialiased">
 				<header data-testid="mocked-header">Header</header>
-				{children}
-			</body>
-		</html>
+				<main className="min-h-screen bg-gray-50">
+					{children}
+				</main>
+			</div>
+		</div>
 	);
 };
 
@@ -60,11 +63,14 @@ describe("RootLayout", () => {
 				</MockedRootLayout>,
 			);
 
-			// Next.jsレイアウトのhtmlタグは実際のDOMではなく、React要素として扱われる
-			// テスト環境では、内部の要素がアクセス可能であることを確認
+			// レイアウト構造が正しく適用されていることを確認
 			const childElement = screen.getByTestId("test-child");
 			expect(childElement).toBeInTheDocument();
 			expect(childElement).toHaveTextContent("Test Content");
+			
+			// ヘッダーが存在することを確認
+			const header = screen.getByTestId("mocked-header");
+			expect(header).toBeInTheDocument();
 		});
 
 		it("フォントクラスが適用される構造でレンダリングされる", () => {

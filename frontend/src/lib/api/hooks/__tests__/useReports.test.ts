@@ -46,7 +46,7 @@ describe("useMonthlyReports", () => {
 			},
 		];
 
-		// useQueryをモック
+		// useQueryをモック（型安全な実装）
 		const { useQuery } = await import("@tanstack/react-query");
 		vi.mocked(useQuery).mockReturnValue({
 			data: mockData,
@@ -55,7 +55,25 @@ describe("useMonthlyReports", () => {
 			isError: false,
 			isSuccess: true,
 			refetch: vi.fn(),
-		} as any);
+			status: "success",
+			dataUpdatedAt: Date.now(),
+			errorUpdatedAt: 0,
+			failureCount: 0,
+			failureReason: null,
+			errorUpdateCount: 0,
+			isFetched: true,
+			isFetchedAfterMount: true,
+			isFetching: false,
+			isInitialLoading: false,
+			isLoadingError: false,
+			isPaused: false,
+			isPlaceholderData: false,
+			isPending: false,
+			isRefetchError: false,
+			isRefetching: false,
+			isStale: false,
+			remove: vi.fn(),
+		} satisfies Partial<ReturnType<typeof useQuery>>);
 
 		vi.mocked(reportApi.fetchMonthlyReports).mockResolvedValue(mockData);
 
@@ -71,7 +89,7 @@ describe("useMonthlyReports", () => {
 		const mockError = new Error("Failed to fetch");
 		vi.mocked(reportApi.fetchMonthlyReports).mockRejectedValue(mockError);
 
-		// useQueryをモック
+		// useQueryをモック（型安全な実装）
 		const { useQuery } = await import("@tanstack/react-query");
 		vi.mocked(useQuery).mockReturnValue({
 			data: null,
@@ -80,7 +98,25 @@ describe("useMonthlyReports", () => {
 			isError: true,
 			isSuccess: false,
 			refetch: vi.fn(),
-		} as any);
+			status: "error",
+			dataUpdatedAt: 0,
+			errorUpdatedAt: Date.now(),
+			failureCount: 1,
+			failureReason: mockError,
+			errorUpdateCount: 1,
+			isFetched: true,
+			isFetchedAfterMount: true,
+			isFetching: false,
+			isInitialLoading: false,
+			isLoadingError: true,
+			isPaused: false,
+			isPlaceholderData: false,
+			isPending: false,
+			isRefetchError: false,
+			isRefetching: false,
+			isStale: false,
+			remove: vi.fn(),
+		} satisfies Partial<ReturnType<typeof useQuery>>);
 
 		const { result } = renderHook(() =>
 			useMonthlyReports({ period: "3months" }),
@@ -93,7 +129,7 @@ describe("useMonthlyReports", () => {
 	it("空データの場合、空配列を返す", async () => {
 		vi.mocked(reportApi.fetchMonthlyReports).mockResolvedValue([]);
 
-		// useQueryをモック
+		// useQueryをモック（型安全な実装）
 		const { useQuery } = await import("@tanstack/react-query");
 		vi.mocked(useQuery).mockReturnValue({
 			data: [],
@@ -102,7 +138,25 @@ describe("useMonthlyReports", () => {
 			isError: false,
 			isSuccess: true,
 			refetch: vi.fn(),
-		} as any);
+			status: "success",
+			dataUpdatedAt: Date.now(),
+			errorUpdatedAt: 0,
+			failureCount: 0,
+			failureReason: null,
+			errorUpdateCount: 0,
+			isFetched: true,
+			isFetchedAfterMount: true,
+			isFetching: false,
+			isInitialLoading: false,
+			isLoadingError: false,
+			isPaused: false,
+			isPlaceholderData: false,
+			isPending: false,
+			isRefetchError: false,
+			isRefetching: false,
+			isStale: false,
+			remove: vi.fn(),
+		} satisfies Partial<ReturnType<typeof useQuery>>);
 
 		const { result } = renderHook(() =>
 			useMonthlyReports({ period: "3months" }),
@@ -127,7 +181,7 @@ describe("useMonthlyReports", () => {
 			isError: true,
 			isSuccess: false,
 			refetch: vi.fn(),
-		} as any);
+		} satisfies Partial<ReturnType<typeof useQuery>>);
 
 		const { result } = renderHook(() =>
 			useMonthlyReports({ period: "3months" }),
@@ -170,7 +224,7 @@ describe("useCategoryBreakdown", () => {
 			isError: false,
 			isSuccess: true,
 			refetch: vi.fn(),
-		} as any);
+		} satisfies Partial<ReturnType<typeof useQuery>>);
 
 		const { result } = renderHook(() =>
 			useCategoryBreakdown({ period: "6months" }),
@@ -210,7 +264,7 @@ describe("useExportReport", () => {
 			error: null,
 			data: null,
 			reset: vi.fn(),
-		} as any);
+		} satisfies Partial<ReturnType<typeof useMutation>>);
 
 		const { result } = renderHook(() => useExportReport());
 
@@ -243,7 +297,7 @@ describe("useExportReport", () => {
 			error: mockError,
 			data: null,
 			reset: vi.fn(),
-		} as any);
+		} satisfies Partial<ReturnType<typeof useMutation>>);
 
 		const { result } = renderHook(() => useExportReport());
 
@@ -289,7 +343,7 @@ describe("useExportReport", () => {
 			error: null,
 			data: null,
 			reset: vi.fn(),
-		} as any);
+		} satisfies Partial<ReturnType<typeof useMutation>>);
 
 		const { result } = renderHook(() => useExportReport());
 
@@ -312,7 +366,8 @@ describe("useExportReport", () => {
 	it("無効なレスポンス形式の場合、エラーをハンドリングする", async () => {
 		// Blobではない無効なレスポンスをシミュレート
 		const mockError = new Error("Invalid response format");
-		vi.mocked(reportApi.exportReportAsCSV).mockResolvedValue(null as any);
+		// Blobではない無効なレスポンスをシミュレート（型安全に修正）
+		vi.mocked(reportApi.exportReportAsCSV).mockResolvedValue(null as unknown as Blob);
 
 		// useMutationをモック（無効レスポンスケース）
 		const { useMutation } = await import("@tanstack/react-query");
@@ -326,7 +381,7 @@ describe("useExportReport", () => {
 			error: mockError,
 			data: null,
 			reset: vi.fn(),
-		} as any);
+		} satisfies Partial<ReturnType<typeof useMutation>>);
 
 		const { result } = renderHook(() => useExportReport());
 

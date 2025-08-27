@@ -102,7 +102,8 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 	});
 
 	describe("ショートカットキー", () => {
-		it.skip("Cmd+Enter（Mac）でフォームを送信できる", async () => {
+		// クロスプラットフォームでのキーボードショートカットテスト
+		it("Cmd+Enter（Mac）とCtrl+Enter（Windows/Linux）でフォームを送信できる", async () => {
 			const user = userEvent.setup();
 
 			render(

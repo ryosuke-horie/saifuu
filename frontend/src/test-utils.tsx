@@ -28,40 +28,44 @@ vi.mock("next/link", () => ({
 	),
 }));
 
+// モックデータの定義（再利用可能で型安全）
+const mockQueryClient = {
+	getQueryData: vi.fn(),
+	setQueryData: vi.fn(),
+	invalidateQueries: vi.fn(),
+	prefetchQuery: vi.fn(),
+	fetchQuery: vi.fn(),
+	clear: vi.fn(),
+};
+
+const mockQueryResult = {
+	data: null,
+	error: null,
+	isLoading: false,
+	isError: false,
+	isSuccess: true,
+	refetch: vi.fn(),
+};
+
+const mockMutationResult = {
+	mutate: vi.fn(),
+	mutateAsync: vi.fn(),
+	isLoading: false,
+	isError: false,
+	isSuccess: false,
+	error: null,
+	data: null,
+	reset: vi.fn(),
+};
+
 // React Query関連をモック（React 19互換性問題を回避）
+// より簡潔で保守しやすいモック構造
 vi.mock("@tanstack/react-query", () => ({
-	QueryClient: vi.fn(() => ({
-		getQueryData: vi.fn(),
-		setQueryData: vi.fn(),
-		invalidateQueries: vi.fn(),
-		prefetchQuery: vi.fn(),
-		fetchQuery: vi.fn(),
-		clear: vi.fn(),
-	})),
+	QueryClient: vi.fn(() => mockQueryClient),
 	QueryClientProvider: ({ children }: { children: ReactNode }) => children,
-	useQuery: vi.fn(() => ({
-		data: null,
-		error: null,
-		isLoading: false,
-		isError: false,
-		isSuccess: true,
-		refetch: vi.fn(),
-	})),
-	useMutation: vi.fn(() => ({
-		mutate: vi.fn(),
-		mutateAsync: vi.fn(),
-		isLoading: false,
-		isError: false,
-		isSuccess: false,
-		error: null,
-		data: null,
-		reset: vi.fn(),
-	})),
-	useQueryClient: vi.fn(() => ({
-		invalidateQueries: vi.fn(),
-		setQueryData: vi.fn(),
-		getQueryData: vi.fn(),
-	})),
+	useQuery: vi.fn(() => mockQueryResult),
+	useMutation: vi.fn(() => mockMutationResult),
+	useQueryClient: vi.fn(() => mockQueryClient),
 }));
 
 // カスタムrender関数（QueryClientProviderなしのシンプル版）

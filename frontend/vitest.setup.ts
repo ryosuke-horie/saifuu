@@ -63,7 +63,25 @@ Object.defineProperty(window, "alert", {
 	value: vi.fn(),
 });
 
-// process オブジェクトをブラウザ環境で利用可能にする
+// Cloudflare Workers環境との整合性のため、import.meta.envを優先的に設定
+// process.envの使用は避け、import.meta.envを推奨
+if (typeof (globalThis as any).import === "undefined") {
+	Object.defineProperty(globalThis, "import", {
+		writable: true,
+		configurable: true,
+		value: {
+			meta: {
+				env: {
+					DEV: true,
+					NODE_ENV: "test",
+					MODE: "test",
+				},
+			},
+		},
+	});
+}
+
+// 既存のコードとの互換性のため、processも設定（段階的に廃止予定）
 if (typeof process === "undefined") {
 	Object.defineProperty(globalThis, "process", {
 		writable: true,
