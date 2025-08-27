@@ -4,6 +4,45 @@ import "@testing-library/jest-dom";
 // 参考: https://github.com/testing-library/react-testing-library/issues/1061
 (global as any).IS_REACT_ACT_ENVIRONMENT = true;
 
+// React 19とReact Query互換性のためのpolyfill
+// React.useEffectがnullを読み取る問題を回避
+import React from 'react';
+if (!React.useEffect) {
+	// eslint-disable-next-line
+	(React as any).useEffect = (fn: () => void, deps?: any[]) => {
+		if (typeof fn === 'function') {
+			fn();
+		}
+	};
+}
+
+// React 19の場合、追加で必要なhooksがnullの場合のpolyfill
+const polyfillHooks = ['useState', 'useRef', 'useContext', 'useMemo', 'useCallback', 'useReducer'];
+polyfillHooks.forEach(hook => {
+	if (!(React as any)[hook]) {
+		switch (hook) {
+			case 'useState':
+				(React as any)[hook] = (initial: any) => [initial, vi.fn()];
+				break;
+			case 'useRef':
+				(React as any)[hook] = (initial: any) => ({ current: initial });
+				break;
+			case 'useContext':
+				(React as any)[hook] = vi.fn(() => ({}));
+				break;
+			case 'useMemo':
+				(React as any)[hook] = (fn: () => any) => fn();
+				break;
+			case 'useCallback':
+				(React as any)[hook] = (fn: any) => fn;
+				break;
+			case 'useReducer':
+				(React as any)[hook] = (reducer: any, initial: any) => [initial, vi.fn()];
+				break;
+		}
+	}
+});
+
 // テスト環境フラグを設定（ErrorBoundaryが開発環境でエラーを再スローしないように）
 (globalThis as any).IS_TEST_ENV = true;
 

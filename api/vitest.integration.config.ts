@@ -1,39 +1,35 @@
-import { defineConfig } from "vitest/config";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { defineConfig } from 'vitest/config'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
 	resolve: {
 		alias: {
-			"@shared": path.resolve(__dirname, "../shared/src"),
+			'@shared': path.resolve(__dirname, '../shared/src'),
 		},
 	},
 	test: {
 		// Node.js環境でのテスト実行
-		environment: "node",
-		
+		environment: 'node',
+
 		// 統合テスト対象ファイルパターン
-		include: ["src/**/*.integration.{test,spec}.{js,mjs,cjs,ts,mts,cts}"],
-		exclude: [
-			"node_modules/**",
-			"dist/**",
-			"public/**",
-		],
-		
+		include: ['src/**/*.integration.{test,spec}.{js,mjs,cjs,ts,mts,cts}'],
+		exclude: ['node_modules/**', 'dist/**', 'public/**'],
+
 		// グローバル設定
 		globals: true,
-		
+
 		// 統合テスト用のタイムアウト（DBアクセスなどのため長めに設定）
 		testTimeout: 30000,
-		
+
 		// 統合テストは順次実行（DBの競合状態を避けるため）
-		pool: "forks",
+		pool: 'forks',
 		poolOptions: {
 			forks: {
 				singleFork: true,
 			},
 		},
 	},
-});
+})

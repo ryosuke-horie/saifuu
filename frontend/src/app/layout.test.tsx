@@ -1,9 +1,9 @@
 // layout.tsx のテスト
 // ルートレイアウトの表示と構造を検証
 
-import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { describe, expect, it, vi } from "vitest";
 import { metadata } from "./layout";
 
 // next/fontのモック
@@ -28,8 +28,12 @@ vi.mock("@/components/providers", () => ({
 
 // Loggerのモック
 vi.mock("@/lib/logger", () => ({
-	LoggedErrorBoundary: ({ children }: { children: ReactNode }) => <>{children}</>,
-	NextjsLoggerProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+	LoggedErrorBoundary: ({ children }: { children: ReactNode }) => (
+		<>{children}</>
+	),
+	NextjsLoggerProvider: ({ children }: { children: ReactNode }) => (
+		<>{children}</>
+	),
 }));
 
 // Server Componentのテストは特殊な扱いが必要

@@ -4,10 +4,9 @@
  * 収入一覧でのページネーション機能の統合動作を検証
  */
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Transaction } from "@/lib/api/types";
+import { fireEvent, render, screen, waitFor } from "@/test-utils";
 import { IncomeList } from "../IncomeList";
 
 // APIモックデータ生成
@@ -36,24 +35,9 @@ vi.mock("@/lib/api/client", () => ({
 }));
 
 describe("IncomeList with Pagination", () => {
-	let queryClient: QueryClient;
-
 	beforeEach(() => {
-		queryClient = new QueryClient({
-			defaultOptions: {
-				queries: { retry: false },
-			},
-		});
 		vi.clearAllMocks();
 	});
-
-	const renderWithQueryClient = (component: React.ReactElement) => {
-		return render(
-			<QueryClientProvider client={queryClient}>
-				{component}
-			</QueryClientProvider>,
-		);
-	};
 
 	describe("ページネーション統合", () => {
 		it("ページネーション付きで収入一覧が表示される", async () => {
@@ -71,7 +55,7 @@ describe("IncomeList with Pagination", () => {
 				},
 			});
 
-			renderWithQueryClient(
+			render(
 				<IncomeList enablePagination={true} itemsPerPage={20} />,
 			);
 
@@ -101,7 +85,7 @@ describe("IncomeList with Pagination", () => {
 				},
 			});
 
-			renderWithQueryClient(
+			render(
 				<IncomeList enablePagination={true} itemsPerPage={20} />,
 			);
 
@@ -149,7 +133,7 @@ describe("IncomeList with Pagination", () => {
 				},
 			});
 
-			renderWithQueryClient(
+			render(
 				<IncomeList enablePagination={true} itemsPerPage={20} />,
 			);
 
@@ -200,7 +184,7 @@ describe("IncomeList with Pagination", () => {
 				},
 			});
 
-			renderWithQueryClient(
+			render(
 				<IncomeList
 					enablePagination={true}
 					itemsPerPage={20}
@@ -234,7 +218,7 @@ describe("IncomeList with Pagination", () => {
 				},
 			});
 
-			renderWithQueryClient(
+			render(
 				<IncomeList
 					enablePagination={true}
 					itemsPerPage={20}
@@ -277,7 +261,7 @@ describe("IncomeList with Pagination", () => {
 				},
 			});
 
-			renderWithQueryClient(
+			render(
 				<IncomeList enablePagination={true} itemsPerPage={20} />,
 			);
 
@@ -334,7 +318,7 @@ describe("IncomeList with Pagination", () => {
 				new Error("ページの取得に失敗しました"),
 			);
 
-			renderWithQueryClient(
+			render(
 				<IncomeList enablePagination={true} itemsPerPage={20} />,
 			);
 
