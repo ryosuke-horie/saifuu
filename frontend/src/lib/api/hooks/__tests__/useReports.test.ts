@@ -1,5 +1,5 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { act, renderHook } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as reportApi from "../../services/reports";
 import {
 	useCategoryBreakdown,
@@ -59,7 +59,9 @@ describe("useMonthlyReports", () => {
 
 		vi.mocked(reportApi.fetchMonthlyReports).mockResolvedValue(mockData);
 
-		const { result } = renderHook(() => useMonthlyReports({ period: "3months" }));
+		const { result } = renderHook(() =>
+			useMonthlyReports({ period: "3months" }),
+		);
 
 		expect(result.current.isLoading).toBe(false);
 		expect(result.current.reports).toEqual(mockData);
@@ -80,7 +82,9 @@ describe("useMonthlyReports", () => {
 			refetch: vi.fn(),
 		} as any);
 
-		const { result } = renderHook(() => useMonthlyReports({ period: "3months" }));
+		const { result } = renderHook(() =>
+			useMonthlyReports({ period: "3months" }),
+		);
 
 		expect(result.current.error).toBeTruthy();
 		expect(result.current.reports).toEqual([]);
@@ -100,7 +104,9 @@ describe("useMonthlyReports", () => {
 			refetch: vi.fn(),
 		} as any);
 
-		const { result } = renderHook(() => useMonthlyReports({ period: "3months" }));
+		const { result } = renderHook(() =>
+			useMonthlyReports({ period: "3months" }),
+		);
 
 		expect(result.current.isLoading).toBe(false);
 		expect(result.current.reports).toEqual([]);
@@ -123,7 +129,9 @@ describe("useMonthlyReports", () => {
 			refetch: vi.fn(),
 		} as any);
 
-		const { result } = renderHook(() => useMonthlyReports({ period: "3months" }));
+		const { result } = renderHook(() =>
+			useMonthlyReports({ period: "3months" }),
+		);
 
 		expect(result.current.error).toBeTruthy();
 		expect(result.current.error?.message).toBe("Network error");
@@ -164,7 +172,9 @@ describe("useCategoryBreakdown", () => {
 			refetch: vi.fn(),
 		} as any);
 
-		const { result } = renderHook(() => useCategoryBreakdown({ period: "6months" }));
+		const { result } = renderHook(() =>
+			useCategoryBreakdown({ period: "6months" }),
+		);
 
 		expect(result.current.isLoading).toBe(false);
 		expect(result.current.breakdown).toEqual(mockData);
@@ -240,7 +250,7 @@ describe("useExportReport", () => {
 		await act(async () => {
 			try {
 				await result.current.exportCSV({ period: "3months" });
-			} catch (error) {
+			} catch (_error) {
 				// エラーを無視（テスト目的）
 			}
 		});
@@ -287,7 +297,7 @@ describe("useExportReport", () => {
 		await act(async () => {
 			try {
 				await result.current.exportCSV({ period: "1year" });
-			} catch (error) {
+			} catch (_error) {
 				// エラーを無視
 			}
 		});
@@ -323,7 +333,7 @@ describe("useExportReport", () => {
 		await act(async () => {
 			try {
 				await result.current.exportCSV({ period: "3months" });
-			} catch (error) {
+			} catch (_error) {
 				// エラーを無視
 			}
 		});

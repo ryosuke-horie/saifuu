@@ -55,9 +55,7 @@ describe("IncomeList with Pagination", () => {
 				},
 			});
 
-			render(
-				<IncomeList enablePagination={true} itemsPerPage={20} />,
-			);
+			render(<IncomeList enablePagination={true} itemsPerPage={20} />);
 
 			// データの読み込みを待つ
 			await waitFor(() => {
@@ -85,9 +83,7 @@ describe("IncomeList with Pagination", () => {
 				},
 			});
 
-			render(
-				<IncomeList enablePagination={true} itemsPerPage={20} />,
-			);
+			render(<IncomeList enablePagination={true} itemsPerPage={20} />);
 
 			await waitFor(() => {
 				expect(screen.getByText("収入 1")).toBeInTheDocument();
@@ -133,9 +129,7 @@ describe("IncomeList with Pagination", () => {
 				},
 			});
 
-			render(
-				<IncomeList enablePagination={true} itemsPerPage={20} />,
-			);
+			render(<IncomeList enablePagination={true} itemsPerPage={20} />);
 
 			await waitFor(() => {
 				expect(screen.getByText("収入 1")).toBeInTheDocument();
@@ -261,9 +255,7 @@ describe("IncomeList with Pagination", () => {
 				},
 			});
 
-			render(
-				<IncomeList enablePagination={true} itemsPerPage={20} />,
-			);
+			render(<IncomeList enablePagination={true} itemsPerPage={20} />);
 
 			await waitFor(() => {
 				expect(screen.getByText("収入 1")).toBeInTheDocument();
@@ -318,9 +310,7 @@ describe("IncomeList with Pagination", () => {
 				new Error("ページの取得に失敗しました"),
 			);
 
-			render(
-				<IncomeList enablePagination={true} itemsPerPage={20} />,
-			);
+			render(<IncomeList enablePagination={true} itemsPerPage={20} />);
 
 			// エラーメッセージの表示
 			await waitFor(() => {

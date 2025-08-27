@@ -6,38 +6,49 @@ import "@testing-library/jest-dom";
 
 // React 19とReact Query互換性のためのpolyfill
 // React.useEffectがnullを読み取る問題を回避
-import React from 'react';
+import React from "react";
+
 if (!React.useEffect) {
 	// eslint-disable-next-line
-	(React as any).useEffect = (fn: () => void, deps?: any[]) => {
-		if (typeof fn === 'function') {
+	(React as any).useEffect = (fn: () => void, _deps?: any[]) => {
+		if (typeof fn === "function") {
 			fn();
 		}
 	};
 }
 
 // React 19の場合、追加で必要なhooksがnullの場合のpolyfill
-const polyfillHooks = ['useState', 'useRef', 'useContext', 'useMemo', 'useCallback', 'useReducer'];
-polyfillHooks.forEach(hook => {
+const polyfillHooks = [
+	"useState",
+	"useRef",
+	"useContext",
+	"useMemo",
+	"useCallback",
+	"useReducer",
+];
+polyfillHooks.forEach((hook) => {
 	if (!(React as any)[hook]) {
 		switch (hook) {
-			case 'useState':
+			case "useState":
 				(React as any)[hook] = (initial: any) => [initial, vi.fn()];
 				break;
-			case 'useRef':
+			case "useRef":
 				(React as any)[hook] = (initial: any) => ({ current: initial });
 				break;
-			case 'useContext':
+			case "useContext":
 				(React as any)[hook] = vi.fn(() => ({}));
 				break;
-			case 'useMemo':
+			case "useMemo":
 				(React as any)[hook] = (fn: () => any) => fn();
 				break;
-			case 'useCallback':
+			case "useCallback":
 				(React as any)[hook] = (fn: any) => fn;
 				break;
-			case 'useReducer':
-				(React as any)[hook] = (reducer: any, initial: any) => [initial, vi.fn()];
+			case "useReducer":
+				(React as any)[hook] = (_reducer: any, initial: any) => [
+					initial,
+					vi.fn(),
+				];
 				break;
 		}
 	}
