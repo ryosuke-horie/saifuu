@@ -19,8 +19,9 @@ const createWrapper = () => {
 		},
 	});
 
-	return ({ children }: { children: ReactNode }) =>
+	const Wrapper = ({ children }: { children: ReactNode }) =>
 		createElement(QueryClientProvider, { client: queryClient }, children);
+	return Wrapper;
 };
 
 describe("useMonthlyReports", () => {

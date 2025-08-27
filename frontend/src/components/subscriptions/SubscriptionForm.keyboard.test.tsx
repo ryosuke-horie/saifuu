@@ -36,7 +36,8 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 	];
 
 	// 明日の日付を取得する関数（YYYY-MM-DD形式）
-	const getTomorrowDate = (): string => {
+	// 現在未使用だが、将来的に日付関連のテストで使用予定
+	const _getTomorrowDate = (): string => {
 		const tomorrow = new Date();
 		tomorrow.setDate(tomorrow.getDate() + 1);
 		return tomorrow.toISOString().split("T")[0];
