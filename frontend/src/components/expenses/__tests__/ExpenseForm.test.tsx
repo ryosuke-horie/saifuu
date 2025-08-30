@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { getToday } from "@/lib/utils/date";
 import type { Category } from "../../../types/category";
 import type { ExpenseFormData } from "../../../types/expense";
 import { ExpenseForm } from "../ExpenseForm";
@@ -30,11 +31,8 @@ describe("ExpenseForm", () => {
 			const mockOnSubmit = vi.fn();
 			const mockOnCancel = vi.fn();
 
-			// 当日の日付を取得（ExpenseFormと同じロジック）
-			const today = new Date();
-			const expectedDate = `${today.getFullYear()}-${String(
-				today.getMonth() + 1,
-			).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+			// 共通のdate utilityを使用して当日の日付を取得
+			const expectedDate = getToday();
 
 			render(
 				<ExpenseForm
