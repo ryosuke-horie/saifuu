@@ -35,12 +35,6 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 		},
 	];
 
-	// 明日の日付を取得する関数（YYYY-MM-DD形式）
-	const _getTomorrowDate = (): string => {
-		const tomorrow = new Date();
-		tomorrow.setDate(tomorrow.getDate() + 1);
-		return tomorrow.toISOString().split("T")[0];
-	};
 
 	afterEach(() => {
 		mockOnSubmit.mockClear();
