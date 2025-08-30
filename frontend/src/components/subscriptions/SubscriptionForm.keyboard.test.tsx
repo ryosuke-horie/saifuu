@@ -35,7 +35,6 @@ describe("SubscriptionForm - キーボードナビゲーション", () => {
 		},
 	];
 
-
 	afterEach(() => {
 		mockOnSubmit.mockClear();
 		mockOnCancel.mockClear();
