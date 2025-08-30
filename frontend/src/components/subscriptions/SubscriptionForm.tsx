@@ -1,6 +1,7 @@
 "use client";
 
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
+import { getToday } from "@/lib/utils/date";
 import type {
 	BillingCycle,
 	SubscriptionFormData,
@@ -39,15 +40,6 @@ interface FormErrors {
 	isActive?: string;
 	description?: string;
 }
-
-// 現在の日付を取得する関数（YYYY-MM-DD形式）
-const getToday = (): string => {
-	const today = new Date();
-	const year = today.getFullYear();
-	const month = String(today.getMonth() + 1).padStart(2, "0");
-	const day = String(today.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
-};
 
 // デフォルトフォームデータ
 const defaultFormData: SubscriptionFormData = {
@@ -275,12 +267,6 @@ export const SubscriptionForm: FC<SubscriptionFormProps> = ({
 		[handleSubmit, onEscape, isSubmitting],
 	);
 
-	// 今日の日付をYYYY-MM-DD形式で取得
-	const getTodayString = (): string => {
-		const today = new Date();
-		return today.toISOString().split("T")[0];
-	};
-
 	return (
 		<form
 			onSubmit={handleSubmit}
@@ -432,7 +418,7 @@ export const SubscriptionForm: FC<SubscriptionFormProps> = ({
 					onChange={(e) => handleFieldChange("nextBillingDate", e.target.value)}
 					onBlur={() => handleFieldBlur("nextBillingDate")}
 					disabled={isSubmitting}
-					min={getTodayString()}
+					min={getToday()}
 					className={`
 						block w-full px-3 py-2 border rounded-md shadow-sm
 						focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
